@@ -6,6 +6,7 @@ Optimized for Apple Silicon M3 MAX.
 import os
 import asyncio
 import logging
+import re
 import uuid
 from pathlib import Path
 from typing import Optional, List
@@ -37,20 +38,53 @@ from app.utils.progress import progress_tracker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+APP_VERSION = "3.5.1"
+SAFE_FILE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+STREAMABLE_AUDIO_VERSIONS = {"original", "processed"}
+DOWNLOAD_AUDIO_VERSIONS = {"original", "processed", "watermarked", "tts"}
+DOWNLOAD_AUDIO_FORMATS = {"wav", "mp3", "flac"}
+
+
+def _cors_origins_from_env() -> list[str]:
+    """Resolve browser origins allowed to call the local API."""
+    raw = os.getenv(
+        "AEMAX_CORS_ORIGINS",
+        "http://127.0.0.1:8000,http://localhost:8000",
+    )
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def _is_safe_file_id(file_id: str) -> bool:
+    return bool(SAFE_FILE_ID_RE.fullmatch(file_id or ""))
+
+
+def _require_file_id(file_id: str) -> str:
+    if not _is_safe_file_id(file_id):
+        raise HTTPException(400, "Invalid file id")
+    return file_id
+
+
+def _require_choice(value: str, allowed: set[str], label: str) -> str:
+    if value not in allowed:
+        raise HTTPException(400, f"Invalid {label}. Allowed: {', '.join(sorted(allowed))}")
+    return value
+
 # ══════════════════════════════════════════════════════════
 # FastAPI App
 # ══════════════════════════════════════════════════════════
 
+CORS_ORIGINS = _cors_origins_from_env()
+
 app = FastAPI(
     title="AudioEnhancerMAX by Fd",
     description="Professional podcast audio processing suite — Apple Silicon Metal GPU + Edge Cluster computing",
-    version="3.5.0",
+    version=APP_VERSION,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials="*" not in CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -227,7 +261,7 @@ async def estimate_processing_time(request: ProcessingRequest):
     """Adaptive estimate using real historical data + benchmark fallback."""
     from app.services.timing_engine import timing_engine
     opts = request.options
-    file_id = request.file_id
+    file_id = _require_file_id(request.file_id)
 
     # Try to get actual duration
     duration = 60.0
@@ -324,6 +358,9 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.get("/api/audio/{file_id}")
 async def get_audio(file_id: str, version: str = "original"):
+    file_id = _require_file_id(file_id)
+    version = _require_choice(version, STREAMABLE_AUDIO_VERSIONS, "version")
+
     if version == "processed":
         for ext in [".wav", ".mp3", ".flac"]:
             path = get_output_path(file_id, "_processed", ext)
@@ -347,7 +384,7 @@ async def process_audio(request: ProcessingRequest):
     import time as _time
     from app.services.timing_engine import timing_engine
 
-    file_id = request.file_id
+    file_id = _require_file_id(request.file_id)
     options = request.options
 
     source_path = _find_source(file_id)
@@ -664,11 +701,12 @@ async def process_audio(request: ProcessingRequest):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Smart Mode (Gemma 4 E2B)
+# Routes — Smart Mode (local Ollama/Gemma)
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/smart-mode/{file_id}")
 async def smart_mode_analyze(file_id: str):
+    file_id = _require_file_id(file_id)
     source_path = _find_source(file_id)
     if not source_path:
         raise HTTPException(404, "File not found")
@@ -683,7 +721,8 @@ async def smart_mode_analyze(file_id: str):
 
 @app.post("/api/smart-mode/{file_id}/suggestions")
 async def get_editing_suggestions(file_id: str):
-    """Get AI-powered editing suggestions from Gemma 4."""
+    """Get AI-assisted editing suggestions from the configured local Ollama/Gemma model."""
+    file_id = _require_file_id(file_id)
     source_path = _find_source(file_id)
     if not source_path:
         raise HTTPException(404, "File not found")
@@ -708,7 +747,8 @@ async def get_editing_suggestions(file_id: str):
 @app.post("/api/transcribe")
 async def transcribe_audio(request: TranscriptionRequest):
     """Non-blocking transcription — runs in thread to keep server responsive."""
-    source_path = _find_source(request.file_id)
+    file_id = _require_file_id(request.file_id)
+    source_path = _find_source(file_id)
     if not source_path:
         raise HTTPException(404, "File not found")
 
@@ -769,7 +809,8 @@ async def transcribe_audio_stream(request: TranscriptionRequest):
     Sends segments in real-time as Whisper processes them.
     Saves incrementally to disk for crash resilience.
     """
-    source_path = _find_source(request.file_id)
+    file_id = _require_file_id(request.file_id)
+    source_path = _find_source(file_id)
     if not source_path:
         raise HTTPException(404, "File not found")
 
@@ -785,7 +826,7 @@ async def transcribe_audio_stream(request: TranscriptionRequest):
         audio_duration = len(audio) / sr
 
         # Incremental output file
-        output_path = OUTPUT_DIR / f"{request.file_id}_transcript.json"
+        output_path = OUTPUT_DIR / f"{file_id}_transcript.json"
 
         t0 = _time.monotonic()
 
@@ -849,6 +890,7 @@ async def transcribe_audio_stream(request: TranscriptionRequest):
 async def check_transcript_resume(file_id: str):
     """Check if a partial transcript exists from a previous interrupted session."""
     import json
+    file_id = _require_file_id(file_id)
     output_path = OUTPUT_DIR / f"{file_id}_transcript.json"
     if output_path.exists():
         try:
@@ -883,7 +925,8 @@ async def synthesize(request: TTSRequest):
 
         clone_path = None
         if request.clone_voice_file_id:
-            clone_path = str(_find_source(request.clone_voice_file_id) or "")
+            clone_file_id = _require_file_id(request.clone_voice_file_id)
+            clone_path = str(_find_source(clone_file_id) or "")
 
         # Run TTS in thread — model loading + inference + Gemma rewrite can take 30+ seconds
         audio, sr, metadata = await asyncio.to_thread(
@@ -941,13 +984,14 @@ async def rewrite_text(request: TTSRewriteRequest):
 @app.post("/api/diarize")
 async def diarize_audio(request: DiarizationRequest):
     """Non-blocking diarization — runs in thread to keep server responsive."""
-    source_path = _find_source(request.file_id)
+    file_id = _require_file_id(request.file_id)
+    source_path = _find_source(file_id)
     if not source_path:
         raise HTTPException(404, "File not found")
 
     try:
         result = await asyncio.to_thread(
-            _diarize_sync, source_path, request.file_id,
+            _diarize_sync, source_path, file_id,
             request.num_speakers, request.min_speakers, request.max_speakers
         )
         return result
@@ -982,6 +1026,7 @@ def _diarize_sync(source_path, file_id, num_speakers, min_speakers, max_speakers
 
 @app.post("/api/watermark/{file_id}")
 async def add_watermark(file_id: str, identifier: str = ""):
+    file_id = _require_file_id(file_id)
     source_path = _find_source(file_id, check_outputs=True)
     if not source_path:
         raise HTTPException(404, "File not found")
@@ -1005,6 +1050,7 @@ async def add_watermark(file_id: str, identifier: str = ""):
 
 @app.post("/api/watermark/detect/{file_id}")
 async def detect_watermark(file_id: str):
+    file_id = _require_file_id(file_id)
     source_path = _find_source(file_id, check_outputs=True)
     if not source_path:
         raise HTTPException(404, "File not found")
@@ -1034,7 +1080,10 @@ async def list_all_presets():
 @app.post("/api/presets")
 async def save_preset(request: PresetSaveRequest):
     from app.services.batch_presets import save_preset
-    return save_preset(request.name, request.options, request.description)
+    try:
+        return save_preset(request.name, request.options, request.description)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 @app.get("/api/presets/{preset_id}")
@@ -1067,6 +1116,9 @@ async def start_batch(request: BatchRequest):
     from app.services.batch_presets import create_batch_job, load_preset, get_builtin_presets
 
     job_id = str(uuid.uuid4())[:12]
+    file_ids = [_require_file_id(file_id) for file_id in request.file_ids]
+    if not file_ids:
+        raise HTTPException(400, "Batch requires at least one file")
 
     # If preset_id is provided, load its options
     options = request.options
@@ -1080,17 +1132,18 @@ async def start_batch(request: BatchRequest):
             if preset:
                 options = ProcessingOptions(**preset["options"])
 
-    job = create_batch_job(job_id, request.file_ids, options)
+    job = create_batch_job(job_id, file_ids, options)
 
     # Process files sequentially in background
-    asyncio.create_task(_process_batch(job_id, request.file_ids, options))
+    asyncio.create_task(_process_batch(job_id, file_ids, options))
 
-    return {"job_id": job_id, "status": "started", "total_files": len(request.file_ids)}
+    return {"job_id": job_id, "status": "started", "total_files": len(file_ids)}
 
 
 @app.get("/api/batch/{job_id}")
 async def get_batch_status(job_id: str):
     from app.services.batch_presets import get_batch_job
+    job_id = _require_file_id(job_id)
     job = get_batch_job(job_id)
     if not job:
         raise HTTPException(404, "Batch job not found")
@@ -1116,6 +1169,9 @@ async def _process_batch(job_id: str, file_ids: List[str], options: ProcessingOp
 
 @app.get("/api/download/{file_id}")
 async def download_file(file_id: str, format: str = "wav", version: str = "processed"):
+    file_id = _require_file_id(file_id)
+    format = _require_choice(format, DOWNLOAD_AUDIO_FORMATS, "format")
+    version = _require_choice(version, DOWNLOAD_AUDIO_VERSIONS, "version")
     suffix = f"_{version}" if version != "original" else ""
 
     path = get_output_path(file_id, suffix, f".{format}")
@@ -1146,6 +1202,10 @@ async def download_file(file_id: str, format: str = "wav", version: str = "proce
 
 @app.websocket("/ws/progress/{file_id}")
 async def websocket_progress(websocket: WebSocket, file_id: str):
+    if not _is_safe_file_id(file_id):
+        await websocket.close(code=1008)
+        return
+
     await progress_tracker.connect(file_id, websocket)
     try:
         while True:
@@ -1163,7 +1223,7 @@ async def health():
     import torch
     gpu_info = "Apple Silicon M3 MAX (MPS)" if torch.backends.mps.is_available() else "CPU"
 
-    # Check Ollama / Gemma 4
+    # Check local Ollama / Gemma-family model
     gemma_status = "unknown"
     gemma_model = None
     try:
@@ -1215,11 +1275,13 @@ async def health():
     return {
         "status": "healthy",
         "app": "AudioEnhancerMAX by Fd",
-        "version": "3.5.0",
+        "version": APP_VERSION,
         "compute": gpu_info,
         "mps_available": torch.backends.mps.is_available(),
         "gemma4_status": gemma_status,
         "gemma_model": gemma_model,
+        "ollama_status": gemma_status,
+        "ollama_model": gemma_model,
         "system": system_data,
     }
 
@@ -1272,6 +1334,9 @@ async def benchmark_results():
 
 def _find_source(file_id: str, check_outputs: bool = False) -> Optional[Path]:
     """Find audio file by ID across uploads and outputs."""
+    if not _is_safe_file_id(file_id):
+        return None
+
     for ext in [".wav", ".mp3", ".mp4", ".flac", ".ogg", ".m4a"]:
         path = get_upload_path(file_id, ext)
         if path.exists():

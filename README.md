@@ -1,273 +1,186 @@
 <div align="center">
 
-# 🎙️ AudioEnhancerMAX
+# AudioEnhancerMAX
 
-### The Open-Source AI Audio Media Center
+### The open-source AI audio media center
 
-**Next-gen, AI-powered audio processing suite for podcasters, creators and professionals.**<br>
-**16+ intelligent filters · Metal GPU · Gemma 4 AI · Edge Cluster · 100% Local · v3.0**
+**Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
+**16+ processing modules · Apple Silicon acceleration · local Ollama/Gemma smart mode · Android edge workers · local-first core · v3.5.1**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-06b6d4.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-10b981.svg)](https://fastapi.tiangolo.com)
 [![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-Optimized-f59e0b.svg)](#)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![SourceForge](https://img.shields.io/badge/SourceForge-Rising_Star-ff6600.svg)](https://sourceforge.net/projects/audioenhancermax/)
 
-[**Features**](#-features) · [**Download**](#-download--installation) · [**Use Cases**](#-use-cases) · [**Architecture**](#-architecture) · [**Docs**](#-documentation) · [**Contributing**](#-contributing) · [**Landing Page**](/frontend/landing.html)
+[Official Website](https://fabriziodegni.com/AudioEnhancerMAX/) ·
+[SourceForge](https://sourceforge.net/projects/audioenhancermax/) ·
+[Documentation](#documentation) ·
+[Changelog](CHANGELOG.md) ·
+[Contributing](CONTRIBUTING.md)
 
----
+<img src="frontend/img/social-preview.png" alt="AudioEnhancerMAX social preview" width="860">
 
-<img src="frontend/img/screenshot.png" alt="AudioEnhancerMAX Dashboard" width="800">
-
-*Professional-grade audio processing running entirely on your hardware — no subscriptions, no cloud, no limits.*
+AudioEnhancerMAX turns raw recordings into cleaner, production-ready audio without requiring a cloud service for the core processing pipeline.
 
 </div>
 
 ---
 
-## 🎯 What is AudioEnhancerMAX?
+## Why It Exists
 
-AudioEnhancerMAX is the **open-source audio media center** — a unified, beautiful, AI-powered suite that turns raw recordings into broadcast-quality audio. Think of it as the **XMB Media Center, but for audio processing**.
+AudioEnhancerMAX is built for creators, podcasters, researchers, interviewers, and audio-heavy workflows where privacy, control, and auditability matter. It combines local DSP, AI-assisted decisions, real-time monitoring, transcription, text-to-speech, and optional Android edge workers in one FastAPI + vanilla JS application.
 
-Unlike cloud-based tools (Adobe Podcast, Descript, Auphonic), AudioEnhancerMAX runs **100% locally** on your hardware. Your audio never leaves your machine. No subscriptions. No hourly limits. No compromises.
+The default architecture is local-first: uploads, DSP output, timing history, and local model inference stay on the host machine unless you explicitly enable an integration that sends data elsewhere. You decide when to use local AI through Ollama/Gemma, when to offload DSP chunks to trusted devices on your LAN, and which output format to export.
 
-**Built for Apple Silicon M3 MAX** with distributed edge computing support — turn your Android smartphones into additional compute nodes.
+AudioEnhancerMAX has also been recognized with the **SourceForge Rising Star Award** for open-source traction and community engagement.
 
----
+## Highlights
 
-## ✨ Features
+| Area | What You Get |
+| --- | --- |
+| Audio cleanup | DeepFilterNet/noisereduce fallback, wind, buzz, static, reverb/echo, breath, mouth-click and silence handling |
+| Speech editing | Whisper-based filler word, hesitation, and stutter cleanup with natural crossfades |
+| Enhancement | Studio sound chain, Auto EQ, LUFS normalization, super-resolution, Demucs music preservation |
+| AI workflow | Smart mode, content classification, dynamic filter tuning, editing suggestions through local Ollama/Gemma |
+| Transcription | Faster-Whisper, streaming SSE delivery, TXT/SRT/VTT/JSON export, crash-resilient partial saves |
+| TTS | Local Kokoro voices, optional Edge Neural voices, expressive rewrite mode, voice-clone input hook |
+| Monitoring | CPU/GPU/ANE/RAM/power/thermal dashboard with adaptive ETA and per-step timing history |
+| Edge compute | Android Kotlin worker app with HTTP processing and UDP discovery on trusted LANs |
 
-### 🔇 Noise Removal
-| Feature | Technology | Description |
-|---------|-----------|-------------|
-| **AI Noise Removal** | DeepFilterNet v3 + noisereduce | Background noise removal with wet/dry mixing and temporal smoothing. Zero metallic artifacts. |
-| **Wind Noise Remover** | Butterworth + Spectral Gating | Tuned for outdoor recordings. Gentle blend preserves voice warmth. |
-| **Buzzing Remover** | Notch Filter | Targets 50/60Hz electrical hum and harmonics. Auto-detects mains frequency. |
-| **Static Noise Remover** | Spectral Gating | Stationary noise with frequency/temporal smoothing. Capped at 85% with wet/dry mix. |
-| **Reverb & Echo Remover** | Spectral Subtraction | Harmonic-preserving floor removes room ambience without destroying voice texture. |
-
-### 💬 Speech Cleanup
-| Feature | Technology | Description |
-|---------|-----------|-------------|
-| **Filler Word Removal** | Whisper Large-v3 | Removes "uhm", "eh", "cioè", "basically" — 20+ fillers in English & Italian. |
-| **Hesitation Eliminator** | Whisper Large-v3 | Detects false starts, mid-sentence pauses. Surgical removal preserving flow. |
-| **Stuttering Removal** | Whisper Large-v3 | Finds repeated syllables/fragments. Keeps only the final complete utterance. |
-| **Breath Reduction** | DSP | v2.0: Caps at 80% attenuation with 30ms crossfades. Natural, no "holes". |
-| **Mouth Sound Removal** | Spectral Flux Analysis | Detects clicks and lip smacks. Local-average interpolation for smooth repair. |
-
-### 🎙️ Audio Enhancement
-| Feature | Technology | Description |
-|---------|-----------|-------------|
-| **Studio Sound v2.0** | Pedalboard (Spotify) | Broadcast-quality chain: warmth (150Hz), presence (4kHz), de-esser (6kHz), gentle 2:1 compression. |
-| **Auto EQ** | Pedalboard | Broadcast, warm, and natural profiles with intelligent frequency shaping. |
-| **Loudness Normalization** | pyloudnorm | Target LUFS normalization for podcast and broadcast standards. |
-| **Audio Super-Resolution** | DSP | Upsamples to 48kHz with subtle harmonic enhancement. |
-| **Music Preservation** | Demucs (Meta) | Source separation keeps background music while processing speech. |
-
-### 🧠 AI Intelligence
-| Feature | Technology | Description |
-|---------|-----------|-------------|
-| **Smart Mode** | Gemma 4 E2B (Ollama) | Auto-classifies content (podcast, interview, voice memo, music, outdoor) and selects optimal preset. |
-| **Dynamic Parameter Tuning** | Gemma 4 E2B | Analyzes audio SNR/spectrum and tunes every filter's strength individually. Clean audio → lighter processing. |
-| **AI Transcription** | Whisper Large-v3 | Word-level transcription with timestamps. Export to TXT, SRT, VTT, JSON. 99+ languages. |
-| **Editing Suggestions** | Gemma 4 E2B | AI recommends specific editing improvements based on content analysis. |
-
-### 🌐 Edge Computing & Monitoring
-| Feature | Technology | Description |
-|---------|-----------|-------------|
-| **Distributed Processing** | FastAPI Workers | Turn Android smartphones into compute nodes via Termux. DSP filters run in parallel. |
-| **Auto-Discovery** | UDP Broadcast | Workers announce themselves on the network. Zero configuration. |
-| **System Monitor** | psutil + macmon | Real-time CPU, GPU, ANE, RAM, Power, Temperature. 60-second sparkline history. |
-| **ETA Engine** | Per-filter Benchmarks | 16 individual filter benchmarks calibrated for M3 MAX. Live progress with per-step timing. |
-
----
-
-## 📋 Use Cases
-
-### 🎙️ Podcast Production
-> Upload raw recording → Smart Mode detects "podcast" → Gemma 4 tunes parameters for clean indoor recording → Auto-remove fillers, normalize loudness, apply broadcast EQ → Export production-ready episode.
-
-### 🎤 Interview Cleanup
-> Multi-speaker recording → Remove background noise, breaths, hesitations → Preserve natural conversation flow → Normalize per-speaker volume → Export with chapter markers.
-
-### 🏞️ Outdoor Recording Rescue
-> Noisy outdoor recording → Wind noise remover + static remover + AI noise reduction → Reverb removal → Studio sound polish → Transform unusable audio into clean voiceover.
-
-### 🎮 Sound Design
-> Game dialogue → Remove room ambience → Super-resolution upsampling → Normalize → Export multi-format (WAV, FLAC, MP3) for game engine integration.
-
-### ⚡ Batch Processing with Edge Computing
-> 10 podcast episodes → Connect Android phones as workers → Distributed processing across Mac + S24 Ultra + Xiaomi 17 Ultra → 3x faster batch completion.
-
----
-
-## 📦 Download & Installation
+## Quick Start
 
 ### Requirements
-- **Python** 3.10+
-- **macOS** 14+ (Apple Silicon recommended) / Linux / Windows
-- **FFmpeg** (for audio format conversion)
-- **Ollama** + Gemma 4 model (optional, for AI features)
 
-### Quick Start
+- Python 3.10+
+- FFmpeg
+- macOS Apple Silicon recommended, with Linux/Windows support for core local processing
+- Ollama + Gemma model optional for Smart Mode and expressive rewrite
+- Android Studio/JDK 17 or 21 optional for building the Android worker
+
+### Install
 
 ```bash
-# Clone the repository
-git clone https://github.com/sev7en2507/AudioEnhancerMAX.git
+git clone https://github.com/sev7enITA/AudioEnhancerMAX.git
 cd AudioEnhancerMAX
 
-# Install dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
-
-# Install FFmpeg (macOS)
-brew install ffmpeg
-
-# (Optional) Install Ollama + Gemma 4 for AI features
-# See: https://ollama.com
-ollama pull gemma4:e2b
-
-# Launch
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Open **http://localhost:8000** in your browser.
+### Run Locally
 
-### Edge Workers (Android)
 ```bash
-# On your Android phone in Termux:
-bash setup_worker.sh
-./start_worker.sh
-```
-See [Edge Computing Setup Guide](docs/edge-computing.md) for details.
-
----
-
-## 🎵 Supported Formats
-
-### Input
-| Format | Extensions |
-|--------|-----------|
-| Uncompressed | `.wav`, `.aiff` |
-| Lossless | `.flac` |
-| Lossy | `.mp3`, `.aac`, `.ogg`, `.m4a`, `.wma` |
-| Video (audio extraction) | `.mp4` |
-
-### Output
-| Format | Quality |
-|--------|---------|
-| WAV | 32-bit float, up to 96kHz |
-| FLAC | Lossless compression |
-| MP3 | VBR, up to 320kbps |
-
-### Internal Processing
-- **32-bit float** throughout the pipeline
-- **Non-destructive**: original file is never modified
-- **Sample rates**: 16kHz to 96kHz, with super-resolution upsampling
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                   AudioEnhancerMAX — System Architecture           │
-├────────────────────────┬────────────────────────────────────────────┤
-│  🖥️  M3 MAX (Master)   │  📱 Edge Workers (Android via Termux)     │
-│                        │                                            │
-│  ┌────────────────┐    │  ┌─────────────┐  ┌────────────────────┐  │
-│  │ FastAPI Backend │    │  │ S24 Ultra    │  │ Xiaomi 17 Ultra    │  │
-│  │ ├─ Whisper      │◄──┼─►│ noisereduce  │  │ noisereduce        │  │
-│  │ ├─ Demucs       │    │  │ pedalboard   │  │ pedalboard         │  │
-│  │ ├─ Gemma 4      │    │  │ scipy/DSP    │  │ scipy/DSP          │  │
-│  │ └─ Cluster Mgr  │    │  └─────────────┘  └────────────────────┘  │
-│  └────────────────┘    │        Wi-Fi LAN / HTTP + UDP Discovery    │
-│  ┌────────────────┐    │                                            │
-│  │ System Monitor  │    │                                            │
-│  │ CPU·GPU·ANE·RAM │    │                                            │
-│  └────────────────┘    │                                            │
-├────────────────────────┴────────────────────────────────────────────┤
-│  🌐 Frontend — Glassmorphism Dark UI                                │
-│  ├─ Processing Dashboard · ETA Engine · Smart Presets               │
-│  ├─ System Monitor Panel · Cluster Management                       │
-│  └─ Waveform Viewer · Transcription · TTS                          │
-└─────────────────────────────────────────────────────────────────────┘
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### Tech Stack
-| Layer | Technology |
-|-------|-----------|
-| **Backend** | FastAPI, Python 3.10+ |
-| **AI Models** | Whisper Large-v3, Gemma 4 E2B (Ollama), Demucs |
-| **DSP** | Pedalboard (Spotify), noisereduce, librosa, scipy |
-| **Frontend** | Vanilla JS, CSS (glassmorphism dark theme) |
-| **Monitoring** | psutil, macmon (Apple Silicon GPU/ANE) |
-| **Edge Computing** | FastAPI workers, UDP auto-discovery |
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
----
+For LAN testing, bind explicitly and restrict browser origins:
 
-## 🆚 Comparison
+```bash
+export AEMAX_CORS_ORIGINS="http://192.168.1.20:8000,http://localhost:8000"
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
 
-| Feature | AudioEnhancerMAX | Adobe Podcast | Descript | Auphonic | iZotope RX 11 |
-|---------|:---:|:---:|:---:|:---:|:---:|
-| **Price** | **Free / OSS** | $9.99/mo | $24/mo | $11-99/mo | $399-$1,349 |
-| **100% Local** | ✅ | ❌ Cloud | ❌ Cloud | ❌ Cloud | ✅ |
-| **AI Noise Removal** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Filler Word Removal** | ✅ | ❌ | ✅ | ❌ | ❌ |
-| **AI Content Classification** | ✅ Gemma 4 | ❌ | ❌ | ◐ | ❌ |
-| **Dynamic Parameter Tuning** | ✅ Gemma 4 | ❌ | ❌ | ◐ | ◐ |
-| **Edge Computing Cluster** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **System Monitor (GPU/ANE)** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Audio Super-Resolution** | ✅ 96kHz | ❌ | ❌ | ❌ | ◐ |
-| **Processing Limit** | **∞ Unlimited** | 1-4 hrs/day | 10-30 hrs/mo | 2-100 hrs/mo | ∞ |
-| **Privacy** | ✅ Always | ❌ | ❌ | ❌ | ✅ |
-| **Open Source** | ✅ MIT | ❌ | ❌ | ❌ | ❌ |
+## Optional AI Setup
 
----
+```bash
+brew install ffmpeg
+brew install ollama
+ollama pull gemma4:e2b
+```
 
-## 📚 Documentation
+`gemma4:e2b` is the preferred model name when available; the app also auto-detects other local Gemma-family models exposed by Ollama. If Gemma is not available, Smart Mode falls back to deterministic heuristics and the core DSP pipeline still works.
+
+## Android Edge Worker
+
+The native Android worker lives in [android-worker](android-worker/). It exposes a small HTTP service on port `8877` and advertises itself to the master over UDP on trusted local networks.
+
+```bash
+cd android-worker
+export JAVA_HOME="/path/to/jdk17-or-jdk21"
+./gradlew assembleDebug
+```
+
+Prebuilt debug APKs are stored in [releases](releases/).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser["Browser UI"] --> API["FastAPI backend"]
+    API --> DSP["DSP pipeline"]
+    API --> STT["Whisper transcription"]
+    API --> TTS["Edge/Kokoro TTS"]
+    API --> Monitor["System monitor"]
+    API --> Cluster["Cluster manager"]
+    Cluster --> Android["Android edge workers"]
+    DSP --> Output["Processed WAV/MP3/FLAC"]
+    STT --> Transcript["TXT/SRT/VTT/JSON"]
+```
+
+## Transparency and AI Governance
+
+AudioEnhancerMAX should be evaluated as a **local-first, AI-assisted tool**, not as a black-box autonomous audio editor. Processing choices remain visible in the UI, source audio is preserved, and optional external services are documented.
+
+| Component | Data Flow | Governance Note |
+| --- | --- | --- |
+| Uploads and processed audio | Stored locally under `app/uploads/` and `app/outputs/` | Original files are not modified by the pipeline. |
+| DSP filters | Run locally in Python, or on explicitly trusted LAN workers | Output quality depends on source material and selected settings. |
+| Faster-Whisper transcription | Runs locally when dependencies and models are installed | Transcript accuracy must be reviewed for high-stakes use. |
+| Ollama/Gemma smart mode | Runs locally through Ollama when configured | Suggestions and dynamic tuning are assistive; they should not be treated as authoritative labels. |
+| Kokoro TTS | Runs locally when installed | Local model availability depends on installed packages and voice assets. |
+| Edge Neural TTS | Optional external service | Text is sent to Microsoft Edge TTS when this engine is selected. |
+| Android edge workers | Audio chunks are sent over trusted LAN | Use only with devices you control and networks you trust. |
+| SourceForge badge | Browser loads SourceForge badge script on public pages | This is presentation metadata, not part of the audio pipeline. |
+
+For governance-sensitive workflows, keep the original audio, record the selected preset/options, review AI-generated transcripts, and document any external engine used for TTS or distribution.
+
+## Security Posture
+
+AudioEnhancerMAX is local-first software. By default, the server is documented for `127.0.0.1`, CORS is restricted to local origins, and user-controlled file IDs, download formats, versions, and preset IDs are validated before touching local storage.
+
+Do not expose the FastAPI server directly to the public internet without adding authentication, rate limiting, storage quotas, and a reverse proxy policy.
+
+## Documentation
 
 - [Getting Started](docs/getting-started.md)
 - [Feature Guide](docs/features.md)
-- [Edge Computing Setup](docs/edge-computing.md)
 - [API Reference](docs/api.md)
+- [Edge Computing Setup](docs/edge-computing.md)
+- [Developer Onboarding](docs/developer-onboarding.md)
+- [AI Governance Notes](docs/ai-governance.md)
 - [Troubleshooting / FAQ](docs/faq.md)
-- [Changelog](CHANGELOG.md)
+- [Translation Notes](docs/translation.md)
 
----
+## Development Checks
 
-## 🤝 Contributing
+```bash
+source venv/bin/activate
+python -m compileall -q app
+pip install -r requirements-dev.txt
+ruff check app
+bandit -r app
+```
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## Project Links
 
-- 🐛 [Report a Bug](https://github.com/sev7en2507/AudioEnhancerMAX/issues/new?template=bug_report.md)
-- 💡 [Request a Feature](https://github.com/sev7en2507/AudioEnhancerMAX/issues/new?template=feature_request.md)
-- 🌍 [Help Translate](docs/translation.md)
+- GitHub: [sev7enITA/AudioEnhancerMAX](https://github.com/sev7enITA/AudioEnhancerMAX)
+- Official website: [fabriziodegni.com/AudioEnhancerMAX](https://fabriziodegni.com/AudioEnhancerMAX/)
+- SourceForge: [sourceforge.net/projects/audioenhancermax](https://sourceforge.net/projects/audioenhancermax/)
 
----
-
-## 📜 License
+## License
 
 AudioEnhancerMAX is released under the [MIT License](LICENSE).
 
 ---
 
-## 🙏 Acknowledgments
-
-Built with these amazing open-source projects:
-- [FastAPI](https://fastapi.tiangolo.com) — Backend framework
-- [Whisper](https://github.com/openai/whisper) — Speech recognition
-- [Pedalboard](https://github.com/spotify/pedalboard) — Audio effects (Spotify)
-- [Demucs](https://github.com/facebookresearch/demucs) — Source separation (Meta)
-- [noisereduce](https://github.com/timsainb/noisereduce) — Spectral noise reduction
-- [Gemma](https://ai.google.dev/gemma) — AI intelligence (Google)
-- [macmon](https://github.com/vladkens/macmon) — Apple Silicon monitoring
-
----
-
 <div align="center">
 
-**AudioEnhancerMAX** by **Fd** · [Landing Page](/frontend/landing.html) · Optimized for Apple Silicon M3 MAX
-
-*The audio media center for the AI era.*
+**AudioEnhancerMAX by Fd**<br>
+The local-first audio media center for the AI era.
 
 </div>

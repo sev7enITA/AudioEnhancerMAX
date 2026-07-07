@@ -6,7 +6,7 @@ Thank you for considering contributing to AudioEnhancerMAX! 🎙️
 
 ### 🐛 Reporting Bugs
 
-1. Check existing [Issues](https://github.com/sev7en2507/AudioEnhancerMAX/issues) to avoid duplicates.
+1. Check existing [Issues](https://github.com/sev7enITA/AudioEnhancerMAX/issues) to avoid duplicates.
 2. Open a new issue using the **Bug Report** template.
 3. Include: OS, Python version, steps to reproduce, expected vs actual behavior, audio sample if possible.
 
@@ -59,12 +59,12 @@ AudioEnhancerMAX supports English and Italian. To add a new language:
 
 ```bash
 # Clone and setup
-git clone https://github.com/sev7en2507/AudioEnhancerMAX.git
+git clone https://github.com/sev7enITA/AudioEnhancerMAX.git
 cd AudioEnhancerMAX
 pip install -r requirements.txt
 
 # Run with auto-reload
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 # (Optional) Install Gemma 4 for AI features
 ollama pull gemma4:e2b
@@ -99,7 +99,8 @@ AudioEnhancerMAX/
 │   ├── css/style.css         # Glassmorphism dark theme
 │   └── js/app.js             # Frontend logic
 ├── docs/                     # Documentation
-├── setup_worker.sh           # Termux setup for Android workers
+├── android-worker/           # Native Android edge worker
+├── setup_worker.sh           # Legacy Termux setup for lightweight workers
 ├── requirements.txt
 ├── LICENSE
 └── README.md

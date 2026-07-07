@@ -24,13 +24,13 @@ Questa app trasforma il tuo smartphone Android in un **nodo di calcolo** per la 
 ### Da Sorgente
 
 Requisiti:
-- JDK 17
+- JDK 17 oppure JDK 21. Evita JDK 25: la toolchain Kotlin/Gradle corrente non lo interpreta correttamente.
 - Android SDK (API 35)
 - Android Build Tools 36.1.0
 
 ```bash
 cd android-worker
-export JAVA_HOME="/path/to/jdk17"
+export JAVA_HOME="/path/to/jdk17-or-jdk21"
 export ANDROID_HOME="/path/to/android-sdk"
 ./gradlew assembleDebug
 ```

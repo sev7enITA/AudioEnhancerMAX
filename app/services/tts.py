@@ -5,7 +5,7 @@ Engines:
   2. Kokoro TTS — Local 82M-param model, very expressive (English)
 
 Expressive Mode:
-  Uses Gemma 4 E2B (local Ollama) to rewrite text in natural spoken style
+  Uses a local Ollama LLM, preferably a Gemma-family model, to rewrite text in natural spoken style
   before passing it to the TTS engine. Adds pauses, filler words, emphasis,
   and conversational rhythm for human-like delivery.
 """
@@ -298,7 +298,8 @@ async def _synthesize_edge_async(text: str, voice: str, rate: str, pitch: str, o
 
 def _synthesize_edge(text: str, voice: str, rate: str, pitch: str) -> tuple:
     """Synchronous wrapper for edge-tts."""
-    temp_path = tempfile.mktemp(suffix=".mp3")
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+        temp_path = tmp.name
     try:
         loop = asyncio.new_event_loop()
         try:

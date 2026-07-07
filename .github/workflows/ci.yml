@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  repository-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile application sources
+        run: python -m compileall -q app
+
+      - name: Verify tracked Pydantic schemas
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pydantic==2.10.4
+          python - <<'PY'
+          from app.models.schemas import ProcessingOptions, TranscriptionRequest
+
+          opts = ProcessingOptions()
+          req = TranscriptionRequest(file_id="clean-id_123")
+          assert opts.output_format.value == "wav"
+          assert req.file_id == "clean-id_123"
+          PY
+
+      - name: Verify public presentation links
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          for html_path in [Path("web/index.html"), Path("frontend/landing.html")]:
+              html = html_path.read_text(encoding="utf-8")
+              assert "sev7enITA/AudioEnhancerMAX" in html, html_path
+              assert "sourceforge.net/projects/audioenhancermax" in html, html_path
+              assert "oss-rising-star-white" in html, html_path
+              assert "sev7en2507" not in html, html_path
+              for banned in ["100% local", "zero cloud", "No limits", "never leaves"]:
+                  assert banned not in html, (html_path, banned)
+
+          readme = Path("README.md").read_text(encoding="utf-8")
+          assert "Transparency and AI Governance" in readme
+          assert "docs/ai-governance.md" in readme
+          for banned in ["100% local", "zero cloud", "No limits", "never leaves"]:
+              assert banned not in readme, banned
+          PY

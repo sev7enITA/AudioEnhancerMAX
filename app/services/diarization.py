@@ -15,6 +15,11 @@ logger = logging.getLogger(__name__)
 _diarization_pipeline = None
 
 
+def _temporary_wav_path() -> Path:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        return Path(tmp.name)
+
+
 def _init_diarization():
     """Initialize speaker diarization pipeline."""
     global _diarization_pipeline
@@ -77,7 +82,7 @@ def _diarize_pyannote(
     max_speakers: int,
 ) -> List[dict]:
     """Diarize using pyannote.audio."""
-    temp_path = Path(tempfile.mktemp(suffix=".wav"))
+    temp_path = _temporary_wav_path()
     sf.write(str(temp_path), audio, sr)
 
     try:

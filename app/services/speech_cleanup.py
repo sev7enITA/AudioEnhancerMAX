@@ -54,7 +54,8 @@ def _get_word_timestamps(
         import soundfile as sf
         from pathlib import Path
 
-        temp_path = Path(tempfile.mktemp(suffix=".wav"))
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            temp_path = Path(tmp.name)
         sf.write(str(temp_path), audio, sr)
 
         words = []
@@ -95,12 +96,14 @@ def _get_word_timestamps(
                         "probability": word_info.get("probability", 0),
                     })
 
-        temp_path.unlink(missing_ok=True)
         return words
 
     except Exception as e:
         logger.error(f"Word timestamp extraction failed: {e}")
         return []
+    finally:
+        if "temp_path" in locals():
+            temp_path.unlink(missing_ok=True)
 
 
 # ── Filler Word Removal ──────────────────────────────────

@@ -1,6 +1,7 @@
 """
-AudioEnhancerMAX by Fd — Smart Mode Service (Gemma 4 E2B via Ollama)
-Uses Gemma 4 for intelligent content classification and advanced editing suggestions.
+AudioEnhancerMAX by Fd — Smart Mode Service via local Ollama/Gemma.
+Uses a locally available Gemma-family model for assistive content classification
+and editing suggestions, with deterministic heuristics as fallback.
 """
 import numpy as np
 import json
@@ -25,7 +26,7 @@ OLLAMA_PREFERRED_MODELS = ["gemma4:e2b", "gemma4:e4b", "gemma4:latest", "gemma3:
 
 def _query_gemma(prompt: str, audio_path: Optional[str] = None) -> Optional[str]:
     """
-    Query Gemma 4 E2B via Ollama Chat API.
+    Query the selected local Gemma-family model via Ollama Chat API.
     Uses /api/chat for chat-tuned models.
     """
     import urllib.request
@@ -70,13 +71,13 @@ def _query_gemma(prompt: str, audio_path: Optional[str] = None) -> Optional[str]
         with urllib.request.urlopen(req, timeout=120) as resp:
             result = json.loads(resp.read().decode("utf-8"))
             content = result.get("message", {}).get("content", "")
-            logger.info(f"Gemma 4 response ({len(content)} chars): {content[:100]}...")
+            logger.info(f"Ollama/Gemma response ({OLLAMA_MODEL}, {len(content)} chars): {content[:100]}...")
             return content
     except urllib.error.URLError as e:
         logger.warning(f"Ollama not reachable: {e}. Falling back to heuristics.")
         return None
     except Exception as e:
-        logger.warning(f"Gemma 4 query failed: {e}. Falling back to heuristics.")
+        logger.warning(f"Ollama/Gemma query failed: {e}. Falling back to heuristics.")
         return None
 
 
@@ -113,9 +114,9 @@ def detect_content_type(
     sr: int,
 ) -> dict:
     """
-    Detect content type using Gemma 4 E2B (primary) with spectral heuristics (fallback).
+    Detect content type using local Ollama/Gemma first, with spectral heuristics fallback.
     """
-    # Try Gemma 4 first
+    # Try local Gemma first
     gemma_result = _detect_with_gemma(audio, sr)
     if gemma_result:
         return gemma_result
@@ -126,13 +127,13 @@ def detect_content_type(
 
 
 def _detect_with_gemma(audio: np.ndarray, sr: int) -> Optional[dict]:
-    """Use Gemma 4 E2B for intelligent content classification via spectral feature analysis."""
+    """Use local Ollama/Gemma for content classification via spectral feature analysis."""
     if not _check_ollama_available():
         return None
 
     import librosa
 
-    # Extract audio features for Gemma analysis
+    # Extract audio features for local model analysis
     duration = len(audio) / sr
     preview = audio[:int(min(30, duration) * sr)]
 
@@ -205,9 +206,9 @@ Respond ONLY with a valid JSON object:
                 "speakers": data.get("speakers", 1),
                 "noise_level": data.get("noise_level", "medium"),
                 "ai_suggestions": data.get("suggestions", []),
-                "engine": "gemma4-e2b",
+                "engine": OLLAMA_MODEL or "ollama-gemma",
             }
-            logger.info(f"Gemma 4 classification: {content_type} ({result['confidence']:.0%})")
+            logger.info(f"Ollama/Gemma classification via {result['engine']}: {content_type} ({result['confidence']:.0%})")
             return result
         else:
             logger.warning(f"No JSON found in Gemma response: {response[:100]}")
@@ -309,7 +310,7 @@ def analyze_and_suggest(audio: np.ndarray, sr: int) -> dict:
 
 def get_editing_suggestions(audio: np.ndarray, sr: int, transcript: str = "") -> list:
     """
-    Use Gemma 4 to provide advanced editing suggestions based on content analysis.
+    Use local Ollama/Gemma to provide assistive editing suggestions based on content analysis.
     """
     if not _check_ollama_available():
         return []
@@ -342,7 +343,7 @@ def get_dynamic_parameters(
     enabled_filters: dict,
 ) -> dict:
     """
-    v2.0: Use Gemma 4 to dynamically tune processing parameters based on
+    v2.0: Use local Ollama/Gemma to dynamically tune processing parameters based on
     the specific audio characteristics. Instead of using static defaults,
     this analyzes the audio and returns optimized strength values per filter.
 
@@ -379,14 +380,14 @@ def get_dynamic_parameters(
     if not active_filters:
         return {}
 
-    # Try Gemma 4 for intelligent tuning
+    # Try local Gemma for intelligent tuning
     if _check_ollama_available():
         gemma_result = _get_gemma_tuning(
             active_filters, rms_db, snr_estimate,
             spectral_centroid, spectral_bandwidth, zcr, duration
         )
         if gemma_result:
-            logger.info(f"Gemma 4 dynamic tuning: {len(gemma_result)} filters adjusted")
+            logger.info(f"Ollama/Gemma dynamic tuning: {len(gemma_result)} filters adjusted")
             return gemma_result
 
     # Fallback: heuristic-based tuning
@@ -403,7 +404,7 @@ def _get_gemma_tuning(
     zcr: float,
     duration: float,
 ) -> Optional[dict]:
-    """Query Gemma 4 for per-filter parameter tuning."""
+    """Query local Ollama/Gemma for per-filter parameter tuning."""
 
     filters_str = ", ".join(active_filters)
 
@@ -448,7 +449,7 @@ Respond with JSON only:
                     strength = max(0.1, min(0.85, strength))
                     result[key] = {
                         "strength": strength,
-                        "reason": str(val.get("reason", "Gemma 4 tuned")),
+                        "reason": str(val.get("reason", f"Ollama/Gemma tuned via {OLLAMA_MODEL or 'local model'}")),
                     }
             return result
     except (json.JSONDecodeError, ValueError, TypeError) as e:

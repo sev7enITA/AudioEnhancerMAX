@@ -2,6 +2,27 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
+## [3.5.1] — 2026-07-07
+
+### Release Hardening
+- Fixed clean-clone packaging by allowing `app/models/` to be tracked again.
+- Added API input validation for file IDs, download formats, audio versions, batch IDs, and preset names.
+- Replaced unsafe `tempfile.mktemp()` usage with atomically created temporary files.
+- Restricted default CORS origins to local development URLs; LAN exposure now requires explicit `AEMAX_CORS_ORIGINS`.
+- Added `edge-tts` and `kokoro` to runtime dependencies to match the current TTS implementation.
+- Smart Mode now reports the detected Ollama/Gemma model instead of hard-coding a model name in responses.
+
+### Public Relaunch
+- Updated README, website, landing page, and contribution links for `sev7enITA/AudioEnhancerMAX`.
+- Added SourceForge Rising Star recognition to the public presentation.
+- Reframed public claims around local-first processing, explicit optional external services, and AI governance transparency.
+- Added real documentation pages for getting started, features, API, edge computing, onboarding, FAQ, and translation notes.
+- Synced the app-served landing page with the deployable `web/` site.
+
+### Android Worker
+- Aligned Android worker metadata with the existing v1.2.0 APK release.
+- Documented JDK 17/21 requirement and the known JDK 25 build incompatibility.
+
 ## [3.5.0] — 2026-04-27 🚀 MAJOR RELEASE
 
 ### ⚡ Non-Blocking Server Architecture
@@ -190,8 +211,8 @@ All notable changes to AudioEnhancerMAX are documented here.
 - **Speech Cleanup**: Breath removal capped at 80% with 30ms fades, improved mouth click detection
 - **Super-Resolution**: Subtler harmonic blending (alpha 0.15), faster rolloff
 
-### 🧠 AI — Gemma 4 Dynamic Tuning
-- NEW: `get_dynamic_parameters()` — Gemma 4 analyzes audio and tunes every filter's strength
+### 🧠 AI — Ollama/Gemma Dynamic Tuning
+- NEW: `get_dynamic_parameters()` — local Ollama/Gemma analyzes extracted audio features and tunes filter strength
 - Heuristic fallback with 3-tier quality classification (clean/moderate/noisy)
 - Safety caps: all strengths between 0.1 and 0.85
 
@@ -229,7 +250,7 @@ All notable changes to AudioEnhancerMAX are documented here.
 ### Initial Release
 - 16 audio processing filters
 - Whisper Large-v3 transcription
-- Gemma 4 Smart Mode (content classification)
+- Ollama/Gemma Smart Mode (content classification)
 - Glassmorphism dark UI
 - WebSocket real-time progress
 - Smart presets (Podcast, Interview, Voice Memo, Music, Outdoor)

@@ -1,0 +1,5 @@
+# AudioEnhancerMAX development and release checks
+
+ruff>=0.5.0
+bandit>=1.7.9
+pip-audit>=2.7.3

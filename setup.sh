@@ -114,11 +114,11 @@ echo "📝 Installing faster-whisper (Speech-to-Text)..."
 pip install --quiet faster-whisper==1.1.0
 echo "  ✓ faster-whisper installed"
 
-# ── Coqui TTS ──
+# ── Text-to-Speech engines ──
 echo ""
-echo "🗣️ Installing Coqui TTS (Text-to-Speech)..."
-pip install --quiet TTS==0.22.0 || {
-    echo "  ⚠ TTS install had issues. Some TTS features may be limited."
+echo "🗣️ Installing Text-to-Speech engines..."
+pip install --quiet edge-tts kokoro TTS==0.22.0 || {
+    echo "  ⚠ TTS install had issues. Edge/Kokoro/Coqui features may be limited."
 }
 
 # ── Demucs (Meta source separation) ──
@@ -171,9 +171,10 @@ echo ""
 echo "To start the application:"
 echo ""
 echo "  source venv/bin/activate"
-echo "  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+echo "  uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
 echo ""
 echo "Then open: http://localhost:8000"
+echo "For LAN access, use --host 0.0.0.0 only on a trusted network and set AEMAX_CORS_ORIGINS explicitly."
 echo ""
 echo "To start Ollama (for Smart Mode):"
 echo "  ollama serve"

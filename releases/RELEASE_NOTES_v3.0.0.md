@@ -48,7 +48,7 @@ The biggest release yet. Metal GPU acceleration, a native Android companion app,
 ## 🔧 Quick Start
 
 ```bash
-git clone https://github.com/sev7en2507/AudioEnhancerMAX.git
+git clone https://github.com/sev7enITA/AudioEnhancerMAX.git
 cd AudioEnhancerMAX
 pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
@@ -58,4 +58,4 @@ Open http://localhost:8000 · Landing page at http://localhost:8000/landing
 
 ---
 
-**Full Changelog**: https://github.com/sev7en2507/AudioEnhancerMAX/compare/v2.0.0...v3.0.0
+**Full Changelog**: https://github.com/sev7enITA/AudioEnhancerMAX/compare/v2.0.0...v3.0.0

@@ -33,6 +33,8 @@ pyloudnorm==0.1.1
 faster-whisper==1.1.0
 
 # Text-to-Speech
+edge-tts>=7.0.0
+kokoro>=0.9.0
 TTS==0.22.0
 
 # Speaker Diarization

@@ -4,6 +4,7 @@ Process multiple files with same settings, save/load custom presets.
 """
 import json
 import logging
+import re
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -16,11 +17,26 @@ logger = logging.getLogger(__name__)
 # Presets storage
 PRESETS_DIR = BASE_DIR / "presets"
 PRESETS_DIR.mkdir(parents=True, exist_ok=True)
+SAFE_PRESET_ID_RE = re.compile(r"^[a-z0-9_]{1,64}$")
 
 
 # ══════════════════════════════════════════════════════════
 # Processing Presets
 # ══════════════════════════════════════════════════════════
+
+def _slugify_preset_name(name: str) -> str:
+    """Convert a user-facing preset name into a safe local filename stem."""
+    slug = re.sub(r"[^a-z0-9]+", "_", name.strip().lower())
+    slug = re.sub(r"_+", "_", slug).strip("_")
+    if not SAFE_PRESET_ID_RE.fullmatch(slug):
+        raise ValueError("Preset name must contain at least one letter or number")
+    return slug
+
+
+def _preset_path(preset_id: str) -> Optional[Path]:
+    if not SAFE_PRESET_ID_RE.fullmatch(preset_id or ""):
+        return None
+    return PRESETS_DIR / f"{preset_id}.json"
 
 def save_preset(
     name: str,
@@ -28,7 +44,7 @@ def save_preset(
     description: str = "",
 ) -> dict:
     """Save a processing preset to disk."""
-    preset_id = name.lower().replace(" ", "_").replace("-", "_")
+    preset_id = _slugify_preset_name(name)
     preset_path = PRESETS_DIR / f"{preset_id}.json"
 
     preset_data = {
@@ -49,9 +65,9 @@ def save_preset(
 
 def load_preset(preset_id: str) -> Optional[dict]:
     """Load a processing preset from disk."""
-    preset_path = PRESETS_DIR / f"{preset_id}.json"
+    preset_path = _preset_path(preset_id)
 
-    if not preset_path.exists():
+    if not preset_path or not preset_path.exists():
         return None
 
     with open(preset_path) as f:
@@ -79,8 +95,8 @@ def list_presets() -> List[dict]:
 
 def delete_preset(preset_id: str) -> bool:
     """Delete a saved preset."""
-    preset_path = PRESETS_DIR / f"{preset_id}.json"
-    if preset_path.exists():
+    preset_path = _preset_path(preset_id)
+    if preset_path and preset_path.exists():
         preset_path.unlink()
         return True
     return False

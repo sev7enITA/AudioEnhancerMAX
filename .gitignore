@@ -23,7 +23,7 @@ app/uploads/
 app/outputs/
 
 ## Model cache
-models/
+/models/
 *.pt
 *.bin
 *.onnx

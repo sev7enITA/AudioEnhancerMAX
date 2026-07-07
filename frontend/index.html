@@ -20,7 +20,7 @@
     <div class="header-actions">
         <div class="header-status" id="gemma-status">
             <span class="status-dot" id="gemma-dot"></span>
-            <span id="gemma-label">Checking Gemma 4...</span>
+            <span id="gemma-label">Checking Ollama/Gemma...</span>
         </div>
         <div class="header-status" id="system-status">
             <span class="status-dot"></span>
@@ -61,7 +61,7 @@
         </div>
         <div class="sidebar-nav-item" data-panel="smart-panel" onclick="switchPanel('smart-panel', this)">
             <span class="icon">🧠</span> Smart Mode
-            <span class="badge">Gemma 4</span>
+            <span class="badge">Ollama/Gemma</span>
         </div>
     </div>
 
@@ -90,8 +90,13 @@
         </div>
     </div>
 
-    <div class="sidebar-version">
-        <span>v3.5</span> · <span id="sidebar-chip">M3 Max</span>
+    <div class="sidebar-badge" style="padding: 12px 16px 0 16px; display: flex; justify-content: center; border-top: 1px solid rgba(255,255,255,0.05); margin-top: auto;">
+        <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star" style="width:125px">
+            <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a>
+        </div>
+    </div>
+    <div class="sidebar-version" style="border-top: none; padding-top: 6px;">
+        <span>v3.5.1</span> · <span id="sidebar-chip">M3 Max</span>
     </div>
 </nav>
 
@@ -155,10 +160,10 @@
         <div class="smart-mode-banner" id="smart-mode-banner">
             <div class="smart-mode-icon">🧠</div>
             <div class="smart-mode-info">
-                <h3 id="smart-mode-type">Analyzing with Gemma 4...</h3>
+                <h3 id="smart-mode-type">Analyzing with Ollama/Gemma...</h3>
                 <p id="smart-mode-description">AI is detecting content type and suggesting optimal settings.</p>
             </div>
-            <span class="smart-mode-badge gemma" id="smart-engine-badge">Gemma 4 E2B</span>
+            <span class="smart-mode-badge gemma" id="smart-engine-badge">Local Ollama</span>
             <button class="btn btn-sm btn-primary" onclick="applySmartPreset()">Apply Suggestions</button>
         </div>
 
@@ -516,12 +521,12 @@
 
             <!-- Expressive Mode Toggle -->
             <div class="mt-12" style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:linear-gradient(135deg, rgba(168,85,247,0.08), rgba(79,70,229,0.08)); border:1px solid rgba(168,85,247,0.2); border-radius:var(--radius-md);">
-                <label class="toggle-switch" style="flex-shrink:0">
+                <label class="toggle" style="flex-shrink:0">
                     <input type="checkbox" id="tts-expressive" onchange="toggleExpressiveMode(this.checked)">
                     <span class="toggle-slider"></span>
                 </label>
                 <div style="flex:1">
-                    <div style="font-weight:600; font-size:0.85rem; color:var(--text-primary)">✨ Expressive Mode <span class="badge" style="font-size:0.65rem; background:rgba(168,85,247,0.2); color:var(--accent-primary); margin-left:6px">Gemma 4 AI</span></div>
+                    <div style="font-weight:600; font-size:0.85rem; color:var(--text-primary)">✨ Expressive Mode <span class="badge" style="font-size:0.65rem; background:rgba(168,85,247,0.2); color:var(--accent-primary); margin-left:6px">Ollama/Gemma</span></div>
                     <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px">Gemma rewrites your text with natural pauses, filler words, and conversational rhythm before synthesis</div>
                 </div>
                 <button class="btn btn-sm btn-secondary" id="btn-preview-rewrite" onclick="previewRewrite()" style="display:none; white-space:nowrap">👁️ Preview</button>
@@ -644,12 +649,12 @@
     <div class="panel" id="smart-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">🧠</span> Smart Mode — Gemma 4 E2B</h2>
+                <h2 class="card-title"><span class="icon">🧠</span> Smart Mode — Ollama/Gemma</h2>
             </div>
             <div class="requires-file-notice" id="smart-no-file">⚠️ Upload an audio file first from the "Upload & Process" panel</div>
-            <p class="text-sm text-muted mb-16">Gemma 4 E2B analyzes your audio content and suggests optimal processing settings. Runs locally via Ollama.</p>
+            <p class="text-sm text-muted mb-16">A local Gemma-family model, when available through Ollama, analyzes extracted audio features and suggests processing settings.</p>
             <button class="btn btn-primary w-full mb-16" id="btn-smart-analyze" onclick="runSmartMode()" disabled>
-                🧠 Analyze with Gemma 4
+                🧠 Analyze with Ollama/Gemma
             </button>
             <div id="smart-results" style="display:none">
                 <div class="card mt-16">
@@ -768,7 +773,7 @@
 <div class="panel" id="settings-panel">
     <div class="panel-header">
         <h2>⚙️ Settings</h2>
-        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.5</p>
+        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.5.1</p>
     </div>
     <div class="panel-body settings-grid">
         <div class="settings-group">
@@ -848,7 +853,7 @@
                 </select>
             </div>
             <div class="setting-item">
-                <label>Dynamic Tuning (Gemma 4)</label>
+                <label>Dynamic Tuning (Ollama/Gemma)</label>
                 <label class="setting-toggle">
                     <input type="checkbox" id="setting-dynamic-tuning" checked>
                     <span class="toggle-slider"></span>
@@ -862,15 +867,20 @@
 <div class="panel" id="about-panel">
     <div class="panel-header">
         <h2>ℹ️ About AudioEnhancerMAX</h2>
-        <p class="panel-subtitle">v3.5 — Streaming Transcription + Real-Time Monitoring Edition</p>
+        <p class="panel-subtitle">v3.5.1 — Streaming Transcription + Real-Time Monitoring Edition</p>
     </div>
     <div class="panel-body about-content">
         <div class="about-hero">
             <div class="about-logo">⚡</div>
-            <div>
-                <h3>AudioEnhancerMAX <span class="about-version">v3.5</span></h3>
+            <div style="flex: 1;">
+                <h3>AudioEnhancerMAX <span class="about-version">v3.5.1</span></h3>
                 <p>Professional AI-powered audio processing suite</p>
                 <p class="about-by">Created by <strong>Fd</strong> — Optimized for Apple Silicon</p>
+            </div>
+            <div class="about-badge-achievement" style="margin-left: auto; display: flex; align-items: center; justify-content: center; min-width: 125px;">
+                <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star" style="width:125px">
+                    <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a>
+                </div>
             </div>
         </div>
 
@@ -890,7 +900,7 @@
                 <div class="about-arch-item">
                     <span class="about-arch-icon">🧠</span>
                     <strong>AI Engine</strong>
-                    <span>Whisper + Gemma 4</span>
+                    <span>Whisper + Ollama/Gemma</span>
                 </div>
                 <div class="about-arch-item">
                     <span class="about-arch-icon">⬡</span>
@@ -911,7 +921,7 @@
         </div>
 
         <div class="about-section">
-            <h3>🆕 What's New in v3.5</h3>
+            <h3>🆕 What's New in v3.5.1</h3>
             <div class="about-changelog">
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
@@ -973,7 +983,7 @@
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag improved">IMPROVED</span>
-                    <span>Dynamic filter tuning via Gemma 4 E2B local inference</span>
+                    <span>Dynamic filter tuning via local Ollama/Gemma inference</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag improved">IMPROVED</span>
@@ -1004,8 +1014,8 @@
         <div class="about-section">
             <h3>🔄 Updates</h3>
             <p class="about-text">AudioEnhancerMAX is open source. To update:</p>
-            <code class="about-code">cd AudioEnhancer && git pull && pip install -r requirements.txt</code>
-            <p class="about-text" style="margin-top:8px">Check for new releases on <a href="https://github.com" target="_blank" style="color:var(--accent-primary)">GitHub</a></p>
+            <code class="about-code">cd AudioEnhancerMAX && git pull && pip install -r requirements.txt</code>
+            <p class="about-text" style="margin-top:8px">Check for new releases on <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" style="color:var(--accent-primary)">GitHub</a></p>
         </div>
 
         <div class="about-section">
@@ -1075,6 +1085,9 @@
 
 <!-- ─── Application Scripts ─── -->
 <script src="/static/js/app.js"></script>
+
+<!-- ─── SourceForge Achievement Badge ─── -->
+<script>(function () {var sc=document.createElement('script');sc.async=true;sc.src='https://b.sf-syn.com/badge_js?sf_id=4084832';var p=document.getElementsByTagName('script')[0];p.parentNode.insertBefore(sc, p);})();</script>
 
 </body>
 </html>

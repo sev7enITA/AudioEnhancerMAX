@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 _model = None
 
 
+def _temporary_wav_path() -> Path:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        return Path(tmp.name)
+
+
 def _init_model(model_size: str = "medium"):
     """Lazily initialize the Whisper model."""
     global _model
@@ -69,7 +74,7 @@ def transcribe(
         }
 
     # Save temp file for model input
-    temp_path = Path(tempfile.mktemp(suffix=".wav"))
+    temp_path = _temporary_wav_path()
     # Ensure mono float32 for whisper
     if audio.ndim > 1:
         audio = audio.mean(axis=1)
@@ -191,7 +196,7 @@ def transcribe_streaming(
         return
 
     # Save temp file for model input
-    temp_path = Path(tempfile.mktemp(suffix=".wav"))
+    temp_path = _temporary_wav_path()
     if audio.ndim > 1:
         audio = audio.mean(axis=1)
     sf.write(str(temp_path), audio.astype(np.float32), sr)
