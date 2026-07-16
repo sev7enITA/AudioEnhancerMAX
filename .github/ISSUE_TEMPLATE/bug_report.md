@@ -29,7 +29,7 @@ If applicable, attach a short audio sample that reproduces the issue.
 - **OS**: [e.g., macOS 15.3, Ubuntu 24.04]
 - **Python**: [e.g., 3.12]
 - **Hardware**: [e.g., M3 MAX 64GB, Intel i7]
-- **AudioEnhancerMAX version**: [e.g., 3.5.1]
+- **AudioEnhancerMAX version**: [e.g., 3.5.2]
 - **Ollama / Gemma**: [e.g., Gemma 4 E2B via Ollama 0.9]
 
 ## Additional Context

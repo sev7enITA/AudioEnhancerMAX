@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Wind noise">
+  <path d="M9 23h33c7 0 7-11 0-11-4 0-6 2-7 5" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+  <path d="M9 34h42c7 0 7 11 0 11-4 0-6-2-7-5" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round"/>
+  <path d="M9 45h25" stroke="#f0f0f5" stroke-width="5" stroke-linecap="round"/>
+</svg>

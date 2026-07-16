@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Main FastAPI Application
+AudioEnhancerMAX by Fd - Main FastAPI Application
 Full-featured audio processing dashboard backend.
 Optimized for Apple Silicon M3 MAX.
 """
@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 from app.config import (
     UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
-    ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB
+    ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB, ROADMAP_VOTES_FILE
 )
 from app.models.schemas import (
     ProcessingOptions, ProcessingRequest,
@@ -38,7 +38,7 @@ from app.utils.progress import progress_tracker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "3.5.1"
+APP_VERSION = "3.5.2"
 SAFE_FILE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 STREAMABLE_AUDIO_VERSIONS = {"original", "processed"}
 DOWNLOAD_AUDIO_VERSIONS = {"original", "processed", "watermarked", "tts"}
@@ -77,7 +77,7 @@ CORS_ORIGINS = _cors_origins_from_env()
 
 app = FastAPI(
     title="AudioEnhancerMAX by Fd",
-    description="Professional podcast audio processing suite — Apple Silicon Metal GPU + Edge Cluster computing",
+    description="Professional podcast audio processing suite - Apple Silicon Metal GPU + Edge Cluster computing",
     version=APP_VERSION,
 )
 
@@ -114,7 +114,7 @@ class DiarizationRequest(BaseModel):
 
 
 # ══════════════════════════════════════════════════════════
-# Lifecycle — Start/Stop services
+# Lifecycle - Start/Stop services
 # ══════════════════════════════════════════════════════════
 
 @app.on_event("startup")
@@ -129,8 +129,8 @@ async def startup_services():
     from app.services.timing_engine import timing_engine
     system_monitor.start()
     cluster_manager.start()
-    logger.info("🚀 System monitor + Cluster manager started")
-    logger.info(f"⏱️ Timing engine ready (history: {len(timing_engine._history.get('filter_timings', {}))} filters tracked)")
+    logger.info(" System monitor + Cluster manager started")
+    logger.info(f" Timing engine ready (history: {len(timing_engine._history.get('filter_timings', {}))} filters tracked)")
 
     # Run DSP benchmark in background (doesn't block startup)
     import threading
@@ -150,7 +150,7 @@ async def shutdown_services():
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — System Monitor
+# Routes - System Monitor
 # ══════════════════════════════════════════════════════════
 
 @app.get("/api/system/stats")
@@ -168,7 +168,7 @@ async def get_system_history():
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Cluster Management
+# Routes - Cluster Management
 # ══════════════════════════════════════════════════════════
 
 @app.get("/api/cluster/status")
@@ -206,7 +206,7 @@ async def cluster_health_check():
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Frontend
+# Routes - Frontend
 # ══════════════════════════════════════════════════════════
 
 @app.get("/", response_class=HTMLResponse)
@@ -218,6 +218,18 @@ async def serve_frontend():
 async def serve_landing():
     """Bilingual landing page presenting AudioEnhancerMAX."""
     return FileResponse(str(FRONTEND_DIR / "landing.html"))
+
+
+@app.get("/roadmap", response_class=HTMLResponse)
+async def serve_roadmap():
+    """Public roadmap page for upcoming AudioEnhancerMAX releases."""
+    return FileResponse(str(FRONTEND_DIR / "roadmap.html"))
+
+
+@app.get("/roadmap.html", response_class=HTMLResponse)
+async def serve_roadmap_html():
+    """Static-compatible roadmap route."""
+    return FileResponse(str(FRONTEND_DIR / "roadmap.html"))
 
 
 # ══════════════════════════════════════════════════════════
@@ -253,7 +265,7 @@ GROUP_LOAD_COSTS = {
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Estimation (Adaptive Timing Engine)
+# Routes - Estimation (Adaptive Timing Engine)
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/estimate")
@@ -310,7 +322,7 @@ async def get_estimate_history():
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Upload
+# Routes - Upload
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/upload")
@@ -376,7 +388,7 @@ async def get_audio(file_id: str, version: str = "original"):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Processing
+# Routes - Processing
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/process")
@@ -416,10 +428,10 @@ async def process_audio(request: ProcessingRequest):
                 last_audio_path = checkpoint_dir / f"{resume_step}.wav"
                 if last_audio_path.exists() and completed_steps_set:
                     audio, sr = load_audio(last_audio_path)
-                    logger.info(f"♻️ Resuming job {file_id}: {len(completed_steps_set)} steps already done, loading from checkpoint '{resume_step}'")
+                    logger.info(f" Resuming job {file_id}: {len(completed_steps_set)} steps already done, loading from checkpoint '{resume_step}'")
                     await progress_tracker.send_progress(
                         file_id, "resume", 0.05,
-                        f"♻️ Ripresa dal checkpoint: {len(completed_steps_set)} step già completati"
+                        f" Ripresa dal checkpoint: {len(completed_steps_set)} step già completati"
                     )
                 else:
                     audio, sr = load_audio(source_path)
@@ -451,7 +463,7 @@ async def process_audio(request: ProcessingRequest):
         estimates = timing_engine.start_job(job_id, audio_duration_sec, active_steps)
         await progress_tracker.send_estimate(file_id, estimates)
         logger.info(
-            f"⏱️ Estimate for {file_id}: ~{estimates['total_seconds']}s "
+            f" Estimate for {file_id}: ~{estimates['total_seconds']}s "
             f"({estimates['confidence']} confidence, {estimates['source']})"
         )
 
@@ -469,7 +481,7 @@ async def process_audio(request: ProcessingRequest):
                     options.mouth_sound_sensitivity = dynamic_params["remove_mouth_sounds"]["strength"]
                 await progress_tracker.send_progress(
                     file_id, "tuning", 0.08,
-                    f"🧠 Dynamic tuning: {len(dynamic_params)} filters optimized for this audio"
+                    f" Dynamic tuning: {len(dynamic_params)} filters optimized for this audio"
                 )
         except Exception as e:
             logger.warning(f"Dynamic tuning skipped: {e}")
@@ -482,7 +494,7 @@ async def process_audio(request: ProcessingRequest):
                 n_workers = len(cluster_manager.online_workers)
                 await progress_tracker.send_progress(
                     file_id, "cluster", 0.08,
-                    f"🌐 Distributing DSP to {n_workers} edge worker(s)..."
+                    f" Distributing DSP to {n_workers} edge worker(s)..."
                 )
                 from app.services.cluster_manager import OFFLOADABLE_FILTERS
                 offload_opts = {k: True for k in OFFLOADABLE_FILTERS if opts_dict.get(k)}
@@ -492,10 +504,10 @@ async def process_audio(request: ProcessingRequest):
                         progress_callback=lambda name, pct, msg: progress_tracker.send_progress(file_id, name, pct, msg)
                     )
                     distributed_filters = set(offload_opts.keys())
-                    logger.info(f"🌐 Distributed processing done for: {distributed_filters}")
+                    logger.info(f" Distributed processing done for: {distributed_filters}")
                     await progress_tracker.send_progress(
                         file_id, "cluster_done", 0.35,
-                        f"🌐 Edge processing complete — {len(distributed_filters)} filters distributed"
+                        f" Edge processing complete - {len(distributed_filters)} filters distributed"
                     )
         except Exception as e:
             logger.warning(f"Distributed processing skipped: {e}")
@@ -523,7 +535,7 @@ async def process_audio(request: ProcessingRequest):
             # Skip if already done (checkpoint resume) or distributed
             if step_name in completed_steps_set:
                 current_step_idx[0] += 1
-                logger.info(f"⏩ Skipping '{step_name}' (checkpoint)")
+                logger.info(f" Skipping '{step_name}' (checkpoint)")
                 return
             if step_name in distributed_filters:
                 return
@@ -533,14 +545,14 @@ async def process_audio(request: ProcessingRequest):
 
             await progress_tracker.send_progress(
                 file_id, step_name, current_step_idx[0] / total_steps,
-                f"⏳ {msg}...",
+                f" {msg}...",
                 step_estimate_seconds=step_est,
                 steps_completed=current_step_idx[0],
                 steps_total=total_steps,
                 eta_confidence=estimates.get("confidence"),
             )
 
-            # Execute the actual processing — in thread to keep server responsive
+            # Execute the actual processing - in thread to keep server responsive
             result = await asyncio.to_thread(process_fn, audio, sr)
             if isinstance(result, tuple):
                 audio, sr = result
@@ -567,7 +579,7 @@ async def process_audio(request: ProcessingRequest):
 
             await progress_tracker.send_progress(
                 file_id, step_name, current_step_idx[0] / total_steps,
-                f"✓ {msg} ({elapsed:.1f}s)",
+                f"Completed: {msg} ({elapsed:.1f}s)",
                 estimated_remaining_seconds=remaining,
                 steps_completed=current_step_idx[0],
                 steps_total=total_steps,
@@ -674,7 +686,7 @@ async def process_audio(request: ProcessingRequest):
         import shutil
         if checkpoint_dir.exists():
             shutil.rmtree(checkpoint_dir, ignore_errors=True)
-            logger.info(f"🧹 Checkpoints cleaned for {file_id}")
+            logger.info(f" Checkpoints cleaned for {file_id}")
 
         await progress_tracker.send_complete(file_id, result_url)
 
@@ -701,7 +713,7 @@ async def process_audio(request: ProcessingRequest):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Smart Mode (local Ollama/Gemma)
+# Routes - Smart Mode (local Ollama/Gemma)
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/smart-mode/{file_id}")
@@ -741,12 +753,12 @@ async def get_editing_suggestions(file_id: str):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Transcription (STT)
+# Routes - Transcription (STT)
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/transcribe")
 async def transcribe_audio(request: TranscriptionRequest):
-    """Non-blocking transcription — runs in thread to keep server responsive."""
+    """Non-blocking transcription - runs in thread to keep server responsive."""
     file_id = _require_file_id(request.file_id)
     source_path = _find_source(file_id)
     if not source_path:
@@ -762,7 +774,7 @@ async def transcribe_audio(request: TranscriptionRequest):
 
 
 def _transcribe_sync(source_path, language, output_format):
-    """Synchronous transcription worker — runs in a separate thread."""
+    """Synchronous transcription worker - runs in a separate thread."""
     import time as _time
     from app.services.timing_engine import timing_engine
 
@@ -777,7 +789,7 @@ def _transcribe_sync(source_path, language, output_format):
     # Record timing for future estimates
     timing_engine.record_operation("transcribe", audio_duration, elapsed)
     timing_engine.mark_group_loaded("whisper")
-    logger.info(f"⏱️ Transcription took {elapsed:.1f}s for {audio_duration:.1f}s audio")
+    logger.info(f" Transcription took {elapsed:.1f}s for {audio_duration:.1f}s audio")
 
     formatters = {
         TranscriptFormat.SRT: lambda: format_as_srt(result["segments"]),
@@ -799,7 +811,7 @@ def _transcribe_sync(source_path, language, output_format):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Streaming Transcription (SSE)
+# Routes - Streaming Transcription (SSE)
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/transcribe/stream")
@@ -852,7 +864,7 @@ async def transcribe_audio_stream(request: TranscriptionRequest):
         worker.start()
 
         while True:
-            # Poll queue without blocking — allow other async tasks
+            # Poll queue without blocking - allow other async tasks
             try:
                 event = await asyncio.to_thread(result_queue.get, timeout=0.5)
             except Exception:
@@ -868,7 +880,7 @@ async def transcribe_audio_stream(request: TranscriptionRequest):
                 elapsed = _time.monotonic() - t0
                 timing_engine.record_operation("transcribe", audio_duration, elapsed)
                 timing_engine.mark_group_loaded("whisper")
-                logger.info(f"⏱️ Streaming transcription took {elapsed:.1f}s for {audio_duration:.1f}s audio")
+                logger.info(f" Streaming transcription took {elapsed:.1f}s for {audio_duration:.1f}s audio")
                 break
             elif event.get("type") == "error":
                 break
@@ -909,7 +921,7 @@ async def check_transcript_resume(file_id: str):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Text-to-Speech (TTS)
+# Routes - Text-to-Speech (TTS)
 # ══════════════════════════════════════════════════════════
 
 @app.get("/api/tts/voices")
@@ -928,7 +940,7 @@ async def synthesize(request: TTSRequest):
             clone_file_id = _require_file_id(request.clone_voice_file_id)
             clone_path = str(_find_source(clone_file_id) or "")
 
-        # Run TTS in thread — model loading + inference + Gemma rewrite can take 30+ seconds
+        # Run TTS in thread - model loading + inference + Gemma rewrite can take 30+ seconds
         audio, sr, metadata = await asyncio.to_thread(
             synthesize_speech,
             text=request.text, language=request.language,
@@ -940,7 +952,7 @@ async def synthesize(request: TTSRequest):
 
         # Check if we got actual audio
         if len(audio) < 100:
-            raise HTTPException(503, "TTS model not available — check server logs")
+            raise HTTPException(503, "TTS model not available - check server logs")
 
         file_id = generate_file_id()
         output_path = get_output_path(file_id, "_tts", ".wav")
@@ -978,12 +990,12 @@ async def rewrite_text(request: TTSRewriteRequest):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Speaker Diarization
+# Routes - Speaker Diarization
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/diarize")
 async def diarize_audio(request: DiarizationRequest):
-    """Non-blocking diarization — runs in thread to keep server responsive."""
+    """Non-blocking diarization - runs in thread to keep server responsive."""
     file_id = _require_file_id(request.file_id)
     source_path = _find_source(file_id)
     if not source_path:
@@ -1000,7 +1012,7 @@ async def diarize_audio(request: DiarizationRequest):
 
 
 def _diarize_sync(source_path, file_id, num_speakers, min_speakers, max_speakers):
-    """Synchronous diarization worker — runs in a separate thread."""
+    """Synchronous diarization worker - runs in a separate thread."""
     audio, sr = load_audio(source_path)
     from app.services.diarization import diarize, get_speaker_stats
 
@@ -1021,7 +1033,7 @@ def _diarize_sync(source_path, file_id, num_speakers, min_speakers, max_speakers
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Audio Watermarking
+# Routes - Audio Watermarking
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/watermark/{file_id}")
@@ -1065,7 +1077,7 @@ async def detect_watermark(file_id: str):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Presets
+# Routes - Presets
 # ══════════════════════════════════════════════════════════
 
 @app.get("/api/presets")
@@ -1108,7 +1120,7 @@ async def remove_preset(preset_id: str):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Batch Processing
+# Routes - Batch Processing
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/batch")
@@ -1164,7 +1176,7 @@ async def _process_batch(job_id: str, file_ids: List[str], options: ProcessingOp
 
 
 # ══════════════════════════════════════════════════════════
-# Routes — Download
+# Routes - Download
 # ══════════════════════════════════════════════════════════
 
 @app.get("/api/download/{file_id}")
@@ -1197,7 +1209,7 @@ async def download_file(file_id: str, format: str = "wav", version: str = "proce
 
 
 # ══════════════════════════════════════════════════════════
-# WebSocket — Progress
+# WebSocket - Progress
 # ══════════════════════════════════════════════════════════
 
 @app.websocket("/ws/progress/{file_id}")
@@ -1300,7 +1312,7 @@ async def benchmark_results():
     from app.services.cluster_manager import cluster_manager
 
     mac_bench = get_benchmark_result()
-    
+
     # Gather worker benchmarks from cluster status
     workers = []
     try:
@@ -1319,7 +1331,7 @@ async def benchmark_results():
 
     return {
         "master": {
-            "name": "Mac — Master",
+            "name": "Mac - Master",
             "chip": mac_bench.get("tests", {}).get("fft", {}).get("description", "") if mac_bench else "",
             "score": mac_bench.get("score", 0) if mac_bench else 0,
             "tests": mac_bench.get("tests", {}) if mac_bench else {},
@@ -1363,3 +1375,46 @@ def _count_steps(options: ProcessingOptions) -> int:
         options.buzzing_noise_remover, options.static_noise_remover,
         options.reverb_echo_remover, options.frequency_restoration,
     ])
+
+
+# ══════════════════════════════════════════════════════════
+# Routes - Community Roadmap Voting API
+# ══════════════════════════════════════════════════════════
+
+@app.get("/api/roadmap/votes")
+async def get_roadmap_votes():
+    import json
+    votes_file = ROADMAP_VOTES_FILE
+    if votes_file.exists():
+        try:
+            with open(votes_file, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to read votes file: {e}")
+    return {}
+
+@app.post("/api/roadmap/vote")
+async def vote_feature(request: dict):
+    import json
+    feature_id = request.get("feature_id")
+    if not feature_id:
+        raise HTTPException(400, "Missing feature_id")
+
+    votes_file = ROADMAP_VOTES_FILE
+    votes = {}
+    if votes_file.exists():
+        try:
+            with open(votes_file, "r") as f:
+                votes = json.load(f)
+        except Exception:
+            pass
+
+    votes[feature_id] = votes.get(feature_id, 0) + 1
+    try:
+        with open(votes_file, "w") as f:
+            json.dump(votes, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save votes: {e}")
+        raise HTTPException(500, f"Failed to save vote: {e}")
+
+    return {"feature_id": feature_id, "votes": votes[feature_id]}

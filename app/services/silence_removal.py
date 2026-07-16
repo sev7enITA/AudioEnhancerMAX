@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Silence Removal Service
+AudioEnhancerMAX by Fd - Silence Removal Service
 Detects and removes/mutes long silences in audio.
 """
 import numpy as np
@@ -105,7 +105,7 @@ def remove_long_silences(
     result = np.concatenate(segments)
     logger.info(
         f"Removed {len(silences)} silent segments. "
-        f"Duration: {len(audio)/sr:.1f}s → {len(result)/sr:.1f}s"
+        f"Duration: {len(audio)/sr:.1f}s -> {len(result)/sr:.1f}s"
     )
 
     return result

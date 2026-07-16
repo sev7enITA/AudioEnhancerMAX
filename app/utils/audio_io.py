@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Audio I/O Utilities
+AudioEnhancerMAX by Fd - Audio I/O Utilities
 Handles loading, converting, and saving audio in multiple formats.
 """
 import os
@@ -65,7 +65,7 @@ def load_audio(file_path: Path, sr: Optional[int] = None, mono: bool = True) -> 
     file_path = Path(file_path)
     ext = file_path.suffix.lower()
 
-    # Handle video files — extract audio first
+    # Handle video files - extract audio first
     if ext in {".mp4", ".m4a", ".avi", ".mkv", ".mov"}:
         wav_path = file_path.with_suffix(".wav")
         extract_audio_from_video(file_path, wav_path)

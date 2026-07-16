@@ -1,19 +1,33 @@
 """
-AudioEnhancerMAX by Fd — Configuration
+AudioEnhancerMAX by Fd - Configuration
 """
 import os
+import sys
 from pathlib import Path
 
-# Base paths
-BASE_DIR = Path(__file__).resolve().parent.parent
-APP_DIR = BASE_DIR / "app"
+# Resource and user-data paths. Frozen macOS builds keep bundled assets in
+# PyInstaller's resource directory while mutable data lives outside the .app.
+SOURCE_BASE_DIR = Path(__file__).resolve().parent.parent
+RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", SOURCE_BASE_DIR))
+BASE_DIR = RESOURCE_DIR
+
+_default_data_dir = SOURCE_BASE_DIR / "app"
+if getattr(sys, "frozen", False):
+    _default_data_dir = Path.home() / "Library" / "Application Support" / "AudioEnhancerMAX"
+
+DATA_DIR = Path(os.getenv("AEMAX_DATA_DIR", str(_default_data_dir))).expanduser()
+APP_DIR = DATA_DIR
 UPLOAD_DIR = APP_DIR / "uploads"
-FRONTEND_DIR = BASE_DIR / "frontend"
+FRONTEND_DIR = RESOURCE_DIR / "frontend"
 OUTPUT_DIR = APP_DIR / "outputs"
+PRESETS_DIR = APP_DIR / "presets"
+TIMING_HISTORY_FILE = APP_DIR / "timing_history.json"
+ROADMAP_VOTES_FILE = APP_DIR / "roadmap_votes.json"
 
 # Ensure directories exist
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+PRESETS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Audio settings
 MAX_FILE_SIZE_MB = 500

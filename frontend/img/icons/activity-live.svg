@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Live estimate">
+  <rect x="10" y="12" width="44" height="40" rx="8" fill="#121722" stroke="#10b981" stroke-width="2"/>
+  <path d="M18 41l10-12 8 7 10-15" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

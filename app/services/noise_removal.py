@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Noise Removal Service
+AudioEnhancerMAX by Fd - Noise Removal Service
 Combines DeepFilterNet (deep learning) + noisereduce (spectral gating).
 """
 import numpy as np
@@ -89,7 +89,7 @@ def remove_noise_spectral(
     try:
         import noisereduce as nr
 
-        # v2.0: Cap prop_decrease at 0.85 — never remove more than 85%
+        # v2.0: Cap prop_decrease at 0.85 - never remove more than 85%
         # of noise to preserve natural room tone and avoid artifacts.
         # (v1 used strength * 1.2 which could exceed 1.0 = metallic sound)
         prop_decrease = min(0.85, strength * 0.85)
@@ -110,7 +110,7 @@ def remove_noise_spectral(
             freq_mask_smooth_hz=500,
         )
 
-        # v2.0: Wet/dry mix — blend processed with original to preserve
+        # v2.0: Wet/dry mix - blend processed with original to preserve
         # natural character. Higher strength = more processed signal.
         wet = min(0.85, strength)
         dry = 1.0 - wet

@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — DSP Benchmark Module
+AudioEnhancerMAX by Fd - DSP Benchmark Module
 Standardized benchmark to compare device performance across the cluster.
 
 Runs a set of representative DSP operations on a synthetic audio signal
@@ -25,7 +25,7 @@ def run_dsp_benchmark(duration_seconds: float = 5.0, sample_rate: int = 44100) -
     """
     global _benchmark_result
 
-    logger.info("🏁 Running DSP benchmark...")
+    logger.info(" Running DSP benchmark...")
     results = {}
 
     # Generate test signal (pink noise + sine tones)
@@ -109,7 +109,7 @@ def run_dsp_benchmark(duration_seconds: float = 5.0, sample_rate: int = 44100) -
         results["resample"] = {
             "ops_per_sec": round(1.0 / avg_resample, 1),
             "avg_ms": round(avg_resample * 1000, 2),
-            "description": f"Resample {sample_rate}→48000 Hz"
+            "description": f"Resample {sample_rate}->48000 Hz"
         }
     except ImportError:
         results["resample"] = {"ops_per_sec": 0, "avg_ms": 0, "description": "scipy not available"}
@@ -134,7 +134,7 @@ def run_dsp_benchmark(duration_seconds: float = 5.0, sample_rate: int = 44100) -
         "timestamp": time.time(),
     }
 
-    logger.info(f"🏁 Benchmark complete — Score: {overall_score} ops/s")
+    logger.info(f" Benchmark complete - Score: {overall_score} ops/s")
     return _benchmark_result
 
 

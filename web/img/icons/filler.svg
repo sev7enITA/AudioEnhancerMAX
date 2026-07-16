@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Filler word review">
+  <rect x="10" y="15" width="44" height="30" rx="10" fill="#121722" stroke="#06b6d4" stroke-width="2"/>
+  <path d="M22 45l-7 8V42" fill="#121722" stroke="#06b6d4" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M22 30h20M22 37h12" stroke="#f0f0f5" stroke-width="3" stroke-linecap="round"/>
+</svg>

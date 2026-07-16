@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Speech Cleanup Service
+AudioEnhancerMAX by Fd - Speech Cleanup Service
 Handles filler words, breaths, mouth sounds, hesitations, stuttering.
 """
 import numpy as np
@@ -240,7 +240,7 @@ def remove_breaths(
         start = max(0, start)
         end = min(len(result), end)
 
-        # v2.0: Never fully mute breaths — cap attenuation at 80%
+        # v2.0: Never fully mute breaths - cap attenuation at 80%
         # and use longer fades (30ms) for smoother transitions.
         # Full muting sounds unnatural (creates "holes" in audio).
         effective_strength = min(strength, 0.8)

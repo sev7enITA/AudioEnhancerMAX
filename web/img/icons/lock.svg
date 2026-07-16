@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Watermarking">
+  <rect x="14" y="28" width="36" height="25" rx="7" fill="#121722" stroke="#06b6d4" stroke-width="3"/>
+  <path d="M22 28v-7a10 10 0 0 1 20 0v7" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="32" cy="41" r="4" fill="#f0f0f5"/>
+</svg>

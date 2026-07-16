@@ -21,6 +21,9 @@ env/
 ## Uploads and outputs (user data)
 app/uploads/
 app/outputs/
+app/presets/
+app/roadmap_votes.json
+app/timing_history.json
 
 ## Model cache
 /models/
@@ -30,6 +33,11 @@ app/outputs/
 
 ## Logs
 *.log
+
+## Desktop packaging artifacts
+build/
+dist/
+packaging/macos/*.icns
 
 ## OS
 Thumbs.db

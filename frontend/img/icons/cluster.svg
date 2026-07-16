@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Edge cluster">
+  <circle cx="32" cy="32" r="8" fill="#121722" stroke="#06b6d4" stroke-width="3"/>
+  <circle cx="15" cy="18" r="7" fill="#121722" stroke="#10b981" stroke-width="3"/>
+  <circle cx="49" cy="18" r="7" fill="#121722" stroke="#f97316" stroke-width="3"/>
+  <circle cx="18" cy="49" r="7" fill="#121722" stroke="#7c3aed" stroke-width="3"/>
+  <circle cx="48" cy="49" r="7" fill="#121722" stroke="#06b6d4" stroke-width="3"/>
+  <path d="M21 22l6 5M43 22l-6 5M24 45l5-7M43 44l-6-6" stroke="#f0f0f5" stroke-width="3" stroke-linecap="round"/>
+</svg>

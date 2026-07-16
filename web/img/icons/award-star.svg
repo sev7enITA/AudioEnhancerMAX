@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Award">
+  <path d="M32 5l24 24-24 30L8 29 32 5z" fill="#171923" stroke="#f97316" stroke-width="2"/>
+  <path d="M32 16l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1 4-9z" fill="#fbbf24"/>
+  <path d="M18 46h28" stroke="#f0f0f5" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mouth sound reduction">
+  <path d="M13 34c9-12 29-12 38 0-9 12-29 12-38 0z" fill="#121722" stroke="#f97316" stroke-width="3"/>
+  <path d="M18 34h28" stroke="#f0f0f5" stroke-width="3" stroke-linecap="round"/>
+  <path d="M24 28l-4-5M40 28l4-5" stroke="#06b6d4" stroke-width="3" stroke-linecap="round"/>
+</svg>

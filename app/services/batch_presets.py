@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Batch Processing & Presets Service
+AudioEnhancerMAX by Fd - Batch Processing & Presets Service
 Process multiple files with same settings, save/load custom presets.
 """
 import json
@@ -9,14 +9,12 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from app.config import BASE_DIR
+from app.config import PRESETS_DIR
 from app.models.schemas import ProcessingOptions
 
 logger = logging.getLogger(__name__)
 
 # Presets storage
-PRESETS_DIR = BASE_DIR / "presets"
-PRESETS_DIR.mkdir(parents=True, exist_ok=True)
 SAFE_PRESET_ID_RE = re.compile(r"^[a-z0-9_]{1,64}$")
 
 
@@ -59,7 +57,7 @@ def save_preset(
     with open(preset_path, "w") as f:
         json.dump(preset_data, f, indent=2, default=str)
 
-    logger.info(f"Preset saved: {name} → {preset_path}")
+    logger.info(f"Preset saved: {name} -> {preset_path}")
     return preset_data
 
 
@@ -107,7 +105,7 @@ def get_builtin_presets() -> List[dict]:
     return [
         {
             "id": "podcast_pro",
-            "name": "🎙️ Podcast Pro",
+            "name": "Podcast Pro",
             "description": "Full cleanup for professional podcast production",
             "options": ProcessingOptions(
                 remove_noise=True,
@@ -125,7 +123,7 @@ def get_builtin_presets() -> List[dict]:
         },
         {
             "id": "quick_clean",
-            "name": "⚡ Quick Clean",
+            "name": "Quick Clean",
             "description": "Fast noise removal and normalization",
             "options": ProcessingOptions(
                 remove_noise=True,
@@ -135,7 +133,7 @@ def get_builtin_presets() -> List[dict]:
         },
         {
             "id": "interview_mode",
-            "name": "🎤 Interview Mode",
+            "name": "Interview Mode",
             "description": "Optimized for multi-speaker interviews",
             "options": ProcessingOptions(
                 remove_noise=True,
@@ -149,7 +147,7 @@ def get_builtin_presets() -> List[dict]:
         },
         {
             "id": "outdoor_rescue",
-            "name": "🌿 Outdoor Rescue",
+            "name": "Outdoor Rescue",
             "description": "Heavy-duty cleanup for outdoor recordings",
             "options": ProcessingOptions(
                 remove_noise=True,
@@ -162,7 +160,7 @@ def get_builtin_presets() -> List[dict]:
         },
         {
             "id": "voice_memo_polish",
-            "name": "📝 Voice Memo Polish",
+            "name": "Voice Memo Polish",
             "description": "Quick enhancement for voice memos",
             "options": ProcessingOptions(
                 remove_noise=True,
@@ -174,7 +172,7 @@ def get_builtin_presets() -> List[dict]:
         },
         {
             "id": "studio_master",
-            "name": "🎚️ Studio Master",
+            "name": "Studio Master",
             "description": "Maximum quality processing chain",
             "options": ProcessingOptions(
                 remove_noise=True,

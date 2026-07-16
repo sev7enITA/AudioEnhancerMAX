@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Speech-to-Text Transcription Service
+AudioEnhancerMAX by Fd - Speech-to-Text Transcription Service
 Uses faster-whisper for high-quality, local transcription.
 """
 import numpy as np
@@ -65,7 +65,7 @@ def transcribe(
     _init_model(model_size)
 
     if _model is None:
-        logger.error("Transcription model failed to load — returning error")
+        logger.error("Transcription model failed to load - returning error")
         return {
             "text": "[Transcription model not available. Please check that faster-whisper is installed.]",
             "language": "",
@@ -146,7 +146,7 @@ def _transcribe_faster_whisper(
 
     # If VAD filtered everything out, retry without VAD
     if not text_parts:
-        logger.warning("VAD filtered all audio — retrying without VAD filter")
+        logger.warning("VAD filtered all audio - retrying without VAD filter")
         segments_iter2, info = _model.transcribe(
             str(audio_path),
             language=language,
@@ -185,7 +185,7 @@ def transcribe_streaming(
     output_path: Optional[Path] = None,
 ):
     """
-    Streaming transcription generator — yields segments incrementally.
+    Streaming transcription generator - yields segments incrementally.
     Each yield is a dict: {"type": "segment"|"progress"|"done", ...}
     Saves partial results to output_path after each segment for crash resilience.
     """
@@ -257,7 +257,7 @@ def transcribe_streaming(
 
         # If VAD filtered everything, retry without VAD
         if not all_text:
-            logger.warning("VAD filtered all audio — retrying without VAD filter")
+            logger.warning("VAD filtered all audio - retrying without VAD filter")
             segments_iter2, info = _model.transcribe(
                 str(temp_path), language=language,
                 word_timestamps=True, vad_filter=False, beam_size=5,

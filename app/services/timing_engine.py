@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Adaptive Timing Engine
+AudioEnhancerMAX by Fd - Adaptive Timing Engine
 Tracks real processing times per filter/operation, persists to disk,
 and provides calibrated estimates using historical data.
 
@@ -12,13 +12,14 @@ import json
 import time
 import logging
 import threading
-from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+from app.config import TIMING_HISTORY_FILE
 
 logger = logging.getLogger(__name__)
 
 # ── Persistence path ──
-HISTORY_FILE = Path(__file__).parent.parent / "timing_history.json"
+HISTORY_FILE = TIMING_HISTORY_FILE
 
 # ── Static benchmarks: seconds per 60s of audio (M3 MAX calibrated) ──
 STATIC_BENCHMARKS = {
@@ -85,7 +86,7 @@ class TimingEngine:
                 self._history = data
                 total = sum(len(v.get("samples", [])) for v in data.get("filter_timings", {}).values())
                 total += sum(len(v.get("samples", [])) for v in data.get("operation_timings", {}).values())
-                logger.info(f"⏱️ Timing history loaded: {total} samples from {HISTORY_FILE}")
+                logger.info(f" Timing history loaded: {total} samples from {HISTORY_FILE}")
         except Exception as e:
             logger.warning(f"Could not load timing history: {e}")
 
@@ -154,7 +155,7 @@ class TimingEngine:
             if meta:
                 total_elapsed = time.monotonic() - meta["start_time"]
                 logger.info(
-                    f"⏱️ Job {job_id[:8]} complete: {total_elapsed:.1f}s total, "
+                    f" Job {job_id[:8]} complete: {total_elapsed:.1f}s total, "
                     f"{len(meta['completed_steps'])} steps"
                 )
 
@@ -207,7 +208,7 @@ class TimingEngine:
                 "remove_noise": {"estimated_seconds": 8.2, "source": "history", "confidence": "high"},
                 ...
             },
-            "breakdown_text": "16 filtri — stima calibrata su 12 esecuzioni precedenti",
+            "breakdown_text": "16 filtri - stima calibrata su 12 esecuzioni precedenti",
         }
         """
         total = 2.0  # base I/O overhead
@@ -245,17 +246,17 @@ class TimingEngine:
         if confidence == "high":
             n = self._get_sample_count(active_steps)
             breakdown_text = (
-                f"{total_steps} filtri — stima calibrata su {n} esecuzioni precedenti "
+                f"{total_steps} filtri - stima calibrata su {n} esecuzioni precedenti "
                 f"per {self._fmt_duration(audio_duration)} di audio"
             )
         elif confidence == "medium":
             breakdown_text = (
-                f"{total_steps} filtri — stima mista (dati reali + benchmark) "
+                f"{total_steps} filtri - stima mista (dati reali + benchmark) "
                 f"per {self._fmt_duration(audio_duration)} di audio"
             )
         else:
             breakdown_text = (
-                f"{total_steps} filtri — stima iniziale da benchmark M3 MAX "
+                f"{total_steps} filtri - stima iniziale da benchmark M3 MAX "
                 f"per {self._fmt_duration(audio_duration)} di audio"
             )
 
@@ -289,7 +290,7 @@ class TimingEngine:
             est = s["elapsed"] * ratio
             confidence = "low"
             source = "history"
-            reason = f"Stima basata su 1 esecuzione precedente — bassa confidenza"
+            reason = f"Stima basata su 1 esecuzione precedente - bassa confidenza"
         else:
             # Fall back to static benchmark
             bench = OPERATION_BENCHMARKS.get(operation, {"secs_per_60": 1.0, "model_load": 5.0})
@@ -302,7 +303,7 @@ class TimingEngine:
             confidence = "low"
             source = "benchmark"
             reason = (
-                f"Stima iniziale da benchmark M3 MAX — "
+                f"Stima iniziale da benchmark M3 MAX - "
                 f"nessuna esecuzione precedente registrata"
             )
 

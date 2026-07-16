@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioEnhancerMAX Roadmap - Community Signal Board</title>
+    <meta name="description" content="AudioEnhancerMAX public roadmap and community signal board: v3.6 trustworthy editing, governance reports, offline-first mode, and future audio workflow candidates shaped by user feedback.">
+    <meta property="og:title" content="AudioEnhancerMAX Roadmap - Community Signal Board">
+    <meta property="og:description" content="Help shape the local-first, explainable audio roadmap by signaling interest in future AudioEnhancerMAX features.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/roadmap.html">
+    <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23080a0c'/><text x='50' y='62' font-size='42' text-anchor='middle' fill='%23f4b740' font-family='Arial'>A</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #080a0c;
+            --ink: #f6f1e8;
+            --muted: #b8b3a9;
+            --faint: #79766f;
+            --panel: #121619;
+            --panel-2: #171c20;
+            --panel-3: #1d2226;
+            --line: rgba(246,241,232,0.12);
+            --line-strong: rgba(246,241,232,0.22);
+            --amber: #f4b740;
+            --aqua: #28d0b0;
+            --coral: #ff765f;
+            --blue: #5aa7ff;
+            --lime: #a7e34b;
+            --rose: #f2769b;
+            --radius: 8px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--ink);
+            background:
+                linear-gradient(rgba(246,241,232,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(246,241,232,0.035) 1px, transparent 1px),
+                linear-gradient(180deg, #080a0c 0%, #0b0f10 44%, #0f1112 100%);
+            background-size: 42px 42px, 42px 42px, auto;
+            line-height: 1.55;
+        }
+        a { color: inherit; }
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            border-bottom: 1px solid var(--line);
+            background: rgba(8,10,12,0.86);
+            backdrop-filter: blur(18px);
+        }
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 13px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-weight: 900;
+        }
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(244,183,64,0.40);
+            border-radius: 8px;
+            background: #16140f;
+            color: var(--amber);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.78rem;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            list-style: none;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+        .nav-links a { text-decoration: none; }
+        .nav-links a:hover { color: var(--ink); }
+        .nav-cta {
+            min-height: 34px;
+            padding: 8px 12px;
+            border: 1px solid rgba(40,208,176,0.36);
+            border-radius: 8px;
+            background: rgba(40,208,176,0.12);
+            color: #c9fff3;
+            font-weight: 800;
+        }
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 82px 22px 48px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 470px);
+            gap: 34px;
+            align-items: center;
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 6px 10px;
+            border: 1px solid rgba(244,183,64,0.34);
+            border-radius: 999px;
+            background: rgba(244,183,64,0.10);
+            color: #ffe4a7;
+            font-size: 0.74rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+        }
+        h1 {
+            max-width: 700px;
+            margin-top: 18px;
+            font-size: 4.4rem;
+            line-height: 0.96;
+            letter-spacing: 0;
+            font-weight: 900;
+            overflow-wrap: anywhere;
+        }
+        .hero-copy {
+            max-width: 720px;
+            margin-top: 22px;
+            color: var(--muted);
+            font-size: 1.08rem;
+        }
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 28px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0 15px;
+            border-radius: 8px;
+            border: 1px solid var(--line-strong);
+            background: var(--panel-2);
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 0.86rem;
+        }
+        .btn.primary {
+            border-color: rgba(244,183,64,0.46);
+            background: #f4b740;
+            color: #161004;
+        }
+        .btn:hover, .signal-link:hover { transform: translateY(-1px); }
+        .hero-board {
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, rgba(246,241,232,0.065), rgba(246,241,232,0.025));
+            box-shadow: 0 24px 80px rgba(0,0,0,0.38);
+            overflow: hidden;
+        }
+        .hero-board img {
+            width: 100%;
+            display: block;
+            aspect-ratio: 16 / 10;
+            object-fit: cover;
+            border-bottom: 1px solid var(--line);
+        }
+        .board-body { padding: 18px; }
+        .board-kicker {
+            color: var(--aqua);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .signal-stack {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .signal-row {
+            display: grid;
+            grid-template-columns: 112px 1fr;
+            gap: 12px;
+            align-items: center;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+        .signal-row strong {
+            color: var(--ink);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .bar {
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(246,241,232,0.10);
+            overflow: hidden;
+        }
+        .bar span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: currentColor;
+        }
+        .bar.build { color: var(--amber); }
+        .bar.rank { color: var(--aqua); }
+        .bar.rd { color: var(--rose); }
+        .strip {
+            border-block: 1px solid var(--line);
+            background: rgba(246,241,232,0.035);
+        }
+        .strip-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 22px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .metric {
+            min-height: 78px;
+            border-left: 3px solid var(--amber);
+            padding: 10px 12px;
+            background: rgba(18,22,25,0.72);
+        }
+        .metric:nth-child(2) { border-left-color: var(--aqua); }
+        .metric:nth-child(3) { border-left-color: var(--coral); }
+        .metric:nth-child(4) { border-left-color: var(--blue); }
+        .metric strong {
+            display: block;
+            color: var(--ink);
+            font-size: 0.95rem;
+        }
+        .metric span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+        .section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 64px 22px;
+        }
+        .section-head {
+            display: grid;
+            grid-template-columns: minmax(0, 0.82fr) minmax(260px, 0.38fr);
+            gap: 32px;
+            align-items: end;
+            margin-bottom: 26px;
+        }
+        .section-label {
+            color: var(--aqua);
+            font-size: 0.72rem;
+            font-weight: 900;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+        }
+        h2 {
+            margin-top: 8px;
+            font-size: 2.65rem;
+            line-height: 1.04;
+            letter-spacing: 0;
+        }
+        .section-note {
+            color: var(--muted);
+            font-size: 0.96rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        .card, .idea-card, .spotlight, .method-step, .callout {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        }
+        .card {
+            min-height: 100%;
+            padding: 20px;
+        }
+        .card-top, .idea-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .phase, .tag {
+            font-family: "JetBrains Mono", monospace;
+            color: var(--faint);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+        .badge {
+            white-space: nowrap;
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 0.68rem;
+            font-weight: 900;
+        }
+        .badge.p0 { background: rgba(244,183,64,0.16); color: #ffe4a7; }
+        .badge.p1 { background: rgba(40,208,176,0.14); color: #c9fff3; }
+        .badge.p2 { background: rgba(90,167,255,0.15); color: #cfe5ff; }
+        .badge.rd { background: rgba(242,118,155,0.15); color: #ffd2de; }
+        h3 {
+            font-size: 1.04rem;
+            margin-bottom: 9px;
+            letter-spacing: 0;
+        }
+        .card p, .idea-card p, .spotlight p, .method-step p {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .meta {
+            display: grid;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 15px;
+            border-top: 1px solid var(--line);
+        }
+        .meta-row {
+            display: grid;
+            grid-template-columns: 86px 1fr;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+        .meta-row strong { color: var(--ink); }
+        .meta-row span { color: var(--muted); }
+        .spotlight-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .spotlight {
+            position: relative;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+        .spotlight::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 4px;
+            background: var(--accent-line, var(--amber));
+        }
+        .spotlight:nth-child(2) { --accent-line: var(--aqua); }
+        .spotlight:nth-child(3) { --accent-line: var(--rose); }
+        .spotlight:nth-child(4) { --accent-line: var(--blue); }
+        .spotlight h3 {
+            font-size: 1.18rem;
+            margin-top: 10px;
+        }
+        .sparkline {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            align-items: end;
+            gap: 4px;
+            height: 56px;
+            margin: 18px 0;
+        }
+        .sparkline span {
+            display: block;
+            min-height: 9px;
+            border-radius: 4px 4px 0 0;
+            background: var(--accent-line, var(--amber));
+            opacity: 0.82;
+        }
+        .interest-note {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+        .signal-link {
+            display: none; /* replaced dynamically by signal-actions-wrap */
+        }
+        .signal-actions-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 14px;
+        }
+        .vote-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
+            padding: 0 14px;
+            border: 1px solid rgba(40,208,176,0.36);
+            border-radius: 8px;
+            background: rgba(40,208,176,0.10);
+            color: #bbf7ec;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 900;
+            transition: all 0.2s ease;
+            gap: 6px;
+            outline: none;
+        }
+        .vote-btn:hover {
+            background: rgba(40,208,176,0.18);
+            border-color: rgba(40,208,176,0.5);
+            transform: translateY(-1px);
+        }
+        .vote-btn.voted {
+            background: #28d0b0;
+            border-color: #28d0b0;
+            color: #080a0c;
+        }
+        .vote-btn.voted:hover {
+            transform: none;
+        }
+        .vote-icon {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+        }
+        .signal-link-details {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 36px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.78rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin-left: auto;
+            gap: 6px;
+        }
+        .signal-link-details:hover {
+            background: rgba(255,255,255,0.06);
+            color: var(--ink);
+            transform: translateY(-1px);
+        }
+        .radar-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        .idea-card {
+            min-height: 218px;
+            display: flex;
+            flex-direction: column;
+            padding: 18px;
+        }
+        .idea-card .signal-link { margin-top: auto; }
+        .tracks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .track {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 4px 8px;
+            color: var(--faint);
+            font-size: 0.72rem;
+            font-weight: 800;
+        }
+        .method {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .method-step {
+            min-height: 190px;
+            padding: 20px;
+        }
+        .step-num {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            background: rgba(40,208,176,0.13);
+            color: #c9fff3;
+            font-family: "JetBrains Mono", monospace;
+            font-weight: 900;
+        }
+        .callout {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 18px;
+            align-items: center;
+            padding: 24px;
+            background: linear-gradient(90deg, rgba(244,183,64,0.15), rgba(40,208,176,0.08));
+        }
+        .callout strong {
+            display: block;
+            color: var(--ink);
+            font-size: 1.22rem;
+        }
+        .callout p {
+            margin-top: 6px;
+            color: var(--muted);
+        }
+        .timeline {
+            display: grid;
+            gap: 12px;
+        }
+        .milestone {
+            display: grid;
+            grid-template-columns: 138px 1fr;
+            gap: 18px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: rgba(18,22,25,0.78);
+            padding: 18px;
+        }
+        .milestone .when {
+            color: var(--amber);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.8rem;
+            font-weight: 900;
+        }
+        .milestone p { color: var(--muted); margin-top: 6px; }
+        footer {
+            border-top: 1px solid var(--line);
+            padding: 34px 22px;
+            color: var(--faint);
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 14px;
+            font-size: 0.82rem;
+        }
+        .footer-links {
+            display: flex;
+            gap: 16px;
+            list-style: none;
+        }
+        .footer-links a { text-decoration: none; color: var(--faint); }
+        .footer-links a:hover { color: var(--ink); }
+        @media (max-width: 980px) {
+            .hero { grid-template-columns: 1fr; padding-top: 56px; }
+            h1 { font-size: 3.25rem; }
+            .strip-inner, .grid, .spotlight-grid, .radar-grid, .method { grid-template-columns: repeat(2, 1fr); }
+            .section-head { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 680px) {
+            .nav-links { display: none; }
+            .hero { padding: 44px 18px 34px; }
+            h1 { font-size: 2.42rem; line-height: 1.02; }
+            h2 { font-size: 1.95rem; }
+            .hero-copy { font-size: 1rem; }
+            .section { padding: 46px 18px; }
+            .strip-inner, .grid, .spotlight-grid, .radar-grid, .method { grid-template-columns: 1fr; }
+            .callout { grid-template-columns: 1fr; }
+            .milestone, .signal-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">
+                <span class="brand-mark">AEM</span>
+                <span>AudioEnhancerMAX</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="#v36">v3.6</a></li>
+                <li><a href="#signal">Signal board</a></li>
+                <li><a href="#radar">Feature radar</a></li>
+                <li><a href="#method">How ranking works</a></li>
+                <li><a class="nav-cta" href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div>
+            <span class="eyebrow">Community-shaped roadmap</span>
+            <h1>Help shape the next release</h1>
+            <p class="hero-copy">v3.6 is focused on trustworthy, reviewable editing. Beyond that, the roadmap is open: signal which future features matter, explain your workflow, or propose the next idea the community should rank.</p>
+            <div class="hero-actions">
+                <a class="btn primary" href="#signal">Signal interest</a>
+                <a class="btn" id="propose-idea-top" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Propose a new idea</a>
+                <a class="btn" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">SourceForge page</a>
+            </div>
+        </div>
+
+        <aside class="hero-board" aria-label="Roadmap signal board preview">
+            <img src="img/social-preview.png" alt="AudioEnhancerMAX interface preview">
+            <div class="board-body">
+                <div class="board-kicker">Roadmap pulse</div>
+                <div class="signal-stack">
+                    <div class="signal-row">
+                        <strong>Build now</strong>
+                        <div><div class="bar build"><span style="width: 78%"></span></div></div>
+                    </div>
+                    <div class="signal-row">
+                        <strong>Rank next</strong>
+                        <div><div class="bar rank"><span style="width: 58%"></span></div></div>
+                    </div>
+                    <div class="signal-row">
+                        <strong>R&amp;D watch</strong>
+                        <div><div class="bar rd"><span style="width: 42%"></span></div></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </header>
+
+    <div class="strip" aria-label="Roadmap principles">
+        <div class="strip-inner">
+            <div class="metric">
+                <strong>Transparent</strong>
+                <span>Every candidate must state benefit, risk, and validation path.</span>
+            </div>
+            <div class="metric">
+                <strong>Local-first</strong>
+                <span>Offline and no-external modes remain product constraints.</span>
+            </div>
+            <div class="metric">
+                <strong>Community led</strong>
+                <span>User signals help decide what should move up next.</span>
+            </div>
+            <div class="metric">
+                <strong>Evidence based</strong>
+                <span>No feature claim becomes public until tested.</span>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <section class="section" id="v36">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Candidate scope</span>
+                    <h2>v3.6 builds the editing foundation</h2>
+                </div>
+                <p class="section-note">These items are prioritized because they improve control, auditability, and creator workflow without promising blind automation.</p>
+            </div>
+
+            <div class="grid">
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Foundation</span>
+                        <span class="badge p0">P0/P1</span>
+                    </div>
+                    <h3>Non-Destructive Edit Decision List</h3>
+                    <p>Represent cuts, mutes, fades, transcript-linked selections, and accepted suggestions as structured timeline decisions while preserving the original uploaded media.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Benefit</strong><span>Undo, redo, re-render, and audit each processing run.</span></div>
+                        <div class="meta-row"><strong>Review</strong><span>EDL JSON schema, cut/mute rendering, playback accuracy, export parity.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Transcript</span>
+                        <span class="badge p1">P1</span>
+                    </div>
+                    <h3>Transcript-Linked Editing</h3>
+                    <p>Create cut or mute timeline edits by selecting transcript words or ranges. The MVP belongs in v3.6 so Whisper word timestamps and EDL metadata are designed together.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Benefit</strong><span>Faster trimming while preserving human review and reversibility.</span></div>
+                        <div class="meta-row"><strong>Review</strong><span>Word timestamp precision, transcript metadata in EDL, preview playback.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Editing UX</span>
+                        <span class="badge p1">P1</span>
+                    </div>
+                    <h3>AI-Assisted Review Dashboard</h3>
+                    <p>Surface filler words, long silences, breaths, mouth sounds, and stutters as suggestions on transcript and waveform instead of applying blind destructive cuts.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Benefit</strong><span>Faster cleanup while reducing choppy or over-processed results.</span></div>
+                        <div class="meta-row"><strong>Review</strong><span>Accept, reject, preview, bulk approve, confidence labels.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Governance</span>
+                        <span class="badge p1">P1</span>
+                    </div>
+                    <h3>Processing and Governance Report</h3>
+                    <p>Generate canonical JSON for each export; render the readable HTML report in the frontend with selected filters, parameters, model use, timing, warnings, and data-flow notes.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Benefit</strong><span>An audit trail for professional, research, and governance-sensitive workflows.</span></div>
+                        <div class="meta-row"><strong>Review</strong><span>Backend JSON, frontend-rendered HTML, print support, raw JSON download.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Privacy</span>
+                        <span class="badge p1">P1</span>
+                    </div>
+                    <h3>Offline-First Asset Mode</h3>
+                    <p>Bundle runtime UI assets locally and expose a mode that disables optional external services, external fonts, and badge scripts for sessions where no-external operation matters.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Benefit</strong><span>Clearer privacy posture for field work and restricted networks.</span></div>
+                        <div class="meta-row"><strong>Review</strong><span>Network call audit, service toggles, disabled SourceForge badge/script loading.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Export</span>
+                        <span class="badge p1">P1</span>
+                    </div>
+                    <h3>Output Profile Manager</h3>
+                    <p>Define fixed podcast, YouTube, audiobook, archival, and preserve-original profiles with manual overrides recorded in the final report.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Benefit</strong><span>Removes guesswork and prevents unexpected format changes.</span></div>
+                        <div class="meta-row"><strong>Review</strong><span>Fixed schemas, override markers, report integration.</span></div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="signal">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Sneak peek</span>
+                    <h2>Which big feature should move up?</h2>
+                </div>
+                <p class="section-note">These are high-potential directions we have analyzed. They are not release promises yet: community interest, technical validation, and governance fit will decide what becomes real product work.</p>
+            </div>
+
+            <div class="spotlight-grid">
+                <article class="spotlight" data-feature="Full DAW XML export and roundtrip" data-track="Professional workflow">
+                    <span class="tag">Professional workflow</span>
+                    <h3>Full DAW XML Export</h3>
+                    <p>Export EDL decisions, markers, regions, and processing notes toward tools such as Reaper, Audition, Resolve, or other studio workflows.</p>
+                    <div class="sparkline" aria-hidden="true">
+                        <span style="height: 22%"></span><span style="height: 34%"></span><span style="height: 48%"></span><span style="height: 68%"></span><span style="height: 44%"></span><span style="height: 76%"></span><span style="height: 62%"></span><span style="height: 86%"></span><span style="height: 58%"></span><span style="height: 72%"></span><span style="height: 92%"></span><span style="height: 66%"></span>
+                    </div>
+                    <p class="interest-note">Tell us which DAW matters most and what roundtrip format you need first.</p>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="spotlight" data-feature="Multi-mic auto-alignment" data-track="Podcast production">
+                    <span class="tag">Podcast production</span>
+                    <h3>Multi-Mic Auto-Alignment</h3>
+                    <p>Sync multiple speakers or recorders, detect drift, warn on phase issues, and reduce manual timeline alignment for interviews.</p>
+                    <div class="sparkline" aria-hidden="true">
+                        <span style="height: 38%"></span><span style="height: 60%"></span><span style="height: 34%"></span><span style="height: 78%"></span><span style="height: 46%"></span><span style="height: 90%"></span><span style="height: 54%"></span><span style="height: 74%"></span><span style="height: 48%"></span><span style="height: 82%"></span><span style="height: 64%"></span><span style="height: 88%"></span>
+                    </div>
+                    <p class="interest-note">Useful feedback: number of mics, recorder types, sample rates, and drift problems.</p>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="spotlight" data-feature="Local neural voice restoration" data-track="Restoration R&D">
+                    <span class="tag">Restoration R&amp;D</span>
+                    <h3>Local Neural Voice Restoration</h3>
+                    <p>Explore local speech restoration models with A/B review, model cards, quality limits, and clear experimental labeling.</p>
+                    <div class="sparkline" aria-hidden="true">
+                        <span style="height: 20%"></span><span style="height: 42%"></span><span style="height: 28%"></span><span style="height: 56%"></span><span style="height: 64%"></span><span style="height: 46%"></span><span style="height: 74%"></span><span style="height: 52%"></span><span style="height: 82%"></span><span style="height: 60%"></span><span style="height: 70%"></span><span style="height: 88%"></span>
+                    </div>
+                    <p class="interest-note">This needs careful benchmarking before claims. Sample types and quality targets matter.</p>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="spotlight" data-feature="Short-form video clip generator" data-track="Creator workflow">
+                    <span class="tag">Creator workflow</span>
+                    <h3>Short-Form Clip Generator</h3>
+                    <p>Find candidate highlights, create caption-ready segments, and prepare exports for Shorts, Reels, TikTok, or social teasers.</p>
+                    <div class="sparkline" aria-hidden="true">
+                        <span style="height: 30%"></span><span style="height: 50%"></span><span style="height: 72%"></span><span style="height: 44%"></span><span style="height: 84%"></span><span style="height: 38%"></span><span style="height: 78%"></span><span style="height: 58%"></span><span style="height: 66%"></span><span style="height: 94%"></span><span style="height: 54%"></span><span style="height: 76%"></span>
+                    </div>
+                    <p class="interest-note">Tell us whether audio-only clips, captions, or full vertical video should come first.</p>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="radar">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Feature radar</span>
+                    <h2>More candidates the community can rank</h2>
+                </div>
+                <p class="section-note">Each card can become a GitHub roadmap signal. The best signals explain a real use case, expected input files, preferred output, and privacy or governance constraints.</p>
+            </div>
+
+            <div class="radar-grid">
+                <article class="idea-card" data-feature="Smart chaptering and show notes" data-track="Content intelligence">
+                    <div class="idea-top"><span class="tag">Content intelligence</span><span class="badge p2">Candidate</span></div>
+                    <h3>Smart Chaptering and Show Notes</h3>
+                    <p>Generate timestamped chapters, topic summaries, and editable show-note drafts from the transcript.</p>
+                    <div class="tracks"><span class="track">Transcript</span><span class="track">Podcast</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Speaker diarization and speaker-aware cleanup" data-track="Transcript intelligence">
+                    <div class="idea-top"><span class="tag">Transcript intelligence</span><span class="badge p2">Candidate</span></div>
+                    <h3>Speaker-Aware Cleanup</h3>
+                    <p>Detect speaker turns and apply review suggestions per speaker, useful for interviews and panels.</p>
+                    <div class="tracks"><span class="track">Diarization</span><span class="track">Review</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Multilingual filler detection beyond English and Italian" data-track="Language support">
+                    <div class="idea-top"><span class="tag">Language support</span><span class="badge p2">Candidate</span></div>
+                    <h3>More Filler Languages</h3>
+                    <p>Extend filler detection beyond English and Italian with language-specific review lists and user-editable dictionaries.</p>
+                    <div class="tracks"><span class="track">Localization</span><span class="track">Editing</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Waveform and spectrogram repair brush" data-track="Audio repair">
+                    <div class="idea-top"><span class="tag">Audio repair</span><span class="badge p2">Candidate</span></div>
+                    <h3>Repair Brush</h3>
+                    <p>Select small waveform or spectrogram regions for click, bump, hum, or mouth-noise repair with before/after preview.</p>
+                    <div class="tracks"><span class="track">Repair</span><span class="track">Preview</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Room tone and ambience fill" data-track="Natural editing">
+                    <div class="idea-top"><span class="tag">Natural editing</span><span class="badge p2">Candidate</span></div>
+                    <h3>Room Tone and Ambience Fill</h3>
+                    <p>Replace removed or muted segments with matched room tone to avoid sterile gaps or awkward edits.</p>
+                    <div class="tracks"><span class="track">EDL</span><span class="track">Mute</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Blind A/B listening review" data-track="Quality control">
+                    <div class="idea-top"><span class="tag">Quality control</span><span class="badge p2">Candidate</span></div>
+                    <h3>Blind A/B Listening Review</h3>
+                    <p>Compare original, processed, and alternate settings without bias, then store the chosen version in the report.</p>
+                    <div class="tracks"><span class="track">QC</span><span class="track">Governance</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Batch processing queue" data-track="Studio workflow">
+                    <div class="idea-top"><span class="tag">Studio workflow</span><span class="badge p2">Candidate</span></div>
+                    <h3>Batch Processing Queue</h3>
+                    <p>Queue multiple files with profiles, ETA, retry handling, and per-file governance reports.</p>
+                    <div class="tracks"><span class="track">Automation</span><span class="track">Reports</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Community preset packs" data-track="Mastering workflow">
+                    <div class="idea-top"><span class="tag">Mastering workflow</span><span class="badge p2">Candidate</span></div>
+                    <h3>Community Preset Packs</h3>
+                    <p>Share transparent, inspectable processing chains for podcast, lecture, field recording, and archival workflows.</p>
+                    <div class="tracks"><span class="track">Profiles</span><span class="track">Open source</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Noise fingerprint library" data-track="Restoration workflow">
+                    <div class="idea-top"><span class="tag">Restoration workflow</span><span class="badge p2">Candidate</span></div>
+                    <h3>Noise Fingerprint Library</h3>
+                    <p>Save reusable local noise profiles for recurring rooms, microphones, fans, or device hum.</p>
+                    <div class="tracks"><span class="track">Noise</span><span class="track">Local</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Broadcast ACX and EBU export targets" data-track="Output compliance">
+                    <div class="idea-top"><span class="tag">Output compliance</span><span class="badge p2">Candidate</span></div>
+                    <h3>Broadcast and Audiobook Targets</h3>
+                    <p>Add explicit ACX, EBU R128, and platform-oriented checks with measurable pass/fail output notes.</p>
+                    <div class="tracks"><span class="track">LUFS</span><span class="track">Compliance</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Project bundle archive" data-track="Portability">
+                    <div class="idea-top"><span class="tag">Portability</span><span class="badge p2">Candidate</span></div>
+                    <h3>Portable Project Bundles</h3>
+                    <p>Package source audio, EDL, transcript, profile, and report into a reviewable archive for later reopening.</p>
+                    <div class="tracks"><span class="track">Projects</span><span class="track">Audit</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="CLI and API automation for studios" data-track="Automation">
+                    <div class="idea-top"><span class="tag">Automation</span><span class="badge p2">Candidate</span></div>
+                    <h3>CLI and Studio API</h3>
+                    <p>Expose repeatable enhancement, transcription, profile, and report workflows for scripted studio pipelines.</p>
+                    <div class="tracks"><span class="track">CLI</span><span class="track">FastAPI</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Trusted LAN worker manager" data-track="Edge compute">
+                    <div class="idea-top"><span class="tag">Edge compute</span><span class="badge p2">Candidate</span></div>
+                    <h3>Trusted-LAN Worker Manager</h3>
+                    <p>Rank paired devices, revoke workers, show health, and make smartphone/offload compute more governable.</p>
+                    <div class="tracks"><span class="track">Workers</span><span class="track">Security</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Portable offline installer and asset pack" data-track="Offline-first">
+                    <div class="idea-top"><span class="tag">Offline-first</span><span class="badge p2">Candidate</span></div>
+                    <h3>Portable Offline Installer</h3>
+                    <p>Make dependency setup, local assets, model checks, and offline mode easier for restricted environments.</p>
+                    <div class="tracks"><span class="track">Setup</span><span class="track">Offline</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Model cards and local model manager" data-track="AI governance">
+                    <div class="idea-top"><span class="tag">AI governance</span><span class="badge p2">Candidate</span></div>
+                    <h3>Model Cards and Manager</h3>
+                    <p>Show installed local models, intended use, limitations, hardware needs, and whether external services are involved.</p>
+                    <div class="tracks"><span class="track">Explainability</span><span class="track">Models</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Caption QC and accessibility review" data-track="Accessibility">
+                    <div class="idea-top"><span class="tag">Accessibility</span><span class="badge p2">Candidate</span></div>
+                    <h3>Caption QC and Accessibility Review</h3>
+                    <p>Validate SRT/VTT timing, reading speed, caption length, speaker labels, and transcript quality warnings.</p>
+                    <div class="tracks"><span class="track">Captions</span><span class="track">QC</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Community benchmark pack" data-track="Evidence">
+                    <div class="idea-top"><span class="tag">Evidence</span><span class="badge p2">Candidate</span></div>
+                    <h3>Community Benchmark Pack</h3>
+                    <p>Publish transparent test clips, expected metrics, and reproducible comparisons for each major audio feature.</p>
+                    <div class="tracks"><span class="track">Testing</span><span class="track">Claims</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+
+                <article class="idea-card" data-feature="Podcast metadata and publishing checklist" data-track="Publishing">
+                    <div class="idea-top"><span class="tag">Publishing</span><span class="badge p2">Candidate</span></div>
+                    <h3>Podcast Publishing Pack</h3>
+                    <p>Prepare title, description, chapters, cover checks, loudness notes, and platform-ready export metadata.</p>
+                    <div class="tracks"><span class="track">Podcast</span><span class="track">Metadata</span></div>
+                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="method">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Community ranking</span>
+                    <h2>How user preference becomes a ranklist</h2>
+                </div>
+                <p class="section-note">The ranklist should guide prioritization, not replace technical judgment. A popular feature still needs feasibility, governance review, and measurable acceptance criteria.</p>
+            </div>
+
+            <div class="method">
+                <div class="method-step">
+                    <div class="step-num">01</div>
+                    <h3>Signal interest</h3>
+                    <p>Click a roadmap card to open a prefilled GitHub issue. Users can also comment on SourceForge using the feature name.</p>
+                </div>
+                <div class="method-step">
+                    <div class="step-num">02</div>
+                    <h3>Describe the workflow</h3>
+                    <p>The most useful signals include input type, expected output, hardware, privacy constraints, and why the current app does not solve it yet.</p>
+                </div>
+                <div class="method-step">
+                    <div class="step-num">03</div>
+                    <h3>Collect evidence</h3>
+                    <p>Repeated requests, concrete examples, test files, and community prototypes move an idea higher than generic interest alone.</p>
+                </div>
+                <div class="method-step">
+                    <div class="step-num">04</div>
+                    <h3>Publish the shortlist</h3>
+                    <p>Release planning can publish the top candidates with feasibility notes, risks, and what must be validated before implementation.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="review">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Implementation discipline</span>
+                    <h2>How v3.6 should be reviewed</h2>
+                </div>
+                <p class="section-note">Each feature should pass product review, technical review, and governance review before it becomes part of public release notes.</p>
+            </div>
+
+            <div class="timeline">
+                <div class="milestone">
+                    <div class="when">Step 1</div>
+                    <div>
+                        <h3>Define schemas and review gates</h3>
+                        <p>Lock EDL JSON, processing report JSON, output profile schema, transcript timestamp mapping, and external-service flags before building UI.</p>
+                    </div>
+                </div>
+                <div class="milestone">
+                    <div class="when">Step 2</div>
+                    <div>
+                        <h3>Build minimum reviewable workflow</h3>
+                        <p>Upload, transcribe, detect suggestions, preview cut/mute edits, accept/reject, export final audio, and generate the report.</p>
+                    </div>
+                </div>
+                <div class="milestone">
+                    <div class="when">Step 3</div>
+                    <div>
+                        <h3>Measure before promising</h3>
+                        <p>Track duration drift, loudness, peak, sample rate, accepted suggestion count, model used, profile overrides, and whether any external service was enabled.</p>
+                    </div>
+                </div>
+                <div class="milestone">
+                    <div class="when">Step 4</div>
+                    <div>
+                        <h3>Publish only defensible claims</h3>
+                        <p>Release notes should say what is implemented, what is experimental, and what still requires human review.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="callout">
+                <div>
+                    <strong>Have an idea that is not listed?</strong>
+                    <p>Open a roadmap proposal with your workflow, files, expected output, and why it matters. The goal is a public, transparent backlog shaped by real users.</p>
+                </div>
+                <a class="btn primary" id="propose-idea-bottom" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Propose an idea</a>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="callout">
+                <div>
+                    <strong>Roadmap status</strong>
+                    <p>This page is a planning and community feedback document, not a delivery guarantee. Features may change after technical validation, user testing, and governance review.</p>
+                </div>
+                <a class="btn" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">Follow on SourceForge</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div>AudioEnhancerMAX roadmap - Community Signal Board</div>
+            <ul class="footer-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+                <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
+                <li><a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">SourceForge</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            const repoIssueUrl = "https://github.com/sev7enITA/AudioEnhancerMAX/issues/new";
+            const issueBody = (feature, track) => [
+                "Roadmap signal for AudioEnhancerMAX",
+                "",
+                "Feature: " + feature,
+                "Track: " + track,
+                "",
+                "Why this matters to my workflow:",
+                "- ",
+                "",
+                "Input files or scenario:",
+                "- ",
+                "",
+                "Expected output:",
+                "- ",
+                "",
+                "Privacy, offline, or governance constraints:",
+                "- ",
+                "",
+                "Would I help test or provide sample material?",
+                "- "
+            ].join("\n");
+
+            // Load current votes from API
+            let votesData = {};
+            const localVotes = JSON.parse(localStorage.getItem("aemax_voted_features") || "{}");
+
+            async function fetchVotes() {
+                try {
+                    const response = await fetch("/api/roadmap/votes");
+                    if (response.ok) {
+                        votesData = await response.json();
+                        updateVoteUI();
+                    }
+                } catch (e) {
+                    console.warn("Could not connect to voting API. Falling back to offline display.");
+                }
+            }
+
+            function updateVoteUI() {
+                document.querySelectorAll("[data-feature]").forEach((card) => {
+                    const feature = card.getAttribute("data-feature");
+                    const countEl = card.querySelector(".vote-count");
+                    if (countEl && feature) {
+                        countEl.textContent = votesData[feature] || 0;
+                    }
+                });
+            }
+
+            async function handleVote(feature, btn, countEl) {
+                if (localVotes[feature]) return; // already voted in this browser
+
+                try {
+                    const response = await fetch("/api/roadmap/vote", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ feature_id: feature })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        votesData[feature] = data.votes;
+                        localVotes[feature] = true;
+                        localStorage.setItem("aemax_voted_features", JSON.stringify(localVotes));
+
+                        btn.classList.add("voted");
+                        btn.innerHTML = `<img class="vote-icon" src="/static/img/icons/check.svg" alt=""> <span class="vote-count">${data.votes}</span> Votato`;
+                    }
+                } catch (e) {
+                    alert("Impossibile salvare il voto. Assicurati che il server locale sia attivo.");
+                }
+            }
+
+            document.querySelectorAll("[data-feature]").forEach((card) => {
+                const feature = card.getAttribute("data-feature");
+                const track = card.getAttribute("data-track") || "Roadmap";
+                const link = card.querySelector(".signal-link");
+                if (!link || !feature) return;
+
+                const title = "Roadmap signal: " + feature;
+                const gitHref = repoIssueUrl + "?title=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(issueBody(feature, track));
+
+                // Create wrapping container for actions
+                const actionsWrap = document.createElement("div");
+                actionsWrap.className = "signal-actions-wrap";
+
+                // Create Vote button
+                const voteBtn = document.createElement("button");
+                voteBtn.className = "vote-btn";
+
+                const hasVoted = localVotes[feature];
+                if (hasVoted) {
+                    voteBtn.classList.add("voted");
+                }
+
+                const initialCount = votesData[feature] || 0;
+                const voteIcon = hasVoted ? "check.svg" : "github-star.svg";
+                voteBtn.innerHTML = `<img class="vote-icon" src="/static/img/icons/${voteIcon}" alt=""> <span class="vote-count">${initialCount}</span> ${hasVoted ? 'Votato' : 'Segnala'}`;
+
+                const countEl = voteBtn.querySelector(".vote-count");
+                voteBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    handleVote(feature, voteBtn, countEl);
+                });
+
+                // Create Details link (renamed GitHub link)
+                const detailsLink = document.createElement("a");
+                detailsLink.className = "signal-link-details";
+                detailsLink.href = gitHref;
+                detailsLink.target = "_blank";
+                detailsLink.rel = "noopener noreferrer";
+                detailsLink.innerHTML = `<img class="vote-icon" src="/static/img/icons/external-flow.svg" alt=""> Dettagli Git`;
+
+                actionsWrap.appendChild(voteBtn);
+                actionsWrap.appendChild(detailsLink);
+
+                // Replace original link with actions wrap
+                link.parentNode.replaceChild(actionsWrap, link);
+            });
+
+            // Fetch votes on load
+            fetchVotes();
+
+            const proposalBody = [
+                "New roadmap proposal for AudioEnhancerMAX",
+                "",
+                "Feature idea:",
+                "- ",
+                "",
+                "Who needs it and why:",
+                "- ",
+                "",
+                "Current workflow or workaround:",
+                "- ",
+                "",
+                "Expected behavior:",
+                "- ",
+                "",
+                "Local-first, offline, explainability, or governance considerations:",
+                "- ",
+                "",
+                "Can you help test it?",
+                "- "
+            ].join("\n");
+            const proposalHref = repoIssueUrl + "?title=" + encodeURIComponent("Roadmap idea: ") + "&body=" + encodeURIComponent(proposalBody);
+            document.querySelectorAll("#propose-idea-top, #propose-idea-bottom").forEach((link) => {
+                link.href = proposalHref;
+            });
+        })();
+    </script>
+</body>
+</html>

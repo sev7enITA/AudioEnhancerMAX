@@ -1,8 +1,8 @@
 """
-AudioEnhancerMAX by Fd — Text-to-Speech Service v2.0
+AudioEnhancerMAX by Fd - Text-to-Speech Service v2.0
 Engines:
-  1. Edge Neural TTS — Microsoft neural voices, 400+ voices, 100+ languages
-  2. Kokoro TTS — Local 82M-param model, very expressive (English)
+  1. Edge Neural TTS - Microsoft neural voices, 400+ voices, 100+ languages
+  2. Kokoro TTS - Local 82M-param model, very expressive (English)
 
 Expressive Mode:
   Uses a local Ollama LLM, preferably a Gemma-family model, to rewrite text in natural spoken style
@@ -67,47 +67,47 @@ LANG_DEFAULTS = {
 
 # Kokoro voice presets
 KOKORO_VOICES = {
-    "kokoro_heart":    {"id": "af_heart",   "name": "Heart ❤️",       "lang": "a", "gender": "female"},
+    "kokoro_heart":    {"id": "af_heart",   "name": "Heart",        "lang": "a", "gender": "female"},
     "kokoro_bella":    {"id": "af_bella",   "name": "Bella",          "lang": "a", "gender": "female"},
     "kokoro_adam":     {"id": "am_adam",     "name": "Adam",           "lang": "a", "gender": "male"},
     "kokoro_michael":  {"id": "am_michael", "name": "Michael",        "lang": "a", "gender": "male"},
-    "kokoro_emma":     {"id": "bf_emma",    "name": "Emma 🇬🇧",      "lang": "b", "gender": "female"},
-    "kokoro_george":   {"id": "bm_george",  "name": "George 🇬🇧",    "lang": "b", "gender": "male"},
+    "kokoro_emma":     {"id": "bf_emma",    "name": "Emma",       "lang": "b", "gender": "female"},
+    "kokoro_george":   {"id": "bm_george",  "name": "George",     "lang": "b", "gender": "male"},
 }
 
 PRESET_VOICES = [
-    # Edge Neural — Italian
-    {"id": "it_giuseppe", "name": "Giuseppe 🇮🇹", "language": "it", "gender": "male",
-     "engine": "edge", "description": "Natural Italian multilingual voice — warm and expressive"},
-    {"id": "it_isabella", "name": "Isabella 🇮🇹", "language": "it", "gender": "female",
-     "engine": "edge", "description": "Clear Italian female voice — professional tone"},
-    {"id": "it_diego", "name": "Diego 🇮🇹", "language": "it", "gender": "male",
-     "engine": "edge", "description": "Deep Italian male voice — authoritative"},
-    # Edge Neural — English
-    {"id": "en_aria", "name": "Aria 🇺🇸", "language": "en", "gender": "female",
-     "engine": "edge", "description": "Expressive American female — versatile and natural"},
-    {"id": "en_guy", "name": "Guy 🇺🇸", "language": "en", "gender": "male",
-     "engine": "edge", "description": "Clear American male — podcast-quality narration"},
-    {"id": "en_davis", "name": "Davis 🇺🇸", "language": "en", "gender": "male",
-     "engine": "edge", "description": "Deep American male — warm and conversational"},
-    {"id": "en_sonia", "name": "Sonia 🇬🇧", "language": "en", "gender": "female",
-     "engine": "edge", "description": "British female — elegant and articulate"},
-    # Edge Neural — Other
-    {"id": "es_elena", "name": "Elena 🇪🇸", "language": "es", "gender": "female",
+    # Edge Neural - Italian
+    {"id": "it_giuseppe", "name": "Giuseppe", "language": "it", "gender": "male",
+     "engine": "edge", "description": "Natural Italian multilingual voice - warm and expressive"},
+    {"id": "it_isabella", "name": "Isabella", "language": "it", "gender": "female",
+     "engine": "edge", "description": "Clear Italian female voice - professional tone"},
+    {"id": "it_diego", "name": "Diego", "language": "it", "gender": "male",
+     "engine": "edge", "description": "Deep Italian male voice - authoritative"},
+    # Edge Neural - English
+    {"id": "en_aria", "name": "Aria", "language": "en", "gender": "female",
+     "engine": "edge", "description": "Expressive American female - versatile and natural"},
+    {"id": "en_guy", "name": "Guy", "language": "en", "gender": "male",
+     "engine": "edge", "description": "Clear American male - podcast-quality narration"},
+    {"id": "en_davis", "name": "Davis", "language": "en", "gender": "male",
+     "engine": "edge", "description": "Deep American male - warm and conversational"},
+    {"id": "en_sonia", "name": "Sonia", "language": "en", "gender": "female",
+     "engine": "edge", "description": "British female - elegant and articulate"},
+    # Edge Neural - Other
+    {"id": "es_elena", "name": "Elena", "language": "es", "gender": "female",
      "engine": "edge", "description": "Natural Spanish female voice"},
-    {"id": "fr_denise", "name": "Denise 🇫🇷", "language": "fr", "gender": "female",
+    {"id": "fr_denise", "name": "Denise", "language": "fr", "gender": "female",
      "engine": "edge", "description": "Warm French female voice"},
-    {"id": "de_katja", "name": "Katja 🇩🇪", "language": "de", "gender": "female",
+    {"id": "de_katja", "name": "Katja", "language": "de", "gender": "female",
      "engine": "edge", "description": "Professional German female voice"},
-    # Kokoro Local — English
-    {"id": "kokoro_heart", "name": "Heart ❤️ (Local)", "language": "en", "gender": "female",
-     "engine": "kokoro", "description": "Very expressive local voice — warm and emotional"},
+    # Kokoro Local - English
+    {"id": "kokoro_heart", "name": "Heart (Local)", "language": "en", "gender": "female",
+     "engine": "kokoro", "description": "Very expressive local voice - warm and emotional"},
     {"id": "kokoro_bella", "name": "Bella (Local)", "language": "en", "gender": "female",
-     "engine": "kokoro", "description": "Natural local female — clear and articulate"},
+     "engine": "kokoro", "description": "Natural local female - clear and articulate"},
     {"id": "kokoro_adam", "name": "Adam (Local)", "language": "en", "gender": "male",
-     "engine": "kokoro", "description": "Deep local male — authoritative narration"},
-    {"id": "kokoro_emma", "name": "Emma 🇬🇧 (Local)", "language": "en", "gender": "female",
-     "engine": "kokoro", "description": "British female — sophisticated and warm"},
+     "engine": "kokoro", "description": "Deep local male - authoritative narration"},
+    {"id": "kokoro_emma", "name": "Emma (Local)", "language": "en", "gender": "female",
+     "engine": "kokoro", "description": "British female - sophisticated and warm"},
 ]
 
 
@@ -128,7 +128,7 @@ REWRITE_PROMPTS = {
 REGOLE:
 - Aggiungi pause naturali usando "..." per le pause brevi
 - Aggiungi intercalari dove suona naturale: "ecco", "guardate", "insomma", "in pratica", "diciamo"
-- Varia la lunghezza delle frasi — alterna frasi corte e lunghe
+- Varia la lunghezza delle frasi - alterna frasi corte e lunghe
 - Aggiungi domande retoriche per coinvolgere l'ascoltatore
 - Spezza le frasi lunghe in frasi più brevi e parlate
 - Mantieni il significato ESATTO, cambia solo lo stile di delivery
@@ -142,7 +142,7 @@ Testo originale: {text}""",
 RULES:
 - Add natural pauses using "..." for brief pauses
 - Add filler words where natural: "you know", "I mean", "look", "right", "actually"
-- Vary sentence length — alternate short and long sentences
+- Vary sentence length - alternate short and long sentences
 - Add rhetorical questions to engage the listener
 - Break long sentences into shorter spoken phrases
 - Keep the EXACT meaning, just change delivery style
@@ -167,7 +167,7 @@ def rewrite_expressive(text: str, language: str = "en", style: str = "neutral") 
     """
     model = _find_ollama_model()
     if not model:
-        logger.warning("No Ollama model available — returning original text")
+        logger.warning("No Ollama model available - returning original text")
         return text
 
     lang_key = language[:2].lower() if language else "en"
@@ -212,14 +212,14 @@ def rewrite_expressive(text: str, language: str = "en", style: str = "neutral") 
                 rewritten = rewritten.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
 
             if rewritten and len(rewritten) > 10:
-                logger.info(f"✨ Gemma rewrite ({model}): {len(text)} → {len(rewritten)} chars")
+                logger.info(f" Gemma rewrite ({model}): {len(text)} -> {len(rewritten)} chars")
                 return rewritten
             else:
-                logger.warning("Gemma returned empty/short response — using original")
+                logger.warning("Gemma returned empty/short response - using original")
                 return text
 
     except Exception as e:
-        logger.warning(f"Gemma rewrite failed: {e} — using original text")
+        logger.warning(f"Gemma rewrite failed: {e} - using original text")
         return text
 
 
@@ -243,13 +243,13 @@ def _find_ollama_model() -> str:
                 for avail in available:
                     if pref == avail or avail.startswith(pref.split(":")[0]):
                         _ollama_model_cache = avail
-                        logger.info(f"🤖 Ollama model for TTS rewrite: {avail}")
+                        logger.info(f" Ollama model for TTS rewrite: {avail}")
                         return avail
 
             # Any model
             if available:
                 _ollama_model_cache = available[0]
-                logger.info(f"🤖 Using first available model: {available[0]}")
+                logger.info(f" Using first available model: {available[0]}")
                 return available[0]
     except Exception as e:
         logger.warning(f"Ollama not reachable: {e}")
@@ -316,7 +316,7 @@ def _synthesize_edge(text: str, voice: str, rate: str, pitch: str) -> tuple:
 
 
 def _synthesize_kokoro(text: str, voice_id: str = "af_heart", lang_code: str = "a", speed: float = 1.0) -> tuple:
-    """Local TTS with Kokoro — 82M params, very expressive."""
+    """Local TTS with Kokoro - 82M params, very expressive."""
     try:
         # espeak-ng data path for Homebrew installation
         os.environ.setdefault("ESPEAK_DATA_PATH", "/opt/homebrew/Cellar/espeak-ng/1.52.0/share")
@@ -331,7 +331,7 @@ def _synthesize_kokoro(text: str, voice_id: str = "af_heart", lang_code: str = "
             raise RuntimeError("Kokoro produced no audio")
 
         full_audio = np.concatenate(segments)
-        logger.info(f"✅ Kokoro TTS: {voice_id} — {len(full_audio)/24000:.1f}s generated")
+        logger.info(f" Kokoro TTS: {voice_id} - {len(full_audio)/24000:.1f}s generated")
         return full_audio, 24000
 
     except ImportError:
@@ -392,7 +392,7 @@ def synthesize_speech(
         rate_str, pitch_str = _style_to_rate_pitch(style, speed, pitch)
         audio, sr = _synthesize_edge(text, voice, rate_str, pitch_str)
         engine_used = "edge"
-        logger.info(f"✅ Edge TTS: {voice} — {len(audio)/sr:.1f}s generated")
+        logger.info(f" Edge TTS: {voice} - {len(audio)/sr:.1f}s generated")
 
     # ── Step 3: Post-processing ──
     audio = _apply_warmth(audio, sr, warmth, style)

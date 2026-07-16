@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Text to speech">
+  <rect x="10" y="13" width="30" height="38" rx="7" fill="#121722" stroke="#06b6d4" stroke-width="2"/>
+  <path d="M20 25h12M20 34h12M20 43h8" stroke="#f0f0f5" stroke-width="3" stroke-linecap="round"/>
+  <path d="M45 26c4 4 4 8 0 12M52 20c8 8 8 20 0 28" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+</svg>

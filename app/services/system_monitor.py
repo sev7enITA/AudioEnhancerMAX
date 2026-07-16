@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — System Monitor Service v2
+AudioEnhancerMAX by Fd - System Monitor Service v2
 Real-time CPU/GPU/ANE/RAM monitoring for Apple Silicon M3 MAX.
 Uses psutil (CPU/RAM) + macmon pipe (GPU/ANE/Power/Thermal).
 
@@ -37,7 +37,7 @@ class SystemMonitor:
         self._macmon_thread: Optional[threading.Thread] = None
         self._macmon_proc: Optional[subprocess.Popen] = None
 
-        # Separate data stores for each source — merged on read
+        # Separate data stores for each source - merged on read
         self._psutil_data = {}
         self._macmon_data = {}
 
@@ -86,7 +86,7 @@ class SystemMonitor:
         self._prev_net = None
         self._prev_time = time.time()
 
-        # psutil warmup — MUST be called before first interval=None call
+        # psutil warmup - MUST be called before first interval=None call
         # See: https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
         psutil.cpu_percent(interval=None)
         psutil.cpu_percent(interval=None, percpu=True)
@@ -117,13 +117,13 @@ class SystemMonitor:
             return
         self._running = True
 
-        # Thread 1: psutil metrics (CPU/RAM/disk/net) — every 2s
+        # Thread 1: psutil metrics (CPU/RAM/disk/net) - every 2s
         self._psutil_thread = threading.Thread(
             target=self._psutil_loop, daemon=True, name="sysmon-psutil"
         )
         self._psutil_thread.start()
 
-        # Thread 2: macmon pipe reader (GPU/ANE/power/temp) — continuous
+        # Thread 2: macmon pipe reader (GPU/ANE/power/temp) - continuous
         macmon_path = self._find_macmon()
         if macmon_path:
             self._macmon_thread = threading.Thread(
@@ -132,7 +132,7 @@ class SystemMonitor:
             )
             self._macmon_thread.start()
         else:
-            logger.info("macmon not found — GPU/ANE metrics unavailable, using psutil only")
+            logger.info("macmon not found - GPU/ANE metrics unavailable, using psutil only")
 
         logger.info(f"System monitor started (chip: {self._chip})")
 
@@ -167,7 +167,7 @@ class SystemMonitor:
         now = time.time()
         dt = now - self._prev_time
 
-        # CPU — interval=None is non-blocking after warmup
+        # CPU - interval=None is non-blocking after warmup
         cpu_pct = psutil.cpu_percent(interval=None)
         cpu_per_core = psutil.cpu_percent(interval=None, percpu=True)
         cpu_freq = psutil.cpu_freq()
@@ -250,12 +250,12 @@ class SystemMonitor:
 
         result = {}
 
-        # CPU usage — macmon gives 0-1 float
+        # CPU usage - macmon gives 0-1 float
         cpu_pct = data.get("cpu_usage_pct", 0)
         if isinstance(cpu_pct, (int, float)) and cpu_pct > 0:
             result["cpu_percent"] = round(cpu_pct * 100, 1)
 
-        # GPU usage — macmon gives [freq_mhz, usage_fraction]
+        # GPU usage - macmon gives [freq_mhz, usage_fraction]
         gpu_data = data.get("gpu_usage")
         if isinstance(gpu_data, list) and len(gpu_data) >= 2:
             gpu_freq_mhz = gpu_data[0]
@@ -266,7 +266,7 @@ class SystemMonitor:
         elif isinstance(gpu_data, (int, float)):
             result["gpu_percent"] = round(gpu_data * 100 if gpu_data <= 1 else gpu_data, 1)
 
-        # ANE power → proxy for ANE usage (max ~8W on M3 Max)
+        # ANE power -> proxy for ANE usage (max ~8W on M3 Max)
         ane_power = data.get("ane_power", 0)
         if isinstance(ane_power, (int, float)) and ane_power > 0:
             result["ane_percent"] = round(min(100, ane_power / 8.0 * 100), 1)
@@ -276,7 +276,7 @@ class SystemMonitor:
         if isinstance(sys_power, (int, float)) and sys_power > 0:
             result["power_watts"] = round(sys_power, 1)
 
-        # Memory from macmon (unified memory — more accurate than psutil)
+        # Memory from macmon (unified memory - more accurate than psutil)
         mem_data = data.get("memory", {})
         if isinstance(mem_data, dict):
             ram_total = mem_data.get("ram_total", 0)

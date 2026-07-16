@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Progress Tracking via WebSocket
+AudioEnhancerMAX by Fd - Progress Tracking via WebSocket
 Enhanced with adaptive ETA from the Timing Engine.
 """
 import asyncio

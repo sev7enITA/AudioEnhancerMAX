@@ -2,6 +2,25 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
+## [3.5.2] - 2026-07-16
+
+### Added
+
+- Apple Silicon macOS desktop launcher and repeatable `.app`/`.dmg` packaging workflow.
+- Community Roadmap pages with feature proposals and interest signaling.
+- Bespoke SVG interface icon set and local SourceForge award fallback.
+- macOS packaging documentation covering data locations, external services, model downloads, signing, and notarization status.
+
+### Changed
+
+- Mutable desktop data now uses `~/Library/Application Support/AudioEnhancerMAX` in frozen builds.
+- Public presentation and roadmap links now target the `sev7enITA` repository.
+
+### Security and governance
+
+- The desktop server binds to loopback by default.
+- The release documentation distinguishes bundled processing components from network-dependent TTS, external Ollama integration, downloadable model weights, and FFmpeg-dependent formats.
+
 ## [3.5.1] — 2026-07-07
 
 ### Release Hardening

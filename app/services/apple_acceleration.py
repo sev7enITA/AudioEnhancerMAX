@@ -1,12 +1,12 @@
 """
-AudioEnhancerMAX by Fd — Apple Silicon Acceleration Module
+AudioEnhancerMAX by Fd - Apple Silicon Acceleration Module
 Centralized Metal/MPS/ANE/Accelerate optimizations for M3 MAX.
 
 GPU acceleration strategy:
 - PyTorch MPS (Metal): Demucs, pyannote diarization
 - Apple Accelerate (vDSP): numpy FFT, scipy signal processing
 - ARM NEON (via ctranslate2): faster-whisper inference
-- CoreML/ANE: future — model compilation for Neural Engine
+- CoreML/ANE: future - model compilation for Neural Engine
 
 Note: CTranslate2 (faster-whisper) does NOT support MPS.
 Its ARM NEON backend is already optimized for Apple Silicon.
@@ -25,7 +25,7 @@ def configure_apple_acceleration():
     Call this once at application startup.
     """
     if platform.machine() != "arm64":
-        logger.info("Not Apple Silicon — skipping Metal acceleration config")
+        logger.info("Not Apple Silicon - skipping Metal acceleration config")
         return
 
     optimizations = []
@@ -46,13 +46,13 @@ def configure_apple_acceleration():
             os.environ.setdefault("PYTORCH_MPS_HIGH_WATERMARK_RATIO", "0.7")
             # Enable MPS fallback for unsupported ops (prevents crashes)
             os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
-            optimizations.append(f"PyTorch MPS (Metal) — {torch.backends.mps.is_built()}")
+            optimizations.append(f"PyTorch MPS (Metal) - {torch.backends.mps.is_built()}")
         else:
-            optimizations.append("PyTorch MPS — not available")
+            optimizations.append("PyTorch MPS - not available")
     except ImportError:
         pass
 
-    # 3. CTranslate2 (faster-whisper) — ARM NEON is auto-detected
+    # 3. CTranslate2 (faster-whisper) - ARM NEON is auto-detected
     # No config needed, but we can set inter/intra threads
     os.environ.setdefault("CT2_USE_EXPERIMENTAL_PACKED_GEMM", "1")
     optimizations.append("CTranslate2 ARM NEON")
@@ -71,7 +71,7 @@ def configure_apple_acceleration():
         pass
 
     logger.info(
-        f"🍎 Apple Silicon acceleration configured: "
+        f" Apple Silicon acceleration configured: "
         f"{', '.join(optimizations)}"
     )
 

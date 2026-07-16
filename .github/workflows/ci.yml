@@ -39,11 +39,12 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          for html_path in [Path("web/index.html"), Path("frontend/landing.html")]:
+          for html_path in [Path("web/index.html"), Path("frontend/landing.html"), Path("web/roadmap.html"), Path("frontend/roadmap.html")]:
               html = html_path.read_text(encoding="utf-8")
               assert "sev7enITA/AudioEnhancerMAX" in html, html_path
               assert "sourceforge.net/projects/audioenhancermax" in html, html_path
-              assert "oss-rising-star-white" in html, html_path
+              if "roadmap" not in html_path.name:
+                  assert "oss-rising-star-white" in html, html_path
               assert "sev7en2507" not in html, html_path
               for banned in ["100% local", "zero cloud", "No limits", "never leaves"]:
                   assert banned not in html, (html_path, banned)
@@ -53,4 +54,31 @@ jobs:
           assert "docs/ai-governance.md" in readme
           for banned in ["100% local", "zero cloud", "No limits", "never leaves"]:
               assert banned not in readme, banned
+          PY
+
+      - name: Enforce icon and punctuation policy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          roots = [Path("app"), Path("frontend"), Path("web"), Path("desktop")]
+          suffixes = {".py", ".html", ".js", ".css"}
+
+          def is_disallowed_symbol(char: str) -> bool:
+              codepoint = ord(char)
+              return (
+                  char in {"—", "–", "✓", "↗"}
+                  or 0x1F000 <= codepoint <= 0x1FAFF
+                  or 0x2600 <= codepoint <= 0x27BF
+                  or 0x1F1E6 <= codepoint <= 0x1F1FF
+                  or codepoint == 0xFE0F
+              )
+
+          for root in roots:
+              for path in root.rglob("*"):
+                  if path.suffix not in suffixes or "outputs" in path.parts or "uploads" in path.parts:
+                      continue
+                  text = path.read_text(encoding="utf-8")
+                  symbols = sorted({char for char in text if is_disallowed_symbol(char)})
+                  assert not symbols, (path, symbols)
           PY

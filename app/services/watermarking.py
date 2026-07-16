@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Audio Watermarking Service
+AudioEnhancerMAX by Fd - Audio Watermarking Service
 Embeds and detects invisible watermarks in processed audio files.
 """
 import numpy as np

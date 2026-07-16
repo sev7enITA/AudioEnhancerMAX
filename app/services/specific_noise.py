@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Specific Noise Removal Service
+AudioEnhancerMAX by Fd - Specific Noise Removal Service
 Wind, buzzing, static, reverb/echo removal.
 """
 import numpy as np
@@ -123,7 +123,7 @@ def remove_static_noise(
     try:
         import noisereduce as nr
 
-        # v2.0: Cap prop_decrease at 0.85 (was strength * 1.3 → could reach 1.0+)
+        # v2.0: Cap prop_decrease at 0.85 (was strength * 1.3 -> could reach 1.0+)
         # Add time/freq smoothing to prevent metallic artifacts
         reduced = nr.reduce_noise(
             y=audio,
@@ -171,7 +171,7 @@ def remove_reverb_echo(
     # Method: median filtering across time to estimate direct sound
     from scipy.ndimage import median_filter
 
-    # Median filter in time dimension — removes transient reverb tails
+    # Median filter in time dimension - removes transient reverb tails
     kernel_size = int(0.1 * sr / hop_length)  # ~100ms window
     kernel_size = max(3, kernel_size | 1)  # Ensure odd
 

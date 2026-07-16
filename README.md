@@ -5,7 +5,7 @@
 ### The open-source AI audio media center
 
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
-**16+ processing modules · Apple Silicon acceleration · local Ollama/Gemma smart mode · Android edge workers · local-first core · v3.5.1**
+**16+ processing modules · Apple Silicon acceleration · local Ollama/Gemma smart mode · Android edge workers · local-first core · v3.5.2**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-06b6d4.svg)](https://python.org)
@@ -15,6 +15,7 @@
 
 [Official Website](https://fabriziodegni.com/AudioEnhancerMAX/) ·
 [SourceForge](https://sourceforge.net/projects/audioenhancermax/) ·
+[Roadmap](web/roadmap.html) ·
 [Documentation](#documentation) ·
 [Changelog](CHANGELOG.md) ·
 [Contributing](CONTRIBUTING.md)
@@ -30,6 +31,8 @@ AudioEnhancerMAX turns raw recordings into cleaner, production-ready audio witho
 ## Why It Exists
 
 AudioEnhancerMAX is built for creators, podcasters, researchers, interviewers, and audio-heavy workflows where privacy, control, and auditability matter. It combines local DSP, AI-assisted decisions, real-time monitoring, transcription, text-to-speech, and optional Android edge workers in one FastAPI + vanilla JS application.
+
+The v3.5.2 macOS distribution adds an Apple Silicon desktop launcher that starts the local server and opens the interface without requiring Terminal. See [macOS App](docs/macos-app.md) for included components, external dependencies, data locations, and signing status.
 
 The default architecture is local-first: uploads, DSP output, timing history, and local model inference stay on the host machine unless you explicitly enable an integration that sends data elsewhere. You decide when to use local AI through Ollama/Gemma, when to offload DSP chunks to trusted devices on your LAN, and which output format to export.
 
@@ -49,6 +52,14 @@ AudioEnhancerMAX has also been recognized with the **SourceForge Rising Star Awa
 | Edge compute | Android Kotlin worker app with HTTP processing and UDP discovery on trusted LANs |
 
 ## Quick Start
+
+### macOS App (Apple Silicon)
+
+Download `AudioEnhancerMAX-v3.5.2-macOS-arm64.dmg` from the [v3.5.2 release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.5.2), open the disk image, and drag AudioEnhancerMAX into Applications. The app starts its private local server and opens the interface in the default browser; no Terminal command is required.
+
+The package requires macOS 13 or later on Apple Silicon. It is ad-hoc signed and integrity-checked, but it is not yet notarized by Apple, so Gatekeeper may request explicit confirmation on first launch. See the [macOS app guide](docs/macos-app.md) for installation, data locations, privacy boundaries, and build instructions.
+
+### Run from Source
 
 ### Requirements
 
@@ -153,6 +164,8 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - [Edge Computing Setup](docs/edge-computing.md)
 - [Developer Onboarding](docs/developer-onboarding.md)
 - [AI Governance Notes](docs/ai-governance.md)
+- [macOS App and Packaging](docs/macos-app.md)
+- [v3.6 Implementation Plan](docs/v3.6-implementation-plan.md)
 - [Troubleshooting / FAQ](docs/faq.md)
 - [Translation Notes](docs/translation.md)
 

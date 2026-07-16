@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Local AI analysis">
+  <circle cx="32" cy="32" r="22" fill="#121722" stroke="#7c3aed" stroke-width="3"/>
+  <path d="M22 33c5-13 15-13 20 0M22 33c5 13 15 13 20 0" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="5" fill="#10b981"/>
+</svg>

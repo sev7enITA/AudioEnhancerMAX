@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Audio Enhancement Service
+AudioEnhancerMAX by Fd - Audio Enhancement Service
 Studio sound, AutoEQ, normalization, music preservation.
 """
 import numpy as np
@@ -14,7 +14,7 @@ def apply_studio_sound(
     sr: int,
 ) -> np.ndarray:
     """
-    Apply studio-quality processing chain (v2.0 — Broadcast standard):
+    Apply studio-quality processing chain (v2.0 - Broadcast standard):
     1. High-pass rumble filter
     2. Gentle EQ for warmth + clarity
     3. De-esser to tame sibilance
@@ -24,7 +24,7 @@ def apply_studio_sound(
     try:
         import pedalboard as pb
 
-        # v2.0: Broadcast-quality chain — designed to sound natural,
+        # v2.0: Broadcast-quality chain - designed to sound natural,
         # not "processed". Key changes from v1:
         # - Slower attack (25ms) preserves consonant transients
         # - Lower ratio (2:1) = gentle compression, no pumping
@@ -38,7 +38,7 @@ def apply_studio_sound(
             # Warmth: gentle low-shelf boost for fuller voice body
             pb.LowShelfFilter(cutoff_frequency_hz=150.0, gain_db=1.0),
 
-            # Presence: subtle clarity boost at 4kHz (v1 used 3kHz +2dB — too harsh)
+            # Presence: subtle clarity boost at 4kHz (v1 used 3kHz +2dB - too harsh)
             pb.HighShelfFilter(cutoff_frequency_hz=4000.0, gain_db=1.5),
 
             # De-esser: tame sibilance at 6kHz (prevents harsh S sounds)
@@ -114,7 +114,7 @@ def apply_auto_eq(
         import pedalboard as pb
 
         if target_profile == "broadcast":
-            # v2.0 Broadcast/podcast EQ profile — warmer, less harsh
+            # v2.0 Broadcast/podcast EQ profile - warmer, less harsh
             # Key change: reduced 2.5kHz peak from +2.5dB to +1.5dB
             # Added warmth boost at 150Hz for fuller voice body
             board = pb.Pedalboard([
@@ -183,7 +183,7 @@ def normalize_volume(
         if peak > 1.0:
             normalized = normalized / peak * 0.99
 
-        logger.info(f"Normalized: {current_loudness:.1f} LUFS → {target_lufs:.1f} LUFS")
+        logger.info(f"Normalized: {current_loudness:.1f} LUFS -> {target_lufs:.1f} LUFS")
         return normalized
 
     except ImportError:

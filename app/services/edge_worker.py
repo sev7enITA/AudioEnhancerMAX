@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-AudioEnhancerMAX by Fd — Edge Worker (Runs on Android via Termux)
+AudioEnhancerMAX by Fd - Edge Worker (Runs on Android via Termux)
 Lightweight FastAPI server that processes audio chunks for the main orchestrator.
-Only DSP filters — no heavy ML models.
+Only DSP filters - no heavy ML models.
 
 Usage:
   python3 edge_worker.py [--port 8877] [--name "My Phone"]
@@ -39,7 +39,7 @@ DISCOVERY_PORT = 9999
 DISCOVERY_MAGIC = b"AEMAX_DISCOVER"
 DISCOVERY_INTERVAL = 5  # seconds
 
-app = FastAPI(title=f"AudioEnhancerMAX Edge Worker — {WORKER_NAME}")
+app = FastAPI(title=f"AudioEnhancerMAX Edge Worker - {WORKER_NAME}")
 
 
 # ══════════════════════════════════════════════════════════
@@ -266,7 +266,7 @@ async def process_audio(
     result = process_chunk(audio_data, sample_rate, filter_dict)
 
     elapsed = time.time() - start_time
-    logger.info(f"✅ Chunk processed in {elapsed:.2f}s")
+    logger.info(f" Chunk processed in {elapsed:.2f}s")
 
     # Return as WAV bytes
     out_buf = io.BytesIO()
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     broadcast_thread = threading.Thread(target=_broadcast_presence, daemon=True)
     broadcast_thread.start()
 
-    logger.info(f"🚀 Edge Worker starting: {WORKER_NAME}")
+    logger.info(f" Edge Worker starting: {WORKER_NAME}")
     logger.info(f"   Device: {DEVICE_INFO['device_model']}")
     logger.info(f"   SoC: {DEVICE_INFO['soc']}")
     logger.info(f"   Cores: {DEVICE_INFO['cpu_cores']}, RAM: {DEVICE_INFO['ram_gb']}GB")

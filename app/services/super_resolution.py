@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Audio Super-Resolution Service
+AudioEnhancerMAX by Fd - Audio Super-Resolution Service
 Restores lost frequencies from compression, upsamples bitrate.
 """
 import numpy as np
@@ -47,7 +47,7 @@ def _try_audiosr(
             target_sr=target_sr,
         )
 
-        logger.info(f"AudioSR: {sr}Hz → {target_sr}Hz super-resolution applied")
+        logger.info(f"AudioSR: {sr}Hz -> {target_sr}Hz super-resolution applied")
         return enhanced, target_sr
 
     except ImportError:
@@ -111,7 +111,7 @@ def _spectral_enhance(
     if peak > 1.0:
         result = result / peak * 0.99
 
-    logger.info(f"Spectral enhancement: {sr}Hz → {target_sr}Hz")
+    logger.info(f"Spectral enhancement: {sr}Hz -> {target_sr}Hz")
     return result, target_sr
 
 

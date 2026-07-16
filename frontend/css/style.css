@@ -1,11 +1,11 @@
-/* ══════════════════════════════════════════════════════════
-   AudioEnhancerMAX by Fd — Design System
+/* ==========================================================
+   AudioEnhancerMAX by Fd - Design System
    Premium dark glassmorphism with vibrant accents
-   ══════════════════════════════════════════════════════════ */
+   ========================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* ── CSS Custom Properties ────────────────────────── */
+/* -- CSS Custom Properties -------------------------- */
 :root {
     /* Background */
     --bg-primary: #07070d;
@@ -65,7 +65,7 @@
     --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Reset & Base ────────────────────────── */
+/* -- Reset & Base -------------------------- */
 *, *::before, *::after {
     margin: 0;
     padding: 0;
@@ -100,7 +100,7 @@ body::before {
     pointer-events: none;
 }
 
-/* ── Scrollbar ────────────────────────── */
+/* -- Scrollbar -------------------------- */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -119,7 +119,7 @@ body::before {
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* ── Layout ────────────────────────── */
+/* -- Layout -------------------------- */
 .app-layout {
     display: flex;
     min-height: 100vh;
@@ -127,7 +127,7 @@ body::before {
     z-index: 1;
 }
 
-/* ── Header ────────────────────────── */
+/* -- Header -------------------------- */
 .app-header {
     position: fixed;
     top: 0;
@@ -158,8 +158,101 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
     box-shadow: var(--shadow-glow);
+}
+
+.icon-img {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+.app-logo-icon .icon-img {
+    width: 26px;
+    height: 26px;
+}
+
+.sourceforge-badge-stack {
+    width: 132px;
+    min-height: 112px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sourceforge-badge-stack .sf-root {
+    width: 125px;
+}
+
+.sourceforge-badge-stack.use-fallback .sf-root {
+    display: none;
+}
+
+.sourceforge-badge-stack:not(.use-fallback) .sourceforge-fallback {
+    display: none;
+}
+
+.sourceforge-fallback {
+    width: 125px;
+    min-height: 104px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    color: var(--text-primary);
+    text-align: center;
+    text-decoration: none;
+    border: 1px solid rgba(245, 158, 11, 0.38);
+    border-radius: var(--radius-md);
+    background:
+        radial-gradient(circle at 50% 20%, rgba(245, 158, 11, 0.22), transparent 42%),
+        rgba(15, 23, 42, 0.86);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 12px 34px rgba(245, 158, 11, 0.12);
+}
+
+.sourceforge-fallback img {
+    width: 40px;
+    height: 40px;
+}
+
+.sourceforge-fallback span {
+    font-size: 0.64rem;
+    line-height: 1.2;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.sourceforge-fallback strong {
+    display: block;
+    color: #fbbf24;
+    font-size: 0.8rem;
+}
+
+.btn-icon-svg,
+.tab-icon-svg,
+.notice-icon-svg,
+.heading-icon,
+.section-title-icon,
+.inline-icon {
+    width: 17px;
+    height: 17px;
+    margin-right: 8px;
+}
+
+.control-icon-svg {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+}
+
+.heading-icon,
+.section-title-icon {
+    vertical-align: -0.25em;
 }
 
 .app-logo-text {
@@ -216,7 +309,7 @@ body::before {
     50% { opacity: 0.5; transform: scale(0.8); }
 }
 
-/* ── Sidebar ────────────────────────── */
+/* -- Sidebar -------------------------- */
 .sidebar {
     position: fixed;
     left: 0;
@@ -273,10 +366,17 @@ body::before {
 }
 
 .sidebar-nav-item .icon {
-    font-size: 1.1rem;
     width: 22px;
-    text-align: center;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+}
+
+.sidebar-nav-item .icon .icon-img {
+    width: 18px;
+    height: 18px;
 }
 
 .sidebar-nav-item .badge {
@@ -289,7 +389,7 @@ body::before {
     font-weight: 600;
 }
 
-/* ── Main Content ────────────────────────── */
+/* -- Main Content -------------------------- */
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
@@ -298,7 +398,7 @@ body::before {
     min-height: calc(100vh - var(--header-height));
 }
 
-/* ── Panel / View containers ────────────────────────── */
+/* -- Panel / View containers -------------------------- */
 .panel {
     display: none;
 }
@@ -312,7 +412,7 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Cards ────────────────────────── */
+/* -- Cards -------------------------- */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
@@ -344,10 +444,16 @@ body::before {
 }
 
 .card-title .icon {
-    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
 }
 
-/* ── Upload Zone ────────────────────────── */
+.card-title .icon .icon-img {
+    width: 21px;
+    height: 21px;
+}
+
+/* Upload Zone */
 .upload-zone {
     border: 2px dashed var(--glass-border);
     border-radius: var(--radius-xl);
@@ -381,10 +487,14 @@ body::before {
 }
 
 .upload-zone-icon {
-    font-size: 3rem;
     margin-bottom: 16px;
     opacity: 0.5;
     transition: var(--transition-normal);
+}
+
+.upload-zone-icon .icon-img {
+    width: 58px;
+    height: 58px;
 }
 
 .upload-zone:hover .upload-zone-icon {
@@ -423,7 +533,7 @@ body::before {
     text-transform: uppercase;
 }
 
-/* ── File Info Bar ────────────────────────── */
+/* -- File Info Bar -------------------------- */
 .file-info-bar {
     display: none;
     background: var(--bg-card);
@@ -478,7 +588,7 @@ body::before {
     gap: 8px;
 }
 
-/* ── Waveform ────────────────────────── */
+/* -- Waveform -------------------------- */
 .waveform-container {
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
@@ -554,7 +664,7 @@ body::before {
     min-width: 100px;
 }
 
-/* ── Buttons ────────────────────────── */
+/* -- Buttons -------------------------- */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -669,7 +779,7 @@ body::before {
     margin-bottom: 16px;
 }
 
-/* ── Feature Toggles ────────────────────────── */
+/* -- Feature Toggles -------------------------- */
 .feature-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -705,9 +815,13 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
     background: rgba(255, 255, 255, 0.04);
     flex-shrink: 0;
+}
+
+.feature-icon .icon-img {
+    width: 24px;
+    height: 24px;
 }
 
 .feature-item.enabled .feature-icon {
@@ -731,7 +845,7 @@ body::before {
     margin-top: 2px;
 }
 
-/* ── Toggle Switch ────────────────────────── */
+/* -- Toggle Switch -------------------------- */
 .toggle {
     position: relative;
     width: 42px;
@@ -774,7 +888,7 @@ body::before {
     transform: translateX(18px);
 }
 
-/* ── Sliders ────────────────────────── */
+/* -- Sliders -------------------------- */
 .slider-group {
     display: flex;
     align-items: center;
@@ -826,7 +940,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     text-align: right;
 }
 
-/* ── Activity Status System ────────────────────────── */
+/* -- Activity Status System -------------------------- */
 
 /* Global activity bar (persistent bottom bar) */
 .activity-bar {
@@ -904,7 +1018,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .activity-bar-eta::before {
-    content: '⏳';
+    content: '';
     font-size: 0.65rem;
 }
 
@@ -985,7 +1099,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .progress-eta-icon {
-    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.progress-eta-icon .icon-img {
+    width: 15px;
+    height: 15px;
+    margin-right: 4px;
 }
 
 .progress-eta-reason {
@@ -1121,7 +1242,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-family: 'Inter', monospace;
 }
 
-/* ── Processing Queue ────────────────────────── */
+/* -- Processing Queue -------------------------- */
 .process-actions {
     display: flex;
     gap: 12px;
@@ -1130,7 +1251,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border-top: 1px solid var(--glass-border);
 }
 
-/* ── Tabs ────────────────────────── */
+/* -- Tabs -------------------------- */
 .tabs {
     display: flex;
     gap: 2px;
@@ -1172,7 +1293,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     animation: fadeIn 0.2s ease;
 }
 
-/* ── Textarea / Text Input ────────────────────────── */
+/* -- Textarea / Text Input -------------------------- */
 .text-input,
 textarea {
     width: 100%;
@@ -1220,7 +1341,7 @@ select:focus {
     border-color: var(--accent-primary);
 }
 
-/* ── Transcript & TTS ────────────────────────── */
+/* -- Transcript & TTS -------------------------- */
 .transcript-output {
     max-height: 400px;
     overflow-y: auto;
@@ -1263,7 +1384,7 @@ select:focus {
     font-weight: 500;
 }
 
-/* ── Preset Cards ────────────────────────── */
+/* -- Preset Cards -------------------------- */
 .preset-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1345,7 +1466,7 @@ select:focus {
     opacity: 0.9;
 }
 
-/* ── Diarization Timeline ────────────────────────── */
+/* -- Diarization Timeline -------------------------- */
 .diarization-timeline {
     display: flex;
     flex-direction: column;
@@ -1385,7 +1506,7 @@ select:focus {
     --speaker-6: #ec4899;
 }
 
-/* ── Batch Processing ────────────────────────── */
+/* -- Batch Processing -------------------------- */
 .batch-file-list {
     display: flex;
     flex-direction: column;
@@ -1416,7 +1537,7 @@ select:focus {
 .batch-file-status.completed { color: var(--success); }
 .batch-file-status.error { color: var(--error); }
 
-/* ── Smart Mode Banner ────────────────────────── */
+/* -- Smart Mode Banner -------------------------- */
 .smart-mode-banner {
     display: none;
     padding: 16px 20px;
@@ -1434,7 +1555,13 @@ select:focus {
 }
 
 .smart-mode-icon {
-    font-size: 2rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.smart-mode-icon .icon-img {
+    width: 38px;
+    height: 38px;
 }
 
 .smart-mode-info h3 {
@@ -1462,7 +1589,7 @@ select:focus {
     border: 1px solid rgba(124, 58, 237, 0.3);
 }
 
-/* ── Toast / Notifications ────────────────────────── */
+/* -- Toast / Notifications -------------------------- */
 .toast-container {
     position: fixed;
     bottom: 24px;
@@ -1499,7 +1626,7 @@ select:focus {
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Loading Overlay ────────────────────────── */
+/* -- Loading Overlay -------------------------- */
 .loading-overlay {
     display: none;
     position: fixed;
@@ -1535,7 +1662,7 @@ select:focus {
     color: var(--text-secondary);
 }
 
-/* ── Download Bar ────────────────────────── */
+/* -- Download Bar -------------------------- */
 .download-bar {
     display: none;
     position: fixed;
@@ -1575,7 +1702,7 @@ select:focus {
     font-weight: 600;
 }
 
-/* ── Responsive ────────────────────────── */
+/* -- Responsive -------------------------- */
 @media (max-width: 1024px) {
     .sidebar {
         transform: translateX(-100%);
@@ -1606,7 +1733,7 @@ select:focus {
     }
 }
 
-/* ── Utility ────────────────────────── */
+/* -- Utility -------------------------- */
 .hidden { display: none !important; }
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
@@ -1627,9 +1754,9 @@ select:focus {
 .font-semibold { font-weight: 600; }
 .w-full { width: 100%; }
 
-/* ══════════════════════════════════════════════════════════
+/* ==========================================================
    Edge Cluster Panel
-   ══════════════════════════════════════════════════════════ */
+   ========================================================== */
 
 .cluster-badge {
     cursor: pointer;
@@ -1893,9 +2020,9 @@ select:focus {
 
 .mt-8 { margin-top: 8px; }
 
-/* ══════════════════════════════════════════════════════════
+/* ==========================================================
    Processing Dashboard (Loading Overlay redesign)
-   ══════════════════════════════════════════════════════════ */
+   ========================================================== */
 
 .processing-dashboard {
     width: 90%;
@@ -1931,7 +2058,7 @@ select:focus {
     color: var(--accent-primary-light);
 }
 
-/* ── Node utilization cards ── */
+/* -- Node utilization cards -- */
 .proc-nodes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -2046,7 +2173,7 @@ select:focus {
     flex-shrink: 0;
 }
 
-/* ── Core heatmap + extras ── */
+/* -- Core heatmap + extras -- */
 .proc-node-extras {
     margin-top: 6px;
 }
@@ -2110,7 +2237,7 @@ select:focus {
     font-weight: 700;
 }
 
-/* ── Pipeline steps ── */
+/* -- Pipeline steps -- */
 .proc-pipeline {
     display: flex;
     flex-direction: column;
@@ -2235,9 +2362,77 @@ select:focus {
     flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════
+/* ==========================================
+   Intent-based Personalization Selector
+   ========================================== */
+.sidebar-intent-selector {
+    padding: 12px 14px;
+    margin: 8px 12px 14px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    backdrop-filter: blur(10px);
+}
+
+.sidebar-intent-label {
+    font-size: 0.62rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.sidebar-intent-select {
+    width: 100%;
+    background: rgba(7, 7, 13, 0.7);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 6px 8px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+    box-sizing: border-box;
+}
+
+.sidebar-intent-select:hover {
+    border-color: rgba(124, 58, 237, 0.4);
+    background: rgba(7, 7, 13, 0.85);
+}
+
+.sidebar-intent-select:focus {
+    border-color: var(--accent-primary);
+}
+
+.sidebar-intent-select option {
+    background: #12121a;
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+.intent-indicator-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(124, 58, 237, 0.15);
+    color: var(--accent-primary-light);
+    font-size: 0.62rem;
+    font-weight: 700;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100%;
+    text-align: center;
+}
+
+/* ==========================================
    Sidebar Version Badge
-   ══════════════════════════════════════════ */
+   ========================================== */
 .sidebar-version {
     margin-top: auto;
     padding: 12px 16px;
@@ -2248,9 +2443,9 @@ select:focus {
     letter-spacing: 0.5px;
 }
 
-/* ══════════════════════════════════════════
+/* ==========================================
    Settings Panel
-   ══════════════════════════════════════════ */
+   ========================================== */
 .settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2357,9 +2552,9 @@ select:focus {
     background: white;
 }
 
-/* ══════════════════════════════════════════
+/* ==========================================
    About Panel
-   ══════════════════════════════════════════ */
+   ========================================== */
 .about-content {
     max-width: 720px;
 }

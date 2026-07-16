@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Speaker Diarization Service
+AudioEnhancerMAX by Fd - Speaker Diarization Service
 Identifies who speaks when in multi-speaker recordings.
 Optimized for Apple Silicon M3 MAX via MPS backend.
 """

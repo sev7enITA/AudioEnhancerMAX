@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AudioEnhancerMAX by Fd — Professional AI-powered podcast audio processing suite. Remove noise, filler words, enhance audio quality with studio-grade tools.">
+    <meta name="description" content="AudioEnhancerMAX by Fd - Professional AI-powered podcast audio processing suite. Remove noise, filler words, enhance audio quality with studio-grade tools.">
     <title>AudioEnhancerMAX by Fd</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+    <link rel="icon" href="/static/img/icons/aem-mark.svg" type="image/svg+xml">
 </head>
 <body>
 
-<!-- ═══════════════ HEADER ═══════════════ -->
+<!-- =============== HEADER =============== -->
 <header class="app-header" id="app-header">
     <div class="app-logo">
-        <div class="app-logo-icon">⚡</div>
+        <div class="app-logo-icon"><img class="icon-img" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true"></div>
         <span class="app-logo-text">AudioEnhancerMAX</span>
         <span class="app-logo-badge">by Fd</span>
     </div>
@@ -35,32 +35,45 @@
 
 <!-- ═══════════════ SIDEBAR ═══════════════ -->
 <nav class="sidebar" id="sidebar">
+    <!-- Intent-based Dashboard Personalization Selector -->
+    <div class="sidebar-intent-selector">
+        <label class="sidebar-intent-label" for="user-intent-select">Dashboard Profile</label>
+        <select class="sidebar-intent-select" id="user-intent-select" onchange="applyIntentProfile(this.value)">
+            <option value="all">Full Suite (All Tools)</option>
+            <option value="podcast">Podcast &amp; Voice Cleanup</option>
+            <option value="analysis">Transcription &amp; AI Intelligence</option>
+            <option value="expert">Cluster &amp; DSP Engineering</option>
+            <option value="secure">Watermark &amp; Local Reports</option>
+        </select>
+        <div class="intent-indicator-badge" id="intent-badge">Full Mode</div>
+    </div>
+
     <div class="sidebar-section">
         <div class="sidebar-section-title">Main</div>
         <div class="sidebar-nav-item active" data-panel="upload-panel" onclick="switchPanel('upload-panel', this)">
-            <span class="icon">📁</span> Upload & Process
+            <span class="icon"><img class="icon-img" src="/static/img/icons/folder-upload.svg" alt="" aria-hidden="true"></span> Upload & Process
         </div>
         <div class="sidebar-nav-item" data-panel="presets-panel" onclick="switchPanel('presets-panel', this)">
-            <span class="icon">🎛️</span> Presets
+            <span class="icon"><img class="icon-img" src="/static/img/icons/presets.svg" alt="" aria-hidden="true"></span> Presets
         </div>
         <div class="sidebar-nav-item" data-panel="batch-panel" onclick="switchPanel('batch-panel', this)">
-            <span class="icon">📦</span> Batch Processing
+            <span class="icon"><img class="icon-img" src="/static/img/icons/package.svg" alt="" aria-hidden="true"></span> Batch Processing
         </div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">AI Tools</div>
         <div class="sidebar-nav-item" data-panel="stt-panel" onclick="switchPanel('stt-panel', this)">
-            <span class="icon">📝</span> Speech to Text
+            <span class="icon"><img class="icon-img" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true"></span> Speech to Text
         </div>
         <div class="sidebar-nav-item" data-panel="tts-panel" onclick="switchPanel('tts-panel', this)">
-            <span class="icon">🗣️</span> Text to Speech
+            <span class="icon"><img class="icon-img" src="/static/img/icons/tts.svg" alt="" aria-hidden="true"></span> Text to Speech
         </div>
         <div class="sidebar-nav-item" data-panel="diarize-panel" onclick="switchPanel('diarize-panel', this)">
-            <span class="icon">👥</span> Speaker Diarization
+            <span class="icon"><img class="icon-img" src="/static/img/icons/speakers.svg" alt="" aria-hidden="true"></span> Speaker Diarization
         </div>
         <div class="sidebar-nav-item" data-panel="smart-panel" onclick="switchPanel('smart-panel', this)">
-            <span class="icon">🧠</span> Smart Mode
+            <span class="icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></span> Smart Mode
             <span class="badge">Ollama/Gemma</span>
         </div>
     </div>
@@ -68,14 +81,14 @@
     <div class="sidebar-section">
         <div class="sidebar-section-title">Audio</div>
         <div class="sidebar-nav-item" data-panel="watermark-panel" onclick="switchPanel('watermark-panel', this)">
-            <span class="icon">🔒</span> Watermarking
+            <span class="icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></span> Watermarking
         </div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">Infrastructure</div>
         <div class="sidebar-nav-item" data-panel="cluster-panel" onclick="switchPanel('cluster-panel', this)">
-            <span class="icon">🌐</span> Edge Cluster
+            <span class="icon"><img class="icon-img" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true"></span> Edge Cluster
             <span class="badge cluster-count-badge" id="sidebar-cluster-count" style="display:none">0</span>
         </div>
     </div>
@@ -83,31 +96,37 @@
     <div class="sidebar-section">
         <div class="sidebar-section-title">System</div>
         <div class="sidebar-nav-item" data-panel="settings-panel" onclick="switchPanel('settings-panel', this)">
-            <span class="icon">⚙️</span> Settings
+            <span class="icon"><img class="icon-img" src="/static/img/icons/settings.svg" alt="" aria-hidden="true"></span> Settings
         </div>
         <div class="sidebar-nav-item" data-panel="about-panel" onclick="switchPanel('about-panel', this)">
-            <span class="icon">ℹ️</span> About
+            <span class="icon"><img class="icon-img" src="/static/img/icons/info.svg" alt="" aria-hidden="true"></span> About
         </div>
     </div>
 
     <div class="sidebar-badge" style="padding: 12px 16px 0 16px; display: flex; justify-content: center; border-top: 1px solid rgba(255,255,255,0.05); margin-top: auto;">
-        <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star" style="width:125px">
-            <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a>
+        <div class="sourceforge-badge-stack use-fallback">
+            <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star">
+                <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a>
+            </div>
+            <a class="sourceforge-fallback" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" aria-label="AudioEnhancerMAX SourceForge Rising Star Award">
+                <img src="/static/img/icons/award-star.svg" alt="" aria-hidden="true">
+                <span>SourceForge<strong>Rising Star</strong></span>
+            </a>
         </div>
     </div>
     <div class="sidebar-version" style="border-top: none; padding-top: 6px;">
-        <span>v3.5.1</span> · <span id="sidebar-chip">M3 Max</span>
+        <span>v3.5.1</span> - <span id="sidebar-chip">M3 Max</span>
     </div>
 </nav>
 
-<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<!-- =============== MAIN CONTENT =============== -->
 <main class="main-content" id="main-content">
 
-    <!-- ─── UPLOAD & PROCESS PANEL ─── -->
+    <!-- --- UPLOAD & PROCESS PANEL --- -->
     <div class="panel active" id="upload-panel">
         <!-- Upload Zone -->
         <div class="upload-zone" id="upload-zone">
-            <div class="upload-zone-icon">📁</div>
+            <div class="upload-zone-icon"><img class="icon-img" src="/static/img/icons/folder-upload.svg" alt="" aria-hidden="true"></div>
             <div class="upload-zone-title">Drop your audio or video file here</div>
             <div class="upload-zone-subtitle">or click to browse</div>
             <div class="upload-zone-formats">
@@ -123,15 +142,15 @@
 
         <!-- File Info -->
         <div class="file-info-bar" id="file-info-bar">
-            <span class="file-info-name" id="file-name">—</span>
+            <span class="file-info-name" id="file-name">-</span>
             <div class="file-info-meta">
-                <div class="file-meta-item"><span class="label">Duration:</span><span id="file-duration">—</span></div>
-                <div class="file-meta-item"><span class="label">Rate:</span><span id="file-samplerate">—</span></div>
-                <div class="file-meta-item"><span class="label">Format:</span><span id="file-format">—</span></div>
-                <div class="file-meta-item"><span class="label">Size:</span><span id="file-size">—</span></div>
+                <div class="file-meta-item"><span class="label">Duration:</span><span id="file-duration">-</span></div>
+                <div class="file-meta-item"><span class="label">Rate:</span><span id="file-samplerate">-</span></div>
+                <div class="file-meta-item"><span class="label">Format:</span><span id="file-format">-</span></div>
+                <div class="file-meta-item"><span class="label">Size:</span><span id="file-size">-</span></div>
             </div>
             <div class="file-info-actions">
-                <button class="btn btn-sm btn-ghost" onclick="removeFile()">✕ Remove</button>
+                <button class="btn btn-sm btn-ghost" onclick="removeFile()">Remove</button>
             </div>
         </div>
 
@@ -147,18 +166,18 @@
             <div id="waveform-original"></div>
             <div id="waveform-processed" style="display:none"></div>
             <div class="waveform-controls">
-                <button class="btn btn-icon btn-secondary" id="btn-play" onclick="togglePlayback()">▶</button>
-                <button class="btn btn-icon btn-secondary" onclick="stopPlayback()">⏹</button>
+                <button class="btn btn-icon btn-secondary" id="btn-play" onclick="togglePlayback()"><img class="icon-img control-icon-svg" src="/static/img/icons/play.svg" alt="" aria-hidden="true"></button>
+                <button class="btn btn-icon btn-secondary" onclick="stopPlayback()"><img class="icon-img control-icon-svg" src="/static/img/icons/stop.svg" alt="" aria-hidden="true"></button>
                 <span class="waveform-time"><span id="time-current">0:00</span> / <span id="time-total">0:00</span></span>
                 <div style="flex:1"></div>
-                <button class="btn btn-sm btn-secondary" onclick="zoomIn()">🔍+</button>
-                <button class="btn btn-sm btn-secondary" onclick="zoomOut()">🔍−</button>
+                <button class="btn btn-sm btn-secondary" onclick="zoomIn()"><img class="icon-img btn-icon-svg" src="/static/img/icons/zoom-in.svg" alt="" aria-hidden="true">Zoom in</button>
+                <button class="btn btn-sm btn-secondary" onclick="zoomOut()"><img class="icon-img btn-icon-svg" src="/static/img/icons/zoom-out.svg" alt="" aria-hidden="true">Zoom out</button>
             </div>
         </div>
 
         <!-- Smart Mode Banner -->
         <div class="smart-mode-banner" id="smart-mode-banner">
-            <div class="smart-mode-icon">🧠</div>
+            <div class="smart-mode-icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
             <div class="smart-mode-info">
                 <h3 id="smart-mode-type">Analyzing with Ollama/Gemma...</h3>
                 <p id="smart-mode-description">AI is detecting content type and suggesting optimal settings.</p>
@@ -170,23 +189,23 @@
         <!-- Feature Controls -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">🎚️</span> Processing Features</h2>
-                <button class="btn btn-sm btn-secondary" onclick="runSmartMode()">🧠 Smart Mode</button>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/controls.svg" alt="" aria-hidden="true"></span> Processing Features</h2>
+                <button class="btn btn-sm btn-secondary" onclick="runSmartMode()"><img class="icon-img btn-icon-svg" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">Smart Mode</button>
             </div>
 
             <!-- Feature Tabs -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('tab-cleanup', this)">🧹 Cleanup</button>
-                <button class="tab-btn" onclick="switchTab('tab-enhance', this)">✨ Enhance</button>
-                <button class="tab-btn" onclick="switchTab('tab-noise', this)">🔇 Noise</button>
-                <button class="tab-btn" onclick="switchTab('tab-advanced', this)">⚙️ Advanced</button>
+                <button class="tab-btn active" id="btn-tab-cleanup" onclick="switchTab('tab-cleanup', this)"><img class="icon-img tab-icon-svg" src="/static/img/icons/cleanup.svg" alt="" aria-hidden="true">Cleanup</button>
+                <button class="tab-btn" id="btn-tab-enhance" onclick="switchTab('tab-enhance', this)"><img class="icon-img tab-icon-svg" src="/static/img/icons/enhance.svg" alt="" aria-hidden="true">Enhance</button>
+                <button class="tab-btn" id="btn-tab-noise" onclick="switchTab('tab-noise', this)"><img class="icon-img tab-icon-svg" src="/static/img/icons/noise.svg" alt="" aria-hidden="true">Specific Noise</button>
+                <button class="tab-btn" id="btn-tab-advanced" onclick="switchTab('tab-advanced', this)"><img class="icon-img tab-icon-svg" src="/static/img/icons/advanced.svg" alt="" aria-hidden="true">Advanced</button>
             </div>
 
             <!-- Tab: Cleanup -->
             <div class="tab-content active" id="tab-cleanup">
                 <div class="feature-grid">
                     <div class="feature-item" id="feat-remove-noise">
-                        <div class="feature-icon">🚫</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/noise.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Remove Noise</div>
                             <div class="feature-desc">AI-powered background noise removal</div>
@@ -194,7 +213,7 @@
                         <label class="toggle"><input type="checkbox" data-option="remove_noise" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-filler-words">
-                        <div class="feature-icon">💬</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/filler.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Remove Filler Words</div>
                             <div class="feature-desc">Eliminates uhm, uh, eh, ehm</div>
@@ -202,7 +221,7 @@
                         <label class="toggle"><input type="checkbox" data-option="remove_filler_words" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-breaths">
-                        <div class="feature-icon">🌬️</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/breath.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Remove Breaths</div>
                             <div class="feature-desc">Attenuate or remove breath sounds</div>
@@ -210,7 +229,7 @@
                         <label class="toggle"><input type="checkbox" data-option="remove_breaths" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-mouth-sounds">
-                        <div class="feature-icon">👄</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/mouth.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Remove Mouth Sounds</div>
                             <div class="feature-desc">Clicks, lip smacking, saliva</div>
@@ -218,7 +237,7 @@
                         <label class="toggle"><input type="checkbox" data-option="remove_mouth_sounds" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-hesitations">
-                        <div class="feature-icon">⏸️</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/pause.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Eliminate Hesitations</div>
                             <div class="feature-desc">Remove unnatural pauses</div>
@@ -226,7 +245,7 @@
                         <label class="toggle"><input type="checkbox" data-option="eliminate_hesitations" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-stuttering">
-                        <div class="feature-icon">🔁</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/repeat.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Remove Stuttering</div>
                             <div class="feature-desc">Fix repeated words/syllables</div>
@@ -234,7 +253,7 @@
                         <label class="toggle"><input type="checkbox" data-option="remove_stuttering" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-silence">
-                        <div class="feature-icon">🔕</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/silence.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Remove Long Silences</div>
                             <div class="feature-desc">Trim dead air and gaps</div>
@@ -242,7 +261,7 @@
                         <label class="toggle"><input type="checkbox" data-option="remove_long_silences" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-mute">
-                        <div class="feature-icon">🔇</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/noise.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Mute Segments</div>
                             <div class="feature-desc">Replace with silence (keep duration)</div>
@@ -275,7 +294,7 @@
             <div class="tab-content" id="tab-enhance">
                 <div class="feature-grid">
                     <div class="feature-item" id="feat-studio">
-                        <div class="feature-icon">🎙️</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Studio Sound</div>
                             <div class="feature-desc">EQ + Compression + Limiting chain</div>
@@ -283,7 +302,7 @@
                         <label class="toggle"><input type="checkbox" data-option="studio_sound" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-autoeq">
-                        <div class="feature-icon">🎵</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/auto-eq.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">AutoEQ</div>
                             <div class="feature-desc">AI-powered equalization</div>
@@ -291,7 +310,7 @@
                         <label class="toggle"><input type="checkbox" data-option="auto_eq" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-normalize">
-                        <div class="feature-icon">📊</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/monitor.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Normalize Volume</div>
                             <div class="feature-desc">EBU R128 loudness normalization</div>
@@ -299,7 +318,7 @@
                         <label class="toggle"><input type="checkbox" data-option="normalize" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-music">
-                        <div class="feature-icon">🎶</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/music.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Keep Music</div>
                             <div class="feature-desc">Preserve background music (Demucs)</div>
@@ -307,7 +326,7 @@
                         <label class="toggle"><input type="checkbox" data-option="keep_music" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-superres">
-                        <div class="feature-icon">📈</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/activity-live.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Frequency Restoration</div>
                             <div class="feature-desc">AI super-resolution / bandwidth extension</div>
@@ -328,7 +347,7 @@
             <div class="tab-content" id="tab-noise">
                 <div class="feature-grid">
                     <div class="feature-item" id="feat-wind">
-                        <div class="feature-icon">🌪️</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/wind.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Wind Noise Remover</div>
                             <div class="feature-desc">Outdoor wind and gusts</div>
@@ -336,7 +355,7 @@
                         <label class="toggle"><input type="checkbox" data-option="wind_noise_remover" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-buzz">
-                        <div class="feature-icon">⚡</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/buzz.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Buzzing Noise Remover</div>
                             <div class="feature-desc">50/60Hz electrical hum</div>
@@ -344,7 +363,7 @@
                         <label class="toggle"><input type="checkbox" data-option="buzzing_noise_remover" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-static">
-                        <div class="feature-icon">📻</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/static.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Static Noise Remover</div>
                             <div class="feature-desc">Mic hiss and static</div>
@@ -352,7 +371,7 @@
                         <label class="toggle"><input type="checkbox" data-option="static_noise_remover" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
                     <div class="feature-item" id="feat-reverb">
-                        <div class="feature-icon">🏛️</div>
+                        <div class="feature-icon"><img class="icon-img" src="/static/img/icons/reverb.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Reverb & Echo Remover</div>
                             <div class="feature-desc">Room echo and reverberation</div>
@@ -394,7 +413,7 @@
             <!-- Process Button -->
             <div class="process-actions">
                 <button class="btn btn-lg btn-primary w-full" id="btn-process" onclick="startProcessing()" disabled>
-                    ⚡ Process Audio
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true">Process Audio
                 </button>
             </div>
         </div>
@@ -410,8 +429,8 @@
                     <div class="progress-time-info">
                         <span class="progress-elapsed" id="progress-elapsed">0:00</span>
                         <div class="progress-eta" id="progress-eta" style="display:none">
-                            <span class="progress-eta-icon">⏳</span>
-                            <span id="progress-eta-value">—</span> remaining
+                            <span class="progress-eta-icon"><img class="icon-img" src="/static/img/icons/timer.svg" alt="" aria-hidden="true"></span>
+                            <span id="progress-eta-value">-</span> remaining
                         </div>
                         <div class="progress-eta-reason" id="progress-eta-reason" style="display:none"></div>
                     </div>
@@ -425,12 +444,12 @@
         </div>
     </div>
 
-    <!-- ─── PRESETS PANEL ─── -->
+    <!-- --- PRESETS PANEL --- -->
     <div class="panel" id="presets-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">🎛️</span> Processing Presets</h2>
-                <button class="btn btn-sm btn-primary" onclick="saveCurrentAsPreset()">💾 Save Current Settings</button>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/presets.svg" alt="" aria-hidden="true"></span> Processing Presets</h2>
+                <button class="btn btn-sm btn-primary" onclick="saveCurrentAsPreset()"><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">Save Current Settings</button>
             </div>
             <div class="sidebar-section-title mb-12">BUILT-IN PRESETS</div>
             <div class="preset-grid" id="builtin-presets"></div>
@@ -439,14 +458,14 @@
         </div>
     </div>
 
-    <!-- ─── BATCH PROCESSING PANEL ─── -->
+    <!-- --- BATCH PROCESSING PANEL --- -->
     <div class="panel" id="batch-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">📦</span> Batch Processing</h2>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/package.svg" alt="" aria-hidden="true"></span> Batch Processing</h2>
             </div>
             <div class="upload-zone" id="batch-upload-zone" style="padding:30px">
-                <div class="upload-zone-icon">📦</div>
+                <div class="upload-zone-icon"><img class="icon-img" src="/static/img/icons/package.svg" alt="" aria-hidden="true"></div>
                 <div class="upload-zone-title">Drop multiple files here</div>
                 <div class="upload-zone-subtitle">All files will be processed with the same settings</div>
                 <input type="file" id="batch-file-input" accept=".mp3,.mp4,.wav,.flac,.ogg,.m4a" multiple hidden>
@@ -454,19 +473,19 @@
             <div class="batch-file-list mt-16" id="batch-file-list"></div>
             <div class="mt-16">
                 <button class="btn btn-lg btn-primary w-full" id="btn-batch-process" onclick="startBatchProcessing()" disabled>
-                    ⚡ Process All Files
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true">Process All Files
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ─── SPEECH-TO-TEXT PANEL ─── -->
+    <!-- --- SPEECH-TO-TEXT PANEL --- -->
     <div class="panel" id="stt-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">📝</span> Speech to Text</h2>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true"></span> Speech to Text</h2>
             </div>
-            <div class="requires-file-notice" id="stt-no-file">⚠️ Upload an audio file first from the "Upload & Process" panel</div>
+            <div class="requires-file-notice" id="stt-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
             <p class="text-sm text-muted mb-16">Transcribe your audio using faster-whisper (large-v3). Supports auto-language detection.</p>
             <div class="tts-controls mb-16">
                 <div class="tts-control-group">
@@ -498,23 +517,23 @@
                 <input type="text" id="stt-filename" class="setting-input" placeholder="transcript" style="width:100%; min-width:0;">
             </div>
             <button class="btn btn-primary w-full mb-16" id="btn-transcribe" onclick="startTranscription()" disabled>
-                📝 Transcribe Audio
+                <img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Transcribe Audio
             </button>
             <div class="transcript-output" id="transcript-output" style="min-height:60px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:var(--radius-md); padding:12px; font-size:0.82rem; color:var(--text-secondary); white-space:pre-wrap; max-height:300px; overflow-y:auto; margin-bottom:12px;">
                 <em style="opacity:0.4">Il testo trascritto apparirà qui in tempo reale...</em>
             </div>
             <div class="mt-12 flex gap-8" id="stt-actions" style="display:flex; gap:8px;">
-                <button class="btn btn-sm btn-secondary" onclick="copyTranscript()" id="btn-copy-transcript" disabled>📋 Copy</button>
-                <button class="btn btn-sm btn-primary" onclick="downloadTranscript()" id="btn-download-transcript" disabled>💾 Download File</button>
+                <button class="btn btn-sm btn-secondary" onclick="copyTranscript()" id="btn-copy-transcript" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Copy</button>
+                <button class="btn btn-sm btn-primary" onclick="downloadTranscript()" id="btn-download-transcript" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">Download File</button>
             </div>
         </div>
     </div>
 
-    <!-- ─── TEXT-TO-SPEECH PANEL ─── -->
+    <!-- --- TEXT-TO-SPEECH PANEL --- -->
     <div class="panel" id="tts-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">🗣️</span> Text to Speech</h2>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/tts.svg" alt="" aria-hidden="true"></span> Text to Speech</h2>
             </div>
             <p class="text-sm text-muted mb-16">Generate natural, expressive speech. Edge Neural TTS (400+ voices) or Kokoro Local (82M AI model).</p>
             <textarea id="tts-text" rows="5" placeholder="Enter text to be spoken..."></textarea>
@@ -526,46 +545,46 @@
                     <span class="toggle-slider"></span>
                 </label>
                 <div style="flex:1">
-                    <div style="font-weight:600; font-size:0.85rem; color:var(--text-primary)">✨ Expressive Mode <span class="badge" style="font-size:0.65rem; background:rgba(168,85,247,0.2); color:var(--accent-primary); margin-left:6px">Ollama/Gemma</span></div>
+                    <div style="font-weight:600; font-size:0.85rem; color:var(--text-primary)"><img class="icon-img inline-icon" src="/static/img/icons/enhance.svg" alt="" aria-hidden="true">Expressive Mode <span class="badge" style="font-size:0.65rem; background:rgba(168,85,247,0.2); color:var(--accent-primary); margin-left:6px">Ollama/Gemma</span></div>
                     <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px">Gemma rewrites your text with natural pauses, filler words, and conversational rhythm before synthesis</div>
                 </div>
-                <button class="btn btn-sm btn-secondary" id="btn-preview-rewrite" onclick="previewRewrite()" style="display:none; white-space:nowrap">👁️ Preview</button>
+                <button class="btn btn-sm btn-secondary" id="btn-preview-rewrite" onclick="previewRewrite()" style="display:none; white-space:nowrap"><img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Preview</button>
             </div>
 
             <!-- Gemma Rewrite Preview (hidden by default) -->
             <div id="tts-rewrite-preview" class="mt-8" style="display:none">
-                <div style="font-size:0.72rem; font-weight:600; color:var(--accent-primary); margin-bottom:4px">✨ Gemma Rewrite Preview:</div>
+                <div style="font-size:0.72rem; font-weight:600; color:var(--accent-primary); margin-bottom:4px"><img class="icon-img inline-icon" src="/static/img/icons/enhance.svg" alt="" aria-hidden="true">Gemma Rewrite Preview:</div>
                 <div id="tts-rewrite-text" style="padding:10px 12px; background:rgba(168,85,247,0.05); border:1px solid rgba(168,85,247,0.15); border-radius:var(--radius-sm); font-size:0.8rem; color:var(--text-secondary); line-height:1.5; white-space:pre-wrap; max-height:150px; overflow-y:auto; cursor:text" contenteditable="true"></div>
-                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px">💡 You can edit the rewritten text before generating speech</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px">You can edit the rewritten text before generating speech</div>
             </div>
 
             <div class="tts-controls mt-16">
                 <div class="tts-control-group">
                     <label>Voice</label>
                     <select id="tts-voice">
-                        <optgroup label="🇮🇹 Italiano (Edge Neural)">
-                            <option value="it_giuseppe" selected>Giuseppe — Maschile, espressivo</option>
-                            <option value="it_isabella">Isabella — Femminile, chiara</option>
-                            <option value="it_diego">Diego — Maschile, profondo</option>
-                            <option value="it_elsa">Elsa — Femminile, naturale</option>
+                        <optgroup label="Italiano (Edge Neural)">
+                            <option value="it_giuseppe" selected>Giuseppe - Maschile, espressivo</option>
+                            <option value="it_isabella">Isabella - Femminile, chiara</option>
+                            <option value="it_diego">Diego - Maschile, profondo</option>
+                            <option value="it_elsa">Elsa - Femminile, naturale</option>
                         </optgroup>
-                        <optgroup label="🇺🇸 English (Edge Neural)">
-                            <option value="en_aria">Aria — Female, versatile</option>
-                            <option value="en_guy">Guy — Male, narrator</option>
-                            <option value="en_davis">Davis — Male, warm</option>
-                            <option value="en_jenny">Jenny — Female, clear</option>
-                            <option value="en_sonia">Sonia 🇬🇧 — Female, British</option>
+                        <optgroup label="English (Edge Neural)">
+                            <option value="en_aria">Aria - Female, versatile</option>
+                            <option value="en_guy">Guy - Male, narrator</option>
+                            <option value="en_davis">Davis - Male, warm</option>
+                            <option value="en_jenny">Jenny - Female, clear</option>
+                            <option value="en_sonia">Sonia - Female, British</option>
                         </optgroup>
-                        <optgroup label="🌍 Other (Edge Neural)">
-                            <option value="es_elena">Elena 🇪🇸 — Español</option>
-                            <option value="fr_denise">Denise 🇫🇷 — Français</option>
-                            <option value="de_katja">Katja 🇩🇪 — Deutsch</option>
+                        <optgroup label="Other (Edge Neural)">
+                            <option value="es_elena">Elena - Espanol</option>
+                            <option value="fr_denise">Denise - Francais</option>
+                            <option value="de_katja">Katja - Deutsch</option>
                         </optgroup>
-                        <optgroup label="🤖 Kokoro Local (AI, English)">
-                            <option value="kokoro_heart">Heart ❤️ — Warm, emotional</option>
-                            <option value="kokoro_bella">Bella — Clear, articulate</option>
-                            <option value="kokoro_adam">Adam — Deep, authoritative</option>
-                            <option value="kokoro_emma">Emma 🇬🇧 — British, sophisticated</option>
+                        <optgroup label="Kokoro Local (AI, English)">
+                            <option value="kokoro_heart">Heart - Warm, emotional</option>
+                            <option value="kokoro_bella">Bella - Clear, articulate</option>
+                            <option value="kokoro_adam">Adam - Deep, authoritative</option>
+                            <option value="kokoro_emma">Emma - British, sophisticated</option>
                         </optgroup>
                     </select>
                 </div>
@@ -581,7 +600,7 @@
                 <div class="tts-control-group">
                     <label>Voice Clone (optional)</label>
                     <button class="btn btn-sm btn-secondary w-full" onclick="document.getElementById('clone-file-input').click()">
-                        🎤 Upload Voice Sample
+                        <img class="icon-img btn-icon-svg" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">Upload Voice Sample
                     </button>
                     <input type="file" id="clone-file-input" accept=".mp3,.wav,.m4a" hidden onchange="handleCloneUpload(event)">
                     <span class="text-xs text-muted" id="clone-status">No voice sample loaded</span>
@@ -605,7 +624,7 @@
                 </div>
             </div>
             <div class="mt-16">
-                <button class="btn btn-lg btn-primary w-full" onclick="synthesizeSpeech()" id="btn-generate-speech">🗣️ Generate Speech</button>
+                <button class="btn btn-lg btn-primary w-full" onclick="synthesizeSpeech()" id="btn-generate-speech"><img class="icon-img btn-icon-svg" src="/static/img/icons/tts.svg" alt="" aria-hidden="true">Generate Speech</button>
             </div>
             <div id="tts-result" class="mt-16" style="display:none">
                 <audio id="tts-audio" controls class="w-full" style="border-radius:var(--radius-md)"></audio>
@@ -614,13 +633,13 @@
         </div>
     </div>
 
-    <!-- ─── SPEAKER DIARIZATION PANEL ─── -->
+    <!-- --- SPEAKER DIARIZATION PANEL --- -->
     <div class="panel" id="diarize-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">👥</span> Speaker Diarization</h2>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/speakers.svg" alt="" aria-hidden="true"></span> Speaker Diarization</h2>
             </div>
-            <div class="requires-file-notice" id="diarize-no-file">⚠️ Upload an audio file first from the "Upload & Process" panel</div>
+            <div class="requires-file-notice" id="diarize-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
             <p class="text-sm text-muted mb-16">Identify who speaks when. Optimized for Apple M3 MAX via MPS.</p>
             <div class="tts-controls mb-16">
                 <div class="tts-control-group">
@@ -635,7 +654,7 @@
                 </div>
             </div>
             <button class="btn btn-primary w-full mb-16" id="btn-diarize" onclick="startDiarization()" disabled>
-                👥 Analyze Speakers
+                <img class="icon-img btn-icon-svg" src="/static/img/icons/speakers.svg" alt="" aria-hidden="true">Analyze Speakers
             </button>
             <div id="diarize-results" style="display:none">
                 <div class="card-title mb-12">Speaker Timeline</div>
@@ -645,16 +664,16 @@
         </div>
     </div>
 
-    <!-- ─── SMART MODE PANEL ─── -->
+    <!-- --- SMART MODE PANEL --- -->
     <div class="panel" id="smart-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">🧠</span> Smart Mode — Ollama/Gemma</h2>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></span> Smart Mode - Ollama/Gemma</h2>
             </div>
-            <div class="requires-file-notice" id="smart-no-file">⚠️ Upload an audio file first from the "Upload & Process" panel</div>
+            <div class="requires-file-notice" id="smart-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
             <p class="text-sm text-muted mb-16">A local Gemma-family model, when available through Ollama, analyzes extracted audio features and suggests processing settings.</p>
             <button class="btn btn-primary w-full mb-16" id="btn-smart-analyze" onclick="runSmartMode()" disabled>
-                🧠 Analyze with Ollama/Gemma
+                <img class="icon-img btn-icon-svg" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">Analyze with Ollama/Gemma
             </button>
             <div id="smart-results" style="display:none">
                 <div class="card mt-16">
@@ -666,13 +685,13 @@
         </div>
     </div>
 
-    <!-- ─── WATERMARK PANEL ─── -->
+    <!-- --- WATERMARK PANEL --- -->
     <div class="panel" id="watermark-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">🔒</span> Audio Watermarking</h2>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></span> Audio Watermarking</h2>
             </div>
-            <div class="requires-file-notice" id="watermark-no-file">⚠️ Upload an audio file first from the "Upload & Process" panel</div>
+            <div class="requires-file-notice" id="watermark-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
             <p class="text-sm text-muted mb-16">Embed an invisible watermark or detect existing watermarks.</p>
             <div class="tts-controls mb-16">
                 <div class="tts-control-group">
@@ -681,24 +700,24 @@
                 </div>
             </div>
             <div class="flex gap-12">
-                <button class="btn btn-primary" id="btn-watermark" onclick="embedWatermark()" disabled>🔒 Embed Watermark</button>
-                <button class="btn btn-secondary" id="btn-detect-watermark" onclick="detectWatermark()" disabled>🔍 Detect Watermark</button>
+                <button class="btn btn-primary" id="btn-watermark" onclick="embedWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/lock.svg" alt="" aria-hidden="true">Embed Watermark</button>
+                <button class="btn btn-secondary" id="btn-detect-watermark" onclick="detectWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Detect Watermark</button>
             </div>
             <div id="watermark-result" class="mt-16" style="display:none"></div>
         </div>
     </div>
 
-    <!-- ─── EDGE CLUSTER PANEL ─── -->
+    <!-- --- EDGE CLUSTER PANEL --- -->
     <div class="panel" id="cluster-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon">🌐</span> Edge Computing Cluster</h2>
-                <button class="btn btn-sm btn-secondary" onclick="refreshCluster()">🔄 Refresh</button>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true"></span> Edge Computing Cluster</h2>
+                <button class="btn btn-sm btn-secondary" onclick="refreshCluster()"><img class="icon-img btn-icon-svg" src="/static/img/icons/refresh.svg" alt="" aria-hidden="true">Refresh</button>
             </div>
             <p class="text-sm text-muted mb-16">Connected devices that contribute compute power for distributed audio processing. Workers auto-announce via UDP on port 9999.</p>
 
             <!-- Master Node -->
-            <div class="cluster-section-title">🖥️ MASTER NODE</div>
+            <div class="cluster-section-title"><img class="icon-img section-title-icon" src="/static/img/icons/desktop-node.svg" alt="" aria-hidden="true">MASTER NODE</div>
             <div class="cluster-node master-node" id="master-node-card">
                 <div class="cluster-node-header">
                     <div class="cluster-node-status online"></div>
@@ -706,22 +725,22 @@
                     <span class="cluster-node-role">MASTER</span>
                 </div>
                 <div class="cluster-node-stats">
-                    <div class="cluster-stat"><span class="cluster-stat-label">Chip</span><span class="cluster-stat-value" id="master-chip">—</span></div>
+                    <div class="cluster-stat"><span class="cluster-stat-label">Chip</span><span class="cluster-stat-value" id="master-chip">-</span></div>
                     <div class="cluster-stat"><span class="cluster-stat-label">Role</span><span class="cluster-stat-value">Orchestrator + ML Models</span></div>
                     <div class="cluster-stat"><span class="cluster-stat-label">Filters</span><span class="cluster-stat-value">16 (all)</span></div>
                 </div>
                 <div class="cluster-benchmark">
                     <div class="cluster-benchmark-label">Benchmark Power</div>
                     <div class="cluster-benchmark-bar"><div class="cluster-benchmark-fill master" style="width:100%"></div></div>
-                    <span class="cluster-benchmark-value">Master — Full Pipeline</span>
+                    <span class="cluster-benchmark-value">Master - Full Pipeline</span>
                 </div>
             </div>
 
             <!-- Edge Workers -->
-            <div class="cluster-section-title mt-20">📱 EDGE WORKERS <span class="text-muted" id="cluster-worker-count">(0 connected)</span></div>
+            <div class="cluster-section-title mt-20"><img class="icon-img section-title-icon" src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">EDGE WORKERS <span class="text-muted" id="cluster-worker-count">(0 connected)</span></div>
             <div id="cluster-workers-list">
                 <div class="cluster-empty" id="cluster-empty">
-                    <div class="cluster-empty-icon">📡</div>
+                    <div class="cluster-empty-icon"><img class="icon-img" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true"></div>
                     <div class="cluster-empty-text">No edge workers connected</div>
                     <div class="cluster-empty-hint">Install the AudioEnhancerMAX Worker app on your Android phone and connect to the same Wi-Fi network.</div>
                 </div>
@@ -741,19 +760,19 @@
 
 
 
-<!-- ─── Download Bar ─── -->
+<!-- --- Download Bar --- -->
 <div class="download-bar" id="download-bar">
     <div class="download-info">
         <div class="label">Processed Audio Ready</div>
-        <div class="value" id="download-info-text">—</div>
+        <div class="value" id="download-info-text">-</div>
     </div>
-    <button class="btn btn-sm btn-secondary" onclick="downloadFile('wav')">💾 WAV</button>
-    <button class="btn btn-sm btn-secondary" onclick="downloadFile('mp3')">💾 MP3</button>
-    <button class="btn btn-sm btn-secondary" onclick="downloadFile('flac')">💾 FLAC</button>
-    <button class="btn btn-sm btn-primary" onclick="compareAB()">🔊 A/B Compare</button>
+    <button class="btn btn-sm btn-secondary" onclick="downloadFile('wav')"><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">WAV</button>
+    <button class="btn btn-sm btn-secondary" onclick="downloadFile('mp3')"><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">MP3</button>
+    <button class="btn btn-sm btn-secondary" onclick="downloadFile('flac')"><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">FLAC</button>
+    <button class="btn btn-sm btn-primary" onclick="compareAB()"><img class="icon-img btn-icon-svg" src="/static/img/icons/volume.svg" alt="" aria-hidden="true">A/B Compare</button>
 </div>
 
-<!-- ─── Global Activity Bar ─── -->
+<!-- --- Global Activity Bar --- -->
 <div class="activity-bar" id="activity-bar">
     <div class="activity-bar-spinner"></div>
     <span class="activity-bar-text" id="activity-bar-text">Processing...</span>
@@ -766,18 +785,18 @@
     </span>
 </div>
 
-<!-- ─── Toast Container ─── -->
+<!-- --- Toast Container --- -->
 <div class="toast-container" id="toast-container"></div>
 
-<!-- ═══════════════ SETTINGS PANEL ═══════════════ -->
+<!-- =============== SETTINGS PANEL =============== -->
 <div class="panel" id="settings-panel">
     <div class="panel-header">
-        <h2>⚙️ Settings</h2>
+        <h2><img class="icon-img heading-icon" src="/static/img/icons/settings.svg" alt="" aria-hidden="true">Settings</h2>
         <p class="panel-subtitle">Configure AudioEnhancerMAX v3.5.1</p>
     </div>
     <div class="panel-body settings-grid">
         <div class="settings-group">
-            <h3>🖥️ Processing</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/desktop-node.svg" alt="" aria-hidden="true">Processing</h3>
             <div class="setting-item">
                 <label>Default Output Format</label>
                 <select id="setting-output-format" class="setting-select">
@@ -802,7 +821,7 @@
         </div>
 
         <div class="settings-group">
-            <h3>🌐 Edge Cluster</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true">Edge Cluster</h3>
             <div class="setting-item">
                 <label>Auto-discover Workers</label>
                 <label class="setting-toggle">
@@ -824,7 +843,7 @@
         </div>
 
         <div class="settings-group">
-            <h3>📊 Monitoring</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/monitor.svg" alt="" aria-hidden="true">Monitoring</h3>
             <div class="setting-item">
                 <label>HW Poll Interval</label>
                 <select id="setting-poll-interval" class="setting-select">
@@ -843,7 +862,7 @@
         </div>
 
         <div class="settings-group">
-            <h3>🧠 AI Engine</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">AI Engine</h3>
             <div class="setting-item">
                 <label>Whisper Model Size</label>
                 <select id="setting-whisper-model" class="setting-select">
@@ -863,57 +882,63 @@
     </div>
 </div>
 
-<!-- ═══════════════ ABOUT PANEL ═══════════════ -->
+<!-- =============== ABOUT PANEL =============== -->
 <div class="panel" id="about-panel">
     <div class="panel-header">
-        <h2>ℹ️ About AudioEnhancerMAX</h2>
-        <p class="panel-subtitle">v3.5.1 — Streaming Transcription + Real-Time Monitoring Edition</p>
+        <h2><img class="icon-img heading-icon" src="/static/img/icons/info.svg" alt="" aria-hidden="true">About AudioEnhancerMAX</h2>
+        <p class="panel-subtitle">v3.5.1 - Streaming Transcription + Real-Time Monitoring Edition</p>
     </div>
     <div class="panel-body about-content">
         <div class="about-hero">
-            <div class="about-logo">⚡</div>
+            <div class="about-logo"><img class="icon-img" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true"></div>
             <div style="flex: 1;">
                 <h3>AudioEnhancerMAX <span class="about-version">v3.5.1</span></h3>
                 <p>Professional AI-powered audio processing suite</p>
-                <p class="about-by">Created by <strong>Fd</strong> — Optimized for Apple Silicon</p>
+                <p class="about-by">Created by <strong>Fd</strong> - Optimized for Apple Silicon</p>
             </div>
             <div class="about-badge-achievement" style="margin-left: auto; display: flex; align-items: center; justify-content: center; min-width: 125px;">
-                <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star" style="width:125px">
-                    <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a>
+                <div class="sourceforge-badge-stack use-fallback">
+                    <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star">
+                        <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a>
+                    </div>
+                    <a class="sourceforge-fallback" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" aria-label="AudioEnhancerMAX SourceForge Rising Star Award">
+                        <img src="/static/img/icons/award-star.svg" alt="" aria-hidden="true">
+                        <span>SourceForge<strong>Rising Star</strong></span>
+                    </a>
                 </div>
             </div>
         </div>
 
         <div class="about-section">
-            <h3>🏗️ Architecture</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true">Architecture</h3>
             <div class="about-arch-grid">
                 <div class="about-arch-item">
-                    <span class="about-arch-icon">🖥️</span>
+                    <span class="about-arch-icon"><img class="icon-img" src="/static/img/icons/api-node.svg" alt="" aria-hidden="true"></span>
                     <strong>Backend</strong>
                     <span>FastAPI + Python 3.11</span>
                 </div>
                 <div class="about-arch-item">
-                    <span class="about-arch-icon">🎨</span>
+                    <span class="about-arch-icon"><img class="icon-img" src="/static/img/icons/controls.svg" alt="" aria-hidden="true"></span>
                     <strong>Frontend</strong>
                     <span>Vanilla JS + CSS3</span>
                 </div>
                 <div class="about-arch-item">
-                    <span class="about-arch-icon">🧠</span>
+                    <span class="about-arch-icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></span>
                     <strong>AI Engine</strong>
                     <span>Whisper + Ollama/Gemma</span>
                 </div>
                 <div class="about-arch-item">
-                    <span class="about-arch-icon">⬡</span>
+                    <span class="about-arch-icon"><img class="icon-img" src="/static/img/icons/metal-chip.svg" alt="" aria-hidden="true"></span>
                     <strong>GPU</strong>
                     <span>PyTorch MPS (Metal)</span>
                 </div>
                 <div class="about-arch-item">
-                    <span class="about-arch-icon">📱</span>
+                    <span class="about-arch-icon"><img class="icon-img" src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true"></span>
                     <strong>Edge Workers</strong>
                     <span>Android Kotlin + HTTP</span>
                 </div>
                 <div class="about-arch-item">
-                    <span class="about-arch-icon">🔊</span>
+                    <span class="about-arch-icon"><img class="icon-img" src="/static/img/icons/volume.svg" alt="" aria-hidden="true"></span>
                     <strong>Audio DSP</strong>
                     <span>scipy + pedalboard</span>
                 </div>
@@ -921,27 +946,27 @@
         </div>
 
         <div class="about-section">
-            <h3>🆕 What's New in v3.5.1</h3>
+            <h3>What's New in v3.5.1</h3>
             <div class="about-changelog">
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
-                    <span>Streaming transcription — see text appear in real-time as Whisper processes</span>
+                    <span>Streaming transcription - see text appear in real-time as Whisper processes</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
-                    <span>Non-blocking server — HW metrics stay live during heavy processing</span>
+                    <span>Non-blocking server - HW metrics stay live during heavy processing</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
-                    <span>Incremental file saving — crash-resilient transcripts saved segment-by-segment</span>
+                    <span>Incremental file saving - crash-resilient transcripts saved segment-by-segment</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
-                    <span>Adaptive ETA engine — pre-task estimates with confidence badges</span>
+                    <span>Adaptive ETA engine - pre-task estimates with confidence badges</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
-                    <span>Custom output filename — choose your transcript filename before processing</span>
+                    <span>Custom output filename - choose your transcript filename before processing</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag improved">FIX</span>
@@ -949,7 +974,7 @@
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag improved">FIX</span>
-                    <span>System monitor v2 — separate threads for psutil + macmon, proper warmup</span>
+                    <span>System monitor v2 - separate threads for psutil + macmon, proper warmup</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag improved">FIX</span>
@@ -959,7 +984,7 @@
         </div>
 
         <div class="about-section">
-            <h3>📋 v3.0 Features</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">v3.0 Features</h3>
             <div class="about-changelog">
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
@@ -967,7 +992,7 @@
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
-                    <span>Distributed Edge Cluster — offload DSP filters to Android smartphones</span>
+                    <span>Distributed Edge Cluster - offload DSP filters to Android smartphones</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
@@ -987,7 +1012,7 @@
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag improved">IMPROVED</span>
-                    <span>v2.0 studio sound chain — broadcast-quality compression + de-esser</span>
+                    <span>v2.0 studio sound chain - broadcast-quality compression + de-esser</span>
                 </div>
                 <div class="changelog-item">
                     <span class="changelog-tag improved">IMPROVED</span>
@@ -997,7 +1022,7 @@
         </div>
 
         <div class="about-section">
-            <h3>🔧 Hardware Acceleration</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/metal-chip.svg" alt="" aria-hidden="true">Hardware Acceleration</h3>
             <div class="about-accel" id="about-accel-list">
                 <!-- Populated by JS -->
                 <div class="about-accel-item loading">Loading acceleration info...</div>
@@ -1005,22 +1030,22 @@
         </div>
 
         <div class="about-section">
-            <h3>📋 System Info</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">System Info</h3>
             <div class="about-sysinfo" id="about-sysinfo">
                 <!-- Populated by JS -->
             </div>
         </div>
 
         <div class="about-section">
-            <h3>🔄 Updates</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/refresh.svg" alt="" aria-hidden="true">Updates</h3>
             <p class="about-text">AudioEnhancerMAX is open source. To update:</p>
             <code class="about-code">cd AudioEnhancerMAX && git pull && pip install -r requirements.txt</code>
             <p class="about-text" style="margin-top:8px">Check for new releases on <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" style="color:var(--accent-primary)">GitHub</a></p>
         </div>
 
         <div class="about-section">
-            <h3>📄 License & Credits</h3>
-            <p class="about-text">MIT License — © 2026 Fd</p>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">License & Credits</h3>
+            <p class="about-text">MIT License - (c) 2026 Fd</p>
             <p class="about-text">Built with: FastAPI, PyTorch, faster-whisper, Demucs, pedalboard, noisereduce, scipy, numpy, librosa, pyannote.audio</p>
         </div>
     </div>
@@ -1028,7 +1053,7 @@
 
 </main>
 
-<!-- ─── Processing Dashboard Overlay ─── -->
+<!-- --- Processing Dashboard Overlay --- -->
 <div class="loading-overlay" id="loading-overlay">
     <div class="processing-dashboard">
         <!-- Header -->
@@ -1047,24 +1072,24 @@
             <div class="proc-node master" id="proc-node-master">
                 <div class="proc-node-head">
                     <span class="proc-node-dot online"></span>
-                    <span class="proc-node-label">🖥️ Mac — Master</span>
+                    <span class="proc-node-label"><img class="icon-img inline-icon" src="/static/img/icons/desktop-node.svg" alt="" aria-hidden="true">Mac - Master</span>
                 </div>
                 <div class="proc-node-chip" id="proc-master-chip">Apple M3 Max</div>
                 <div class="proc-node-meters">
                     <div class="proc-meter">
                         <span class="proc-meter-label">CPU</span>
                         <div class="proc-meter-bar"><div class="proc-meter-fill" id="proc-master-cpu" style="width:0%"></div></div>
-                        <span class="proc-meter-val" id="proc-master-cpu-val">—</span>
+                        <span class="proc-meter-val" id="proc-master-cpu-val">-</span>
                     </div>
                     <div class="proc-meter">
                         <span class="proc-meter-label">GPU</span>
                         <div class="proc-meter-bar"><div class="proc-meter-fill gpu" id="proc-master-gpu" style="width:0%"></div></div>
-                        <span class="proc-meter-val" id="proc-master-gpu-val">—</span>
+                        <span class="proc-meter-val" id="proc-master-gpu-val">-</span>
                     </div>
                     <div class="proc-meter">
                         <span class="proc-meter-label">RAM</span>
                         <div class="proc-meter-bar"><div class="proc-meter-fill ram" id="proc-master-ram" style="width:0%"></div></div>
-                        <span class="proc-meter-val" id="proc-master-ram-val">—</span>
+                        <span class="proc-meter-val" id="proc-master-ram-val">-</span>
                     </div>
                 </div>
                 <!-- Per-core heatmap + power + benchmark -->
@@ -1080,14 +1105,53 @@
     </div>
 </div>
 
-<!-- ─── WaveSurfer.js ─── -->
+<!-- --- WaveSurfer.js --- -->
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js" type="module"></script>
 
-<!-- ─── Application Scripts ─── -->
+<!-- --- Application Scripts --- -->
 <script src="/static/js/app.js"></script>
 
-<!-- ─── SourceForge Achievement Badge ─── -->
-<script>(function () {var sc=document.createElement('script');sc.async=true;sc.src='https://b.sf-syn.com/badge_js?sf_id=4084832';var p=document.getElementsByTagName('script')[0];p.parentNode.insertBefore(sc, p);})();</script>
+<!-- --- SourceForge Achievement Badge --- -->
+<script>
+    (function () {
+        function setSourceForgeFallback(enabled) {
+            document.querySelectorAll('.sourceforge-badge-stack').forEach(function (stack) {
+                stack.classList.toggle('use-fallback', enabled);
+            });
+        }
+
+        function verifySourceForgeBadges() {
+            document.querySelectorAll('.sourceforge-badge-stack').forEach(function (stack) {
+                var img = stack.querySelector('.sf-root img');
+                if (!img) {
+                    stack.classList.add('use-fallback');
+                    return;
+                }
+                var ready = img.complete && img.naturalWidth > 0;
+                stack.classList.toggle('use-fallback', !ready);
+                img.addEventListener('load', function () {
+                    stack.classList.remove('use-fallback');
+                }, { once: true });
+                img.addEventListener('error', function () {
+                    stack.classList.add('use-fallback');
+                }, { once: true });
+            });
+        }
+
+        var sc = document.createElement('script');
+        sc.async = true;
+        sc.src = 'https://b.sf-syn.com/badge_js?sf_id=4084832';
+        sc.onload = function () {
+            window.setTimeout(verifySourceForgeBadges, 250);
+            window.setTimeout(verifySourceForgeBadges, 1500);
+        };
+        sc.onerror = function () {
+            setSourceForgeFallback(true);
+        };
+        var p = document.getElementsByTagName('script')[0];
+        p.parentNode.insertBefore(sc, p);
+    })();
+</script>
 
 </body>
 </html>

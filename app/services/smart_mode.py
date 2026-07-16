@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Smart Mode Service via local Ollama/Gemma.
+AudioEnhancerMAX by Fd - Smart Mode Service via local Ollama/Gemma.
 Uses a locally available Gemma-family model for assistive content classification
 and editing suggestions, with deterministic heuristics as fallback.
 """
@@ -426,7 +426,7 @@ Rules:
 - For noisy audio (SNR < 10dB), use MODERATE noise reduction (0.6-0.8), never higher
 - Studio sound and EQ should always be subtle (0.4-0.7)
 - Breath removal should be gentle (0.3-0.5) to sound natural
-- NEVER use 1.0 for any filter — always leave some natural character
+- NEVER use 1.0 for any filter - always leave some natural character
 
 Respond with JSON only:
 {{{", ".join(f'"{f}": {{"strength": 0.5, "reason": ""}}' for f in active_filters)}}}"""
@@ -493,11 +493,11 @@ def _get_heuristic_tuning(
 
     for f in active_filters:
         if f in noise_filters:
-            result[f] = {"strength": s["noise"], "reason": f"Heuristic: {quality} audio → {s['noise']}"}
+            result[f] = {"strength": s["noise"], "reason": f"Heuristic: {quality} audio -> {s['noise']}"}
         elif f in speech_filters:
-            result[f] = {"strength": s["speech"], "reason": f"Heuristic: {quality} audio → {s['speech']}"}
+            result[f] = {"strength": s["speech"], "reason": f"Heuristic: {quality} audio -> {s['speech']}"}
         elif f in enhance_filters:
-            result[f] = {"strength": s["enhance"], "reason": f"Heuristic: {quality} audio → {s['enhance']}"}
+            result[f] = {"strength": s["enhance"], "reason": f"Heuristic: {quality} audio -> {s['enhance']}"}
         else:
             result[f] = {"strength": 0.5, "reason": "Default"}
 

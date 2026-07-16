@@ -1,11 +1,10 @@
 /**
- * AudioEnhancerMAX by Fd — Main Application JavaScript
+ * AudioEnhancerMAX by Fd - Main Application JavaScript
  * Handles all UI interactions, API calls, and state management.
  */
-
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // State
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 const state = {
     fileId: null,
@@ -56,9 +55,19 @@ const options = {
     output_format: 'wav',
 };
 
-// ══════════════════════════════════════════════════════════
+const ICON_BASE = '/static/img/icons';
+function svgIcon(name, cls = 'icon-img inline-icon', alt = '') {
+    const safeName = String(name || 'info').replace(/[^a-z0-9-]/gi, '');
+    const safeCls = String(cls || 'icon-img inline-icon').replace(/[^a-z0-9_ -]/gi, '');
+    const safeAlt = String(alt || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    return `<img class="${safeCls}" src="${ICON_BASE}/${safeName}.svg" alt="${safeAlt}" aria-hidden="${safeAlt ? 'false' : 'true'}">`;
+}
+function buttonIcon(name) { return svgIcon(name, 'icon-img btn-icon-svg'); }
+
+
+// ==========================================================
 // Initialization
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     initUploadZone();
@@ -87,13 +96,13 @@ async function checkSystemHealth() {
         if (ollamaStatus === 'available') {
             dot.className = 'status-dot';
             const modelName = ollamaModel || 'Ollama/Gemma';
-            label.textContent = modelName + ' ✓';
+            label.textContent = modelName + ' ready';
         } else if (ollamaStatus === 'not_running') {
             dot.className = 'status-dot warning';
-            label.textContent = 'Ollama/Gemma — Start Ollama';
+            label.textContent = 'Ollama/Gemma - Start Ollama';
         } else {
             dot.className = 'status-dot error';
-            label.textContent = 'Ollama/Gemma — Unavailable';
+            label.textContent = 'Ollama/Gemma - Unavailable';
         }
     } catch (e) {
         document.getElementById('gemma-dot').className = 'status-dot error';
@@ -101,9 +110,9 @@ async function checkSystemHealth() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Navigation
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 function switchPanel(panelId, navItem) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -123,9 +132,9 @@ function switchTab(tabId, tabBtn) {
     tabBtn.classList.add('active');
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // File Upload
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 function initUploadZone() {
     const zone = document.getElementById('upload-zone');
@@ -244,9 +253,9 @@ function removeFile() {
     document.querySelectorAll('.requires-file-notice').forEach(el => el.style.display = '');
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Waveform (WaveSurfer.js)
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function initWaveform(audioUrl) {
     const container = document.getElementById('waveform-container');
@@ -282,11 +291,11 @@ async function initWaveform(audioUrl) {
     });
 
     state.wavesurferOriginal.on('play', () => {
-        document.getElementById('btn-play').textContent = '⏸';
+        document.getElementById('btn-play').textContent = 'Pause';
     });
 
     state.wavesurferOriginal.on('pause', () => {
-        document.getElementById('btn-play').textContent = '▶';
+        document.getElementById('btn-play').textContent = 'Play';
     });
 }
 
@@ -358,9 +367,9 @@ function zoomOut() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Feature Toggles & Options
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 function toggleFeature(checkbox) {
     const option = checkbox.dataset.option;
@@ -418,12 +427,12 @@ function updateProcessButton() {
         const audioDur = getAudioDuration();
         const estimate = estimateFilterSetETA(options, audioDur);
         if (estimate.totalSeconds > 0) {
-            btn.innerHTML = `⚡ Process Audio <span class="btn-eta-badge">${formatETA(estimate.totalSeconds)}</span>`;
+            btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio <span class="btn-eta-badge">${formatETA(estimate.totalSeconds)}</span>`;
         } else {
-            btn.innerHTML = '⚡ Process Audio';
+            btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
         }
     } else {
-        btn.innerHTML = '⚡ Process Audio';
+        btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
     }
 }
 
@@ -471,9 +480,9 @@ function setOptionsFromPreset(presetOptions) {
     showToast('info', 'Preset settings applied');
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Activity Tracker + ETA Engine
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 /**
  * Per-filter benchmarks: estimated seconds to process 60 seconds of audio.
@@ -482,26 +491,26 @@ function setOptionsFromPreset(presetOptions) {
  * Filters sharing a 'group' (e.g. 'whisper') share the firstLoadCost.
  */
 const FILTER_BENCHMARKS = {
-    // ── Noise Filters ──
+    // -- Noise Filters --
     remove_noise:           { secondsPer60s: 8.0,  firstLoadCost: 5,  group: 'deepfilter', label: 'Noise Removal (DeepFilterNet / noisereduce)' },
     wind_noise_remover:     { secondsPer60s: 2.5,  firstLoadCost: 0,  group: 'dsp',        label: 'Wind Noise Removal (Pedalboard HPF)' },
     buzzing_noise_remover:  { secondsPer60s: 0.5,  firstLoadCost: 0,  group: 'dsp',        label: 'Buzzing Removal (notch filters)' },
     static_noise_remover:   { secondsPer60s: 2.5,  firstLoadCost: 0,  group: 'dsp',        label: 'Static Noise Removal (spectral gating)' },
     reverb_echo_remover:    { secondsPer60s: 4.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Reverb/Echo Removal (STFT + median filter)' },
-    // ── Speech Cleanup (Whisper-based) ──
+    // -- Speech Cleanup (Whisper-based) --
     remove_filler_words:    { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Filler Words (Whisper large-v3 transcription)' },
     eliminate_hesitations:  { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Hesitations (Whisper large-v3 transcription)' },
     remove_stuttering:      { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Stuttering (Whisper large-v3 transcription)' },
-    // ── Speech Cleanup (DSP-based) ──
+    // -- Speech Cleanup (DSP-based) --
     remove_mouth_sounds:    { secondsPer60s: 2.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Mouth Sounds (spectral flux analysis)' },
     remove_breaths:         { secondsPer60s: 3.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Breath Removal (spectral features)' },
-    // ── Silence ──
+    // -- Silence --
     remove_long_silences:   { secondsPer60s: 1.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Silence Removal (RMS energy analysis)' },
-    // ── Enhancement ──
+    // -- Enhancement --
     auto_eq:                { secondsPer60s: 0.3,  firstLoadCost: 0,  group: 'dsp',        label: 'AutoEQ (Pedalboard filter chain)' },
     studio_sound:           { secondsPer60s: 0.5,  firstLoadCost: 0,  group: 'dsp',        label: 'Studio Sound (compressor + limiter)' },
     normalize:              { secondsPer60s: 0.3,  firstLoadCost: 0,  group: 'dsp',        label: 'Volume Normalization (EBU R128)' },
-    // ── Advanced ──
+    // -- Advanced --
     keep_music:             { secondsPer60s: 25.0, firstLoadCost: 8,  group: 'demucs',     label: 'Keep Music (Demucs neural separation)' },
     frequency_restoration:  { secondsPer60s: 5.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Frequency Restoration (STFT harmonic synthesis)' },
 };
@@ -511,7 +520,7 @@ const FILTER_BENCHMARKS = {
  */
 const OPERATION_BENCHMARKS = {
     'Speech-to-Text Transcription':        { rate: 2.5,  base: 12, reason: 'Whisper large-v3 model inference' },
-    'Smart Mode — Ollama/Gemma Analysis':  { rate: 0.0,  base: 12, reason: 'Local Ollama/Gemma analysis + spectral features' },
+    'Smart Mode - Ollama/Gemma Analysis':  { rate: 0.0,  base: 12, reason: 'Local Ollama/Gemma analysis + spectral features' },
     'Speaker Diarization (MPS)':           { rate: 1.5,  base: 5,  reason: 'Energy-based speaker segmentation (MPS)' },
     'Speech Synthesis (TTS)':              { rate: 0.0,  base: 15, reason: 'XTTS-v2 neural synthesis' },
 };
@@ -542,7 +551,7 @@ const activity = {
     audioDuration: 0,       // duration of uploaded audio in seconds
 };
 
-// ── localStorage persistence for timing history ──
+// -- localStorage persistence for timing history --
 function _loadTimingHistory() {
     try {
         const raw = localStorage.getItem('audioenhancer_timing_history');
@@ -618,9 +627,9 @@ function estimateFilterSetETA(filterOptions, audioDurationSec) {
     let reason;
     if (heavyFilters.length > 0) {
         const heavyNames = heavyFilters.map(h => h.label.split('(')[0].trim()).join(', ');
-        reason = `${activeFilters.length} filtri attivi — più costosi: ${heavyNames} — stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
+        reason = `${activeFilters.length} filtri attivi - più costosi: ${heavyNames} - stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
     } else {
-        reason = `${activeFilters.length} filtri DSP leggeri — stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
+        reason = `${activeFilters.length} filtri DSP leggeri - stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
     }
 
     return { totalSeconds, breakdown, reason };
@@ -628,7 +637,7 @@ function estimateFilterSetETA(filterOptions, audioDurationSec) {
 
 /**
  * Format seconds as a human-readable ETA string.
- * e.g. 95 → "~1:35", 8 → "~8s"
+ * e.g. 95  to  "~1:35", 8  to  "~8s"
  */
 function formatETA(seconds) {
     if (seconds <= 0) return '';
@@ -663,13 +672,13 @@ function estimateInitialETA(operationName) {
     if (bench) {
         const estimated = bench.base + (audioDur * bench.rate);
         activity.etaSource = 'benchmark';
-        activity.etaReason = `${bench.reason} — stima per ${formatElapsed(Math.round(audioDur))} di audio`;
+        activity.etaReason = `${bench.reason} - stima per ${formatElapsed(Math.round(audioDur))} di audio`;
         return Math.max(3, Math.round(estimated));
     }
 
     // 4. Generic fallback
     activity.etaSource = 'benchmark';
-    activity.etaReason = 'Stima generica — nessun benchmark disponibile per questa operazione';
+    activity.etaReason = 'Stima generica - nessun benchmark disponibile per questa operazione';
     return Math.max(5, Math.round(audioDur * 0.5 + 5));
 }
 
@@ -708,12 +717,12 @@ function refineLiveETA(progress) {
 
         activity.etaSeconds = Math.max(1, Math.round(blended));
         activity.etaSource = 'live';
-        activity.etaReason = `Stima in tempo reale — progresso ${(progress * 100).toFixed(0)}% in ${formatElapsed(Math.round(elapsedSec))}`;
+        activity.etaReason = `Stima in tempo reale - progresso ${(progress * 100).toFixed(0)}% in ${formatElapsed(Math.round(elapsedSec))}`;
     } else {
         // Not enough data points yet, use simple ratio
         activity.etaSeconds = Math.max(1, Math.round(remainingSec));
         activity.etaSource = 'live';
-        activity.etaReason = `Estrapolazione lineare — ${(progress * 100).toFixed(0)}% completato in ${formatElapsed(Math.round(elapsedSec))}`;
+        activity.etaReason = `Estrapolazione lineare - ${(progress * 100).toFixed(0)}% completato in ${formatElapsed(Math.round(elapsedSec))}`;
     }
 }
 
@@ -726,15 +735,16 @@ function updateETADisplay() {
 
     const etaStr = formatElapsed(eta);
     const conf = activity.etaConfidence || 'low';
-    const sourceIcon = conf === 'high' ? '📊' :
-                       conf === 'medium' ? '📈' : '🧮';
+    const sourceIcon = conf === 'high' ? svgIcon('activity-history', 'icon-img inline-icon') :
+                       conf === 'medium' ? svgIcon('activity-live', 'icon-img inline-icon') :
+                       svgIcon('calculator', 'icon-img inline-icon');
     const confLabel = conf === 'high' ? 'alta precisione' :
                       conf === 'medium' ? 'precisione media' : 'stima iniziale';
 
     // Steps counter text
     let stepsText = '';
     if (activity.totalSteps > 0) {
-        stepsText = ` — step ${activity.completedSteps}/${activity.totalSteps}`;
+        stepsText = ` - step ${activity.completedSteps}/${activity.totalSteps}`;
     }
 
     // Activity bar ETA badge
@@ -756,7 +766,7 @@ function updateETADisplay() {
     const reasonEl = document.getElementById('progress-eta-reason');
     if (reasonEl) {
         const reasonText = activity.etaReason || `${confLabel}${stepsText}`;
-        reasonEl.textContent = `${sourceIcon} ${reasonText}`;
+        reasonEl.innerHTML = `${sourceIcon}${reasonText}`;
         reasonEl.style.display = '';
     }
 
@@ -764,12 +774,12 @@ function updateETADisplay() {
     const loadingEta = document.getElementById('loading-eta');
     const loadingReason = document.getElementById('loading-eta-reason');
     if (loadingEta) {
-        loadingEta.textContent = `⏳ ~${etaStr} restanti`;
+        loadingEta.innerHTML = `${svgIcon('timer', 'icon-img inline-icon')}~${etaStr} remaining`;
         loadingEta.style.display = '';
     }
     if (loadingReason) {
         const reasonText = activity.etaReason || `${confLabel}${stepsText}`;
-        loadingReason.textContent = `${sourceIcon} ${reasonText}`;
+        loadingReason.innerHTML = `${sourceIcon}${reasonText}`;
         loadingReason.style.display = '';
     }
 }
@@ -806,7 +816,7 @@ function startActivity(operationName, totalSteps = 0) {
     activity.lastProgress = 0;
     activity.lastProgressTime = null;
     activity.progressRates = [];
-    activity.serverEstimate = null;  // Reset — will be set by caller if available
+    activity.serverEstimate = null;  // Reset - will be set by caller if available
 
     // Calculate initial ETA (fallback if no server estimate)
     activity.etaSeconds = estimateInitialETA(operationName);
@@ -822,7 +832,7 @@ function startActivity(operationName, totalSteps = 0) {
     document.getElementById('loading-text').textContent = operationName;
     document.getElementById('loading-overlay').classList.add('visible');
 
-    // ── ALWAYS start HW polling for any activity ──
+    // Always start HW polling for any activity
     try { startProcDashHWPolling(); } catch(e) { console.error('startProcDashHWPolling error:', e); }
 
     // Initialize processing pipeline dashboard only for Audio Processing
@@ -843,7 +853,7 @@ function startActivity(operationName, totalSteps = 0) {
                             const badge = el.querySelector('.proc-device-badge');
                             if (badge) {
                                 badge.className = 'proc-device-badge edge';
-                                badge.textContent = '📱 Edge Cluster';
+                                badge.innerHTML = `${svgIcon('edge-device', 'icon-img inline-icon')}Edge Cluster`;
                             }
                         }
                     });
@@ -890,7 +900,7 @@ function updateActivity(message, progress = -1) {
 
     // Update activity bar text
     document.getElementById('activity-bar-text').innerHTML =
-        `<strong>${activity.currentOperation}</strong> — ${message}`;
+        `<strong>${activity.currentOperation}</strong> - ${message}`;
 
     // Update progress if provided
     if (progress >= 0) {
@@ -925,13 +935,13 @@ function addActivityStep(message, status = 'completed') {
     if (activeStep) {
         activeStep.classList.remove('active');
         activeStep.classList.add('completed');
-        activeStep.querySelector('.step-icon').textContent = '✓';
+        activeStep.querySelector('.step-icon').innerHTML = svgIcon('check', 'icon-img control-icon-svg');
     }
 
     const stepEl = document.createElement('div');
     stepEl.className = `progress-step ${status}`;
 
-    const icon = status === 'completed' ? '✓' : status === 'error' ? '✕' : '⟳';
+    const icon = status === 'completed' ? svgIcon('check', 'icon-img control-icon-svg') : status === 'error' ? svgIcon('cross', 'icon-img control-icon-svg') : svgIcon('refresh', 'icon-img control-icon-svg');
     stepEl.innerHTML = `<span class="step-icon">${icon}</span> ${message} <span class="step-time">${formatElapsed(elapsed)}</span>`;
 
     progressSteps.appendChild(stepEl);
@@ -965,7 +975,7 @@ function stopActivity(success = true) {
     if (success) {
         document.getElementById('activity-bar-fill').style.width = '100%';
         document.getElementById('activity-bar-text').innerHTML =
-            `<strong>${activity.currentOperation}</strong> — Completato in ${formatElapsed(elapsed)} ✓`;
+            `<strong>${activity.currentOperation}</strong> - Completed in ${formatElapsed(elapsed)}`;
     }
 
     // Hide ETA elements
@@ -994,9 +1004,9 @@ function formatElapsed(seconds) {
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Processing
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function startProcessing() {
     if (!state.fileId || state.isProcessing) return;
@@ -1019,7 +1029,7 @@ async function startProcessing() {
     if (spinner) spinner.style.display = '';
 
     document.getElementById('btn-process').disabled = true;
-    document.getElementById('btn-process').innerHTML = '⏳ Processing...';
+    document.getElementById('btn-process').innerHTML = ' Processing...';
 
     // Connect WebSocket for progress
     connectProgressWS(state.fileId);
@@ -1051,10 +1061,10 @@ async function startProcessing() {
         const dlBar = document.getElementById('download-bar');
         dlBar.classList.add('visible');
         document.getElementById('download-info-text').textContent =
-            `${formatDuration(result.duration_seconds)} • ${result.sample_rate}Hz • ${result.format.toUpperCase()}`;
+            `${formatDuration(result.duration_seconds)} - ${result.sample_rate}Hz - ${result.format.toUpperCase()}`;
 
         updateActivity('Complete!', 1.0);
-        addActivityStep('Processing complete — audio ready for download');
+        addActivityStep('Processing complete - audio ready for download');
         stopActivity(true);
         showToast('success', 'Processing complete! Download your enhanced audio.');
 
@@ -1065,7 +1075,7 @@ async function startProcessing() {
     } finally {
         state.isProcessing = false;
         document.getElementById('btn-process').disabled = false;
-        document.getElementById('btn-process').innerHTML = '⚡ Process Audio';
+        document.getElementById('btn-process').innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
     }
 }
 
@@ -1077,7 +1087,7 @@ function connectProgressWS(fileId) {
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
 
-            // ── Handle initial estimate from backend ──
+            // -- Handle initial estimate from backend --
             if (data.status === 'estimate') {
                 const totalEst = data.estimated_total_seconds || 0;
                 if (totalEst > 0) {
@@ -1094,7 +1104,7 @@ function connectProgressWS(fileId) {
                 return;
             }
 
-            // ── Use server-side remaining seconds when available ──
+            // -- Use server-side remaining seconds when available --
             if (data.estimated_remaining_seconds !== undefined && data.estimated_remaining_seconds !== null) {
                 activity.etaSeconds = Math.max(0, Math.round(data.estimated_remaining_seconds));
                 activity.etaSource = data.eta_confidence === 'high' ? 'history' : 'live';
@@ -1102,7 +1112,7 @@ function connectProgressWS(fileId) {
                 // Don't overwrite reason if server didn't send one
             }
 
-            // ── Update steps counter ──
+            // -- Update steps counter --
             if (data.steps_completed !== undefined && data.steps_total !== undefined) {
                 activity.completedSteps = data.steps_completed;
                 activity.totalSteps = data.steps_total;
@@ -1141,14 +1151,14 @@ function connectProgressWS(fileId) {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Smart Mode (Ollama/Gemma)
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function runSmartMode() {
     if (!state.fileId) return;
 
-    startActivity('Smart Mode — Ollama/Gemma Analysis');
+    startActivity('Smart Mode - Ollama/Gemma Analysis');
     updateActivity('Analyzing audio features...', 0.1);
 
     try {
@@ -1203,9 +1213,9 @@ function applySmartPreset() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Speech-to-Text
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function startTranscription() {
     if (!state.fileId) return;
@@ -1213,8 +1223,8 @@ async function startTranscription() {
     const btn = document.getElementById('btn-transcribe');
     btn.disabled = true;
 
-    // ─── PHASE 1: Calculate estimate BEFORE starting the task ───
-    btn.textContent = '📊 Calcolo stima...';
+    // --- PHASE 1: Calculate estimate BEFORE starting the task ---
+    btn.innerHTML = `${buttonIcon('activity-history')}Calculating estimate...`;
 
     let estimateData = null;
     try {
@@ -1229,22 +1239,22 @@ async function startTranscription() {
         }
     } catch (e) { /* estimate failed, continue anyway */ }
 
-    // ─── PHASE 2: Show estimate to user with visual pause ───
+    // --- PHASE 2: Show estimate to user with visual pause ---
     if (estimateData && estimateData.total_seconds > 0) {
         const rangeStr = _formatTimeRange(estimateData.total_seconds);
-        const confIcon = estimateData.confidence === 'high' ? '📊' :
-                         estimateData.confidence === 'medium' ? '📈' : '🧮';
+        const confIcon = estimateData.confidence === 'high' ? svgIcon('activity-history', 'icon-img inline-icon') :
+                         estimateData.confidence === 'medium' ? svgIcon('activity-live', 'icon-img inline-icon') : svgIcon('calculator', 'icon-img inline-icon');
         const confLabel = estimateData.confidence === 'high' ? 'alta precisione' :
                           estimateData.confidence === 'medium' ? 'precisione media' : 'stima iniziale';
 
-        btn.innerHTML = `⏱️ Tempo stimato: ~${rangeStr} (${confIcon} ${confLabel})`;
+        btn.innerHTML = `${buttonIcon('timer')}Estimated time: ~${rangeStr} (${confIcon} ${confLabel})`;
 
         // Let user see the estimate for 2 seconds before starting
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    // ─── PHASE 3: Start the actual activity ───
-    btn.textContent = '⏳ Transcribing...';
+    // --- PHASE 3: Start the actual activity ---
+    btn.innerHTML = `${buttonIcon('timer')}Transcribing...`;
 
     startActivity('Speech-to-Text Transcription');
 
@@ -1269,12 +1279,12 @@ async function startTranscription() {
         const language = document.getElementById('stt-language').value || null;
         const format = document.getElementById('stt-format').value;
 
-        // ─── Check for partial transcript from previous session ───
+        // --- Check for partial transcript from previous session ---
         try {
             const resumeRes = await fetch(`/api/transcribe/resume/${state.fileId}`);
             const resumeData = await resumeRes.json();
             if (resumeData.has_partial && resumeData.complete) {
-                // Previous transcription completed — offer to use it
+                // Previous transcription completed - offer to use it
                 output.textContent = resumeData.text;
                 state.transcriptData = resumeData;
                 const bc = document.getElementById('btn-copy-transcript');
@@ -1286,12 +1296,12 @@ async function startTranscription() {
                 showToast('success', `Transcript loaded from cache (${resumeData.segments_count} segments)`);
                 return;
             } else if (resumeData.has_partial && resumeData.segments_count > 0) {
-                output.textContent = resumeData.text + '\n\n⏳ Resuming...';
+                output.textContent = resumeData.text + '\n\nResuming...';
                 showToast('info', `Found ${resumeData.segments_count} cached segments, continuing...`);
             }
         } catch (e) { /* resume check failed, continue fresh */ }
 
-        // ─── Use SSE streaming for real-time segment delivery ───
+        // --- Use SSE streaming for real-time segment delivery ---
         const startTime = Date.now();
 
         const response = await fetch('/api/transcribe/stream', {
@@ -1311,7 +1321,7 @@ async function startTranscription() {
         let buffer = '';
         let receivedDone = false;
 
-        // Accumulate segments locally — fallback if 'done' event is lost
+        // Accumulate segments locally - fallback if 'done' event is lost
         let accSegments = [];
         let accText = '';
         let accLang = '';
@@ -1336,12 +1346,12 @@ async function startTranscription() {
                 try {
                     event = JSON.parse(payload);
                 } catch (e) {
-                    // JSON too large or malformed — skip this event
+                    // JSON too large or malformed - skip this event
                     continue;
                 }
 
                 if (event.type === 'segment') {
-                    // ✅ Append text incrementally — user sees results in real-time
+                    // Append text incrementally - user sees results in real-time
                     output.textContent = event.text_so_far;
                     output.scrollTop = output.scrollHeight;
 
@@ -1366,7 +1376,7 @@ async function startTranscription() {
             }
         }
 
-        // ── Stream ended — finalize whether or not 'done' was received ──
+        // Stream ended - finalize whether or not 'done' was received
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
         if (accText) {
@@ -1393,9 +1403,9 @@ async function startTranscription() {
             _autoDownloadTranscript(formatted, format);
 
             updateActivity('Transcription complete', 1.0);
-            addActivityStep(`Transcribed (${accLang || 'auto'}) — ${accSegments.length} segments`);
+            addActivityStep(`Transcribed (${accLang || 'auto'}) - ${accSegments.length} segments`);
             stopActivity(true);
-            showToast('success', `✅ Transcript saved! (${accLang || 'auto'}) — ${elapsed}s`);
+            showToast('success', `Transcript saved! (${accLang || 'auto'}) - ${elapsed}s`);
         } else {
             stopActivity(false);
             showToast('error', 'Transcription produced no output');
@@ -1406,7 +1416,7 @@ async function startTranscription() {
         showToast('error', e.message || 'Transcription error');
     } finally {
         btn.disabled = false;
-        btn.textContent = '📝 Transcribe Audio';
+        btn.innerHTML = `${buttonIcon('file-report')}Transcribe Audio`;
     }
 }
 
@@ -1531,9 +1541,9 @@ function downloadTranscript() {
     URL.revokeObjectURL(url);
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Text-to-Speech
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function handleCloneUpload(event) {
     const file = event.target.files[0];
@@ -1546,14 +1556,14 @@ async function handleCloneUpload(event) {
         const res = await fetch('/api/upload', { method: 'POST', body: formData });
         const data = await res.json();
         state.cloneVoiceFileId = data.file_id;
-        document.getElementById('clone-status').textContent = `✓ Loaded: ${file.name}`;
+        document.getElementById('clone-status').textContent = `Loaded: ${file.name}`;
         showToast('success', 'Voice sample loaded for cloning');
     } catch (e) {
         showToast('error', 'Failed to upload voice sample');
     }
 }
 
-// ── Expressive Mode helpers ──
+// -- Expressive Mode helpers --
 
 function toggleExpressiveMode(enabled) {
     const previewBtn = document.getElementById('btn-preview-rewrite');
@@ -1562,11 +1572,11 @@ function toggleExpressiveMode(enabled) {
 
     if (enabled) {
         previewBtn.style.display = 'inline-flex';
-        genBtn.textContent = '✨ Generate Expressive Speech';
+        genBtn.textContent = ' Generate Expressive Speech';
     } else {
         previewBtn.style.display = 'none';
         previewArea.style.display = 'none';
-        genBtn.textContent = '🗣️ Generate Speech';
+        genBtn.textContent = ' Generate Speech';
     }
 }
 
@@ -1582,7 +1592,7 @@ async function previewRewrite() {
     const style = document.getElementById('tts-style').value;
 
     const previewBtn = document.getElementById('btn-preview-rewrite');
-    previewBtn.textContent = '⏳ Rewriting...';
+    previewBtn.textContent = ' Rewriting...';
     previewBtn.disabled = true;
 
     try {
@@ -1602,14 +1612,14 @@ async function previewRewrite() {
         previewArea.style.display = 'block';
 
         if (data.changed) {
-            showToast('success', '✨ Text rewritten for expressive delivery');
+            showToast('success', 'Text rewritten for expressive delivery');
         } else {
-            showToast('info', 'Gemma unavailable — original text will be used');
+            showToast('info', 'Gemma unavailable - original text will be used');
         }
     } catch (e) {
         showToast('error', e.message);
     } finally {
-        previewBtn.textContent = '👁️ Preview';
+        previewBtn.innerHTML = `${buttonIcon('search')}Preview`;
         previewBtn.disabled = false;
     }
 }
@@ -1643,7 +1653,7 @@ async function synthesizeSpeech() {
     startActivity(label);
 
     if (isExpressive && !rewrittenVisible) {
-        updateActivity('✨ Gemma is rewriting your text...', 0.05);
+        updateActivity('Gemma is rewriting your text...', 0.05);
     } else {
         updateActivity(`Generating speech with ${engineLabel}...`, 0.1);
     }
@@ -1683,10 +1693,10 @@ async function synthesizeSpeech() {
         const badge = document.getElementById('tts-engine-badge');
         if (badge) {
             const parts = [];
-            parts.push(`Engine: ${data.engine === 'kokoro' ? '🤖 Kokoro Local' : '☁️ Edge Neural'}`);
-            if (data.expressive) parts.push('✨ Expressive');
+            parts.push(`Engine: ${data.engine === 'kokoro' ? 'Kokoro Local' : 'Edge Neural'}`);
+            if (data.expressive) parts.push('Expressive');
             parts.push(`${data.duration.toFixed(1)}s`);
-            badge.textContent = parts.join(' · ');
+            badge.textContent = parts.join(' - ');
             badge.style.display = 'block';
         }
 
@@ -1699,8 +1709,7 @@ async function synthesizeSpeech() {
         }
 
         stopActivity(true);
-        const emoji = data.expressive ? '✨' : '🗣️';
-        showToast('success', `${emoji} Speech generated (${data.duration.toFixed(1)}s)`);
+        showToast('success', `Speech generated (${data.duration.toFixed(1)}s)`);
 
     } catch (e) {
         stopActivity(false);
@@ -1708,9 +1717,9 @@ async function synthesizeSpeech() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Speaker Diarization
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function startDiarization() {
     if (!state.fileId) return;
@@ -1769,10 +1778,10 @@ function renderDiarization(data) {
         const color = colors[idx % colors.length];
         statsHtml += `
             <div class="feature-item">
-                <div class="feature-icon" style="background:${color}33;color:${color}">👤</div>
+                <div class="feature-icon" style="background:${color}33;color:${color}">${svgIcon('user')}</div>
                 <div class="feature-info">
                     <div class="feature-name">${speaker}</div>
-                    <div class="feature-desc">${stats.total_duration}s • ${stats.segment_count} segments • ${stats.percentage}%</div>
+                    <div class="feature-desc">${stats.total_duration}s - ${stats.segment_count} segments - ${stats.percentage}%</div>
                 </div>
             </div>`;
     });
@@ -1780,9 +1789,9 @@ function renderDiarization(data) {
     statsDiv.innerHTML = statsHtml;
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Watermarking
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function embedWatermark() {
     if (!state.fileId) return;
@@ -1798,7 +1807,7 @@ async function embedWatermark() {
         const data = await res.json();
         document.getElementById('watermark-result').style.display = 'block';
         document.getElementById('watermark-result').innerHTML =
-            `<div class="card" style="border-color:var(--success)"><div class="card-title">✓ Watermark Embedded</div>
+            `<div class="card" style="border-color:var(--success)"><div class="card-title">${svgIcon('check', 'icon-img inline-icon')}Watermark Embedded</div>
             <p class="text-sm text-muted mt-12">Invisible watermark has been embedded. <a href="${data.watermarked_url}" download style="color:var(--accent-primary-light)">Download watermarked file</a></p></div>`;
 
         showToast('success', 'Watermark embedded');
@@ -1819,7 +1828,7 @@ async function detectWatermark() {
 
         if (data.watermark && data.watermark.detected) {
             document.getElementById('watermark-result').innerHTML =
-                `<div class="card" style="border-color:var(--success)"><div class="card-title">🔍 Watermark Detected</div>
+                `<div class="card" style="border-color:var(--success)"><div class="card-title">${svgIcon('search', 'icon-img inline-icon')}Watermark Detected</div>
                 <p class="text-sm mt-12">Method: ${data.watermark.method}</p>
                 <p class="text-xs text-muted">Payload: ${data.watermark.payload}</p></div>`;
         } else {
@@ -1831,9 +1840,9 @@ async function detectWatermark() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Presets
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function loadPresets() {
     try {
@@ -1848,7 +1857,7 @@ async function loadPresets() {
             // Calculate ETA for this preset (use 60s as reference)
             const presetETA = estimateFilterSetETA(p.options, 60);
             const etaBadge = presetETA.totalSeconds > 0
-                ? `<div class="preset-card-eta" title="Tempo stimato per 1 min di audio">⏱ ${formatETA(presetETA.totalSeconds)} per 1 min</div>`
+                ? `<div class="preset-card-eta" title="Tempo stimato per 1 min di audio"> ${formatETA(presetETA.totalSeconds)} per 1 min</div>`
                 : '';
             const filterCount = Object.keys(p.options).filter(k => p.options[k] === true).length;
             return `
@@ -1917,9 +1926,9 @@ async function saveCurrentAsPreset() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Batch Processing
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 function initBatchUpload() {
     const zone = document.getElementById('batch-upload-zone');
@@ -2022,9 +2031,9 @@ async function pollBatchStatus(jobId) {
     poll();
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Download & A/B Compare
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 function downloadFile(format) {
     if (!state.fileId) return;
@@ -2046,9 +2055,9 @@ function compareAB() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // UI Utilities
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 function showLoading(text = 'Processing...') {
     // If activity system is not running, show simple overlay
@@ -2069,8 +2078,8 @@ function showToast(type, message) {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
 
-    const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
-    toast.innerHTML = `<span>${icons[type] || '•'}</span> ${message}`;
+    const icons = { success: svgIcon('check', 'icon-img toast-icon-svg'), error: svgIcon('cross', 'icon-img toast-icon-svg'), warning: svgIcon('warning', 'icon-img toast-icon-svg'), info: svgIcon('info', 'icon-img toast-icon-svg') };
+    toast.innerHTML = `<span>${icons[type] || '-'}</span> ${message}`;
 
     container.appendChild(toast);
 
@@ -2094,9 +2103,9 @@ function formatFileSize(bytes) {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Edge Cluster Management
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 let clusterPollInterval = null;
 
@@ -2112,7 +2121,7 @@ async function pollClusterStatus() {
         const data = await res.json();
         updateClusterUI(data);
     } catch (e) {
-        // Silently fail — cluster polling is non-critical
+        // Silently fail - cluster polling is non-critical
     }
 }
 
@@ -2205,22 +2214,22 @@ function createWorkerCard(worker) {
             <div class="cluster-node-status ${statusClass}"></div>
             <div class="cluster-node-name">${escapeHtml(worker.name || worker.device_model || 'Unknown')}</div>
             <span class="cluster-node-role worker">${statusText}</span>
-            <button class="btn btn-xs btn-ghost" onclick="removeWorker('${worker.ip}', ${worker.port})" title="Remove">✕</button>
+            <button class="btn btn-xs btn-ghost" onclick="removeWorker('${worker.ip}', ${worker.port})" title="Remove">Remove</button>
         </div>
         <div class="cluster-node-stats">
-            <div class="cluster-stat"><span class="cluster-stat-label">Model</span><span class="cluster-stat-value">${escapeHtml(worker.device_model || '—')}</span></div>
+            <div class="cluster-stat"><span class="cluster-stat-label">Model</span><span class="cluster-stat-value">${escapeHtml(worker.device_model || '-')}</span></div>
             <div class="cluster-stat"><span class="cluster-stat-label">IP</span><span class="cluster-stat-value">${worker.ip}:${worker.port}</span></div>
             <div class="cluster-stat"><span class="cluster-stat-label">CPU</span><span class="cluster-stat-value">${worker.cpu_cores || '?'} cores</span></div>
             <div class="cluster-stat"><span class="cluster-stat-label">RAM</span><span class="cluster-stat-value">${worker.ram_gb || '?'} GB</span></div>
             <div class="cluster-stat"><span class="cluster-stat-label">DSP Filters</span><span class="cluster-stat-value">${(worker.available_filters || []).length}</span></div>
             <div class="cluster-stat"><span class="cluster-stat-label">Tasks Done</span><span class="cluster-stat-value">${worker.tasks_completed || 0}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">Avg Speed</span><span class="cluster-stat-value">${worker.avg_speed ? worker.avg_speed + 's' : '—'}</span></div>
+            <div class="cluster-stat"><span class="cluster-stat-label">Avg Speed</span><span class="cluster-stat-value">${worker.avg_speed ? worker.avg_speed + 's' : '-'}</span></div>
             ${worker.current_task ? `<div class="cluster-stat"><span class="cluster-stat-label">Current</span><span class="cluster-stat-value highlight">${escapeHtml(worker.current_task)}</span></div>` : ''}
         </div>
         <div class="cluster-benchmark">
-            <div class="cluster-benchmark-label">Benchmark Power — <span class="tier-${tierClass}">${powerTier}</span></div>
+            <div class="cluster-benchmark-label">Benchmark Power - <span class="tier-${tierClass}">${powerTier}</span></div>
             <div class="cluster-benchmark-bar"><div class="cluster-benchmark-fill ${tierClass}" style="width:${benchmarkPct}%"></div></div>
-            <span class="cluster-benchmark-value">${benchmarkPct}% — ${(worker.available_filters || []).length} DSP filters</span>
+            <span class="cluster-benchmark-value">${benchmarkPct}% - ${(worker.available_filters || []).length} DSP filters</span>
         </div>
     `;
 
@@ -2292,9 +2301,9 @@ document.addEventListener('DOMContentLoaded', () => {
     startClusterPolling();
 });
 
-// ══════════════════════════════════════════════════════════
-// Processing Dashboard — per-filter pipeline + HW utilization
-// ══════════════════════════════════════════════════════════
+// ==========================================================
+// Processing Dashboard - per-filter pipeline + HW utilization
+// ==========================================================
 
 const FILTER_LABELS = {
     remove_noise: 'Noise Removal',
@@ -2356,13 +2365,13 @@ function buildProcessingPipeline() {
         // Determine execution device
         let deviceLabel, deviceClass;
         if (isML) {
-            deviceLabel = '🧠 ML · Mac';
+            deviceLabel = `${svgIcon('smart-ai', 'icon-img inline-icon')}ML - Mac`;
             deviceClass = 'ml';
         } else if (isDSP && _procHasEdgeWorkers) {
-            deviceLabel = '📱 Edge Cluster';
+            deviceLabel = `${svgIcon('edge-device', 'icon-img inline-icon')}Edge Cluster`;
             deviceClass = 'edge';
         } else {
-            deviceLabel = '🖥️ Mac';
+            deviceLabel = `${svgIcon('desktop-node', 'icon-img inline-icon')}Mac`;
             deviceClass = 'mac';
         }
 
@@ -2402,7 +2411,7 @@ function renderWorkerNodes() {
         node.innerHTML = `
             <div class="proc-node-head">
                 <span class="proc-node-dot ${w.status === 'busy' ? 'busy' : 'online'}"></span>
-                <span class="proc-node-label">📱 ${w.device_model || w.name}</span>
+                <span class="proc-node-label">${svgIcon('edge-device', 'icon-img inline-icon')}${w.device_model || w.name}</span>
             </div>
             <div class="proc-node-chip">${w.cpu_cores} cores · ${w.ram_gb} GB RAM · ${(w.available_filters || []).length} DSP filters</div>
             <div class="proc-node-meters">
@@ -2414,7 +2423,7 @@ function renderWorkerNodes() {
                 <div class="proc-meter">
                     <span class="proc-meter-label">Avg</span>
                     <div class="proc-meter-bar"><div class="proc-meter-fill gpu" style="width:60%"></div></div>
-                    <span class="proc-meter-val">${w.avg_speed ? w.avg_speed + 's' : '—'}</span>
+                    <span class="proc-meter-val">${w.avg_speed ? w.avg_speed + 's' : '-'}</span>
                 </div>
             </div>
         `;
@@ -2435,7 +2444,7 @@ function startProcDashHWPolling() {
 
 async function _pollHWMetrics() {
     try {
-        // Use AbortController to timeout after 3s — prevents stalling if server is busy
+        // Use AbortController to timeout after 3s - prevents stalling if server is busy
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
         const health = await fetch('/api/health', { signal: controller.signal }).then(r => r.json());
@@ -2485,10 +2494,10 @@ async function _pollHWMetrics() {
                 // Build extra metrics row
                 let extrasHtml = coreHtml;
                 extrasHtml += `<div class="proc-extras-row">`;
-                if (power > 0) extrasHtml += `<span class="proc-extra-chip">⚡ ${power.toFixed(1)}W</span>`;
-                if (freq > 0) extrasHtml += `<span class="proc-extra-chip">🔄 ${freq.toFixed(1)} GHz</span>`;
-                if (ane > 0) extrasHtml += `<span class="proc-extra-chip">🧠 ANE ${Math.round(ane)}%</span>`;
-                if (bench > 0) extrasHtml += `<span class="proc-extra-chip bench">🏁 ${Math.round(bench)} ops/s</span>`;
+                if (power > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('power', 'icon-img inline-icon')}${power.toFixed(1)}W</span>`;
+                if (freq > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('refresh', 'icon-img inline-icon')}${freq.toFixed(1)} GHz</span>`;
+                if (ane > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('smart-ai', 'icon-img inline-icon')}ANE ${Math.round(ane)}%</span>`;
+                if (bench > 0) extrasHtml += `<span class="proc-extra-chip bench">${svgIcon('benchmark', 'icon-img inline-icon')}${Math.round(bench)} ops/s</span>`;
 
                 // Temperature display
                 const cpuTemp = health.system.cpu_temp_c || 0;
@@ -2496,15 +2505,14 @@ async function _pollHWMetrics() {
                 const thermal = health.system.thermal_pressure || 'nominal';
                 if (cpuTemp > 0) {
                     const tempClass = cpuTemp > 90 ? 'critical' : cpuTemp > 80 ? 'warn' : '';
-                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">🌡️ CPU ${Math.round(cpuTemp)}°C</span>`;
+                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">${svgIcon('monitor', 'icon-img inline-icon')}CPU ${Math.round(cpuTemp)} C</span>`;
                 }
                 if (gpuTemp > 0) {
                     const tempClass = gpuTemp > 85 ? 'critical' : gpuTemp > 75 ? 'warn' : '';
-                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">🌡️ GPU ${Math.round(gpuTemp)}°C</span>`;
+                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">${svgIcon('monitor', 'icon-img inline-icon')}GPU ${Math.round(gpuTemp)} C</span>`;
                 }
                 if (thermal !== 'nominal') {
-                    const thermalIcon = thermal === 'critical' ? '🔴' : thermal === 'serious' ? '🟠' : '🟡';
-                    extrasHtml += `<span class="proc-extra-chip ${thermal}">${thermalIcon} ${thermal.toUpperCase()}</span>`;
+                    extrasHtml += `<span class="proc-extra-chip ${thermal}">${svgIcon('warning', 'icon-img inline-icon')}${thermal.toUpperCase()}</span>`;
                 }
 
                 extrasHtml += `</div>`;
@@ -2571,8 +2579,8 @@ function updatePipelineStep(stepName, message) {
         return;
     }
 
-    // If message contains ✓, mark the step as done
-    if (message && message.includes('✓')) {
+    // If message contains done marker, mark the step as done
+    if (message && message.toLowerCase().includes('complete')) {
         // If still queued, mark active first (set startTime for elapsed calc)
         if (_procPipelineState[filterKey] && _procPipelineState[filterKey].status === 'queued') {
             _procPipelineState[filterKey].status = 'active';
@@ -2604,7 +2612,7 @@ function markStepActive(filterKey) {
     const el = document.getElementById(`proc-step-${filterKey}`);
     if (el) {
         el.className = 'proc-step active';
-        el.querySelector('.proc-step-icon').textContent = '⟳';
+        el.querySelector('.proc-step-icon').textContent = 'refresh';
     }
 }
 
@@ -2619,7 +2627,7 @@ function markStepDone(filterKey, isDistributed) {
     const el = document.getElementById(`proc-step-${filterKey}`);
     if (el) {
         el.className = `proc-step done${isDistributed ? ' distributed' : ''}`;
-        el.querySelector('.proc-step-icon').textContent = '✓';
+        el.querySelector('.proc-step-icon').innerHTML = svgIcon('check', 'icon-img control-icon-svg');
 
         // Show elapsed time
         if (state.startTime) {
@@ -2633,7 +2641,7 @@ function markStepDone(filterKey, isDistributed) {
             const badge = el.querySelector('.proc-device-badge');
             if (badge) {
                 badge.className = 'proc-device-badge edge';
-                badge.textContent = '📱 Edge Cluster';
+                badge.innerHTML = `${svgIcon('edge-device', 'icon-img inline-icon')}Edge Cluster`;
             }
         }
     }
@@ -2650,9 +2658,9 @@ function markStepDone(filterKey, isDistributed) {
 // Cluster data cache for processing dashboard
 let _lastClusterData = null;
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // Settings Panel
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 function initSettingsPanel() {
     // LUFS slider live value
@@ -2665,9 +2673,9 @@ function initSettingsPanel() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 // About Panel
-// ══════════════════════════════════════════════════════════
+// ==========================================================
 
 async function initAboutPanel() {
     // Fetch acceleration info
@@ -2679,7 +2687,7 @@ async function initAboutPanel() {
                 `<div class="about-accel-item">${a}</div>`
             ).join('');
             if (accel.mps_available) {
-                accelEl.innerHTML += `<div class="about-accel-item">✅ MPS Available</div>`;
+                accelEl.innerHTML += `<div class="about-accel-item">${svgIcon('check', 'icon-img inline-icon')}MPS Available</div>`;
             }
         }
     } catch (e) {
@@ -2698,7 +2706,7 @@ async function initAboutPanel() {
                 ['CPU Freq', (s.cpu_freq_ghz || 0) + ' GHz'],
                 ['RAM', (s.ram_used_gb || 0).toFixed(1) + ' / ' + (s.ram_total_gb || 0).toFixed(1) + ' GB'],
                 ['GPU', health.compute || 'N/A'],
-                ['MPS', health.mps_available ? '✅ Active' : '❌ Unavailable'],
+                ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
                 ['Version', health.version || '3.5.1'],
                 ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
             ];
@@ -2717,9 +2725,9 @@ async function initAboutPanel() {
     }
 }
 
-// ══════════════════════════════════════════════════════════
-// Sidebar Filter Labels — Edge / ML badges
-// ══════════════════════════════════════════════════════════
+// ==========================================================
+// Sidebar Filter Labels - Edge / ML badges
+// ==========================================================
 
 function injectFilterCapabilityBadges() {
     // DSP filters that can run on edge workers
@@ -2729,12 +2737,12 @@ function injectFilterCapabilityBadges() {
         'remove_breaths': true, 'remove_long_silences': true, 'auto_eq': true,
         'studio_sound': true, 'normalize': true, 'frequency_restoration': true,
     };
-    // ML filters — local Whisper (ARM NEON optimized)
+    // ML filters - local Whisper (ARM NEON optimized)
     const mlLocal = {
         'remove_filler_words': true, 'eliminate_hesitations': true,
         'remove_stuttering': true,
     };
-    // GPU Metal filters — PyTorch MPS
+    // GPU Metal filters - PyTorch MPS
     const gpuMetal = {
         'keep_music': true,  // Demucs uses MPS
     };
@@ -2751,7 +2759,7 @@ function injectFilterCapabilityBadges() {
         if (gpuMetal[key]) {
             badge = document.createElement('span');
             badge.className = 'feat-cap-badge gpu';
-            badge.textContent = '⬡ Metal';
+            badge.textContent = 'Metal';
             badge.title = 'GPU-accelerated via Apple Metal (MPS)';
         } else if (edgeCapable[key]) {
             badge = document.createElement('span');
@@ -2808,4 +2816,180 @@ function injectFilterCapabilityBadges() {
 // Inject badges on page load
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(injectFilterCapabilityBadges, 500);
+});
+
+// ══════════════════════════════════════════════════════════
+// Intent-Based Dashboard Personalization
+// ══════════════════════════════════════════════════════════
+
+function applyIntentProfile(profile) {
+    localStorage.setItem('aemax_intent_profile', profile);
+
+    const badge = document.getElementById('intent-badge');
+    const navItems = {
+        'upload-panel': document.querySelector('[data-panel="upload-panel"]'),
+        'presets-panel': document.querySelector('[data-panel="presets-panel"]'),
+        'batch-panel': document.querySelector('[data-panel="batch-panel"]'),
+        'stt-panel': document.querySelector('[data-panel="stt-panel"]'),
+        'tts-panel': document.querySelector('[data-panel="tts-panel"]'),
+        'diarize-panel': document.querySelector('[data-panel="diarize-panel"]'),
+        'smart-panel': document.querySelector('[data-panel="smart-panel"]'),
+        'watermark-panel': document.querySelector('[data-panel="watermark-panel"]'),
+        'cluster-panel': document.querySelector('[data-panel="cluster-panel"]'),
+        'settings-panel': document.querySelector('[data-panel="settings-panel"]'),
+        'about-panel': document.querySelector('[data-panel="about-panel"]'),
+    };
+
+    // Helper to toggle visibility of nav elements
+    function toggleNav(id, visible) {
+        const el = navItems[id];
+        if (el) el.style.display = visible ? '' : 'none';
+    }
+
+    // Toggle tab buttons in the upload/process panel
+    const tabs = {
+        'enhance': document.getElementById('btn-tab-enhance'),
+        'noise': document.getElementById('btn-tab-noise'),
+        'advanced': document.getElementById('btn-tab-advanced'),
+    };
+    function toggleTabBtn(tabKey, visible) {
+        const btn = tabs[tabKey];
+        if (btn) btn.style.display = visible ? '' : 'none';
+    }
+
+    // Default reset: show everything
+    Object.keys(navItems).forEach(key => toggleNav(key, true));
+    Object.keys(tabs).forEach(key => toggleTabBtn(key, true));
+    document.querySelectorAll('.sidebar-section').forEach(s => s.style.display = '');
+
+    if (profile === 'podcast') {
+        badge.textContent = 'Podcast Clean';
+        badge.style.background = 'rgba(244, 183, 64, 0.15)';
+        badge.style.color = 'var(--amber)';
+
+        // Hide non-podcast panels
+        toggleNav('batch-panel', false);
+        toggleNav('stt-panel', false);
+        toggleNav('tts-panel', false);
+        toggleNav('diarize-panel', false);
+        toggleNav('smart-panel', false);
+        toggleNav('watermark-panel', false);
+        toggleNav('cluster-panel', false);
+        toggleNav('settings-panel', false);
+
+        // Hide tabs
+        toggleTabBtn('enhance', false);
+        toggleTabBtn('noise', false);
+        toggleTabBtn('advanced', false);
+
+        // Filter sections
+        document.querySelectorAll('.sidebar-section').forEach(section => {
+            const titleEl = section.querySelector('.sidebar-section-title');
+            if (titleEl) {
+                const title = titleEl.textContent;
+                if (title === 'AI Tools' || title === 'Audio' || title === 'Infrastructure') {
+                    section.style.display = 'none';
+                }
+            }
+        });
+
+        // Ensure active is one of the visible panels
+        const activeItem = document.querySelector('.sidebar-nav-item.active');
+        if (activeItem && activeItem.style.display === 'none') {
+            switchPanel('upload-panel', navItems['upload-panel']);
+        }
+        // Force cleanup tab
+        const cleanupBtn = document.getElementById('btn-tab-cleanup');
+        if (cleanupBtn) switchTab('tab-cleanup', cleanupBtn);
+
+    } else if (profile === 'analysis') {
+        badge.textContent = 'AI Insights';
+        badge.style.background = 'rgba(40, 208, 176, 0.15)';
+        badge.style.color = 'var(--aqua)';
+
+        toggleNav('presets-panel', false);
+        toggleNav('batch-panel', false);
+        toggleNav('tts-panel', false);
+        toggleNav('watermark-panel', false);
+        toggleNav('cluster-panel', false);
+        toggleNav('settings-panel', false);
+
+        toggleTabBtn('enhance', false);
+        toggleTabBtn('noise', false);
+        toggleTabBtn('advanced', false);
+
+        document.querySelectorAll('.sidebar-section').forEach(section => {
+            const titleEl = section.querySelector('.sidebar-section-title');
+            if (titleEl) {
+                const title = titleEl.textContent;
+                if (title === 'Audio' || title === 'Infrastructure') {
+                    section.style.display = 'none';
+                }
+            }
+        });
+
+        const activeItem = document.querySelector('.sidebar-nav-item.active');
+        if (activeItem && activeItem.style.display === 'none') {
+            switchPanel('upload-panel', navItems['upload-panel']);
+        }
+        const cleanupBtn = document.getElementById('btn-tab-cleanup');
+        if (cleanupBtn) switchTab('tab-cleanup', cleanupBtn);
+
+    } else if (profile === 'expert') {
+        badge.textContent = 'Expert DSP';
+        badge.style.background = 'rgba(90, 167, 255, 0.15)';
+        badge.style.color = 'var(--blue)';
+
+        // Show everything (default reset handles this)
+
+    } else if (profile === 'secure') {
+        badge.textContent = 'Secure Mode';
+        badge.style.background = 'rgba(255, 118, 95, 0.15)';
+        badge.style.color = 'var(--coral)';
+
+        toggleNav('presets-panel', false);
+        toggleNav('batch-panel', false);
+        toggleNav('stt-panel', false);
+        toggleNav('tts-panel', false);
+        toggleNav('diarize-panel', false);
+        toggleNav('smart-panel', false);
+        toggleNav('cluster-panel', false);
+
+        toggleTabBtn('enhance', false);
+        toggleTabBtn('noise', false);
+        toggleTabBtn('advanced', false);
+
+        document.querySelectorAll('.sidebar-section').forEach(section => {
+            const titleEl = section.querySelector('.sidebar-section-title');
+            if (titleEl) {
+                const title = titleEl.textContent;
+                if (title === 'AI Tools' || title === 'Infrastructure') {
+                    section.style.display = 'none';
+                }
+            }
+        });
+
+        const activeItem = document.querySelector('.sidebar-nav-item.active');
+        if (activeItem && activeItem.style.display === 'none') {
+            switchPanel('upload-panel', navItems['upload-panel']);
+        }
+        const cleanupBtn = document.getElementById('btn-tab-cleanup');
+        if (cleanupBtn) switchTab('tab-cleanup', cleanupBtn);
+
+    } else {
+        // 'all'
+        badge.textContent = 'Full Mode';
+        badge.style.background = 'rgba(124, 58, 237, 0.15)';
+        badge.style.color = 'var(--accent-primary-light)';
+    }
+}
+
+// Restore saved profile on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('aemax_intent_profile') || 'all';
+    const select = document.getElementById('user-intent-select');
+    if (select) {
+        select.value = saved;
+        setTimeout(() => applyIntentProfile(saved), 200);
+    }
 });

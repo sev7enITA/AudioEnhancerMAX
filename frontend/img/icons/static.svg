@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Static noise">
+  <rect x="10" y="15" width="44" height="34" rx="8" fill="#121722" stroke="#06b6d4" stroke-width="2"/>
+  <path d="M18 32h5l3-7 5 14 4-11 4 7h7" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="23" cy="42" r="2" fill="#f97316"/>
+  <circle cx="43" cy="23" r="2" fill="#f97316"/>
+</svg>

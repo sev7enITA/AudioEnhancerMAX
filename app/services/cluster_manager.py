@@ -1,5 +1,5 @@
 """
-AudioEnhancerMAX by Fd — Cluster Manager (Orchestrator)
+AudioEnhancerMAX by Fd - Cluster Manager (Orchestrator)
 Manages distributed audio processing across network devices.
 Handles worker discovery, chunk splitting, parallel dispatch, and reassembly.
 """
@@ -19,10 +19,10 @@ import soundfile as sf
 
 logger = logging.getLogger(__name__)
 
-# Discovery port for UDP broadcast (workers → server)
+# Discovery port for UDP broadcast (workers -> server)
 DISCOVERY_PORT = 9999
 DISCOVERY_MAGIC = b"AEMAX_DISCOVER"
-# Server announcement port (server → workers)
+# Server announcement port (server -> workers)
 SERVER_ANNOUNCE_PORT = 9998
 SERVER_MAGIC = b"AEMAX_SERVER"
 WORKER_API_PORT = 8877
@@ -35,7 +35,7 @@ OFFLOADABLE_FILTERS = {
     "normalize", "frequency_restoration",
 }
 
-# Filters requiring heavy ML models — NEVER offload these
+# Filters requiring heavy ML models - NEVER offload these
 LOCAL_ONLY_FILTERS = {
     "remove_filler_words", "eliminate_hesitations", "remove_stuttering",
     "keep_music",  # Demucs
@@ -119,7 +119,7 @@ class ClusterManager:
             target=self._server_broadcaster, daemon=True
         )
         self._announce_thread.start()
-        logger.info("Cluster manager started — listener UDP:%d, announcer UDP:%d", DISCOVERY_PORT, SERVER_ANNOUNCE_PORT)
+        logger.info("Cluster manager started - listener UDP:%d, announcer UDP:%d", DISCOVERY_PORT, SERVER_ANNOUNCE_PORT)
 
     def stop(self):
         self._running = False
@@ -139,7 +139,7 @@ class ClusterManager:
             sock.bind(("", DISCOVERY_PORT))
             sock.settimeout(2.0)
 
-            logger.info(f"🔍 Discovery listener active on 0.0.0.0:{DISCOVERY_PORT}")
+            logger.info(f" Discovery listener active on 0.0.0.0:{DISCOVERY_PORT}")
 
             while self._running:
                 try:
@@ -166,7 +166,7 @@ class ClusterManager:
                             worker.available_filters = payload.get("filters", [])
                             worker.benchmark_score = payload.get("benchmark", 0)
                             self._workers[key] = worker
-                            logger.info(f"🔗 Worker discovered: {worker.name} ({ip}:{port}) — {worker.device_model}")
+                            logger.info(f" Worker discovered: {worker.name} ({ip}:{port}) - {worker.device_model}")
                         
                         self._workers[key].status = "online"
                         self._workers[key].last_seen = time.time()
@@ -206,7 +206,7 @@ class ClusterManager:
 
             message = SERVER_MAGIC + payload
 
-            logger.info(f"📡 Server announcer broadcasting on UDP:{SERVER_ANNOUNCE_PORT} (server IP: {local_ip})")
+            logger.info(f" Server announcer broadcasting on UDP:{SERVER_ANNOUNCE_PORT} (server IP: {local_ip})")
 
             while self._running:
                 try:
@@ -279,7 +279,7 @@ class ClusterManager:
                     async with self._lock:
                         self._workers[key] = worker
 
-                    logger.info(f"✅ Worker added: {worker.name} ({ip}:{port})")
+                    logger.info(f" Worker added: {worker.name} ({ip}:{port})")
                     return {"status": "ok", "worker": worker.to_dict()}
                 else:
                     return {"status": "error", "message": f"Worker responded with {resp.status_code}"}
@@ -346,7 +346,7 @@ class ClusterManager:
         now = time.time()
         for w in self._workers.values():
             if w.status == "online" and (now - w.last_seen) > 30:
-                logger.info(f"⚠️ Worker {w.name} ({w.ip}) went stale, marking offline")
+                logger.info(f" Worker {w.name} ({w.ip}) went stale, marking offline")
                 w.status = "offline"
 
     def can_distribute(self, options_dict: dict) -> bool:
@@ -401,7 +401,7 @@ class ClusterManager:
         if progress_callback:
             await progress_callback(
                 "cluster", 0.1,
-                f"🌐 Distributing to {len(workers)} worker(s)..."
+                f" Distributing to {len(workers)} worker(s)..."
             )
 
         # Dispatch chunks to workers (last chunk processed locally)
@@ -435,7 +435,7 @@ class ClusterManager:
         if progress_callback:
             await progress_callback(
                 "cluster", 0.3,
-                f"🌐 Reassembling {n_nodes} chunks..."
+                f" Reassembling {n_nodes} chunks..."
             )
 
         # Reassemble with crossfade
@@ -477,7 +477,7 @@ class ClusterManager:
                     elapsed = time.time() - start_time
                     worker.total_processing_seconds += elapsed
                     logger.info(
-                        f"✅ Worker {worker.name} processed chunk-{chunk_id} "
+                        f" Worker {worker.name} processed chunk-{chunk_id} "
                         f"in {elapsed:.1f}s"
                     )
                     return result_audio.astype(np.float32)

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AudioEnhancerMAX mark">
+  <defs>
+    <linearGradient id="g" x1="10" y1="54" x2="54" y2="10" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7c3aed"/>
+      <stop offset="0.55" stop-color="#06b6d4"/>
+      <stop offset="1" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+  <rect x="5" y="5" width="54" height="54" rx="14" fill="#10131a" stroke="url(#g)" stroke-width="2"/>
+  <path d="M15 35c5 0 5-15 10-15s5 24 10 24 5-24 10-24 5 15 10 15" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M18 46h28" fill="none" stroke="#f0f0f5" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+</svg>
