@@ -9,6 +9,12 @@ ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
 ICONSET="${BUILD_DIR}/AudioEnhancerMAX.iconset"
 ICON="${ROOT}/packaging/macos/AudioEnhancerMAX.icns"
 PYTHON="${AEMAX_PYTHON:-${ROOT}/venv/bin/python}"
+DISTRIBUTION="${AEMAX_DISTRIBUTION:-direct}"
+
+if [[ "${DISTRIBUTION}" != "direct" ]]; then
+    print -u2 "This script builds the direct-download DMG only. The App Store package requires its dedicated signed workflow."
+    exit 1
+fi
 
 if [[ "$(uname -m)" != "arm64" ]]; then
     print -u2 "This release target is Apple Silicon (arm64)."
@@ -71,3 +77,4 @@ cp "${DMG_TEMP}" "${DMG_PATH}"
 shasum -a 256 "${DMG_PATH}" > "${DMG_PATH}.sha256"
 print "Built intermediate ${APP_PATH}"
 print "Built ${DMG_PATH}"
+print "Distribution channel: ${DISTRIBUTION}"

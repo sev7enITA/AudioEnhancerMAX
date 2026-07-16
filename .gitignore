@@ -24,6 +24,7 @@ app/outputs/
 app/presets/
 app/roadmap_votes.json
 app/timing_history.json
+app/preflight_state.json
 
 ## Model cache
 /models/

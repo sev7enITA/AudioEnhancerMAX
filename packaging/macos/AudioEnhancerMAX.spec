@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_submodules
@@ -7,6 +8,7 @@ from PyInstaller.utils.hooks import collect_submodules
 
 ROOT = Path(SPEC).resolve().parents[2]
 VERSION = "3.5.2"
+DISTRIBUTION = os.getenv("AEMAX_DISTRIBUTION", "direct")
 ICON = ROOT / "packaging" / "macos" / "AudioEnhancerMAX.icns"
 
 hiddenimports = []
@@ -71,5 +73,6 @@ app = BUNDLE(
         "LSMinimumSystemVersion": "13.0",
         "NSHighResolutionCapable": True,
         "NSLocalNetworkUsageDescription": "AudioEnhancerMAX uses the local network only when connecting to trusted edge workers selected by the user.",
+        "AEMAXDistribution": DISTRIBUTION,
     },
 )

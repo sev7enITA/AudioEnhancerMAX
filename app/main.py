@@ -167,6 +167,25 @@ async def get_system_history():
     return system_monitor.get_history()
 
 
+@app.get("/api/system/preflight")
+async def get_system_preflight():
+    """Return first-launch readiness checks without changing the system."""
+    from app.services.preflight import run_preflight
+
+    return run_preflight(APP_VERSION)
+
+
+@app.post("/api/system/preflight/configure")
+async def configure_system_preflight():
+    """Configure private runtime storage and acknowledge the current build."""
+    from app.services.preflight import configure_runtime
+
+    report = configure_runtime(APP_VERSION)
+    if not report["can_continue"]:
+        return JSONResponse(status_code=409, content=report)
+    return report
+
+
 # ══════════════════════════════════════════════════════════
 # Routes - Cluster Management
 # ══════════════════════════════════════════════════════════

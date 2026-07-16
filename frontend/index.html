@@ -115,7 +115,7 @@
         </div>
     </div>
     <div class="sidebar-version" style="border-top: none; padding-top: 6px;">
-        <span>v3.5.1</span> - <span id="sidebar-chip">M3 Max</span>
+        <span>v3.5.2</span> - <span id="sidebar-chip">M3 Max</span>
     </div>
 </nav>
 
@@ -792,7 +792,7 @@
 <div class="panel" id="settings-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/settings.svg" alt="" aria-hidden="true">Settings</h2>
-        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.5.1</p>
+        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.5.2</p>
     </div>
     <div class="panel-body settings-grid">
         <div class="settings-group">
@@ -879,6 +879,17 @@
                 </label>
             </div>
         </div>
+
+        <div class="settings-group">
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/monitor.svg" alt="" aria-hidden="true">System Readiness</h3>
+            <div class="setting-item readiness-setting">
+                <div>
+                    <label>Current status</label>
+                    <span class="setting-supporting-text" id="settings-readiness-status">Checking...</span>
+                </div>
+                <button class="btn btn-sm btn-secondary" type="button" onclick="openSystemReadiness()"><img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Review</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -886,13 +897,13 @@
 <div class="panel" id="about-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/info.svg" alt="" aria-hidden="true">About AudioEnhancerMAX</h2>
-        <p class="panel-subtitle">v3.5.1 - Streaming Transcription + Real-Time Monitoring Edition</p>
+        <p class="panel-subtitle">v3.5.2 - macOS Desktop and Community Roadmap Edition</p>
     </div>
     <div class="panel-body about-content">
         <div class="about-hero">
             <div class="about-logo"><img class="icon-img" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true"></div>
             <div style="flex: 1;">
-                <h3>AudioEnhancerMAX <span class="about-version">v3.5.1</span></h3>
+                <h3>AudioEnhancerMAX <span class="about-version">v3.5.2</span></h3>
                 <p>Professional AI-powered audio processing suite</p>
                 <p class="about-by">Created by <strong>Fd</strong> - Optimized for Apple Silicon</p>
             </div>
@@ -946,7 +957,7 @@
         </div>
 
         <div class="about-section">
-            <h3>What's New in v3.5.1</h3>
+            <h3>What's New in v3.5.2</h3>
             <div class="about-changelog">
                 <div class="changelog-item">
                     <span class="changelog-tag new">NEW</span>
@@ -1038,9 +1049,7 @@
 
         <div class="about-section">
             <h3><img class="icon-img heading-icon" src="/static/img/icons/refresh.svg" alt="" aria-hidden="true">Updates</h3>
-            <p class="about-text">AudioEnhancerMAX is open source. To update:</p>
-            <code class="about-code">cd AudioEnhancerMAX && git pull && pip install -r requirements.txt</code>
-            <p class="about-text" style="margin-top:8px">Check for new releases on <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" style="color:var(--accent-primary)">GitHub</a></p>
+            <p class="about-text">Desktop builds update through their distribution channel. Mac App Store builds use App Store updates; direct desktop releases remain available on <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" style="color:var(--accent-primary)">GitHub</a>.</p>
         </div>
 
         <div class="about-section">
@@ -1052,6 +1061,32 @@
 </div>
 
 </main>
+
+<!-- --- First-launch System Readiness --- -->
+<div class="preflight-overlay" id="preflight-overlay" role="dialog" aria-modal="true" aria-labelledby="preflight-title">
+    <div class="preflight-dialog">
+        <div class="preflight-header">
+            <div class="preflight-title-group">
+                <img class="preflight-title-icon" src="/static/img/icons/monitor.svg" alt="" aria-hidden="true">
+                <div>
+                    <h2 id="preflight-title">System readiness</h2>
+                    <p>AudioEnhancerMAX validates this Mac before enabling the workspace.</p>
+                </div>
+            </div>
+            <span class="preflight-status" id="preflight-status">Checking</span>
+        </div>
+        <div class="preflight-summary" id="preflight-summary">Running local checks...</div>
+        <div class="preflight-checks" id="preflight-checks"></div>
+        <div class="preflight-policy">
+            <img src="/static/img/icons/lock.svg" alt="" aria-hidden="true">
+            <span>The check runs locally. It does not transmit diagnostics, install third-party software, or request administrator access.</span>
+        </div>
+        <div class="preflight-actions">
+            <button class="btn btn-secondary" type="button" onclick="initPreflight(true)"><img class="icon-img btn-icon-svg" src="/static/img/icons/refresh.svg" alt="" aria-hidden="true">Check again</button>
+            <button class="btn btn-primary" id="preflight-continue" type="button" onclick="configurePreflight()" disabled>Configuring...</button>
+        </div>
+    </div>
+</div>
 
 <!-- --- Processing Dashboard Overlay --- -->
 <div class="loading-overlay" id="loading-overlay">
@@ -1105,53 +1140,8 @@
     </div>
 </div>
 
-<!-- --- WaveSurfer.js --- -->
-<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js" type="module"></script>
-
 <!-- --- Application Scripts --- -->
 <script src="/static/js/app.js"></script>
-
-<!-- --- SourceForge Achievement Badge --- -->
-<script>
-    (function () {
-        function setSourceForgeFallback(enabled) {
-            document.querySelectorAll('.sourceforge-badge-stack').forEach(function (stack) {
-                stack.classList.toggle('use-fallback', enabled);
-            });
-        }
-
-        function verifySourceForgeBadges() {
-            document.querySelectorAll('.sourceforge-badge-stack').forEach(function (stack) {
-                var img = stack.querySelector('.sf-root img');
-                if (!img) {
-                    stack.classList.add('use-fallback');
-                    return;
-                }
-                var ready = img.complete && img.naturalWidth > 0;
-                stack.classList.toggle('use-fallback', !ready);
-                img.addEventListener('load', function () {
-                    stack.classList.remove('use-fallback');
-                }, { once: true });
-                img.addEventListener('error', function () {
-                    stack.classList.add('use-fallback');
-                }, { once: true });
-            });
-        }
-
-        var sc = document.createElement('script');
-        sc.async = true;
-        sc.src = 'https://b.sf-syn.com/badge_js?sf_id=4084832';
-        sc.onload = function () {
-            window.setTimeout(verifySourceForgeBadges, 250);
-            window.setTimeout(verifySourceForgeBadges, 1500);
-        };
-        sc.onerror = function () {
-            setSourceForgeFallback(true);
-        };
-        var p = document.getElementsByTagName('script')[0];
-        p.parentNode.insertBefore(sc, p);
-    })();
-</script>
 
 </body>
 </html>

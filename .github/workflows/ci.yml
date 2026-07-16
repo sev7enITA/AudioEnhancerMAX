@@ -54,6 +54,15 @@ jobs:
           assert "docs/ai-governance.md" in readme
           for banned in ["100% local", "zero cloud", "No limits", "never leaves"]:
               assert banned not in readme, banned
+
+          desktop_frontend = "\n".join(
+              path.read_text(encoding="utf-8")
+              for path in [Path("frontend/index.html"), Path("frontend/landing.html"), Path("frontend/js/app.js")]
+          )
+          for external_runtime in ["unpkg.com", "b.sf-syn.com"]:
+              assert external_runtime not in desktop_frontend, external_runtime
+          assert Path("frontend/vendor/wavesurfer/wavesurfer.esm.js").is_file()
+          assert Path("frontend/vendor/wavesurfer/LICENSE").is_file()
           PY
 
       - name: Enforce icon and punctuation policy

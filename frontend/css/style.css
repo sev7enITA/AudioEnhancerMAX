@@ -2772,3 +2772,221 @@ select:focus {
         margin-top: 12px;
     }
 }
+
+/* First-launch system readiness */
+.preflight-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(5, 8, 14, 0.82);
+    backdrop-filter: blur(10px);
+}
+
+.preflight-overlay.visible {
+    display: flex;
+}
+
+.preflight-dialog {
+    width: min(760px, 100%);
+    max-height: min(780px, calc(100vh - 48px));
+    overflow: auto;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: #111722;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
+}
+
+.preflight-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 24px 18px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.preflight-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.preflight-title-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+}
+
+.preflight-title-group h2 {
+    margin: 0 0 5px;
+    font-size: 1.2rem;
+    letter-spacing: 0;
+}
+
+.preflight-title-group p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.preflight-status {
+    flex: 0 0 auto;
+    padding: 6px 9px;
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.preflight-status.ready {
+    border-color: rgba(16, 185, 129, 0.38);
+    background: rgba(16, 185, 129, 0.12);
+    color: #6ee7b7;
+}
+
+.preflight-status.degraded {
+    border-color: rgba(245, 158, 11, 0.38);
+    background: rgba(245, 158, 11, 0.12);
+    color: #fcd34d;
+}
+
+.preflight-status.blocked {
+    border-color: rgba(239, 68, 68, 0.38);
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+}
+
+.preflight-summary {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+}
+
+.preflight-checks {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 24px;
+}
+
+.preflight-check {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.preflight-check:last-child {
+    border-bottom: 0;
+}
+
+.preflight-check-icon {
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+}
+
+.preflight-check-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.preflight-check-heading strong {
+    color: var(--text-primary);
+    font-size: 0.79rem;
+}
+
+.preflight-check-heading span {
+    color: var(--text-tertiary);
+    font-size: 0.61rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.preflight-detail,
+.preflight-resolution {
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.45;
+}
+
+.preflight-resolution {
+    color: var(--text-tertiary);
+}
+
+.preflight-policy {
+    display: flex;
+    gap: 10px;
+    margin: 8px 24px 0;
+    padding: 12px;
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 6px;
+    background: rgba(6, 182, 212, 0.07);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    line-height: 1.5;
+}
+
+.preflight-policy img {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+}
+
+.preflight-actions {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px 24px 24px;
+    border-top: 1px solid var(--glass-border);
+    background: #111722;
+}
+
+.readiness-setting {
+    align-items: center;
+}
+
+.setting-supporting-text {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+}
+
+@media (max-width: 640px) {
+    .preflight-overlay {
+        align-items: stretch;
+        padding: 0;
+    }
+
+    .preflight-dialog {
+        max-height: 100vh;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .preflight-header {
+        flex-direction: column;
+    }
+
+    .preflight-actions {
+        flex-direction: column-reverse;
+    }
+
+    .preflight-actions .btn {
+        width: 100%;
+    }
+}

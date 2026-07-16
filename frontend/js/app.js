@@ -72,11 +72,95 @@ function buttonIcon(name) { return svgIcon(name, 'icon-img btn-icon-svg'); }
 document.addEventListener('DOMContentLoaded', () => {
     initUploadZone();
     initBatchUpload();
+    initPreflight();
     checkSystemHealth();
     loadPresets();
     initSettingsPanel();
     initAboutPanel();
 });
+
+let preflightReport = null;
+
+async function initPreflight(forceOpen = false) {
+    const settingsStatus = document.getElementById('settings-readiness-status');
+    try {
+        const response = await fetch('/api/system/preflight', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Readiness check failed');
+        preflightReport = await response.json();
+        renderPreflight(preflightReport);
+        if (forceOpen || preflightReport.show_on_launch) {
+            document.getElementById('preflight-overlay').classList.add('visible');
+        }
+    } catch (error) {
+        if (settingsStatus) settingsStatus.textContent = 'Check unavailable';
+        if (forceOpen) showToast('error', error.message);
+    }
+}
+
+function renderPreflight(report) {
+    const overlay = document.getElementById('preflight-overlay');
+    const list = document.getElementById('preflight-checks');
+    const status = document.getElementById('preflight-status');
+    const summary = document.getElementById('preflight-summary');
+    const continueButton = document.getElementById('preflight-continue');
+    const settingsStatus = document.getElementById('settings-readiness-status');
+    if (!overlay || !list || !status || !summary || !continueButton) return;
+
+    const statusLabels = {
+        ready: 'Ready',
+        degraded: 'Ready with optional limits',
+        blocked: 'Action required',
+    };
+    status.className = `preflight-status ${report.status}`;
+    status.textContent = statusLabels[report.status] || 'Unknown';
+    summary.textContent = `${report.summary.passed} passed, ${report.summary.warnings} optional notices, ${report.summary.blocked} blocking issues`;
+    if (settingsStatus) settingsStatus.textContent = statusLabels[report.status] || 'Unknown';
+
+    list.innerHTML = report.checks.map((item) => {
+        const icon = item.status === 'pass' ? 'check' : item.status === 'blocked' ? 'cross' : 'warning';
+        const resolution = item.resolution
+            ? `<div class="preflight-resolution">${escapeHtml(String(item.resolution))}</div>`
+            : '';
+        return `
+            <div class="preflight-check ${item.status}">
+                ${svgIcon(icon, 'preflight-check-icon')}
+                <div class="preflight-check-copy">
+                    <div class="preflight-check-heading">
+                        <strong>${escapeHtml(String(item.label))}</strong>
+                        <span>${item.required ? 'Required' : 'Optional'}</span>
+                    </div>
+                    <div class="preflight-detail">${escapeHtml(String(item.detail))}</div>
+                    ${resolution}
+                </div>
+            </div>`;
+    }).join('');
+
+    continueButton.disabled = !report.can_continue;
+    continueButton.textContent = report.can_continue ? 'Configure and continue' : 'Cannot continue';
+}
+
+function openSystemReadiness() {
+    initPreflight(true);
+}
+
+async function configurePreflight() {
+    const continueButton = document.getElementById('preflight-continue');
+    continueButton.disabled = true;
+    continueButton.textContent = 'Configuring...';
+    try {
+        const response = await fetch('/api/system/preflight/configure', { method: 'POST' });
+        const report = await response.json();
+        preflightReport = report;
+        renderPreflight(report);
+        if (!response.ok || !report.can_continue) {
+            throw new Error('A required system check is blocking startup');
+        }
+        document.getElementById('preflight-overlay').classList.remove('visible');
+        showToast('success', 'Local application storage is configured');
+    } catch (error) {
+        showToast('error', error.message);
+    }
+}
 
 async function checkSystemHealth() {
     try {
@@ -261,8 +345,7 @@ async function initWaveform(audioUrl) {
     const container = document.getElementById('waveform-container');
     container.classList.add('visible');
 
-    // Dynamic import for WaveSurfer ESM
-    const WaveSurfer = (await import('https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js')).default;
+    const WaveSurfer = (await import('/static/vendor/wavesurfer/wavesurfer.esm.js')).default;
 
     // Destroy existing
     if (state.wavesurferOriginal) state.wavesurferOriginal.destroy();
@@ -300,7 +383,7 @@ async function initWaveform(audioUrl) {
 }
 
 async function initProcessedWaveform(audioUrl) {
-    const WaveSurfer = (await import('https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js')).default;
+    const WaveSurfer = (await import('/static/vendor/wavesurfer/wavesurfer.esm.js')).default;
 
     if (state.wavesurferProcessed) state.wavesurferProcessed.destroy();
 
@@ -2707,7 +2790,7 @@ async function initAboutPanel() {
                 ['RAM', (s.ram_used_gb || 0).toFixed(1) + ' / ' + (s.ram_total_gb || 0).toFixed(1) + ' GB'],
                 ['GPU', health.compute || 'N/A'],
                 ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
-                ['Version', health.version || '3.5.1'],
+                ['Version', health.version || '3.5.2'],
                 ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
             ];
             sysEl.innerHTML = items.map(([label, value]) =>

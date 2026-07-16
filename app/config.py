@@ -23,6 +23,7 @@ OUTPUT_DIR = APP_DIR / "outputs"
 PRESETS_DIR = APP_DIR / "presets"
 TIMING_HISTORY_FILE = APP_DIR / "timing_history.json"
 ROADMAP_VOTES_FILE = APP_DIR / "roadmap_votes.json"
+PREFLIGHT_STATE_FILE = APP_DIR / "preflight_state.json"
 
 # Ensure directories exist
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

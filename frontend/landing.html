@@ -6,7 +6,7 @@
     <title>AudioEnhancerMAX - Local-First AI Audio Media Center</title>
     <meta name="description" content="Open-source, local-first audio processing suite with 16+ modules, streaming transcription, Apple Silicon acceleration, transparent optional external services, and Android edge workers.">
     <meta name="keywords" content="audio enhancer, podcast processing, AI audio, noise removal, Apple Silicon, Metal GPU, edge computing, open source">
-    <meta property="og:title" content="AudioEnhancerMAX v3.5.1 - SourceForge Rising Star">
+    <meta property="og:title" content="AudioEnhancerMAX v3.5.2 - SourceForge Rising Star">
     <meta property="og:description" content="Award-winning open-source, local-first audio processing suite with streaming transcription, Metal acceleration, transparent optional external services, and edge workers.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/">
@@ -859,7 +859,7 @@
         <a href="#" class="nav-logo">
             <div class="nav-logo-icon"><img class="icon-img" src="img/icons/aem-mark.svg" alt="AudioEnhancerMAX mark"></div>
             <span class="nav-logo-text">AudioEnhancerMAX</span>
-            <span class="v-badge">v3.5.1</span>
+            <span class="v-badge">v3.5.2</span>
         </a>
         <ul class="nav-links">
             <li><a href="#features">Features</a></li>
@@ -879,7 +879,7 @@
     <div class="hero-content">
         <div class="hero-badge">
             <span class="dot"></span>
-            v3.5.1 - Streaming Transcription + Real-Time Monitoring
+            v3.5.2 - macOS Desktop + Community Roadmap
         </div>
         <h1>AudioEnhancerMAX<br><span class="gradient">AI Audio Media Center</span></h1>
         <p class="hero-sub">Professional podcast audio processing suite with Apple Metal GPU acceleration, streaming transcription, and optional trusted-LAN edge workers. The core pipeline is local-first; external services are explicit and documented.</p>
@@ -1213,18 +1213,11 @@
 <!-- Download CTA -->
 <section id="download" class="cta-section">
     <div class="cta-card reveal">
-        <h2>Start Processing<br>in 60 Seconds</h2>
-        <p>Clone, install, launch. Core processing stays local; optional external services are documented.</p>
-        <code class="cta-code">
-            <span class="comment"># Clone & install</span><br>
-            git clone https://github.com/sev7enITA/AudioEnhancerMAX.git<br>
-            cd AudioEnhancerMAX && pip install -r requirements.txt<br><br>
-            <span class="comment"># Launch</span><br>
-            python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-        </code>
+        <h2>Install, Open,<br>Start Processing</h2>
+        <p>The macOS application performs its own local readiness check. No Terminal commands or package manager setup are required for the supported desktop build.</p>
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Clone from GitHub</a>
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" class="btn btn-secondary"><img class="icon-img btn-icon-svg" src="img/icons/package.svg" alt="" aria-hidden="true">Releases</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/package.svg" alt="" aria-hidden="true">macOS Releases</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer" class="btn btn-secondary"><img class="icon-img btn-icon-svg" src="img/icons/github-star.svg" alt="" aria-hidden="true">Source Repository</a>
         </div>
     </div>
 </section>
@@ -1233,7 +1226,7 @@
 <footer>
     <div class="footer-inner">
         <div class="footer-left">
-            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX v3.5.1 - SourceForge Rising Star - MIT License - (c) 2026 Fd</span>
+            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX v3.5.2 - SourceForge Rising Star - MIT License - (c) 2026 Fd</span>
         </div>
         <ul class="footer-links">
             <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
@@ -1271,48 +1264,6 @@
             if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
-</script>
-
-<!-- SourceForge Rising Star badge -->
-<script>
-    (function () {
-        function setSourceForgeFallback(enabled) {
-            document.querySelectorAll('.sourceforge-badge-stack').forEach(function (stack) {
-                stack.classList.toggle('use-fallback', enabled);
-            });
-        }
-
-        function verifySourceForgeBadges() {
-            document.querySelectorAll('.sourceforge-badge-stack').forEach(function (stack) {
-                var img = stack.querySelector('.sf-root img');
-                if (!img) {
-                    stack.classList.add('use-fallback');
-                    return;
-                }
-                var ready = img.complete && img.naturalWidth > 0;
-                stack.classList.toggle('use-fallback', !ready);
-                img.addEventListener('load', function () {
-                    stack.classList.remove('use-fallback');
-                }, { once: true });
-                img.addEventListener('error', function () {
-                    stack.classList.add('use-fallback');
-                }, { once: true });
-            });
-        }
-
-        var sc = document.createElement('script');
-        sc.async = true;
-        sc.src = 'https://b.sf-syn.com/badge_js?sf_id=4084832';
-        sc.onload = function () {
-            window.setTimeout(verifySourceForgeBadges, 250);
-            window.setTimeout(verifySourceForgeBadges, 1500);
-        };
-        sc.onerror = function () {
-            setSourceForgeFallback(true);
-        };
-        var p = document.getElementsByTagName('script')[0];
-        p.parentNode.insertBefore(sc, p);
-    })();
 </script>
 
 </body>

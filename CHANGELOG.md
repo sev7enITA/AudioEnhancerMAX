@@ -2,6 +2,25 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
+## Unreleased
+
+### Added
+
+- First-launch system readiness flow for macOS with required and optional capability checks.
+- Local runtime configuration endpoint with versioned acknowledgement in private app storage.
+- Vendored WaveSurfer 7.12.10 runtime and BSD-3-Clause license for offline waveform rendering.
+
+### Changed
+
+- Desktop UI no longer loads WaveSurfer or SourceForge scripts from external domains.
+- Desktop packaging records its distribution channel so App Store checks can enforce stricter self-contained requirements.
+- macOS setup documentation now distinguishes direct-download and future App Store packages.
+
+### Security and governance
+
+- Readiness diagnostics remain local and do not invoke package managers, request administrator privileges, or silently install third-party software.
+- Missing mandatory Store components block startup; unavailable optional engines remain visible with their fallback impact.
+
 ## [3.5.2] - 2026-07-16
 
 ### Added

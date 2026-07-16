@@ -8,6 +8,7 @@ import logging
 import multiprocessing
 import os
 from pathlib import Path
+import plistlib
 import signal
 import socket
 import sys
@@ -21,6 +22,20 @@ import webbrowser
 APP_NAME = "AudioEnhancerMAX"
 APP_VERSION = "3.5.2"
 DEFAULT_PORT = 8000
+
+
+def _distribution_channel() -> str:
+    configured = os.getenv("AEMAX_DISTRIBUTION")
+    if configured:
+        return configured
+    if getattr(sys, "frozen", False):
+        info_plist = Path(sys.executable).resolve().parents[1] / "Info.plist"
+        try:
+            with info_plist.open("rb") as stream:
+                return str(plistlib.load(stream).get("AEMAXDistribution", "direct"))
+        except (OSError, ValueError, plistlib.InvalidFileException):
+            pass
+    return "direct"
 
 
 def _support_dir() -> Path:
@@ -112,6 +127,10 @@ def _write_state(state_path: Path, port: int) -> None:
 
 def main() -> int:
     multiprocessing.freeze_support()
+    distribution = _distribution_channel()
+    os.environ.setdefault("AEMAX_DISTRIBUTION", distribution)
+    if distribution == "app-store":
+        os.environ.setdefault("AEMAX_APP_STORE", "1")
     support_dir = _support_dir()
     log_path = _configure_logging()
     lock_path = support_dir / "desktop.lock"
