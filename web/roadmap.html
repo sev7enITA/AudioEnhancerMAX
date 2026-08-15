@@ -3,36 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioEnhancerMAX Roadmap - Community Signal Board</title>
-    <meta name="description" content="AudioEnhancerMAX public roadmap and community signal board: v3.6 trustworthy editing, governance reports, offline-first mode, and future audio workflow candidates shaped by user feedback.">
-    <meta property="og:title" content="AudioEnhancerMAX Roadmap - Community Signal Board">
-    <meta property="og:description" content="Help shape the local-first, explainable audio roadmap by signaling interest in future AudioEnhancerMAX features.">
+    <title>AudioEnhancerMAX 3.7 Roadmap - Delivered Foundations and Research Candidates</title>
+    <meta name="description" content="AudioEnhancerMAX 3.7 foundations are delivered and release-candidate validated. Explore clearly labeled research candidates and community signals that are not release commitments.">
+    <meta property="og:title" content="AudioEnhancerMAX 3.7 Roadmap - Evidence-Led Planning">
+    <meta property="og:description" content="See what AudioEnhancerMAX 3.7 delivered and explore future research candidates without confusing roadmap signals with release commitments.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/roadmap.html">
     <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23080a0c'/><text x='50' y='62' font-size='42' text-anchor='middle' fill='%23f4b740' font-family='Arial'>A</text></svg>">
+    <link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg: #080a0c;
-            --ink: #f6f1e8;
-            --muted: #b8b3a9;
-            --faint: #79766f;
-            --panel: #121619;
-            --panel-2: #171c20;
-            --panel-3: #1d2226;
-            --line: rgba(246,241,232,0.12);
-            --line-strong: rgba(246,241,232,0.22);
-            --amber: #f4b740;
-            --aqua: #28d0b0;
+            --bg: #0a0a0f;
+            --ink: #f0f0f5;
+            --muted: #b2b2c7;
+            --faint: #87879f;
+            --panel: #111118;
+            --panel-2: #15151f;
+            --panel-3: #1b1b27;
+            --line: rgba(255,255,255,0.08);
+            --line-strong: rgba(255,255,255,0.16);
+            --amber: #7c3aed;
+            --aqua: #06b6d4;
             --coral: #ff765f;
             --blue: #5aa7ff;
-            --lime: #a7e34b;
+            --lime: #10b981;
             --rose: #f2769b;
-            --radius: 8px;
+            --radius: 16px;
         }
         html { scroll-behavior: smooth; }
         body {
@@ -40,13 +40,18 @@
             font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--ink);
             background:
-                linear-gradient(rgba(246,241,232,0.035) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(246,241,232,0.035) 1px, transparent 1px),
-                linear-gradient(180deg, #080a0c 0%, #0b0f10 44%, #0f1112 100%);
+                linear-gradient(rgba(124,58,237,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6,182,212,0.03) 1px, transparent 1px),
+                linear-gradient(180deg, #0a0a0f 0%, #0d0d14 44%, #101018 100%);
             background-size: 42px 42px, 42px 42px, auto;
             line-height: 1.55;
         }
         a { color: inherit; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #49d7ef; outline-offset: 4px; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
         .nav {
             position: sticky;
             top: 0;
@@ -63,6 +68,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 18px;
+            position: relative;
         }
         .brand {
             display: inline-flex;
@@ -76,13 +82,13 @@
             height: 34px;
             display: grid;
             place-items: center;
-            border: 1px solid rgba(244,183,64,0.40);
-            border-radius: 8px;
-            background: #16140f;
-            color: var(--amber);
+            border: 1px solid rgba(124,58,237,0.4);
+            border-radius: 10px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
             font-family: "JetBrains Mono", monospace;
-            font-size: 0.78rem;
         }
+        .brand-mark img { width: 25px; height: 25px; }
+        .brand .v-badge { padding: 2px 6px; border-radius: 6px; background: #7c3aed; color: #fff; font-size: 0.55rem; }
         .nav-links {
             display: flex;
             align-items: center;
@@ -93,13 +99,14 @@
         }
         .nav-links a { text-decoration: none; }
         .nav-links a:hover { color: var(--ink); }
+        .nav-toggle { display: none; width: 42px; height: 42px; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,0.055); color: var(--ink); font: 700 0.72rem/1 "JetBrains Mono", monospace; cursor: pointer; }
         .nav-cta {
             min-height: 34px;
             padding: 8px 12px;
-            border: 1px solid rgba(40,208,176,0.36);
-            border-radius: 8px;
-            background: rgba(40,208,176,0.12);
-            color: #c9fff3;
+            border: 1px solid rgba(6,182,212,0.36);
+            border-radius: 10px;
+            background: rgba(124,58,237,0.18);
+            color: #ddd6fe;
             font-weight: 800;
         }
         .hero {
@@ -116,10 +123,10 @@
             align-items: center;
             min-height: 28px;
             padding: 6px 10px;
-            border: 1px solid rgba(244,183,64,0.34);
+            border: 1px solid rgba(124,58,237,0.38);
             border-radius: 999px;
-            background: rgba(244,183,64,0.10);
-            color: #ffe4a7;
+            background: rgba(124,58,237,0.12);
+            color: #c4b5fd;
             font-size: 0.74rem;
             font-weight: 900;
             text-transform: uppercase;
@@ -152,7 +159,7 @@
             justify-content: center;
             min-height: 42px;
             padding: 0 15px;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid var(--line-strong);
             background: var(--panel-2);
             color: var(--ink);
@@ -161,9 +168,9 @@
             font-size: 0.86rem;
         }
         .btn.primary {
-            border-color: rgba(244,183,64,0.46);
-            background: #f4b740;
-            color: #161004;
+            border-color: rgba(124,58,237,0.56);
+            background: #7c3aed;
+            color: #fff;
         }
         .btn:hover, .signal-link:hover { transform: translateY(-1px); }
         .hero-board {
@@ -318,8 +325,8 @@
             font-size: 0.68rem;
             font-weight: 900;
         }
-        .badge.p0 { background: rgba(244,183,64,0.16); color: #ffe4a7; }
-        .badge.p1 { background: rgba(40,208,176,0.14); color: #c9fff3; }
+        .badge.p0 { background: rgba(124,58,237,0.16); color: #c4b5fd; }
+        .badge.p1 { background: rgba(6,182,212,0.14); color: #c9fff3; }
         .badge.p2 { background: rgba(90,167,255,0.15); color: #cfe5ff; }
         .badge.rd { background: rgba(242,118,155,0.15); color: #ffd2de; }
         h3 {
@@ -402,10 +409,10 @@
             min-height: 36px;
             margin-top: 14px;
             padding: 0 12px;
-            border: 1px solid rgba(244,183,64,0.36);
+            border: 1px solid rgba(124,58,237,0.36);
             border-radius: 8px;
-            background: rgba(244,183,64,0.10);
-            color: #ffe4a7;
+            background: rgba(124,58,237,0.10);
+            color: #c4b5fd;
             text-decoration: none;
             font-size: 0.78rem;
             font-weight: 900;
@@ -452,7 +459,7 @@
             height: 34px;
             margin-bottom: 16px;
             border-radius: 8px;
-            background: rgba(40,208,176,0.13);
+            background: rgba(6,182,212,0.13);
             color: #c9fff3;
             font-family: "JetBrains Mono", monospace;
             font-weight: 900;
@@ -463,7 +470,7 @@
             gap: 18px;
             align-items: center;
             padding: 24px;
-            background: linear-gradient(90deg, rgba(244,183,64,0.15), rgba(40,208,176,0.08));
+            background: linear-gradient(90deg, rgba(124,58,237,0.15), rgba(6,182,212,0.08));
         }
         .callout strong {
             display: block;
@@ -510,7 +517,10 @@
         }
         .footer-links {
             display: flex;
+            flex-wrap: wrap;
             gap: 16px;
+            margin: 0;
+            padding: 0;
             list-style: none;
         }
         .footer-links a { text-decoration: none; color: var(--faint); }
@@ -522,11 +532,16 @@
             .section-head { grid-template-columns: 1fr; }
         }
         @media (max-width: 680px) {
-            .nav-links { display: none; }
+            .nav-toggle { display: inline-flex; }
+            .nav-links { display: none; position: absolute; top: calc(100% + 10px); left: 18px; right: 18px; padding: 14px; flex-direction: column; align-items: stretch; gap: 4px; border: 1px solid rgba(124,58,237,0.32); border-radius: 14px; background: rgba(10,10,15,0.98); box-shadow: 0 24px 70px rgba(0,0,0,0.5); }
+            .nav-links.is-open { display: flex; }
+            .nav-links a { display: block; padding: 11px 12px; border-radius: 8px; }
+            .brand > span:nth-child(2) { font-size: 0.88rem; }
+            .brand .v-badge { display: none; }
             .hero { padding: 44px 18px 34px; }
             h1 { font-size: 2.42rem; line-height: 1.02; }
             h2 { font-size: 1.95rem; }
-            .hero-copy { font-size: 1rem; }
+            .hero-copy { font-size: 1.04rem; line-height: 1.68; }
             .section { padding: 46px 18px; }
             .strip-inner, .grid, .spotlight-grid, .radar-grid, .method { grid-template-columns: 1fr; }
             .callout { grid-template-columns: 1fr; }
@@ -538,15 +553,19 @@
     <nav class="nav">
         <div class="nav-inner">
             <a class="brand" href="index.html">
-                <span class="brand-mark">AEM</span>
+                <span class="brand-mark"><img src="img/icons/aem-mark.svg" alt=""></span>
                 <span>AudioEnhancerMAX</span>
+                <span class="v-badge">3.7</span>
             </a>
-            <ul class="nav-links">
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="roadmap-navigation" aria-label="Open navigation menu">Menu</button>
+            <ul class="nav-links" id="roadmap-navigation">
                 <li><a href="index.html">Overview</a></li>
-                <li><a href="#v36">v3.6</a></li>
+                <li><a href="roadmap.html" aria-current="page">Roadmap</a></li>
+                <li><a href="#v37">v3.7 delivered</a></li>
                 <li><a href="#signal">Signal board</a></li>
                 <li><a href="#radar">Feature radar</a></li>
                 <li><a href="#method">How ranking works</a></li>
+                <li><a href="support.html">Support</a></li>
                 <li><a class="nav-cta" href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             </ul>
         </div>
@@ -554,9 +573,9 @@
 
     <header class="hero">
         <div>
-            <span class="eyebrow">Community-shaped roadmap</span>
-            <h1>Help shape the next release</h1>
-            <p class="hero-copy">v3.6 is focused on trustworthy, reviewable editing. Beyond that, the roadmap is open: signal which future features matter, explain your workflow, or propose the next idea the community should rank.</p>
+            <span class="eyebrow">3.7 delivered · future work clearly labeled</span>
+            <h1>Delivered foundations.<br>Open research horizon.</h1>
+            <p class="hero-copy">AudioEnhancerMAX 3.7 now connects eight reviewable-production foundations. All eight foundations passed signed 3.7.2 package validation. Everything beyond that line is a research candidate or community signal&mdash;not a release commitment.</p>
             <div class="hero-actions">
                 <a class="btn primary" href="#signal">Signal interest</a>
                 <a class="btn" id="propose-idea-top" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Propose a new idea</a>
@@ -570,16 +589,16 @@
                 <div class="board-kicker">Roadmap pulse</div>
                 <div class="signal-stack">
                     <div class="signal-row">
-                        <strong>Build now</strong>
-                        <div><div class="bar build"><span style="width: 78%"></span></div></div>
+                        <strong>3.7 foundations</strong>
+                        <div class="board-kicker">Delivered / RC validated</div>
                     </div>
                     <div class="signal-row">
-                        <strong>Rank next</strong>
-                        <div><div class="bar rank"><span style="width: 58%"></span></div></div>
+                        <strong>Feature radar</strong>
+                        <div class="board-kicker">Community signals</div>
                     </div>
                     <div class="signal-row">
-                        <strong>R&amp;D watch</strong>
-                        <div><div class="bar rd"><span style="width: 42%"></span></div></div>
+                        <strong>R&amp;D horizon</strong>
+                        <div class="board-kicker">Research candidates</div>
                     </div>
                 </div>
             </div>
@@ -597,102 +616,128 @@
                 <span>Offline and no-external modes remain product constraints.</span>
             </div>
             <div class="metric">
-                <strong>Community led</strong>
-                <span>User signals help decide what should move up next.</span>
+                <strong>Eight delivered</strong>
+                <span>Six packaged plus two source-validated 3.7.2 waves.</span>
             </div>
             <div class="metric">
-                <strong>Evidence based</strong>
-                <span>No feature claim becomes public until tested.</span>
+                <strong>No promises hidden</strong>
+                <span>Future cards are signals or research candidates only.</span>
             </div>
         </div>
     </div>
 
     <main>
-        <section class="section" id="v36">
+        <section class="section" id="v37">
             <div class="section-head">
                 <div>
-                    <span class="section-label">Candidate scope</span>
-                    <h2>v3.6 builds the editing foundation</h2>
+                    <span class="section-label">Current release · 3.7.0</span>
+                    <h2>Eight foundations delivered in 3.7.2</h2>
                 </div>
-                <p class="section-note">These items are prioritized because they improve control, auditability, and creator workflow without promising blind automation.</p>
+                <p class="section-note">These eight capabilities are implemented in the 3.7.2 source and covered by automated checks. Final packaged-application validation and Mac App Store approval are not claimed while submission preparation remains in progress.</p>
             </div>
 
             <div class="grid">
                 <article class="card">
                     <div class="card-top">
                         <span class="phase">Foundation</span>
-                        <span class="badge p0">P0/P1</span>
+                        <span class="badge p0">Delivered / RC validated</span>
                     </div>
-                    <h3>Non-Destructive Edit Decision List</h3>
-                    <p>Represent cuts, mutes, fades, transcript-linked selections, and accepted suggestions as structured timeline decisions while preserving the original uploaded media.</p>
+                    <h3>Smart Enhance 2</h3>
+                    <p>Uses measured signal characteristics to produce explainable Conservative, Balanced, or Maximum DSP recommendations without delegating parameter choice to a language model.</p>
                     <div class="meta">
-                        <div class="meta-row"><strong>Benefit</strong><span>Undo, redo, re-render, and audit each processing run.</span></div>
-                        <div class="meta-row"><strong>Review</strong><span>EDL JSON schema, cut/mute rendering, playback accuracy, export parity.</span></div>
+                        <div class="meta-row"><strong>Boundary</strong><span>Deterministic DSP on this Mac.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Signal analysis, named profiles, and reasons returned with recommendations.</span></div>
                     </div>
                 </article>
 
                 <article class="card">
                     <div class="card-top">
                         <span class="phase">Transcript</span>
-                        <span class="badge p1">P1</span>
+                        <span class="badge p0">Delivered / RC validated</span>
                     </div>
-                    <h3>Transcript-Linked Editing</h3>
-                    <p>Create cut or mute timeline edits by selecting transcript words or ranges. The MVP belongs in v3.6 so Whisper word timestamps and EDL metadata are designed together.</p>
+                    <h3>Precision Speech Editor</h3>
+                    <p>Select transcript words or time ranges, review suggestions, and propose cut or mute decisions using local word timestamps.</p>
                     <div class="meta">
-                        <div class="meta-row"><strong>Benefit</strong><span>Faster trimming while preserving human review and reversibility.</span></div>
-                        <div class="meta-row"><strong>Review</strong><span>Word timestamp precision, transcript metadata in EDL, preview playback.</span></div>
+                        <div class="meta-row"><strong>Boundary</strong><span>Bundled local transcription model; human approval remains explicit.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Word selection, cut/mute proposals, preview, and export workflow exercised.</span></div>
                     </div>
                 </article>
 
                 <article class="card">
                     <div class="card-top">
-                        <span class="phase">Editing UX</span>
-                        <span class="badge p1">P1</span>
+                        <span class="phase">Revision history</span>
+                        <span class="badge p0">Delivered / RC validated</span>
                     </div>
-                    <h3>AI-Assisted Review Dashboard</h3>
-                    <p>Surface filler words, long silences, breaths, mouth sounds, and stutters as suggestions on transcript and waveform instead of applying blind destructive cuts.</p>
+                    <h3>Non-Destructive, Revisioned EDL</h3>
+                    <p>Store accepted cuts and mutes as structured decisions while preserving the source, with persisted undo, redo, preview, JSON, and CSV export.</p>
                     <div class="meta">
-                        <div class="meta-row"><strong>Benefit</strong><span>Faster cleanup while reducing choppy or over-processed results.</span></div>
-                        <div class="meta-row"><strong>Review</strong><span>Accept, reject, preview, bulk approve, confidence labels.</span></div>
+                        <div class="meta-row"><strong>Boundary</strong><span>Local timeline and revision store.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Manual edit, decision, undo, redo, and export paths tested.</span></div>
                     </div>
                 </article>
 
                 <article class="card">
                     <div class="card-top">
                         <span class="phase">Governance</span>
-                        <span class="badge p1">P1</span>
+                        <span class="badge p0">Delivered / RC validated</span>
                     </div>
                     <h3>Processing and Governance Report</h3>
                     <p>Generate canonical JSON for each export; render the readable HTML report in the frontend with selected filters, parameters, model use, timing, warnings, and data-flow notes.</p>
                     <div class="meta">
-                        <div class="meta-row"><strong>Benefit</strong><span>An audit trail for professional, research, and governance-sensitive workflows.</span></div>
-                        <div class="meta-row"><strong>Review</strong><span>Backend JSON, frontend-rendered HTML, print support, raw JSON download.</span></div>
+                        <div class="meta-row"><strong>Boundary</strong><span>Generated locally per processing job.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Canonical JSON, readable HTML, print support, and raw download.</span></div>
                     </div>
                 </article>
 
                 <article class="card">
                     <div class="card-top">
                         <span class="phase">Privacy</span>
-                        <span class="badge p1">P1</span>
+                        <span class="badge p0">Delivered / RC validated</span>
                     </div>
-                    <h3>Offline-First Asset Mode</h3>
-                    <p>Bundle runtime UI assets locally and expose a mode that disables optional external services, external fonts, and badge scripts for sessions where no-external operation matters.</p>
+                    <h3>Enforced Privacy Controls</h3>
+                    <p>Persist independent server-enforced controls for optional Microsoft TTS, local Ollama editorial assistance, and trusted-LAN processing while core DSP remains local.</p>
                     <div class="meta">
-                        <div class="meta-row"><strong>Benefit</strong><span>Clearer privacy posture for field work and restricted networks.</span></div>
-                        <div class="meta-row"><strong>Review</strong><span>Network call audit, service toggles, disabled SourceForge badge/script loading.</span></div>
+                        <div class="meta-row"><strong>Boundary</strong><span>Local by default; every optional route is separately gated.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Persisted settings and blocked-call behavior tested.</span></div>
                     </div>
                 </article>
 
                 <article class="card">
                     <div class="card-top">
                         <span class="phase">Export</span>
-                        <span class="badge p1">P1</span>
+                        <span class="badge p0">Delivered / RC validated</span>
                     </div>
-                    <h3>Output Profile Manager</h3>
-                    <p>Define fixed podcast, YouTube, audiobook, archival, and preserve-original profiles with manual overrides recorded in the final report.</p>
+                    <h3>Five Fixed Delivery Profiles</h3>
+                    <p>Choose podcast, video, audiobook, lossless archive, or source-quality master output, with manual overrides recorded in the final report.</p>
                     <div class="meta">
-                        <div class="meta-row"><strong>Benefit</strong><span>Removes guesswork and prevents unexpected format changes.</span></div>
-                        <div class="meta-row"><strong>Review</strong><span>Fixed schemas, override markers, report integration.</span></div>
+                        <div class="meta-row"><strong>Boundary</strong><span>Local export pipeline.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Fixed schemas, override markers, FLAC export, and report integration tested.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Delivery evidence</span>
+                        <span class="badge p0">Delivered / signed validated</span>
+                    </div>
+                    <h3>Delivery Compliance Lab</h3>
+                    <p>Measure integrated loudness, estimated true peak, clipping, and sample rate against transparent delivery targets with rule-level pass, warning, or failure output.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Boundary</strong><span>Measured locally; no audio upload.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Target, silence, clipping, and tolerance behavior covered by automated tests.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Portable evidence</span>
+                        <span class="badge p0">Delivered / signed validated</span>
+                    </div>
+                    <h3>Evidence Chain &amp; Project Capsule</h3>
+                    <p>Create SHA-256 provenance and export the processed output with available report, compliance, transcript, EDL, and blind-listening evidence in a portable ZIP.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Boundary</strong><span>Generated locally; original audio excluded unless explicitly selected.</span></div>
+                        <div class="meta-row"><strong>Evidence</strong><span>Manifest hashes, included artifacts, source opt-in, and archive path safety tested.</span></div>
                     </div>
                 </article>
             </div>
@@ -704,12 +749,12 @@
                     <span class="section-label">Sneak peek</span>
                     <h2>Which big feature should move up?</h2>
                 </div>
-                <p class="section-note">These are high-potential directions we have analyzed. They are not release promises yet: community interest, technical validation, and governance fit will decide what becomes real product work.</p>
+                <p class="section-note">These are research directions, not release promises. Community interest, technical validation, and governance fit may inform future planning.</p>
             </div>
 
             <div class="spotlight-grid">
                 <article class="spotlight" data-feature="Full DAW XML export and roundtrip" data-track="Professional workflow">
-                    <span class="tag">Professional workflow</span>
+                    <span class="tag">Research candidate · Professional workflow</span>
                     <h3>Full DAW XML Export</h3>
                     <p>Export EDL decisions, markers, regions, and processing notes toward tools such as Reaper, Audition, Resolve, or other studio workflows.</p>
                     <div class="sparkline" aria-hidden="true">
@@ -720,7 +765,7 @@
                 </article>
 
                 <article class="spotlight" data-feature="Multi-mic auto-alignment" data-track="Podcast production">
-                    <span class="tag">Podcast production</span>
+                    <span class="tag">Research candidate · Podcast production</span>
                     <h3>Multi-Mic Auto-Alignment</h3>
                     <p>Sync multiple speakers or recorders, detect drift, warn on phase issues, and reduce manual timeline alignment for interviews.</p>
                     <div class="sparkline" aria-hidden="true">
@@ -731,7 +776,7 @@
                 </article>
 
                 <article class="spotlight" data-feature="Local neural voice restoration" data-track="Restoration R&D">
-                    <span class="tag">Restoration R&amp;D</span>
+                    <span class="tag">Research candidate · Restoration R&amp;D</span>
                     <h3>Local Neural Voice Restoration</h3>
                     <p>Explore local speech restoration models with A/B review, model cards, quality limits, and clear experimental labeling.</p>
                     <div class="sparkline" aria-hidden="true">
@@ -742,7 +787,7 @@
                 </article>
 
                 <article class="spotlight" data-feature="Short-form video clip generator" data-track="Creator workflow">
-                    <span class="tag">Creator workflow</span>
+                    <span class="tag">Community signal · Creator workflow</span>
                     <h3>Short-Form Clip Generator</h3>
                     <p>Find candidate highlights, create caption-ready segments, and prepare exports for Shorts, Reels, TikTok, or social teasers.</p>
                     <div class="sparkline" aria-hidden="true">
@@ -765,7 +810,7 @@
 
             <div class="radar-grid">
                 <article class="idea-card" data-feature="Smart chaptering and show notes" data-track="Content intelligence">
-                    <div class="idea-top"><span class="tag">Content intelligence</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Content intelligence</span><span class="badge p2">Research candidate</span></div>
                     <h3>Smart Chaptering and Show Notes</h3>
                     <p>Generate timestamped chapters, topic summaries, and editable show-note drafts from the transcript.</p>
                     <div class="tracks"><span class="track">Transcript</span><span class="track">Podcast</span></div>
@@ -773,7 +818,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Speaker diarization and speaker-aware cleanup" data-track="Transcript intelligence">
-                    <div class="idea-top"><span class="tag">Transcript intelligence</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Transcript intelligence</span><span class="badge p2">Research candidate</span></div>
                     <h3>Speaker-Aware Cleanup</h3>
                     <p>Detect speaker turns and apply review suggestions per speaker, useful for interviews and panels.</p>
                     <div class="tracks"><span class="track">Diarization</span><span class="track">Review</span></div>
@@ -781,7 +826,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Multilingual filler detection beyond English and Italian" data-track="Language support">
-                    <div class="idea-top"><span class="tag">Language support</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Language support</span><span class="badge p2">Research candidate</span></div>
                     <h3>More Filler Languages</h3>
                     <p>Extend filler detection beyond English and Italian with language-specific review lists and user-editable dictionaries.</p>
                     <div class="tracks"><span class="track">Localization</span><span class="track">Editing</span></div>
@@ -789,7 +834,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Waveform and spectrogram repair brush" data-track="Audio repair">
-                    <div class="idea-top"><span class="tag">Audio repair</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Audio repair</span><span class="badge p2">Research candidate</span></div>
                     <h3>Repair Brush</h3>
                     <p>Select small waveform or spectrogram regions for click, bump, hum, or mouth-noise repair with before/after preview.</p>
                     <div class="tracks"><span class="track">Repair</span><span class="track">Preview</span></div>
@@ -797,7 +842,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Room tone and ambience fill" data-track="Natural editing">
-                    <div class="idea-top"><span class="tag">Natural editing</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Natural editing</span><span class="badge p2">Research candidate</span></div>
                     <h3>Room Tone and Ambience Fill</h3>
                     <p>Replace removed or muted segments with matched room tone to avoid sterile gaps or awkward edits.</p>
                     <div class="tracks"><span class="track">EDL</span><span class="track">Mute</span></div>
@@ -805,7 +850,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Blind A/B listening review" data-track="Quality control">
-                    <div class="idea-top"><span class="tag">Quality control</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Quality control</span><span class="badge p2">Research candidate</span></div>
                     <h3>Blind A/B Listening Review</h3>
                     <p>Compare original, processed, and alternate settings without bias, then store the chosen version in the report.</p>
                     <div class="tracks"><span class="track">QC</span><span class="track">Governance</span></div>
@@ -813,7 +858,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Batch processing queue" data-track="Studio workflow">
-                    <div class="idea-top"><span class="tag">Studio workflow</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Studio workflow</span><span class="badge p2">Research candidate</span></div>
                     <h3>Batch Processing Queue</h3>
                     <p>Queue multiple files with profiles, ETA, retry handling, and per-file governance reports.</p>
                     <div class="tracks"><span class="track">Automation</span><span class="track">Reports</span></div>
@@ -821,7 +866,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Community preset packs" data-track="Mastering workflow">
-                    <div class="idea-top"><span class="tag">Mastering workflow</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Mastering workflow</span><span class="badge p2">Research candidate</span></div>
                     <h3>Community Preset Packs</h3>
                     <p>Share transparent, inspectable processing chains for podcast, lecture, field recording, and archival workflows.</p>
                     <div class="tracks"><span class="track">Profiles</span><span class="track">Open source</span></div>
@@ -829,31 +874,15 @@
                 </article>
 
                 <article class="idea-card" data-feature="Noise fingerprint library" data-track="Restoration workflow">
-                    <div class="idea-top"><span class="tag">Restoration workflow</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Restoration workflow</span><span class="badge p2">Research candidate</span></div>
                     <h3>Noise Fingerprint Library</h3>
                     <p>Save reusable local noise profiles for recurring rooms, microphones, fans, or device hum.</p>
                     <div class="tracks"><span class="track">Noise</span><span class="track">Local</span></div>
                     <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
                 </article>
 
-                <article class="idea-card" data-feature="Broadcast ACX and EBU export targets" data-track="Output compliance">
-                    <div class="idea-top"><span class="tag">Output compliance</span><span class="badge p2">Candidate</span></div>
-                    <h3>Broadcast and Audiobook Targets</h3>
-                    <p>Add explicit ACX, EBU R128, and platform-oriented checks with measurable pass/fail output notes.</p>
-                    <div class="tracks"><span class="track">LUFS</span><span class="track">Compliance</span></div>
-                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
-                </article>
-
-                <article class="idea-card" data-feature="Project bundle archive" data-track="Portability">
-                    <div class="idea-top"><span class="tag">Portability</span><span class="badge p2">Candidate</span></div>
-                    <h3>Portable Project Bundles</h3>
-                    <p>Package source audio, EDL, transcript, profile, and report into a reviewable archive for later reopening.</p>
-                    <div class="tracks"><span class="track">Projects</span><span class="track">Audit</span></div>
-                    <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
-                </article>
-
                 <article class="idea-card" data-feature="CLI and API automation for studios" data-track="Automation">
-                    <div class="idea-top"><span class="tag">Automation</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Automation</span><span class="badge p2">Research candidate</span></div>
                     <h3>CLI and Studio API</h3>
                     <p>Expose repeatable enhancement, transcription, profile, and report workflows for scripted studio pipelines.</p>
                     <div class="tracks"><span class="track">CLI</span><span class="track">FastAPI</span></div>
@@ -861,7 +890,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Trusted LAN worker manager" data-track="Edge compute">
-                    <div class="idea-top"><span class="tag">Edge compute</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Edge compute</span><span class="badge p2">Research candidate</span></div>
                     <h3>Trusted-LAN Worker Manager</h3>
                     <p>Rank paired devices, revoke workers, show health, and make smartphone/offload compute more governable.</p>
                     <div class="tracks"><span class="track">Workers</span><span class="track">Security</span></div>
@@ -869,7 +898,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Portable offline installer and asset pack" data-track="Offline-first">
-                    <div class="idea-top"><span class="tag">Offline-first</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Offline-first</span><span class="badge p2">Research candidate</span></div>
                     <h3>Portable Offline Installer</h3>
                     <p>Make dependency setup, local assets, model checks, and offline mode easier for restricted environments.</p>
                     <div class="tracks"><span class="track">Setup</span><span class="track">Offline</span></div>
@@ -877,7 +906,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Model cards and local model manager" data-track="AI governance">
-                    <div class="idea-top"><span class="tag">AI governance</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">AI governance</span><span class="badge p2">Research candidate</span></div>
                     <h3>Model Cards and Manager</h3>
                     <p>Show installed local models, intended use, limitations, hardware needs, and whether external services are involved.</p>
                     <div class="tracks"><span class="track">Explainability</span><span class="track">Models</span></div>
@@ -885,7 +914,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Caption QC and accessibility review" data-track="Accessibility">
-                    <div class="idea-top"><span class="tag">Accessibility</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Accessibility</span><span class="badge p2">Research candidate</span></div>
                     <h3>Caption QC and Accessibility Review</h3>
                     <p>Validate SRT/VTT timing, reading speed, caption length, speaker labels, and transcript quality warnings.</p>
                     <div class="tracks"><span class="track">Captions</span><span class="track">QC</span></div>
@@ -893,7 +922,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Community benchmark pack" data-track="Evidence">
-                    <div class="idea-top"><span class="tag">Evidence</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Evidence</span><span class="badge p2">Research candidate</span></div>
                     <h3>Community Benchmark Pack</h3>
                     <p>Publish transparent test clips, expected metrics, and reproducible comparisons for each major audio feature.</p>
                     <div class="tracks"><span class="track">Testing</span><span class="track">Claims</span></div>
@@ -901,7 +930,7 @@
                 </article>
 
                 <article class="idea-card" data-feature="Podcast metadata and publishing checklist" data-track="Publishing">
-                    <div class="idea-top"><span class="tag">Publishing</span><span class="badge p2">Candidate</span></div>
+                    <div class="idea-top"><span class="tag">Publishing</span><span class="badge p2">Research candidate</span></div>
                     <h3>Podcast Publishing Pack</h3>
                     <p>Prepare title, description, chapters, cover checks, loudness notes, and platform-ready export metadata.</p>
                     <div class="tracks"><span class="track">Podcast</span><span class="track">Metadata</span></div>
@@ -947,38 +976,38 @@
             <div class="section-head">
                 <div>
                     <span class="section-label">Implementation discipline</span>
-                    <h2>How v3.6 should be reviewed</h2>
+                    <h2>How 3.7 reached release-candidate validation</h2>
                 </div>
-                <p class="section-note">Each feature should pass product review, technical review, and governance review before it becomes part of public release notes.</p>
+                <p class="section-note">The 3.7 foundations passed product, technical, governance, and packaged-application validation. Future candidates begin this process again; no roadmap card inherits release status.</p>
             </div>
 
             <div class="timeline">
                 <div class="milestone">
                     <div class="when">Step 1</div>
                     <div>
-                        <h3>Define schemas and review gates</h3>
-                        <p>Lock EDL JSON, processing report JSON, output profile schema, transcript timestamp mapping, and external-service flags before building UI.</p>
+                        <h3>Schemas and review gates &mdash; complete</h3>
+                        <p>EDL JSON, processing report JSON, output profiles, transcript timestamp mapping, history, and privacy flags are implemented.</p>
                     </div>
                 </div>
                 <div class="milestone">
                     <div class="when">Step 2</div>
                     <div>
-                        <h3>Build minimum reviewable workflow</h3>
-                        <p>Upload, transcribe, detect suggestions, preview cut/mute edits, accept/reject, export final audio, and generate the report.</p>
+                        <h3>Minimum reviewable workflow &mdash; complete</h3>
+                        <p>Upload, transcribe, select words, preview cut/mute proposals, accept/reject, undo/redo, export EDL, render audio, and generate the report are connected.</p>
                     </div>
                 </div>
                 <div class="milestone">
                     <div class="when">Step 3</div>
                     <div>
-                        <h3>Measure before promising</h3>
-                        <p>Track duration drift, loudness, peak, sample rate, accepted suggestion count, model used, profile overrides, and whether any external service was enabled.</p>
+                        <h3>Regression and release-candidate validation &mdash; complete</h3>
+                        <p>Validate duration drift, loudness, sample rate, edit counts, engines, profile overrides, external-service enforcement, accessibility, and packaged macOS behavior.</p>
                     </div>
                 </div>
                 <div class="milestone">
                     <div class="when">Step 4</div>
                     <div>
-                        <h3>Publish only defensible claims</h3>
-                        <p>Release notes should say what is implemented, what is experimental, and what still requires human review.</p>
+                        <h3>Evidence-led release communication &mdash; complete</h3>
+                        <p>Release notes distinguish delivered behavior, optional execution boundaries, human-review requirements, and future research.</p>
                     </div>
                 </div>
             </div>
@@ -998,7 +1027,7 @@
             <div class="callout">
                 <div>
                     <strong>Roadmap status</strong>
-                    <p>This page is a planning and community feedback document, not a delivery guarantee. Features may change after technical validation, user testing, and governance review.</p>
+                    <p>Only the eight 3.7 foundations above are marked delivered. Every remaining feature in the signal board and radar is a research candidate or community signal, not a delivery guarantee or release commitment.</p>
                 </div>
                 <a class="btn" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">Follow on SourceForge</a>
             </div>
@@ -1007,9 +1036,12 @@
 
     <footer>
         <div class="footer-inner">
-            <div>AudioEnhancerMAX roadmap - Community Signal Board</div>
+            <div>AudioEnhancerMAX 3.7 roadmap · delivered facts and future research</div>
             <ul class="footer-links">
                 <li><a href="index.html">Overview</a></li>
+                <li><a href="support.html">Support</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="accessibility.html">Accessibility</a></li>
                 <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
                 <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
                 <li><a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">SourceForge</a></li>
@@ -1019,6 +1051,27 @@
 
     <script>
         (function () {
+            const nav = document.querySelector('.nav');
+            const navToggle = document.querySelector('.nav-toggle');
+            const navLinks = document.getElementById('roadmap-navigation');
+            const closeMenu = () => {
+                navLinks.classList.remove('is-open');
+                navToggle.setAttribute('aria-expanded', 'false');
+                navToggle.setAttribute('aria-label', 'Open navigation menu');
+                navToggle.textContent = 'Menu';
+            };
+            navToggle.addEventListener('click', () => {
+                const opening = navToggle.getAttribute('aria-expanded') !== 'true';
+                navLinks.classList.toggle('is-open', opening);
+                navToggle.setAttribute('aria-expanded', String(opening));
+                navToggle.setAttribute('aria-label', opening ? 'Close navigation menu' : 'Open navigation menu');
+                navToggle.textContent = opening ? 'Close' : 'Menu';
+            });
+            navLinks.addEventListener('click', (event) => { if (event.target.closest('a')) closeMenu(); });
+            document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeMenu(); navToggle.focus(); } });
+            document.addEventListener('click', (event) => { if (!nav.contains(event.target)) closeMenu(); });
+            window.addEventListener('resize', () => { if (window.innerWidth > 680) closeMenu(); });
+
             const repoIssueUrl = "https://github.com/sev7enITA/AudioEnhancerMAX/issues/new";
             const issueBody = (feature, track) => [
                 "Roadmap signal for AudioEnhancerMAX",

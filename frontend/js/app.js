@@ -17,11 +17,25 @@ const state = {
     cloneVoiceFileId: null,
     batchFiles: [],
     smartSuggestions: null,
+    smartProfile: 'balanced',
+    processingReportUrl: null,
+    speechEdl: null,
+    transcriptSelection: [],
+    outputProfiles: [],
+    outputProfileBase: null,
+    runtimePrivacy: null,
+    currentReport: null,
+    processedVersion: 'processed',
     wsConnection: null,
     wavesurferOriginal: null,
     wavesurferProcessed: null,
     currentWaveform: 'original',
     abMode: false,
+    complianceTargets: [],
+    deliveryCompliance: null,
+    complianceTargetId: 'podcast',
+    complianceRequestId: 0,
+    blindAB: null,
 };
 
 const options = {
@@ -53,9 +67,12 @@ const options = {
     target_sample_rate: 48000,
     smart_mode: false,
     output_format: 'wav',
+    output_profile: null,
+    output_profile_overrides: {},
 };
 
 const ICON_BASE = '/static/img/icons';
+let reportReturnFocus = null;
 function svgIcon(name, cls = 'icon-img inline-icon', alt = '') {
     const safeName = String(name || 'info').replace(/[^a-z0-9-]/gi, '');
     const safeCls = String(cls || 'icon-img inline-icon').replace(/[^a-z0-9_ -]/gi, '');
@@ -72,12 +89,68 @@ function buttonIcon(name) { return svgIcon(name, 'icon-img btn-icon-svg'); }
 document.addEventListener('DOMContentLoaded', () => {
     initUploadZone();
     initBatchUpload();
+    initCapabilities();
     initPreflight();
     checkSystemHealth();
     loadPresets();
     initSettingsPanel();
+    loadOutputProfiles();
+    loadRuntimePrivacySettings();
     initAboutPanel();
+    initReviewDeck();
 });
+
+let systemCapabilities = null;
+
+async function initCapabilities() {
+    try {
+        const response = await fetch('/api/system/capabilities', { cache: 'no-store' });
+        if (!response.ok) return;
+        systemCapabilities = await response.json();
+
+        if (!systemCapabilities.demucs_music_separation) {
+            const musicFeature = document.getElementById('feat-music');
+            if (musicFeature) musicFeature.remove();
+            options.keep_music = false;
+        }
+        if (!systemCapabilities.neural_denoise) {
+            const noiseDescription = document.querySelector('#feat-remove-noise .feature-desc');
+            if (noiseDescription) noiseDescription.textContent = 'Spectral background noise reduction';
+        }
+        if (systemCapabilities.non_destructive_speech_editor) {
+            ['feat-filler-words', 'feat-breaths', 'feat-mouth-sounds', 'feat-hesitations', 'feat-stuttering'].forEach(id => {
+                const legacyFeature = document.getElementById(id);
+                if (legacyFeature) legacyFeature.remove();
+            });
+            options.remove_filler_words = false;
+            options.remove_breaths = false;
+            options.remove_mouth_sounds = false;
+            options.eliminate_hesitations = false;
+            options.remove_stuttering = false;
+        }
+        if (!systemCapabilities.neural_diarization) {
+            const diarizationDescription = document.querySelector('#diarize-panel > .card > p.text-muted');
+            if (diarizationDescription) {
+                diarizationDescription.textContent = 'Approximate local speaker-change detection. Neural diarization is not packaged in this build.';
+            }
+        }
+        if (!systemCapabilities.kokoro_local_tts) {
+            const kokoroVoices = document.getElementById('tts-kokoro-voices');
+            if (kokoroVoices) kokoroVoices.remove();
+            const description = document.getElementById('tts-engine-description');
+            if (description) description.textContent = 'Generate speech with Microsoft Edge Neural TTS. Text is sent to Microsoft only when you start synthesis.';
+            const cloneControl = document.getElementById('voice-clone-control');
+            if (cloneControl) cloneControl.remove();
+        }
+        const whisperSelect = document.getElementById('setting-whisper-model');
+        if (whisperSelect && systemCapabilities.transcription_bundled) {
+            whisperSelect.value = 'medium';
+            whisperSelect.disabled = true;
+        }
+    } catch (_) {
+        // The backend remains authoritative if this optional UI profile cannot load.
+    }
+}
 
 let preflightReport = null;
 
@@ -283,6 +356,7 @@ async function uploadFile(file) {
         // Enable buttons
         document.getElementById('btn-process').disabled = false;
         document.getElementById('btn-transcribe').disabled = false;
+        document.getElementById('btn-speech-editor-analyze').disabled = false;
         document.getElementById('btn-diarize').disabled = false;
         document.getElementById('btn-smart-analyze').disabled = false;
         document.getElementById('btn-watermark').disabled = false;
@@ -293,6 +367,7 @@ async function uploadFile(file) {
 
         // Hide upload zone
         document.getElementById('upload-zone').style.display = 'none';
+        setReviewWorkflowStage('process');
 
         hideLoading();
         showToast('success', `"${data.filename}" uploaded successfully`);
@@ -308,6 +383,11 @@ function removeFile() {
     state.fileName = null;
     state.hasProcessed = false;
     state.processedUrl = null;
+    state.smartSuggestions = null;
+    state.processingReportUrl = null;
+    state.speechEdl = null;
+    state.processedVersion = 'processed';
+    resetReviewDeck();
 
     // Destroy waveforms
     if (state.wavesurferOriginal) {
@@ -324,10 +404,15 @@ function removeFile() {
     document.getElementById('upload-zone').style.display = '';
     document.getElementById('download-bar').classList.remove('visible');
     document.getElementById('smart-mode-banner').classList.remove('visible');
+    const speechResults = document.getElementById('speech-editor-results');
+    if (speechResults) speechResults.style.display = 'none';
+    const reportButton = document.getElementById('btn-quality-report');
+    if (reportButton) reportButton.style.display = 'none';
 
     // Disable buttons
     document.getElementById('btn-process').disabled = true;
     document.getElementById('btn-transcribe').disabled = true;
+    document.getElementById('btn-speech-editor-analyze').disabled = true;
     document.getElementById('btn-diarize').disabled = true;
     document.getElementById('btn-smart-analyze').disabled = true;
     document.getElementById('btn-watermark').disabled = true;
@@ -466,6 +551,7 @@ function toggleFeature(checkbox) {
     }
 
     updateProcessButton();
+    syncOutputProfileOverrides();
 }
 
 function updateSliderValue(slider, unit = '%') {
@@ -486,6 +572,7 @@ function updateSliderValue(slider, unit = '%') {
         display.textContent = val + '%';
         options[option] = parseFloat(val) / 100;
     }
+    syncOutputProfileOverrides();
 }
 
 function updateOptions() {
@@ -494,11 +581,12 @@ function updateOptions() {
         const val = sel.value;
         options[option] = isNaN(val) ? val : parseInt(val);
     });
+    syncOutputProfileOverrides();
 }
 
 function updateProcessButton() {
     const hasFile = !!state.fileId;
-    const hasOptions = Object.keys(options).some(k => {
+    const hasOptions = !!options.output_profile || Object.keys(options).some(k => {
         if (typeof options[k] === 'boolean') return options[k];
         return false;
     });
@@ -516,6 +604,62 @@ function updateProcessButton() {
         }
     } else {
         btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
+    }
+}
+
+async function loadOutputProfiles() {
+    try {
+        const response = await fetch('/api/output-profiles', { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        state.outputProfiles = data.profiles || [];
+        const select = document.getElementById('output-profile-select');
+        if (!select) return;
+        select.innerHTML = '<option value="">Custom settings</option>' + state.outputProfiles.map(profile =>
+            `<option value="${escapeHtml(profile.id)}">${escapeHtml(profile.label)}</option>`
+        ).join('');
+    } catch (error) {
+        console.warn('Output profiles unavailable:', error);
+    }
+}
+
+function applyOutputProfile(profileId) {
+    const profile = state.outputProfiles.find(item => item.id === profileId);
+    const description = document.getElementById('output-profile-description');
+    if (!profile) {
+        options.output_profile = null;
+        options.output_profile_overrides = {};
+        state.outputProfileBase = null;
+        if (description) description.textContent = 'Custom controls are active; values will be recorded in the report.';
+        updateProcessButton();
+        return;
+    }
+    options.output_profile = null;
+    state.outputProfileBase = null;
+    setOptionsFromPreset(profile.values);
+    options.output_profile = profile.id;
+    state.outputProfileBase = Object.fromEntries(
+        ['output_format', 'normalize', 'target_loudness_lufs'].map(key => [key, options[key]])
+    );
+    options.output_profile_overrides = {};
+    if (description) description.textContent = profile.description;
+    updateProcessButton();
+}
+
+function syncOutputProfileOverrides() {
+    if (!options.output_profile || !state.outputProfileBase) return;
+    const overrides = {};
+    ['output_format', 'normalize', 'target_loudness_lufs'].forEach(key => {
+        if (options[key] !== state.outputProfileBase[key]) {
+            overrides[key] = options[key];
+        }
+    });
+    options.output_profile_overrides = overrides;
+    const description = document.getElementById('output-profile-description');
+    const profile = state.outputProfiles.find(item => item.id === options.output_profile);
+    if (description && profile) {
+        const count = Object.keys(overrides).length;
+        description.textContent = count ? `${profile.description} ${count} manual override(s) will be recorded.` : profile.description;
     }
 }
 
@@ -581,9 +725,9 @@ const FILTER_BENCHMARKS = {
     static_noise_remover:   { secondsPer60s: 2.5,  firstLoadCost: 0,  group: 'dsp',        label: 'Static Noise Removal (spectral gating)' },
     reverb_echo_remover:    { secondsPer60s: 4.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Reverb/Echo Removal (STFT + median filter)' },
     // -- Speech Cleanup (Whisper-based) --
-    remove_filler_words:    { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Filler Words (Whisper large-v3 transcription)' },
-    eliminate_hesitations:  { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Hesitations (Whisper large-v3 transcription)' },
-    remove_stuttering:      { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Stuttering (Whisper large-v3 transcription)' },
+    remove_filler_words:    { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Filler Words (bundled Whisper Medium)' },
+    eliminate_hesitations:  { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Hesitations (bundled Whisper Medium)' },
+    remove_stuttering:      { secondsPer60s: 35.0, firstLoadCost: 12, group: 'whisper',    label: 'Stuttering (bundled Whisper Medium)' },
     // -- Speech Cleanup (DSP-based) --
     remove_mouth_sounds:    { secondsPer60s: 2.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Mouth Sounds (spectral flux analysis)' },
     remove_breaths:         { secondsPer60s: 3.0,  firstLoadCost: 0,  group: 'dsp',        label: 'Breath Removal (spectral features)' },
@@ -602,7 +746,7 @@ const FILTER_BENCHMARKS = {
  * Non-filter operation benchmarks (transcription, diarization, etc.)
  */
 const OPERATION_BENCHMARKS = {
-    'Speech-to-Text Transcription':        { rate: 2.5,  base: 12, reason: 'Whisper large-v3 model inference' },
+    'Speech-to-Text Transcription':        { rate: 2.5,  base: 12, reason: 'Bundled Whisper Medium model inference' },
     'Smart Mode - Ollama/Gemma Analysis':  { rate: 0.0,  base: 12, reason: 'Local Ollama/Gemma analysis + spectral features' },
     'Speaker Diarization (MPS)':           { rate: 1.5,  base: 5,  reason: 'Energy-based speaker segmentation (MPS)' },
     'Speech Synthesis (TTS)':              { rate: 0.0,  base: 15, reason: 'XTTS-v2 neural synthesis' },
@@ -1094,6 +1238,7 @@ function formatElapsed(seconds) {
 async function startProcessing() {
     if (!state.fileId || state.isProcessing) return;
     state.isProcessing = true;
+    setReviewWorkflowStage('process');
 
     // Count processing steps
     const stepCount = Object.keys(options).filter(k => typeof options[k] === 'boolean' && options[k]).length;
@@ -1135,6 +1280,8 @@ async function startProcessing() {
         const result = await res.json();
         state.hasProcessed = true;
         state.processedUrl = result.output_url;
+        state.processedVersion = 'processed';
+        state.processingReportUrl = result.report_url || null;
 
         // Show processed waveform
         await initProcessedWaveform(result.output_url);
@@ -1143,8 +1290,14 @@ async function startProcessing() {
         // Show download bar
         const dlBar = document.getElementById('download-bar');
         dlBar.classList.add('visible');
-        document.getElementById('download-info-text').textContent =
-            `${formatDuration(result.duration_seconds)} - ${result.sample_rate}Hz - ${result.format.toUpperCase()}`;
+        let downloadSummary = `${formatDuration(result.duration_seconds)} - ${result.sample_rate}Hz - ${result.format.toUpperCase()}`;
+        if (result.report_summary) {
+            downloadSummary += ` - Quality ${result.report_summary.input_quality_score} → ${result.report_summary.output_quality_score}`;
+        }
+        document.getElementById('download-info-text').textContent = downloadSummary;
+        const reportButton = document.getElementById('btn-quality-report');
+        if (reportButton) reportButton.style.display = state.processingReportUrl ? '' : 'none';
+        activateReviewDeck(result);
 
         updateActivity('Complete!', 1.0);
         addActivityStep('Processing complete - audio ready for download');
@@ -1235,17 +1388,21 @@ function connectProgressWS(fileId) {
 }
 
 // ==========================================================
-// Smart Mode (Ollama/Gemma)
+// Smart Enhance 2.0 (deterministic local analysis)
 // ==========================================================
 
-async function runSmartMode() {
+async function runSmartMode(profile = null) {
     if (!state.fileId) return;
 
-    startActivity('Smart Mode - Ollama/Gemma Analysis');
-    updateActivity('Analyzing audio features...', 0.1);
+    const profileSelect = document.getElementById('smart-profile');
+    state.smartProfile = profile || (profileSelect ? profileSelect.value : state.smartProfile) || 'balanced';
+    if (profileSelect) profileSelect.value = state.smartProfile;
+
+    startActivity('Smart Enhance 2.0 - Local Analysis');
+    updateActivity('Measuring level, noise, clipping, silence and spectrum...', 0.1);
 
     try {
-        const res = await fetch(`/api/smart-mode/${state.fileId}`, { method: 'POST' });
+        const res = await fetch(`/api/smart-mode/${state.fileId}?profile=${encodeURIComponent(state.smartProfile)}`, { method: 'POST' });
         if (!res.ok) throw new Error('Smart mode analysis failed');
 
         const data = await res.json();
@@ -1257,30 +1414,57 @@ async function runSmartMode() {
         document.getElementById('smart-mode-type').textContent =
             `Detected: ${data.detected_type.replace('_', ' ').toUpperCase()}`;
         document.getElementById('smart-mode-description').textContent = data.description;
-        document.getElementById('smart-engine-badge').textContent =
-            data.engine && data.engine !== 'heuristics' ? data.engine : 'Heuristics';
+        document.getElementById('smart-engine-badge').textContent = 'Local deterministic';
 
         // Show in smart panel
         const resultsDiv = document.getElementById('smart-results');
         resultsDiv.style.display = 'block';
 
-        let html = `<p><strong>Content Type:</strong> ${data.detected_type}</p>`;
-        html += `<p><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(0)}%</p>`;
-        html += `<p><strong>Engine:</strong> ${data.engine}</p>`;
-        html += `<p>${data.description}</p>`;
+        const quality = data.quality || {};
+        const metrics = quality.metrics || {};
+        const issues = quality.issues || [];
+        const selected = data.profiles ? data.profiles[data.selected_profile] : null;
+        let html = `
+            <div class="smart-score-row">
+                <div class="smart-quality-score"><strong>${Number(quality.quality_score || 0)}</strong><span>/100 quality</span></div>
+                <div><strong>${escapeHtml(String(data.detected_type || 'unknown').replace('_', ' '))}</strong><p>${escapeHtml(String(data.description || ''))}</p></div>
+            </div>
+            <div class="smart-metrics-grid">
+                <div><span>Level</span><strong>${Number(metrics.rms_dbfs || 0).toFixed(1)} dBFS</strong></div>
+                <div><span>Est. SNR</span><strong>${Number(metrics.estimated_snr_db || 0).toFixed(1)} dB</strong></div>
+                <div><span>Peak</span><strong>${Number(metrics.peak_dbfs || 0).toFixed(1)} dBFS</strong></div>
+                <div><span>Silence</span><strong>${(Number(metrics.silence_ratio || 0) * 100).toFixed(1)}%</strong></div>
+            </div>`;
 
-        if (data.ai_suggestions && data.ai_suggestions.length > 0) {
-            html += '<div class="mt-12"><strong>AI Suggestions:</strong><ul>';
-            data.ai_suggestions.forEach(s => {
-                html += `<li style="color:var(--text-secondary);font-size:0.85rem;margin:4px 0">${s}</li>`;
+        if (issues.length) {
+            html += '<div class="smart-issue-list">';
+            issues.forEach(issue => {
+                html += `<article class="smart-issue ${escapeHtml(String(issue.severity || 'low'))}">
+                    <div><strong>${escapeHtml(String(issue.label || 'Signal issue'))}</strong><span>${escapeHtml(String(issue.severity || 'low'))}</span></div>
+                    <p>${escapeHtml(String(issue.evidence || ''))}</p>
+                    <small>${escapeHtml(String(issue.recommendation || ''))}</small>
+                </article>`;
             });
-            html += '</ul></div>';
+            html += '</div>';
+        } else {
+            html += '<p class="smart-clean-result">No material signal defect detected.</p>';
+        }
+
+        if (selected) {
+            html += `<div class="smart-selected-profile">
+                <strong>${escapeHtml(String(selected.name))} profile</strong>
+                <p>${escapeHtml(String(selected.description))}</p>
+                <div>${selected.active_steps.length
+                    ? selected.active_steps.map(step => `<span>${escapeHtml(String(step).replaceAll('_', ' '))}</span>`).join('')
+                    : '<span>No corrective step required</span>'}</div>
+                ${selected.review_required ? '<small>Manual A/B review required for destructive or synthetic processing.</small>' : ''}
+            </div>`;
         }
 
         document.getElementById('smart-analysis-content').innerHTML = html;
 
         stopActivity(true);
-        showToast('success', `Smart Mode: detected "${data.detected_type}" (${data.engine})`);
+        showToast('success', `Smart Enhance: ${quality.quality_score}/100, ${data.selected_profile} profile ready`);
 
     } catch (e) {
         stopActivity(false);
@@ -1292,7 +1476,328 @@ function applySmartPreset() {
     if (state.smartSuggestions && state.smartSuggestions.suggested_options) {
         setOptionsFromPreset(state.smartSuggestions.suggested_options);
         switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
-        showToast('success', 'Smart Mode settings applied!');
+        showToast('success', `${state.smartProfile} Smart Enhance profile applied`);
+    }
+}
+
+// ==========================================================
+// Precision Speech Editor (non-destructive EDL)
+// ==========================================================
+
+async function runSpeechEditor() {
+    if (!state.fileId) return;
+    const button = document.getElementById('btn-speech-editor-analyze');
+    const language = document.getElementById('speech-editor-language').value || null;
+    const fillers = document.getElementById('speech-editor-fillers').value
+        .split(',').map(item => item.trim()).filter(Boolean);
+    button.disabled = true;
+    startActivity('Precision Speech Editor');
+    updateActivity('Transcribing locally and locating review candidates...', 0.08);
+
+    try {
+        const response = await fetch('/api/speech-editor/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                file_id: state.fileId,
+                language,
+                custom_filler_words: fillers.length ? fillers : null,
+            }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Speech analysis failed');
+        }
+        state.speechEdl = await response.json();
+        state.transcriptSelection = [];
+        renderSpeechEdl();
+        stopActivity(true);
+        showToast('success', `${state.speechEdl.summary.total_candidates} review candidates found; no edit has been applied`);
+    } catch (error) {
+        stopActivity(false);
+        showToast('error', error.message);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+function renderSpeechEdl() {
+    const edl = state.speechEdl;
+    if (!edl) return;
+    const results = document.getElementById('speech-editor-results');
+    const summary = document.getElementById('speech-editor-summary');
+    const list = document.getElementById('speech-edit-list');
+    const revision = document.getElementById('speech-editor-revision');
+    const renderButton = document.getElementById('btn-speech-editor-render');
+    const renderNote = document.getElementById('speech-editor-render-note');
+    results.style.display = 'block';
+    revision.textContent = `Revision ${edl.revision}`;
+    const history = edl.history || {};
+    const undoButton = document.getElementById('btn-speech-undo');
+    const redoButton = document.getElementById('btn-speech-redo');
+    if (undoButton) undoButton.disabled = !history.can_undo;
+    if (redoButton) redoButton.disabled = !history.can_redo;
+    summary.innerHTML = `
+        <div><strong>${edl.summary.total_candidates}</strong><span>Candidates</span></div>
+        <div><strong>${edl.summary.selected_candidates}</strong><span>Approved</span></div>
+        <div><strong>${Number(edl.summary.selected_duration_seconds || 0).toFixed(1)}s</strong><span>Selected duration</span></div>
+        <div><strong>${escapeHtml(String(edl.source.language || 'auto').toUpperCase())}</strong><span>Language</span></div>`;
+
+    const visibleCandidates = edl.candidates.slice(0, 250);
+    list.innerHTML = visibleCandidates.length ? visibleCandidates.map(candidate => {
+        const safeId = escapeHtml(String(candidate.id));
+        const typeClass = String(candidate.type || '').replace(/[^a-z_-]/g, '');
+        const applied = candidate.decision === 'apply';
+        return `<article class="speech-edit-item ${typeClass} ${applied ? 'approved' : ''}">
+            <label class="speech-edit-decision">
+                <input type="checkbox" ${applied ? 'checked' : ''} onchange="setSpeechEditDecision('${safeId}', this.checked ? 'apply' : 'keep')">
+                <span>${applied ? 'Apply' : 'Keep'}</span>
+            </label>
+            <div class="speech-edit-main">
+                <div class="speech-edit-heading">
+                    <strong>${escapeHtml(String(candidate.label))}</strong>
+                    <span>${formatDuration(candidate.start)} - ${formatDuration(candidate.end)}</span>
+                    <span class="speech-confidence">${Math.round(candidate.confidence * 100)}%</span>
+                </div>
+                ${candidate.text ? `<div class="speech-edit-text">${escapeHtml(String(candidate.text))}</div>` : ''}
+                <p>${escapeHtml(String(candidate.evidence))}</p>
+                <small>${escapeHtml(String(candidate.detector).replaceAll('-', ' '))} / ${escapeHtml(String(candidate.action))}</small>
+            </div>
+            <div class="speech-edit-preview-actions">
+                <button class="btn btn-sm btn-ghost" type="button" onclick="previewSpeechEdit('${safeId}', 'original')">Original</button>
+                <button class="btn btn-sm btn-secondary" type="button" onclick="previewSpeechEdit('${safeId}', 'applied')">Proposed</button>
+            </div>
+        </article>`;
+    }).join('') : '<p class="smart-clean-result">No speech edit candidate was detected.</p>';
+
+    if (edl.candidates.length > visibleCandidates.length) {
+        list.insertAdjacentHTML('beforeend', `<p class="text-sm text-muted">Showing the first ${visibleCandidates.length} of ${edl.candidates.length} candidates.</p>`);
+    }
+    renderTranscriptWords();
+    renderButton.disabled = edl.summary.selected_candidates === 0;
+    renderNote.textContent = edl.summary.selected_candidates
+        ? `${edl.summary.selected_candidates} approved edit(s) will be rendered to a new file.`
+        : 'Approve one or more candidates to render a new file.';
+}
+
+function renderTranscriptWords() {
+    const container = document.getElementById('speech-transcript-words');
+    if (!container || !state.speechEdl) return;
+    const words = state.speechEdl.source_words || [];
+    if (!words.length) {
+        container.innerHTML = '<span class="text-sm text-muted">Word timestamps are unavailable for this transcript.</span>';
+        updateTranscriptSelectionUi();
+        return;
+    }
+    const selected = state.transcriptSelection.length === 2
+        ? [Math.min(...state.transcriptSelection), Math.max(...state.transcriptSelection)]
+        : state.transcriptSelection;
+    container.innerHTML = words.slice(0, 1200).map((word, index) => {
+        const isSelected = selected.length === 2
+            ? index >= selected[0] && index <= selected[1]
+            : selected[0] === index;
+        return `<button type="button" class="speech-word ${isSelected ? 'selected' : ''}" role="option" aria-selected="${isSelected}" onclick="selectTranscriptWord(${index})" title="${formatDuration(word.start)}">${escapeHtml(word.display_word || word.word)}</button>`;
+    }).join('');
+    updateTranscriptSelectionUi();
+}
+
+function selectTranscriptWord(index) {
+    if (state.transcriptSelection.length === 0 || state.transcriptSelection.length === 2) {
+        state.transcriptSelection = [index];
+    } else {
+        state.transcriptSelection.push(index);
+    }
+    renderTranscriptWords();
+}
+
+function clearTranscriptSelection() {
+    state.transcriptSelection = [];
+    renderTranscriptWords();
+}
+
+function updateTranscriptSelectionUi() {
+    const note = document.getElementById('speech-transcript-selection-note');
+    const cutButton = document.getElementById('btn-manual-cut');
+    const muteButton = document.getElementById('btn-manual-mute');
+    const complete = state.transcriptSelection.length === 2;
+    if (cutButton) cutButton.disabled = !complete;
+    if (muteButton) muteButton.disabled = !complete;
+    if (!note) return;
+    if (!state.transcriptSelection.length) {
+        note.textContent = 'No transcript range selected.';
+    } else if (!complete) {
+        note.textContent = 'First word selected. Choose the last word.';
+    } else {
+        const [startIndex, endIndex] = [Math.min(...state.transcriptSelection), Math.max(...state.transcriptSelection)];
+        const words = state.speechEdl.source_words || [];
+        const text = words.slice(startIndex, endIndex + 1).map(word => word.display_word || word.word).join(' ');
+        note.textContent = `${formatDuration(words[startIndex].start)} - ${formatDuration(words[endIndex].end)}: ${text}`;
+    }
+}
+
+async function createTranscriptEdit(action) {
+    if (!state.speechEdl || state.transcriptSelection.length !== 2) return;
+    const [wordStart, wordEnd] = [Math.min(...state.transcriptSelection), Math.max(...state.transcriptSelection)];
+    const words = state.speechEdl.source_words || [];
+    if (!words[wordStart] || !words[wordEnd]) return;
+    const text = words.slice(wordStart, wordEnd + 1).map(word => word.display_word || word.word).join(' ');
+    try {
+        const response = await fetch(`/api/speech-editor/${state.fileId}/manual-edit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                revision: state.speechEdl.revision,
+                start: words[wordStart].start,
+                end: words[wordEnd].end,
+                action,
+                decision: 'keep',
+                text,
+                word_start: wordStart,
+                word_end: wordEnd,
+            }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Could not create transcript edit');
+        }
+        state.speechEdl = await response.json();
+        state.transcriptSelection = [];
+        renderSpeechEdl();
+        showToast('success', `${action === 'cut' ? 'Cut' : 'Mute'} proposal added for review`);
+    } catch (error) {
+        showToast('error', error.message);
+        await reloadSpeechEdl();
+    }
+}
+
+async function navigateSpeechHistory(direction) {
+    if (!state.speechEdl) return;
+    try {
+        const response = await fetch(`/api/speech-editor/${state.fileId}/${direction}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ revision: state.speechEdl.revision }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || `Could not ${direction}`);
+        }
+        state.speechEdl = await response.json();
+        state.transcriptSelection = [];
+        renderSpeechEdl();
+        showToast('info', direction === 'undo' ? 'Last EDL change undone' : 'EDL change restored');
+    } catch (error) {
+        showToast('error', error.message);
+        await reloadSpeechEdl();
+    }
+}
+
+function exportSpeechEdl(format) {
+    if (!state.fileId || !state.speechEdl) return;
+    window.open(`/api/speech-editor/${state.fileId}/export?format=${encodeURIComponent(format)}`, '_blank');
+}
+
+async function setSpeechEditDecision(candidateId, decision) {
+    if (!state.speechEdl) return;
+    try {
+        const response = await fetch(`/api/speech-editor/${state.fileId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                revision: state.speechEdl.revision,
+                decisions: [{ candidate_id: candidateId, decision }],
+            }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Could not save edit decision');
+        }
+        state.speechEdl = await response.json();
+        renderSpeechEdl();
+    } catch (error) {
+        showToast('error', error.message);
+        await reloadSpeechEdl();
+    }
+}
+
+async function applySpeechEditBulk(mode) {
+    if (!state.speechEdl) return;
+    const decisions = state.speechEdl.candidates.map(candidate => ({
+        candidate_id: candidate.id,
+        decision: mode === 'high-confidence' && candidate.confidence >= 0.8 ? 'apply' : 'keep',
+    }));
+    try {
+        const response = await fetch(`/api/speech-editor/${state.fileId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ revision: state.speechEdl.revision, decisions }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Could not update edit decisions');
+        }
+        state.speechEdl = await response.json();
+        renderSpeechEdl();
+    } catch (error) {
+        showToast('error', error.message);
+        await reloadSpeechEdl();
+    }
+}
+
+async function reloadSpeechEdl() {
+    if (!state.fileId) return;
+    const response = await fetch(`/api/speech-editor/${state.fileId}`, { cache: 'no-store' });
+    if (response.ok) {
+        state.speechEdl = await response.json();
+        renderSpeechEdl();
+    }
+}
+
+function previewSpeechEdit(candidateId, mode) {
+    if (!state.fileId) return;
+    const player = document.getElementById('speech-editor-preview');
+    player.src = `/api/speech-editor/${state.fileId}/preview/${encodeURIComponent(candidateId)}?mode=${encodeURIComponent(mode)}`;
+    player.play().catch(() => {});
+}
+
+async function renderSpeechEditor() {
+    if (!state.fileId || !state.speechEdl || !state.speechEdl.summary.selected_candidates) return;
+    const button = document.getElementById('btn-speech-editor-render');
+    button.disabled = true;
+    startActivity('Rendering approved speech edits', state.speechEdl.summary.selected_candidates);
+    try {
+        const response = await fetch(`/api/speech-editor/${state.fileId}/render`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ revision: state.speechEdl.revision, output_format: 'wav' }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Speech edit rendering failed');
+        }
+        const result = await response.json();
+        state.hasProcessed = true;
+        state.processedUrl = result.output_url;
+        state.processedVersion = 'speech_edit';
+        state.processingReportUrl = result.report_url || null;
+        await initProcessedWaveform(result.output_url);
+        showWaveform('processed');
+        document.getElementById('download-bar').classList.add('visible');
+        let speechRenderSummary = `${result.applied_edits} reviewed edits - ${formatDuration(result.duration_seconds)} - source preserved`;
+        if (result.report_summary) {
+            speechRenderSummary += ` - Quality ${result.report_summary.input_quality_score} → ${result.report_summary.output_quality_score}`;
+        }
+        document.getElementById('download-info-text').textContent = speechRenderSummary;
+        const reportButton = document.getElementById('btn-quality-report');
+        if (reportButton) reportButton.style.display = state.processingReportUrl ? '' : 'none';
+        activateReviewDeck(result);
+        stopActivity(true);
+        showToast('success', 'Approved speech edits rendered to a new file');
+    } catch (error) {
+        stopActivity(false);
+        showToast('error', error.message);
+    } finally {
+        button.disabled = false;
     }
 }
 
@@ -2118,24 +2623,539 @@ async function pollBatchStatus(jobId) {
 // Download & A/B Compare
 // ==========================================================
 
+function initReviewDeck() {
+    setReviewWorkflowStage('diagnose');
+    updateCapsulePrivacyLabel();
+    ensureComplianceTargets(false);
+    document.addEventListener('keydown', handleReportModalKeydown);
+}
+
+function setReviewWorkflowStage(stage, complete = false) {
+    const workflow = document.getElementById('review-workflow');
+    if (!workflow) return;
+    const stages = ['diagnose', 'process', 'review', 'deliver'];
+    const currentIndex = Math.max(0, stages.indexOf(stage));
+    workflow.dataset.current = stages[currentIndex];
+    workflow.querySelectorAll('[data-stage]').forEach((item) => {
+        const itemIndex = stages.indexOf(item.dataset.stage);
+        item.classList.toggle('is-current', itemIndex === currentIndex && !complete);
+        item.classList.toggle('is-complete', itemIndex < currentIndex || (complete && itemIndex <= currentIndex));
+        if (itemIndex > currentIndex) item.setAttribute('aria-disabled', 'true');
+        else item.removeAttribute('aria-disabled');
+        if (itemIndex === currentIndex && !complete) item.setAttribute('aria-current', 'step');
+        else item.removeAttribute('aria-current');
+    });
+}
+
+async function ensureComplianceTargets(showErrors = true) {
+    if (state.complianceTargets.length) return true;
+    try {
+        const response = await fetch('/api/compliance-targets', { cache: 'no-store' });
+        if (!response.ok) throw new Error(await readApiError(response, 'Delivery targets are unavailable'));
+        const payload = await response.json();
+        const targets = Array.isArray(payload.targets) ? payload.targets.filter(item => item && item.id && item.label) : [];
+        if (!targets.length) throw new Error('No delivery targets are available');
+        state.complianceTargets = targets;
+        const select = document.getElementById('compliance-target');
+        if (select) {
+            const fragment = document.createDocumentFragment();
+            targets.forEach((target) => {
+                const option = document.createElement('option');
+                option.value = String(target.id);
+                option.textContent = String(target.label);
+                fragment.appendChild(option);
+            });
+            select.replaceChildren(fragment);
+            const preferred = targets.some(item => item.id === state.complianceTargetId)
+                ? state.complianceTargetId : targets[0].id;
+            state.complianceTargetId = preferred;
+            select.value = preferred;
+        }
+        return true;
+    } catch (error) {
+        if (showErrors) setComplianceError(error.message);
+        return false;
+    }
+}
+
+async function activateReviewDeck(result = {}) {
+    if (!state.fileId || !state.processedUrl) return;
+    const deck = document.getElementById('download-bar');
+    if (!deck) return;
+    deck.classList.add('visible');
+    setReviewWorkflowStage('review');
+    document.getElementById('review-readiness').lastChild.textContent = 'Evidence loading';
+
+    if (result.compliance_summary?.target_id) {
+        state.complianceTargetId = result.compliance_summary.target_id;
+        renderDeliveryCompliance(result.compliance_summary);
+    }
+    const targetsReady = await ensureComplianceTargets(true);
+    if (!targetsReady || !state.fileId) return;
+    const select = document.getElementById('compliance-target');
+    if (select && Array.from(select.options).some(option => option.value === state.complianceTargetId)) {
+        select.value = state.complianceTargetId;
+    }
+    await loadDeliveryCompliance();
+}
+
+function resetReviewDeck() {
+    state.complianceRequestId += 1;
+    state.deliveryCompliance = null;
+    state.complianceTargetId = 'podcast';
+    state.blindAB = null;
+    state.abMode = false;
+    document.getElementById('download-bar')?.classList.remove('visible');
+    document.getElementById('waveform-container')?.classList.remove('blind-review-active');
+    const waveformLabel = document.querySelector('.waveform-label');
+    if (waveformLabel) waveformLabel.textContent = 'Waveform';
+    const target = document.getElementById('compliance-target');
+    if (target && Array.from(target.options).some(option => option.value === 'podcast')) target.value = 'podcast';
+    const includeSource = document.getElementById('capsule-include-source');
+    if (includeSource) includeSource.checked = false;
+    setComplianceLoading('Awaiting a processed file…');
+    resetBlindABControls();
+    updateCapsulePrivacyLabel();
+    const capsuleStatus = document.getElementById('capsule-status');
+    if (capsuleStatus) capsuleStatus.className = 'capsule-status';
+    setReviewWorkflowStage('diagnose');
+}
+
+function handleComplianceTargetChange(targetId) {
+    if (!state.hasProcessed || !state.fileId) return;
+    state.complianceTargetId = String(targetId || 'podcast');
+    loadDeliveryCompliance();
+}
+
+async function loadDeliveryCompliance() {
+    if (!state.fileId || !state.hasProcessed) return;
+    const requestId = ++state.complianceRequestId;
+    const fileId = state.fileId;
+    const targetId = state.complianceTargetId;
+    setComplianceLoading('Re-checking the processed master…');
+    try {
+        const response = await fetch(`/api/compliance/${encodeURIComponent(fileId)}?target_id=${encodeURIComponent(targetId)}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(await readApiError(response, 'Compliance guidance is unavailable'));
+        const compliance = await response.json();
+        if (requestId !== state.complianceRequestId || fileId !== state.fileId || targetId !== state.complianceTargetId) return;
+        renderDeliveryCompliance(compliance);
+        document.getElementById('review-readiness').lastChild.textContent = 'Review ready';
+    } catch (error) {
+        if (requestId !== state.complianceRequestId) return;
+        setComplianceError(error.message);
+    }
+}
+
+function setComplianceLoading(message) {
+    const status = document.getElementById('compliance-status');
+    if (!status) return;
+    status.className = 'evidence-status is-loading';
+    status.querySelector('strong').textContent = 'Measuring';
+    document.getElementById('compliance-summary').textContent = message;
+    ['metric-loudness', 'metric-true-peak', 'metric-clipping', 'metric-sample-rate'].forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = '\u2014';
+    });
+    const rules = document.getElementById('compliance-rules');
+    if (rules) rules.innerHTML = '<li class="is-loading">Awaiting measured rules.</li>';
+}
+
+function setComplianceError(message) {
+    state.deliveryCompliance = null;
+    const status = document.getElementById('compliance-status');
+    if (!status) return;
+    status.className = 'evidence-status is-error';
+    status.querySelector('strong').textContent = 'Unavailable';
+    document.getElementById('compliance-summary').textContent = message || 'Compliance guidance could not be loaded.';
+    const rules = document.getElementById('compliance-rules');
+    if (rules) rules.innerHTML = '<li class="is-fail"><strong>Check unavailable</strong><span>Try another target</span></li>';
+    document.getElementById('review-readiness').lastChild.textContent = 'Review needs attention';
+}
+
+function formatEvidenceNumber(value, digits = 2) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return '\u2014';
+    return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
+}
+
+function formatComplianceRule(rule) {
+    const measured = rule.measured === null || rule.measured === undefined
+        ? 'Not measured' : `${formatEvidenceNumber(rule.measured, Number.isInteger(Number(rule.measured)) ? 0 : 2)} ${rule.unit || ''}`.trim();
+    let target = '';
+    if (rule.target !== undefined) target = `Target ${rule.target} ±${rule.tolerance} ${rule.unit || ''}`;
+    else if (rule.ceiling !== undefined) target = `Ceiling ${rule.ceiling} ${rule.unit || ''}`;
+    else if (rule.floor !== undefined) target = `Minimum ${rule.floor} ${rule.unit || ''}`;
+    return `${measured}${target ? ` · ${target}` : ''}`;
+}
+
+function renderDeliveryCompliance(compliance) {
+    if (!compliance || typeof compliance !== 'object') return;
+    state.deliveryCompliance = compliance;
+    if (compliance.target_id) state.complianceTargetId = String(compliance.target_id);
+    const statusName = ['pass', 'warn', 'fail'].includes(compliance.status) ? compliance.status : 'warn';
+    const status = document.getElementById('compliance-status');
+    status.className = `evidence-status is-${statusName}`;
+    status.querySelector('strong').textContent = statusName;
+    const counts = compliance.summary || {};
+    document.getElementById('compliance-summary').textContent = `${Number(counts.pass || 0)} pass · ${Number(counts.warn || 0)} warn · ${Number(counts.fail || 0)} fail`;
+
+    const measurements = compliance.measurements || {};
+    document.getElementById('metric-loudness').textContent = formatEvidenceNumber(measurements.integrated_loudness_lufs);
+    document.getElementById('metric-true-peak').textContent = formatEvidenceNumber(measurements.estimated_true_peak_dbtp);
+    document.getElementById('metric-clipping').textContent = formatEvidenceNumber(measurements.clipped_sample_count, 0);
+    document.getElementById('metric-sample-rate').textContent = formatEvidenceNumber(measurements.sample_rate_hz, 0);
+
+    const rules = Array.isArray(compliance.rules) ? compliance.rules : [];
+    const rulesElement = document.getElementById('compliance-rules');
+    rulesElement.innerHTML = rules.length ? rules.map((rule) => {
+        const ruleStatus = ['pass', 'warn', 'fail'].includes(rule.status) ? rule.status : 'warn';
+        return `<li class="is-${ruleStatus}"><strong>${escapeHtml(String(rule.label || rule.id || 'Rule'))}</strong><span>${escapeHtml(formatComplianceRule(rule))}</span></li>`;
+    }).join('') : '<li class="is-warn"><strong>No rule detail returned</strong><span>Review the processing report</span></li>';
+    document.getElementById('compliance-disclaimer').textContent = compliance.disclaimer || 'Local workflow guidance only. This is not regulatory or third-party certification.';
+}
+
+function randomBlindMapping() {
+    let swap;
+    if (window.crypto?.getRandomValues) {
+        const value = new Uint32Array(1);
+        window.crypto.getRandomValues(value);
+        swap = Boolean(value[0] & 1);
+    } else {
+        swap = Math.random() >= 0.5;
+    }
+    return swap ? { A: 'processed', B: 'original' } : { A: 'original', B: 'processed' };
+}
+
+function resetBlindABControls() {
+    document.getElementById('ab-reveal')?.setAttribute('hidden', '');
+    document.querySelectorAll('[data-ab-choice], #btn-listen-a, #btn-listen-b').forEach(button => { button.disabled = true; });
+    document.querySelectorAll('.blind-listen-button').forEach(button => button.classList.remove('is-playing'));
+    const start = document.getElementById('btn-start-ab');
+    if (start) {
+        start.disabled = false;
+        start.innerHTML = `${buttonIcon('repeat')}Start blind round`;
+    }
+    const indicator = document.getElementById('ab-round-indicator');
+    if (indicator) indicator.textContent = 'Not started';
+    const feedback = document.getElementById('ab-feedback');
+    if (feedback) feedback.textContent = 'A/B preference is subjective, not a quality score.';
+}
+
+function startBlindABRound() {
+    if (!state.hasProcessed || !state.wavesurferOriginal || !state.wavesurferProcessed) {
+        showToast('warning', 'Process audio first to start a blind round');
+        return;
+    }
+    stopPlayback();
+    state.blindAB = { mapping: randomBlindMapping(), status: 'open', decision: null };
+    state.abMode = true;
+    document.getElementById('waveform-container')?.classList.add('blind-review-active');
+    const waveformLabel = document.querySelector('.waveform-label');
+    if (waveformLabel) waveformLabel.textContent = 'Blind listening active';
+    document.getElementById('ab-reveal').hidden = true;
+    document.querySelectorAll('[data-ab-choice], #btn-listen-a, #btn-listen-b').forEach(button => { button.disabled = false; });
+    document.querySelectorAll('.blind-listen-button').forEach(button => button.classList.remove('is-playing'));
+    document.getElementById('ab-round-indicator').textContent = 'Round open';
+    document.getElementById('ab-feedback').textContent = 'Listen to both slots, then save one subjective choice.';
+    document.getElementById('btn-start-ab').innerHTML = `${buttonIcon('repeat')}New randomized round`;
+}
+
+function listenBlindSlot(slot) {
+    if (!state.blindAB || state.blindAB.status !== 'open' || !['A', 'B'].includes(slot)) return;
+    const version = state.blindAB.mapping[slot];
+    stopPlayback();
+    showWaveform(version);
+    const waveform = version === 'processed' ? state.wavesurferProcessed : state.wavesurferOriginal;
+    const playback = waveform?.play();
+    if (playback?.catch) playback.catch(() => {});
+    document.querySelectorAll('.blind-listen-button').forEach(button => button.classList.remove('is-playing'));
+    document.getElementById(`btn-listen-${slot.toLowerCase()}`)?.classList.add('is-playing');
+    document.getElementById('ab-feedback').textContent = `Listening to slot ${slot}. Mapping remains hidden.`;
+}
+
+function setBlindDecisionBusy(busy) {
+    document.querySelectorAll('[data-ab-choice], #btn-listen-a, #btn-listen-b').forEach(button => { button.disabled = busy; });
+    const start = document.getElementById('btn-start-ab');
+    if (start) start.disabled = busy;
+}
+
+async function submitBlindDecision(slot) {
+    if (!state.fileId || !state.blindAB || state.blindAB.status !== 'open' || !['A', 'B', 'tie'].includes(slot)) return;
+    const mapping = { ...state.blindAB.mapping };
+    const selectedVersion = slot === 'tie' ? 'no_difference' : mapping[slot];
+    const blindSlot = slot;
+    setBlindDecisionBusy(true);
+    document.getElementById('ab-feedback').textContent = 'Saving the decision locally…';
+    try {
+        const response = await fetch(`/api/reviews/${encodeURIComponent(state.fileId)}/blind-ab`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                selected_version: selectedVersion,
+                blind_slot: blindSlot,
+                target_id: state.complianceTargetId,
+            }),
+        });
+        if (!response.ok) throw new Error(await readApiError(response, 'The A/B decision could not be saved'));
+        const record = await response.json();
+        state.blindAB.status = 'saved';
+        state.blindAB.decision = record;
+        state.abMode = false;
+        stopPlayback();
+        document.getElementById('waveform-container')?.classList.remove('blind-review-active');
+        const waveformLabel = document.querySelector('.waveform-label');
+        if (waveformLabel) waveformLabel.textContent = 'Waveform';
+        showWaveform(selectedVersion === 'no_difference' ? 'processed' : selectedVersion);
+
+        const selectedLabel = selectedVersion === 'no_difference'
+            ? 'No audible difference selected'
+            : `Slot ${slot} selected · ${selectedVersion === 'processed' ? 'Processed' : 'Original'}`;
+        document.getElementById('ab-reveal-choice').textContent = selectedLabel;
+        document.getElementById('ab-reveal-mapping').textContent = `Mapping revealed: A was ${mapping.A}; B was ${mapping.B}.`;
+        document.getElementById('ab-reveal').hidden = false;
+        document.getElementById('ab-round-indicator').textContent = 'Saved + revealed';
+        document.getElementById('ab-feedback').textContent = 'Preference persisted as local review evidence.';
+        document.querySelectorAll('[data-ab-choice], #btn-listen-a, #btn-listen-b').forEach(button => { button.disabled = true; });
+        const startButton = document.getElementById('btn-start-ab');
+        startButton.disabled = false;
+        startButton.innerHTML = `${buttonIcon('repeat')}Start fresh round`;
+        setReviewWorkflowStage('deliver');
+        showToast('success', 'Blind A/B decision saved and mapping revealed');
+    } catch (error) {
+        setBlindDecisionBusy(false);
+        document.getElementById('ab-feedback').textContent = `${error.message}. Mapping remains hidden.`;
+        showToast('error', error.message);
+    }
+}
+
+function updateCapsulePrivacyLabel() {
+    const includeSource = Boolean(document.getElementById('capsule-include-source')?.checked);
+    const status = document.getElementById('capsule-status');
+    if (!status) return;
+    status.className = 'capsule-status';
+    status.textContent = includeSource ? 'Original audio will be included in this export.' : 'Original audio excluded.';
+}
+
+function capsuleFilename(contentDisposition, fallback) {
+    let filename = '';
+    if (contentDisposition) {
+        const encoded = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+        const quoted = contentDisposition.match(/filename="([^"]+)"/i);
+        const plain = contentDisposition.match(/filename=([^;]+)/i);
+        try {
+            if (encoded) filename = decodeURIComponent(encoded[1].trim());
+        } catch (_) {
+            filename = '';
+        }
+        if (!filename && quoted) filename = quoted[1];
+        if (!filename && plain) filename = plain[1].trim();
+    }
+    const safe = String(filename || fallback)
+        .split(/[\\/]/).pop()
+        .replace(/[\u0000-\u001f\u007f<>:"|?*]/g, '-')
+        .trim();
+    return safe || fallback;
+}
+
+async function exportProjectCapsule() {
+    if (!state.fileId || !state.hasProcessed) {
+        showToast('warning', 'Process audio before exporting a capsule');
+        return;
+    }
+    const button = document.getElementById('btn-export-capsule');
+    const status = document.getElementById('capsule-status');
+    const includeSource = Boolean(document.getElementById('capsule-include-source')?.checked);
+    button.disabled = true;
+    button.innerHTML = `${buttonIcon('package')}Building ZIP…`;
+    status.className = 'capsule-status';
+    status.textContent = 'Collecting local evidence and calculating the manifest…';
+    try {
+        const response = await fetch(`/api/projects/${encodeURIComponent(state.fileId)}/export`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ include_source: includeSource, target_id: state.complianceTargetId }),
+        });
+        if (!response.ok) throw new Error(await readApiError(response, 'Project Capsule export failed'));
+        const blob = await response.blob();
+        const fallback = `AudioEnhancerMAX-${state.fileId}-project-capsule.zip`;
+        const filename = capsuleFilename(response.headers.get('Content-Disposition'), fallback);
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+        status.className = 'capsule-status is-success';
+        status.textContent = `${filename} downloaded${includeSource ? ' with original audio.' : ' without original audio.'}`;
+        setReviewWorkflowStage('deliver', true);
+        showToast('success', 'Project Capsule downloaded');
+    } catch (error) {
+        status.className = 'capsule-status is-error';
+        status.textContent = error.message;
+        showToast('error', error.message);
+    } finally {
+        button.disabled = false;
+        button.innerHTML = `${buttonIcon('package')}Export ZIP capsule`;
+    }
+}
+
+async function readApiError(response, fallback) {
+    try {
+        const contentType = response.headers.get('Content-Type') || '';
+        if (contentType.includes('application/json')) {
+            const payload = await response.json();
+            return payload.detail || payload.message || fallback;
+        }
+        const text = await response.text();
+        return text || fallback;
+    } catch (_) {
+        return fallback;
+    }
+}
+
 function downloadFile(format) {
     if (!state.fileId) return;
-    window.open(`/api/download/${state.fileId}?format=${format}&version=processed`, '_blank');
+    window.open(`/api/download/${state.fileId}?format=${format}&version=${encodeURIComponent(state.processedVersion || 'processed')}`, '_blank');
+}
+
+async function downloadProcessingReport() {
+    if (!state.processingReportUrl || !state.fileId) return;
+    try {
+        const response = await fetch(state.processingReportUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Quality report is unavailable');
+        const report = await response.json();
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `AudioEnhancerMAX-${state.fileId}-quality-report.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+        showToast('success', 'Local quality report downloaded');
+    } catch (error) {
+        showToast('error', error.message);
+    }
+}
+
+async function openProcessingReport() {
+    if (!state.processingReportUrl || !state.fileId) return;
+    try {
+        const response = await fetch(state.processingReportUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Quality report is unavailable');
+        state.currentReport = await response.json();
+        renderProcessingReport(state.currentReport);
+        const modal = document.getElementById('report-modal');
+        reportReturnFocus = document.activeElement;
+        modal.hidden = false;
+        document.body.classList.add('report-open');
+        modal.querySelector('button')?.focus();
+    } catch (error) {
+        showToast('error', error.message);
+    }
+}
+
+function closeProcessingReport() {
+    const modal = document.getElementById('report-modal');
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    document.body.classList.remove('report-open');
+    if (reportReturnFocus instanceof HTMLElement && document.contains(reportReturnFocus)) reportReturnFocus.focus();
+    reportReturnFocus = null;
+}
+
+function handleReportModalKeydown(event) {
+    const modal = document.getElementById('report-modal');
+    if (!modal || modal.hidden) return;
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        closeProcessingReport();
+        return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(modal.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+        .filter(element => element.getClientRects().length > 0);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
+}
+
+function renderProcessingReport(report) {
+    const content = document.getElementById('report-content');
+    if (!content) return;
+    const input = report.input || {};
+    const output = report.output || {};
+    const privacy = report.privacy || {};
+    const pipeline = report.pipeline || [];
+    const warnings = report.warnings || [];
+    const edits = report.speech_edits;
+    const profile = report.options?.output_profile;
+    const overrides = report.options?.output_profile_overrides || {};
+    const compliance = state.deliveryCompliance || report.delivery_compliance;
+    const provenance = report.provenance;
+    const issueList = (output.issues || []).map(issue => `<li>${escapeHtml(issue.label || issue.id || String(issue))}</li>`).join('');
+    const complianceRules = Array.isArray(compliance?.rules) ? compliance.rules.map((rule) => {
+        const ruleStatus = ['pass', 'warn', 'fail'].includes(rule.status) ? rule.status : 'warn';
+        return `<li><span class="report-rule-status is-${ruleStatus}">${escapeHtml(ruleStatus)}</span><strong>${escapeHtml(String(rule.label || rule.id || 'Rule'))}</strong><span>${escapeHtml(formatComplianceRule(rule))}</span></li>`;
+    }).join('') : '';
+    const provenanceItems = provenance ? [
+        ['Source', provenance.source],
+        ['Processed output', provenance.processed_output],
+    ].filter(([, item]) => item).map(([label, item]) => `<li><strong>${escapeHtml(label)} · ${escapeHtml(String(item.name || 'artifact'))}</strong><code>${escapeHtml(String(item.sha256 || 'Hash unavailable'))}</code></li>`).join('') : '';
+    content.innerHTML = `
+        <section class="report-hero">
+            <div><span>AudioEnhancerMAX ${escapeHtml(report.app_version || '')}</span><strong>${escapeHtml(report.file_id || '')}</strong></div>
+            <time>${escapeHtml(new Date(report.created_at).toLocaleString())}</time>
+        </section>
+        <section class="report-score-grid">
+            <div><span>Input score</span><strong>${escapeHtml(String(input.quality_score ?? '-'))}</strong><small>${escapeHtml(input.quality_grade || '')}</small></div>
+            <div><span>Output score</span><strong>${escapeHtml(String(output.quality_score ?? '-'))}</strong><small>${escapeHtml(output.quality_grade || '')}</small></div>
+            <div><span>Processing</span><strong>${escapeHtml(privacy.processing_location || 'local')}</strong><small>${privacy.audio_transmitted ? 'Trusted-LAN transmission used' : 'No audio transmission recorded'}</small></div>
+            <div><span>Elapsed</span><strong>${report.elapsed_seconds == null ? '-' : `${Number(report.elapsed_seconds).toFixed(2)}s`}</strong><small>${pipeline.length} pipeline step(s)</small></div>
+        </section>
+        <section class="report-section">
+            <h3>Pipeline evidence</h3>
+            <div class="report-pipeline">${pipeline.length ? pipeline.map(item => `
+                <article><span>${escapeHtml(item.step)}</span><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.mode)}${item.version ? ` · v${escapeHtml(item.version)}` : ''}</small></article>`).join('') : '<p>No DSP step was applied; this was an export-only render.</p>'}</div>
+        </section>
+        <section class="report-two-column">
+            <div class="report-section"><h3>Privacy boundaries</h3><dl>
+                <dt>Optional external services allowed</dt><dd>${privacy.external_services_allowed ? 'Yes' : 'No'}</dd>
+                <dt>External service used by this job</dt><dd>${privacy.external_service_used_by_this_job ? 'Yes' : 'No'}</dd>
+                <dt>Local Ollama allowed</dt><dd>${privacy.ollama_editorial_allowed ? 'Yes' : 'No'}</dd>
+                <dt>Trusted LAN allowed</dt><dd>${privacy.trusted_lan_processing_allowed ? 'Yes' : 'No'}</dd>
+            </dl></div>
+            <div class="report-section"><h3>Delivery</h3><dl>
+                <dt>Profile</dt><dd>${escapeHtml(profile || 'Custom')}</dd>
+                <dt>Manual overrides</dt><dd>${escapeHtml(Object.keys(overrides).length ? JSON.stringify(overrides) : 'None')}</dd>
+                <dt>Warnings</dt><dd>${warnings.length}</dd>
+                ${edits ? `<dt>Approved speech edits</dt><dd>${edits.approved_count} / ${edits.candidate_count}</dd>` : ''}
+            </dl></div>
+        </section>
+        ${compliance ? `<section class="report-section report-compliance"><h3>Delivery compliance · ${escapeHtml(String(compliance.target_label || compliance.target_id || 'Current target'))}</h3><dl>
+            <dt>Guidance status</dt><dd><span class="report-rule-status is-${['pass', 'warn', 'fail'].includes(compliance.status) ? compliance.status : 'warn'}">${escapeHtml(String(compliance.status || 'unknown'))}</span></dd>
+            <dt>Integrated loudness</dt><dd>${escapeHtml(formatEvidenceNumber(compliance.measurements?.integrated_loudness_lufs))} LUFS</dd>
+            <dt>Estimated true peak</dt><dd>${escapeHtml(formatEvidenceNumber(compliance.measurements?.estimated_true_peak_dbtp))} dBTP</dd>
+            <dt>Clipped samples</dt><dd>${escapeHtml(formatEvidenceNumber(compliance.measurements?.clipped_sample_count, 0))}</dd>
+            <dt>Sample rate</dt><dd>${escapeHtml(formatEvidenceNumber(compliance.measurements?.sample_rate_hz, 0))} Hz</dd>
+        </dl>${complianceRules ? `<ul class="report-compliance-rules">${complianceRules}</ul>` : ''}<p>${escapeHtml(String(compliance.disclaimer || 'Local workflow guidance only; not a certification.'))}</p></section>` : ''}
+        ${provenanceItems ? `<section class="report-section"><h3>Artifact provenance · ${escapeHtml(String(provenance.hash_algorithm || 'SHA-256'))}</h3><ul class="report-provenance-list">${provenanceItems}</ul></section>` : ''}
+        <section class="report-section"><h3>Output findings</h3>${issueList ? `<ul>${issueList}</ul>` : '<p>No signal-derived issue remains above the configured thresholds.</p>'}</section>
+        ${warnings.length ? `<section class="report-section report-warnings"><h3>Warnings &amp; limitations</h3><ul>${warnings.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul></section>` : ''}
+        <p class="report-interpretation">${escapeHtml(report.interpretation || '')}</p>`;
 }
 
 function compareAB() {
-    if (!state.wavesurferOriginal || !state.wavesurferProcessed) {
-        showToast('warning', 'Process audio first to compare');
-        return;
-    }
-
-    state.abMode = !state.abMode;
-
-    if (state.abMode) {
-        // Play both alternating
-        showToast('info', 'A/B Mode: Toggle between Original and Processed waveforms');
-        showWaveform('original');
-    }
+    startBlindABRound();
 }
 
 // ==========================================================
@@ -2162,7 +3182,12 @@ function showToast(type, message) {
     toast.className = `toast ${type}`;
 
     const icons = { success: svgIcon('check', 'icon-img toast-icon-svg'), error: svgIcon('cross', 'icon-img toast-icon-svg'), warning: svgIcon('warning', 'icon-img toast-icon-svg'), info: svgIcon('info', 'icon-img toast-icon-svg') };
-    toast.innerHTML = `<span>${icons[type] || '-'}</span> ${message}`;
+    const icon = document.createElement('span');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = icons[type] || '-';
+    const text = document.createElement('span');
+    text.textContent = String(message || '');
+    toast.append(icon, text);
 
     container.appendChild(toast);
 
@@ -2210,10 +3235,13 @@ async function pollClusterStatus() {
 
 async function refreshCluster() {
     try {
+        const enableRes = await fetch('/api/cluster/enable', { method: 'POST' });
+        if (!enableRes.ok) throw new Error('Discovery could not be enabled');
         const res = await fetch('/api/cluster/health-check', { method: 'POST' });
+        if (!res.ok) throw new Error('Cluster refresh failed');
         const data = await res.json();
         updateClusterUI(data);
-        showToast('info', 'Cluster status refreshed');
+        showToast('info', 'Local-network discovery enabled');
     } catch (e) {
         showToast('error', 'Failed to refresh cluster');
     }
@@ -2221,6 +3249,12 @@ async function refreshCluster() {
 
 function updateClusterUI(data) {
     const { workers, online_workers, total_workers, orchestrator_ip } = data;
+    const enableButton = document.getElementById('cluster-enable-button');
+    if (enableButton) {
+        enableButton.innerHTML = data.enabled
+            ? `${buttonIcon('refresh')}Refresh discovery`
+            : `${buttonIcon('power')}Enable &amp; discover`;
+    }
 
     // Update header badge
     const badge = document.getElementById('cluster-badge');
@@ -2756,6 +3790,76 @@ function initSettingsPanel() {
     }
 }
 
+async function loadRuntimePrivacySettings() {
+    try {
+        const response = await fetch('/api/settings/privacy', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Privacy settings unavailable');
+        state.runtimePrivacy = await response.json();
+        document.getElementById('setting-external-services').checked = state.runtimePrivacy.external_services_allowed;
+        document.getElementById('setting-ollama-editorial').checked = state.runtimePrivacy.ollama_editorial_allowed;
+        document.getElementById('setting-trusted-lan').checked = state.runtimePrivacy.trusted_lan_processing_allowed;
+        applyRuntimePrivacyUi();
+        document.getElementById('privacy-settings-status').textContent = 'Current boundaries loaded from this Mac.';
+    } catch (error) {
+        const status = document.getElementById('privacy-settings-status');
+        if (status) status.textContent = error.message;
+    }
+}
+
+async function saveRuntimePrivacySettings() {
+    const button = document.getElementById('btn-save-privacy');
+    button.disabled = true;
+    try {
+        const response = await fetch('/api/settings/privacy', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                external_services_allowed: document.getElementById('setting-external-services').checked,
+                ollama_editorial_allowed: document.getElementById('setting-ollama-editorial').checked,
+                trusted_lan_processing_allowed: document.getElementById('setting-trusted-lan').checked,
+            }),
+        });
+        if (!response.ok) throw new Error('Could not save privacy boundaries');
+        state.runtimePrivacy = await response.json();
+        applyRuntimePrivacyUi();
+        document.getElementById('privacy-settings-status').textContent = 'Saved locally. New jobs now enforce these boundaries.';
+        showToast('success', 'Privacy boundaries saved');
+    } catch (error) {
+        showToast('error', error.message);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+function applyRuntimePrivacyUi() {
+    if (!state.runtimePrivacy) return;
+    const allowExternal = state.runtimePrivacy.external_services_allowed;
+    const allowOllama = state.runtimePrivacy.ollama_editorial_allowed;
+    const allowLan = state.runtimePrivacy.trusted_lan_processing_allowed;
+    const voiceSelect = document.getElementById('tts-voice');
+    if (voiceSelect) {
+        voiceSelect.querySelectorAll('option').forEach(option => {
+            if (option.value) option.disabled = !allowExternal && !option.value.startsWith('kokoro_');
+        });
+        if (voiceSelect.selectedOptions[0]?.disabled) {
+            const localVoice = [...voiceSelect.options].find(option => option.value.startsWith('kokoro_') && !option.disabled);
+            if (localVoice) voiceSelect.value = localVoice.value;
+        }
+    }
+    const description = document.getElementById('tts-engine-description');
+    if (description && !allowExternal) description.textContent = 'Offline boundary active: only packaged local TTS voices can be used.';
+    const dynamicTuning = document.getElementById('setting-dynamic-tuning');
+    if (dynamicTuning) {
+        dynamicTuning.checked = allowOllama;
+        dynamicTuning.disabled = true;
+    }
+    const offload = document.getElementById('setting-offload-dsp');
+    if (offload) {
+        offload.checked = allowLan;
+        offload.disabled = !allowLan;
+    }
+}
+
 // ==========================================================
 // About Panel
 // ==========================================================
@@ -2790,7 +3894,7 @@ async function initAboutPanel() {
                 ['RAM', (s.ram_used_gb || 0).toFixed(1) + ' / ' + (s.ram_total_gb || 0).toFixed(1) + ' GB'],
                 ['GPU', health.compute || 'N/A'],
                 ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
-                ['Version', health.version || '3.5.2'],
+                ['Version', health.version || '3.7.0'],
                 ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
             ];
             sysEl.innerHTML = items.map(([label, value]) =>
@@ -2914,6 +4018,7 @@ function applyIntentProfile(profile) {
         'presets-panel': document.querySelector('[data-panel="presets-panel"]'),
         'batch-panel': document.querySelector('[data-panel="batch-panel"]'),
         'stt-panel': document.querySelector('[data-panel="stt-panel"]'),
+        'speech-editor-panel': document.querySelector('[data-panel="speech-editor-panel"]'),
         'tts-panel': document.querySelector('[data-panel="tts-panel"]'),
         'diarize-panel': document.querySelector('[data-panel="diarize-panel"]'),
         'smart-panel': document.querySelector('[data-panel="smart-panel"]'),
@@ -2970,7 +4075,7 @@ function applyIntentProfile(profile) {
             const titleEl = section.querySelector('.sidebar-section-title');
             if (titleEl) {
                 const title = titleEl.textContent;
-                if (title === 'AI Tools' || title === 'Audio' || title === 'Infrastructure') {
+                if (title === 'Audio' || title === 'Infrastructure') {
                     section.style.display = 'none';
                 }
             }

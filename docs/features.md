@@ -13,6 +13,15 @@
 - LUFS normalization for podcast and broadcast targets.
 - Frequency restoration and optional Demucs music preservation.
 
+## Reviewable Delivery
+
+- Five fixed delivery profiles for podcast, online video, audiobook, lossless archive, and source-quality master workflows.
+- Delivery Compliance Lab with integrated loudness, 4× oversampled true-peak estimate, clipping, sample-rate, channel, and duration evidence.
+- Transparent rule-level guidance for podcast, video, audiobook, EBU R128 broadcast, source-master, and archive targets; results are not certification.
+- Randomized blind A/B listening that reveals original/processed mapping only after the user’s choice.
+- Processing Report schema 2 with app build, SHA-256 source/output provenance, pipeline, privacy, and compliance evidence.
+- Project Capsule ZIP with a verification manifest, processed output, and available report, compliance, transcript, EDL, and listening-review artifacts. Original audio is excluded by default.
+
 ## AI Workflow
 
 - Smart Mode classifies the content type and suggests processing options.

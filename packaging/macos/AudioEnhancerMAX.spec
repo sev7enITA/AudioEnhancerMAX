@@ -3,26 +3,57 @@
 import os
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 ROOT = Path(SPEC).resolve().parents[2]
-VERSION = "3.5.2"
+VERSION = os.getenv("AEMAX_MARKETING_VERSION", "3.7.0")
+BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", "3.7.2")
 DISTRIBUTION = os.getenv("AEMAX_DISTRIBUTION", "direct")
 ICON = ROOT / "packaging" / "macos" / "AudioEnhancerMAX.icns"
+WHISPER_MODEL_DIR = Path(os.getenv("AEMAX_WHISPER_MODEL_DIR", ""))
+LICENSE_DIR = Path(os.getenv("AEMAX_LICENSE_DIR", ""))
+
+datas = [
+    (str(ROOT / "frontend"), "frontend"),
+    (str(ROOT / "presets"), "presets"),
+    (str(ROOT / "packaging" / "macos" / "PrivacyInfo.xcprivacy"), "."),
+    (str(ROOT / "packaging" / "macos" / "THIRD_PARTY_NOTICES.md"), "."),
+]
+datas.extend(collect_data_files("faster_whisper", includes=["assets/*.onnx"]))
+
+if DISTRIBUTION == "app-store":
+    required_model_files = {"config.json", "model.bin", "tokenizer.json", "vocabulary.txt"}
+    if not WHISPER_MODEL_DIR.is_dir():
+        raise SystemExit(f"Bundled Whisper model directory not found: {WHISPER_MODEL_DIR}")
+    missing_model_files = sorted(name for name in required_model_files if not (WHISPER_MODEL_DIR / name).is_file())
+    if missing_model_files:
+        raise SystemExit("Incomplete bundled Whisper model: " + ", ".join(missing_model_files))
+    datas.append((str(WHISPER_MODEL_DIR), "models/faster-whisper-medium"))
+
+    required_licenses = {
+        "PyAV-LICENSE.txt",
+        "COPYING.LGPLv3",
+        "Faster-Whisper-LICENSE.txt",
+        "Whisper-Medium-LICENSE.txt",
+    }
+    if not LICENSE_DIR.is_dir():
+        raise SystemExit(f"License staging directory not found: {LICENSE_DIR}")
+    missing_licenses = sorted(name for name in required_licenses if not (LICENSE_DIR / name).is_file())
+    if missing_licenses:
+        raise SystemExit("Incomplete license staging directory: " + ", ".join(missing_licenses))
+    datas.append((str(LICENSE_DIR), "licenses"))
 
 hiddenimports = []
-for package in ("uvicorn", "backports", "app"):
+for package in ("uvicorn", "backports", "app", "desktop"):
     hiddenimports.extend(collect_submodules(package))
+hiddenimports.extend(["AppKit", "Cocoa", "Foundation", "WebKit", "objc"])
 
 a = Analysis(
     [str(ROOT / "desktop" / "launcher.py")],
     pathex=[str(ROOT)],
     binaries=[],
-    datas=[
-        (str(ROOT / "frontend"), "frontend"),
-        (str(ROOT / "presets"), "presets"),
-    ],
+    datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
@@ -68,11 +99,15 @@ app = BUNDLE(
         "CFBundleDisplayName": "AudioEnhancerMAX",
         "CFBundleName": "AudioEnhancerMAX",
         "CFBundleShortVersionString": VERSION,
-        "CFBundleVersion": VERSION,
+        "CFBundleVersion": BUILD_NUMBER,
         "LSApplicationCategoryType": "public.app-category.music",
         "LSMinimumSystemVersion": "13.0",
         "NSHighResolutionCapable": True,
         "NSLocalNetworkUsageDescription": "AudioEnhancerMAX uses the local network only when connecting to trusted edge workers selected by the user.",
+        "NSHumanReadableCopyright": "Copyright (c) 2026 Fabrizio Degni",
+        "ITSAppUsesNonExemptEncryption": False,
+        "LSMultipleInstancesProhibited": True,
+        "NSQuitAlwaysKeepsWindows": False,
         "AEMAXDistribution": DISTRIBUTION,
     },
 )

@@ -19,12 +19,16 @@ def _init_whisper():
     if _whisper_model is None:
         try:
             from faster_whisper import WhisperModel
+            from app.config import whisper_model_source
+
+            model_source, local_only = whisper_model_source("medium")
             _whisper_model = WhisperModel(
-                "large-v3",
-                device="auto",
-                compute_type="auto"
+                model_source,
+                device="cpu",
+                compute_type="int8",
+                local_files_only=local_only,
             )
-            logger.info("Whisper model loaded for speech cleanup")
+            logger.info("Whisper model loaded for speech cleanup (local_only=%s)", local_only)
         except ImportError:
             logger.warning("faster-whisper not installed. Trying regular whisper.")
             try:
@@ -261,6 +265,36 @@ def remove_breaths(
 
 # ── Mouth Sound / Click Removal ──────────────────────────────────
 
+def detect_mouth_sounds(
+    audio: np.ndarray,
+    sr: int,
+    sensitivity: float = 0.5,
+) -> List[Tuple[int, int]]:
+    """Return candidate short high-frequency transients as sample ranges."""
+    import librosa
+
+    frame_length = max(32, int(sr * 0.005))
+    hop_length = max(16, int(sr * 0.002))
+    spectrum = np.abs(librosa.stft(audio, n_fft=frame_length, hop_length=hop_length))
+    spectral_flux = np.sum(np.diff(spectrum, axis=1) ** 2, axis=0)
+    if not len(spectral_flux):
+        return []
+    flux_threshold = np.mean(spectral_flux) + np.std(spectral_flux) * (4 - sensitivity * 2)
+    click_frames = np.flatnonzero(spectral_flux > flux_threshold)
+    repair_samples = max(1, int(sr * 0.003))
+
+    segments: List[Tuple[int, int]] = []
+    for frame_index in click_frames:
+        center = int(frame_index * hop_length)
+        start = max(0, center - repair_samples)
+        end = min(len(audio), center + repair_samples)
+        if segments and start <= segments[-1][1] + repair_samples:
+            segments[-1] = (segments[-1][0], max(segments[-1][1], end))
+        else:
+            segments.append((start, end))
+    return segments
+
+
 def remove_mouth_sounds(
     audio: np.ndarray,
     sr: int,
@@ -270,39 +304,18 @@ def remove_mouth_sounds(
     Remove mouth clicks and lip smacking sounds.
     Uses spectral analysis to detect short, high-frequency transients.
     """
-    import librosa
-
-    frame_length = int(sr * 0.005)  # 5ms frames for click detection
-    hop_length = int(sr * 0.002)  # 2ms hop
-
-    # Compute spectral flux (change in spectrum between frames)
-    S = np.abs(librosa.stft(audio, n_fft=frame_length, hop_length=hop_length))
-    spectral_flux = np.sum(np.diff(S, axis=1) ** 2, axis=0)
-
-    # v2.0: Raised base threshold from 3 to 4 to reduce false positives.
-    # Too many false positives = "patchy" audio with interpolation artifacts.
-    flux_threshold = np.mean(spectral_flux) + np.std(spectral_flux) * (4 - sensitivity * 2)
-
-    click_frames = spectral_flux > flux_threshold
-
     result = audio.copy()
     repair_samples = int(sr * 0.003)  # 3ms repair window
 
-    for i, is_click in enumerate(click_frames):
-        if is_click:
-            center = i * hop_length
-            start = max(0, center - repair_samples)
-            end = min(len(result), center + repair_samples)
-
-            # v2.0: Use local average interpolation (smoother than linear)
-            # Linear interpolation between endpoints can create audible discontinuities
-            if start > repair_samples and end < len(result) - repair_samples:
-                # Use surrounding audio average for smoother repair
-                before_avg = np.mean(result[max(0, start - repair_samples):start])
-                after_avg = np.mean(result[end:min(len(result), end + repair_samples)])
-                result[start:end] = np.linspace(before_avg, after_avg, end - start)
-            elif start > 0 and end < len(result):
-                result[start:end] = np.linspace(result[start], result[end - 1], end - start)
+    for start, end in detect_mouth_sounds(audio, sr, sensitivity):
+        # v2.0: Use local average interpolation (smoother than linear)
+        # Linear interpolation between endpoints can create audible discontinuities
+        if start > repair_samples and end < len(result) - repair_samples:
+            before_avg = np.mean(result[max(0, start - repair_samples):start])
+            after_avg = np.mean(result[end:min(len(result), end + repair_samples)])
+            result[start:end] = np.linspace(before_avg, after_avg, end - start)
+        elif start > 0 and end < len(result):
+            result[start:end] = np.linspace(result[start], result[end - 1], end - start)
 
     return result
 

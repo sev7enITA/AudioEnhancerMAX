@@ -2708,7 +2708,7 @@ async function initAboutPanel() {
                 ['RAM', (s.ram_used_gb || 0).toFixed(1) + ' / ' + (s.ram_total_gb || 0).toFixed(1) + ' GB'],
                 ['GPU', health.compute || 'N/A'],
                 ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
-                ['Version', health.version || '3.5.1'],
+                ['Version', health.version || '3.7.0'],
                 ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
             ];
             sysEl.innerHTML = items.map(([label, value]) =>

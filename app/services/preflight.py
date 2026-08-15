@@ -15,12 +15,15 @@ from pathlib import Path
 from typing import Any
 
 from app.config import (
+    APP_STORE_MODE,
+    BUNDLED_WHISPER_MODEL_DIR,
     DATA_DIR,
     OUTPUT_DIR,
     PREFLIGHT_STATE_FILE,
     PRESETS_DIR,
     RESOURCE_DIR,
     UPLOAD_DIR,
+    bundled_whisper_model_available,
 )
 
 
@@ -30,6 +33,7 @@ RECOMMENDED_MEMORY_GB = 16
 MIN_FREE_DISK_GB = 2
 RECOMMENDED_FREE_DISK_GB = 5
 CORE_MODULES = (
+    "av",
     "fastapi",
     "faster_whisper",
     "librosa",
@@ -249,6 +253,14 @@ def _core_runtime_check() -> dict[str, Any]:
 
 
 def _optional_engines_check() -> dict[str, Any]:
+    if APP_STORE_MODE:
+        return _check(
+            "optional_engines",
+            "Store feature set",
+            "pass",
+            False,
+            "Only packaged engines and explicitly disclosed network integrations are exposed.",
+        )
     missing = [label for module, label in OPTIONAL_ENGINES.items() if importlib.util.find_spec(module) is None]
     if missing:
         return _check(
@@ -269,44 +281,46 @@ def _optional_engines_check() -> dict[str, Any]:
 
 
 def _media_tools_check() -> dict[str, Any]:
-    bundled_ffmpeg = RESOURCE_DIR / "bin" / "ffmpeg"
-    bundled_ffprobe = RESOURCE_DIR / "bin" / "ffprobe"
-    if bundled_ffmpeg.is_file() and bundled_ffprobe.is_file():
-        return _check(
-            "media_tools",
-            "Bundled media codecs",
-            "pass",
-            True,
-            "FFmpeg and FFprobe are included in the application bundle.",
-        )
+    try:
+        import av
 
-    system_ffmpeg = shutil.which("ffmpeg")
-    system_ffprobe = shutil.which("ffprobe")
-    app_store_mode = os.getenv("AEMAX_APP_STORE") == "1"
-    if app_store_mode:
+        av.codec.Codec("libmp3lame", "w")
+        av.codec.Codec("aac", "r")
+    except Exception as exc:
         return _check(
             "media_tools",
-            "Bundled media codecs",
+            "Packaged media codecs",
             "blocked",
             True,
-            "The App Store package does not contain FFmpeg and FFprobe.",
-            "Install a complete AudioEnhancerMAX build. External package managers are not used.",
-        )
-    if system_ffmpeg and system_ffprobe:
-        return _check(
-            "media_tools",
-            "Media codecs",
-            "pass",
-            True,
-            "FFmpeg and FFprobe are available on this development system.",
+            f"The packaged PyAV media backend is unavailable: {exc}",
+            "Reinstall AudioEnhancerMAX. No external codec installation is supported.",
         )
     return _check(
         "media_tools",
-        "Media codecs",
-        "warning",
-        False,
-        "FFmpeg or FFprobe is unavailable. WAV processing remains available, but compressed media support is limited.",
-        "Use a self-contained distribution that includes the licensed media tools.",
+        "Packaged media codecs",
+        "pass",
+        True,
+        f"PyAV {av.__version__} and its embedded FFmpeg libraries are available; no external executable is used.",
+    )
+
+
+def _speech_model_check() -> dict[str, Any]:
+    if bundled_whisper_model_available():
+        return _check(
+            "speech_model",
+            "Bundled transcription model",
+            "pass",
+            True,
+            f"Faster-Whisper Medium is available at {BUNDLED_WHISPER_MODEL_DIR.name}.",
+        )
+    status = "blocked" if APP_STORE_MODE else "warning"
+    return _check(
+        "speech_model",
+        "Bundled transcription model",
+        status,
+        APP_STORE_MODE,
+        "The local Faster-Whisper model is not bundled.",
+        "Store builds must include the model and never download it at runtime.",
     )
 
 
@@ -359,6 +373,14 @@ def _ollama_check() -> dict[str, Any]:
             "Smart Mode uses deterministic local heuristics when no model is available.",
         )
     except (OSError, ValueError, urllib.error.URLError):
+        if APP_STORE_MODE:
+            return _check(
+                "local_ai",
+                "Optional local AI",
+                "pass",
+                False,
+                "No local Ollama service is configured; deterministic local fallbacks remain active.",
+            )
         return _check(
             "local_ai",
             "Optional local AI",
@@ -386,6 +408,7 @@ def run_preflight(app_version: str) -> dict[str, Any]:
         _core_runtime_check(),
         _optional_engines_check(),
         _media_tools_check(),
+        _speech_model_check(),
         _mps_check(),
         _ollama_check(),
     ]

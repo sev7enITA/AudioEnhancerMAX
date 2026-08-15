@@ -1,6 +1,6 @@
 # AudioEnhancerMAX for macOS
 
-AudioEnhancerMAX v3.5.2 introduces an Apple Silicon desktop package. Opening the app starts a loopback-only FastAPI server and opens the local interface in the default browser. Closing the app stops the server.
+AudioEnhancerMAX v3.7.0 provides an Apple Silicon desktop package. Current App Store candidate builds start a loopback-only FastAPI service and render the local interface in an app-owned AppKit/WKWebView window. They do not open the default browser. Closing the main window or quitting the app stops the service.
 
 ## First-launch readiness
 
@@ -28,7 +28,7 @@ The `.app` includes the Python runtime, backend, browser frontend, and installed
 
 Compressed formats that rely on FFmpeg require FFmpeg to be installed separately. WAV and formats handled directly by libsndfile do not require FFmpeg.
 
-The GitHub v3.5.2 DMG retains these documented external boundaries. It must not be represented as the Mac App Store package. The App Store build will set `AEMAX_APP_STORE=1`; in that mode the readiness check requires FFmpeg and FFprobe inside the signed app bundle and rejects fallback to Homebrew or another system installation.
+Direct-download DMGs retain these documented external boundaries and must not be represented as the Mac App Store package. The App Store build sets `AEMAX_APP_STORE=1`; in that mode the readiness check requires FFmpeg and FFprobe inside the signed app bundle and rejects fallback to Homebrew or another system installation.
 
 Model assets require the same treatment before App Store submission: a feature may use a bundled model or an explicitly disclosed resource download, but it must not silently obtain executable code. Ollama integration remains optional and cannot be a prerequisite for the core audio workflow.
 
@@ -41,7 +41,7 @@ Model assets require the same treatment before App Store submission: a feature m
 The build produces a DMG containing the signed application and keeps the unpackaged `.app` as an intermediate build artifact:
 
 - `dist/macos/AudioEnhancerMAX.app`
-- `dist/macos/AudioEnhancerMAX-v3.5.2-macOS-arm64.dmg`
+- `dist/macos/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg`
 - a SHA-256 checksum alongside the DMG
 
 The local script applies ad-hoc signing so the bundle can be verified after packaging. Public distribution should use a Developer ID Application certificate and Apple notarization. Ad-hoc signing is not equivalent to notarization, and macOS Gatekeeper may still warn on first launch.

@@ -113,6 +113,16 @@ def apply_auto_eq(
     try:
         import pedalboard as pb
 
+        # Pedalboard filters expect their cutoff below Nyquist.  Voice notes
+        # and reviewer samples are often 16 kHz, so fixed 8/16 kHz filters can
+        # otherwise collapse the signal instead of shaping it.  Keep a small
+        # transition band and derive every high-frequency cutoff from the
+        # actual source rate.
+        max_cutoff = max(100.0, float(sr) * 0.45)
+
+        def safe_cutoff(requested_hz: float) -> float:
+            return min(float(requested_hz), max_cutoff)
+
         if target_profile == "broadcast":
             # v2.0 Broadcast/podcast EQ profile - warmer, less harsh
             # Key change: reduced 2.5kHz peak from +2.5dB to +1.5dB
@@ -122,23 +132,23 @@ def apply_auto_eq(
                 pb.LowShelfFilter(cutoff_frequency_hz=150.0, gain_db=1.0),
                 pb.LowShelfFilter(cutoff_frequency_hz=250.0, gain_db=-1.5),
                 pb.PeakFilter(cutoff_frequency_hz=2500.0, gain_db=1.5, q=1.0),
-                pb.PeakFilter(cutoff_frequency_hz=5000.0, gain_db=1.0, q=0.7),
-                pb.HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=0.5),
-                pb.LowpassFilter(cutoff_frequency_hz=16000.0),
+                pb.PeakFilter(cutoff_frequency_hz=safe_cutoff(5000.0), gain_db=1.0, q=0.7),
+                pb.HighShelfFilter(cutoff_frequency_hz=safe_cutoff(8000.0), gain_db=0.5),
+                pb.LowpassFilter(cutoff_frequency_hz=safe_cutoff(16000.0)),
             ])
         elif target_profile == "warm":
             board = pb.Pedalboard([
                 pb.HighpassFilter(cutoff_frequency_hz=60.0),
                 pb.LowShelfFilter(cutoff_frequency_hz=250.0, gain_db=2.0),
                 pb.PeakFilter(cutoff_frequency_hz=1000.0, gain_db=-1.0, q=0.5),
-                pb.HighShelfFilter(cutoff_frequency_hz=6000.0, gain_db=-1.0),
+                pb.HighShelfFilter(cutoff_frequency_hz=safe_cutoff(6000.0), gain_db=-1.0),
             ])
         elif target_profile == "bright":
             board = pb.Pedalboard([
                 pb.HighpassFilter(cutoff_frequency_hz=100.0),
                 pb.PeakFilter(cutoff_frequency_hz=3000.0, gain_db=3.0, q=1.0),
-                pb.PeakFilter(cutoff_frequency_hz=8000.0, gain_db=2.0, q=0.7),
-                pb.HighShelfFilter(cutoff_frequency_hz=10000.0, gain_db=2.0),
+                pb.PeakFilter(cutoff_frequency_hz=safe_cutoff(8000.0), gain_db=2.0, q=0.7),
+                pb.HighShelfFilter(cutoff_frequency_hz=safe_cutoff(10000.0), gain_db=2.0),
             ])
         else:
             return audio

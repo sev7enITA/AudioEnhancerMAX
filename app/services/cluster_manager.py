@@ -121,6 +121,10 @@ class ClusterManager:
         self._announce_thread.start()
         logger.info("Cluster manager started - listener UDP:%d, announcer UDP:%d", DISCOVERY_PORT, SERVER_ANNOUNCE_PORT)
 
+    @property
+    def enabled(self) -> bool:
+        return self._running
+
     def stop(self):
         self._running = False
 
@@ -302,9 +306,10 @@ class ClusterManager:
         online = sum(1 for w in self._workers.values() if w.status in ("online", "busy"))
 
         # Get local machine IP for worker setup
-        local_ip = self._get_local_ip()
+        local_ip = self._get_local_ip() if self._running else "disabled"
 
         return {
+            "enabled": self._running,
             "total_workers": len(self._workers),
             "online_workers": online,
             "workers": workers,

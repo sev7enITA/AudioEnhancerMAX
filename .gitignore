@@ -38,6 +38,7 @@ app/preflight_state.json
 ## Desktop packaging artifacts
 build/
 dist/
+output/
 packaging/macos/*.icns
 
 ## OS

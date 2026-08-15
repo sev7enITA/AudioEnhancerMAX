@@ -21,6 +21,8 @@ import tempfile
 import logging
 import soundfile as sf
 
+from app.config import APP_STORE_MODE
+
 logger = logging.getLogger(__name__)
 
 # ══════════════════════════════════════════════════════════
@@ -113,6 +115,8 @@ PRESET_VOICES = [
 
 def get_available_voices() -> List[dict]:
     """Get list of available voices."""
+    if APP_STORE_MODE:
+        return [voice for voice in PRESET_VOICES if voice["engine"] == "edge"]
     return PRESET_VOICES
 
 
@@ -375,6 +379,9 @@ def synthesize_speech(
 
     # ── Step 2: Determine engine ──
     is_kokoro = voice_id.startswith("kokoro_") or engine == "kokoro"
+
+    if APP_STORE_MODE and is_kokoro:
+        raise RuntimeError("Kokoro is not included in the Mac App Store build.")
 
     if is_kokoro:
         # Kokoro local engine

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioEnhancerMAX Accessibility Statement</title>
+    <meta name="description" content="AudioEnhancerMAX accessibility statement with current design foundations, known limitations, testing commitments, and a public feedback channel.">
+    <meta property="og:title" content="AudioEnhancerMAX Accessibility Statement">
+    <meta property="og:description" content="Current accessibility status, limitations and improvement process for AudioEnhancerMAX.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/accessibility.html">
+    <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+    <link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/public-info.css">
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to accessibility content</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">
+                <img src="img/icons/aem-mark.svg" alt="">
+                <span>AudioEnhancerMAX</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="roadmap.html">Roadmap</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="accessibility.html" aria-current="page">Accessibility</a></li>
+                <li><a href="support.html">Support</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <span class="eyebrow">Accessibility statement</span>
+        <h1>Progress without inflated claims</h1>
+        <p class="hero-copy">AudioEnhancerMAX aims to support different ways of seeing, hearing and operating the interface. This page records current foundations, known gaps and the evidence required before declaring conformance.</p>
+        <div class="hero-meta">
+            <span><span class="meta-label">Updated</span> <strong>July 16, 2026</strong></span>
+            <span><span class="meta-label">Status</span> <strong>Evaluation in progress</strong></span>
+            <span><span class="meta-label">Conformance claim</span> <strong>None yet</strong></span>
+        </div>
+    </header>
+
+    <main id="main-content" class="page-grid">
+        <aside class="toc" aria-label="Page contents">
+            <p class="toc-title">On this page</p>
+            <ol>
+                <li><a href="#commitment">Commitment</a></li>
+                <li><a href="#foundations">Current foundations</a></li>
+                <li><a href="#limitations">Known limitations</a></li>
+                <li><a href="#testing">Testing plan</a></li>
+                <li><a href="#feedback">Report a barrier</a></li>
+            </ol>
+        </aside>
+
+        <div>
+            <section id="commitment" class="content-section">
+                <span class="section-index">01 / Commitment</span>
+                <h2>Accessibility is a product requirement</h2>
+                <p>The project treats accessibility as part of functional quality, not as a marketing badge. Interface changes should preserve keyboard operation, readable text, programmatic labels, visible focus and alternatives to color-only status.</p>
+                <div class="notice">
+                    <strong>No formal conformance claim is made today.</strong>
+                    <p>The application has not yet completed the manual assistive-technology and end-to-end workflow testing needed to claim WCAG conformance or specific App Store accessibility support categories.</p>
+                </div>
+            </section>
+
+            <section id="foundations" class="content-section">
+                <span class="section-index">02 / Foundations</span>
+                <h2>What is already designed into the public pages</h2>
+                <div class="status-list">
+                    <div class="status-item">
+                        <img src="img/icons/controls.svg" alt="">
+                        <strong>Keyboard focus</strong>
+                        <span>Interactive links expose a visible focus indicator and the information pages provide a skip link.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/explainability.svg" alt="">
+                        <strong>Semantic structure</strong>
+                        <span>Headings, landmarks, navigation labels, lists and tables are represented in document structure.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/info.svg" alt="">
+                        <strong>Status in text</strong>
+                        <span>Important state and governance information is expressed with words rather than color or icon alone.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/monitor.svg" alt="">
+                        <strong>Responsive layout</strong>
+                        <span>Pages reflow for narrow screens and avoid viewport-based font scaling for interface labels.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/activity-live.svg" alt="">
+                        <strong>Reduced motion</strong>
+                        <span>Information pages disable smooth scrolling when the operating system requests reduced motion.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/file-report.svg" alt="">
+                        <strong>Printable information</strong>
+                        <span>Support, privacy and accessibility pages include a simplified print presentation.</span>
+                    </div>
+                </div>
+                <p>These foundations do not establish accessibility of every application workflow. The processing workspace has a wider interaction surface and must be assessed separately.</p>
+            </section>
+
+            <section id="limitations" class="content-section">
+                <span class="section-index">03 / Limitations</span>
+                <h2>Areas that still require evidence</h2>
+                <ul>
+                    <li>Complete VoiceOver navigation through file import, waveform controls, processing settings, progress reporting and export.</li>
+                    <li>Keyboard-only operation of all custom controls, tabs, dialogs and dynamic status regions.</li>
+                    <li>Accessible alternatives for waveform and monitoring visualizations.</li>
+                    <li>Contrast validation across every state, including disabled controls, errors and chart labels.</li>
+                    <li>Behavior at larger macOS text sizes and with display zoom.</li>
+                    <li>Captions or equivalent text for any future product preview video.</li>
+                </ul>
+                <p>The App Store accessibility questionnaire should remain conservative until these workflows have been tested in the exact submitted build.</p>
+            </section>
+
+            <section id="testing" class="content-section">
+                <span class="section-index">04 / Verification</span>
+                <h2>How claims will be earned</h2>
+                <p>The release process should combine automated markup checks with manual keyboard navigation, VoiceOver review, zoom and contrast inspection, reduced-motion testing and task-based testing with users where feasible.</p>
+                <p>Findings should be recorded against a specific app version and workflow. A capability will be declared in App Store Connect only when it works throughout the relevant user journey, not because one screen contains a compatible control.</p>
+            </section>
+
+            <section id="feedback" class="content-section">
+                <span class="section-index">05 / Feedback</span>
+                <h2>Report an accessibility barrier</h2>
+                <p>Describe the task, app version, macOS version, assistive technology and the result you expected. Do not include private recordings or personal data in the public issue.</p>
+                <div class="btn-row">
+                    <a class="btn primary" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new?title=Accessibility%3A%20&amp;body=App%20version%3A%0AmacOS%20version%3A%0AAssistive%20technology%3A%0ATask%20I%20was%20trying%20to%20complete%3A%0AObserved%20barrier%3A%0AExpected%20behavior%3A" target="_blank" rel="noopener noreferrer">Report an accessibility barrier</a>
+                    <a class="btn" href="support.html">Open support</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div>AudioEnhancerMAX Accessibility Statement | Updated July 16, 2026</div>
+            <ul class="footer-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="support.html">Support</a></li>
+                <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+</html>

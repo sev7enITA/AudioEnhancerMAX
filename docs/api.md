@@ -22,7 +22,7 @@ The backend is defined in `app/main.py` and serves the browser UI plus JSON, fil
 | GET | `/api/download/{file_id}` | Download WAV, MP3, or FLAC output |
 | WS | `/ws/progress/{file_id}` | Live processing progress |
 
-`file_id` must be a safe storage token. Download `format` is limited to `wav`, `mp3`, or `flac`. Download `version` is limited to `original`, `processed`, `watermarked`, or `tts`.
+`file_id` must be a safe storage token. Download `format` is limited to `wav`, `mp3`, or `flac`. Download `version` is limited to `original`, `processed`, `speech_edit`, `watermarked`, or `tts`.
 
 ## Transcription and Diarization
 
@@ -32,6 +32,34 @@ The backend is defined in `app/main.py` and serves the browser UI plus JSON, fil
 | POST | `/api/transcribe/stream` | SSE streaming transcription |
 | GET | `/api/transcribe/resume/{file_id}` | Check partial transcript state |
 | POST | `/api/diarize` | Speaker diarization with pyannote or fallback |
+
+## Precision Speech Editor
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/api/speech-editor/analyze` | Generate a non-destructive EDL from local word timestamps and acoustic candidates |
+| GET | `/api/speech-editor/{file_id}` | Retrieve the persisted EDL |
+| PATCH | `/api/speech-editor/{file_id}` | Save Keep/Apply decisions with revision checking |
+| GET | `/api/speech-editor/{file_id}/preview/{candidate_id}` | Preview original or proposed candidate audio |
+| POST | `/api/speech-editor/{file_id}/render` | Render approved `cut` and `mute` edits to a new output |
+| POST | `/api/speech-editor/{file_id}/manual-edit` | Create a reviewable cut/mute proposal from a transcript range |
+| POST | `/api/speech-editor/{file_id}/undo` | Undo the current persisted EDL state with revision checking |
+| POST | `/api/speech-editor/{file_id}/redo` | Restore the next persisted EDL state with revision checking |
+| GET | `/api/speech-editor/{file_id}/export?format=json\|csv` | Export the complete decision list |
+| GET | `/api/output-profiles` | List fixed delivery profiles and parameters |
+| GET/PATCH | `/api/settings/privacy` | Read or persist external-service, Ollama, and trusted-LAN boundaries |
+| GET | `/api/reports/{file_id}` | Retrieve processing and reviewed-EDL evidence |
+
+## Delivery Review and Portable Evidence
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/compliance-targets` | List transparent local delivery-check targets and thresholds |
+| GET | `/api/compliance/{file_id}?target_id=podcast` | Measure the processed artifact and return rule-level delivery guidance |
+| POST | `/api/reviews/{file_id}/blind-ab` | Persist the revealed result of a subjective blind A/B listening round |
+| POST | `/api/projects/{file_id}/export` | Download a checksum-backed Project Capsule ZIP |
+
+Project Capsule JSON accepts `include_source` (default `false`) and `target_id`. The ZIP includes `manifest.json`, the processed output, and any available report, compliance result, transcript, speech EDL, or blind A/B review. Original audio is included only after explicit opt-in. Delivery checks are local workflow guidance, not third-party or regulatory certification.
 
 ## TTS
 

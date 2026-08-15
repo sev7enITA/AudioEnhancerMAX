@@ -1,2 +1,4 @@
 pyinstaller==6.16.0
 backports.tarfile==1.2.0
+pyobjc-framework-Cocoa==12.2.1
+pyobjc-framework-WebKit==12.2.1

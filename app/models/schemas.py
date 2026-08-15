@@ -2,7 +2,7 @@
 AudioEnhancerMAX by Fd - Pydantic Schemas
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from enum import Enum
 
 
@@ -13,6 +13,12 @@ class ContentType(str, Enum):
     MUSIC = "music"
     OUTDOOR = "outdoor_recording"
     CUSTOM = "custom"
+
+
+class SmartProfile(str, Enum):
+    CONSERVATIVE = "conservative"
+    BALANCED = "balanced"
+    MAXIMUM = "maximum"
 
 
 class OutputFormat(str, Enum):
@@ -79,6 +85,8 @@ class ProcessingOptions(BaseModel):
 
     # Output
     output_format: OutputFormat = OutputFormat.WAV
+    output_profile: Optional[str] = Field(default=None, max_length=64)
+    output_profile_overrides: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ProcessingRequest(BaseModel):
@@ -108,6 +116,59 @@ class TranscriptionResponse(BaseModel):
     language: str
     segments: List[TranscriptionSegment]
     duration: float
+
+
+class SpeechEditorAnalyzeRequest(BaseModel):
+    file_id: str
+    language: Optional[str] = None
+    custom_filler_words: Optional[List[str]] = None
+
+
+class SpeechEditDecision(BaseModel):
+    candidate_id: str = Field(min_length=1, max_length=64)
+    decision: Literal["keep", "apply"]
+
+
+class SpeechEditorUpdateRequest(BaseModel):
+    revision: int = Field(ge=1)
+    decisions: List[SpeechEditDecision]
+
+
+class SpeechEditorRenderRequest(BaseModel):
+    revision: int = Field(ge=1)
+    output_format: OutputFormat = OutputFormat.WAV
+
+
+class SpeechEditorManualEditRequest(BaseModel):
+    revision: int = Field(ge=1)
+    start: float = Field(ge=0.0)
+    end: float = Field(gt=0.0)
+    action: Literal["cut", "mute"]
+    decision: Literal["keep", "apply"] = "keep"
+    text: str = Field(default="", max_length=500)
+    word_start: Optional[int] = Field(default=None, ge=0)
+    word_end: Optional[int] = Field(default=None, ge=0)
+
+
+class RevisionRequest(BaseModel):
+    revision: int = Field(ge=1)
+
+
+class RuntimePrivacySettingsRequest(BaseModel):
+    external_services_allowed: bool
+    ollama_editorial_allowed: bool
+    trusted_lan_processing_allowed: bool
+
+
+class ProjectCapsuleRequest(BaseModel):
+    include_source: bool = False
+    target_id: str = Field(default="podcast", min_length=1, max_length=64)
+
+
+class BlindABReviewRequest(BaseModel):
+    selected_version: Literal["original", "processed", "no_difference"]
+    blind_slot: Literal["A", "B", "tie"]
+    target_id: str = Field(default="podcast", min_length=1, max_length=64)
 
 
 # ── Text-to-Speech ──────────────────────────────────

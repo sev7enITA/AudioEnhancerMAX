@@ -6,6 +6,7 @@ Optimized for Apple Silicon M3 MAX.
 import os
 import asyncio
 import logging
+import mimetypes
 import re
 import uuid
 from pathlib import Path
@@ -14,18 +15,22 @@ from typing import Optional, List
 import numpy as np
 from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, Query, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.config import (
-    UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
-    ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB, ROADMAP_VOTES_FILE
+    APP_STORE_MODE, UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
+    ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB, ROADMAP_VOTES_FILE,
+    bundled_whisper_model_available,
 )
 from app.models.schemas import (
     ProcessingOptions, ProcessingRequest,
     TranscriptionRequest, TranscriptFormat,
-    TTSRequest, TTSRewriteRequest, FileInfo, ContentType
+    TTSRequest, TTSRewriteRequest, FileInfo, ContentType, SmartProfile,
+    SpeechEditorAnalyzeRequest, SpeechEditorUpdateRequest, SpeechEditorRenderRequest,
+    SpeechEditorManualEditRequest, RevisionRequest, RuntimePrivacySettingsRequest,
+    ProjectCapsuleRequest, BlindABReviewRequest,
 )
 from app.utils.audio_io import (
     generate_file_id, get_upload_path, get_output_path,
@@ -38,11 +43,44 @@ from app.utils.progress import progress_tracker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "3.5.2"
+APP_VERSION = "3.7.0"
+APP_BUILD = os.getenv("AEMAX_BUILD_NUMBER", "3.7.2")
 SAFE_FILE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 STREAMABLE_AUDIO_VERSIONS = {"original", "processed"}
-DOWNLOAD_AUDIO_VERSIONS = {"original", "processed", "watermarked", "tts"}
+DOWNLOAD_AUDIO_VERSIONS = {"original", "processed", "speech_edit", "watermarked", "tts"}
 DOWNLOAD_AUDIO_FORMATS = {"wav", "mp3", "flac"}
+AUDIO_MEDIA_TYPES = {
+    ".wav": "audio/wav",
+    ".mp3": "audio/mpeg",
+    ".mp4": "audio/mp4",
+    ".flac": "audio/flac",
+    ".ogg": "audio/ogg",
+    ".m4a": "audio/mp4",
+}
+
+# Python's default MIME initialization reads system files such as
+# /etc/apache2/mime.types, which are intentionally inaccessible inside the
+# Mac App Store sandbox. Clear the platform file list and initialize from
+# Python's built-in table before StaticFiles or FileResponse can trigger that
+# lookup. (On Python 3.11, ``init(files=[])`` still prepends ``knownfiles``.)
+mimetypes.knownfiles.clear()
+mimetypes.init()
+for extension, media_type in {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "application/javascript",
+    ".json": "application/json",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".ico": "image/x-icon",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    **AUDIO_MEDIA_TYPES,
+}.items():
+    mimetypes.add_type(media_type, extension)
 
 
 def _cors_origins_from_env() -> list[str]:
@@ -76,7 +114,7 @@ def _require_choice(value: str, allowed: set[str], label: str) -> str:
 CORS_ORIGINS = _cors_origins_from_env()
 
 app = FastAPI(
-    title="AudioEnhancerMAX by Fd",
+    title="AudioEnhancerMAX by Fabrizio Degni",
     description="Professional podcast audio processing suite - Apple Silicon Metal GPU + Edge Cluster computing",
     version=APP_VERSION,
 )
@@ -89,8 +127,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def prevent_stale_frontend(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path in {"/", "/landing", "/roadmap", "/roadmap.html"} or path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 # Serve frontend
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+app.mount("/img", StaticFiles(directory=str(FRONTEND_DIR / "img")), name="public-images")
 app.mount("/outputs", StaticFiles(directory=str(OUTPUT_DIR)), name="outputs")
 
 
@@ -126,10 +176,17 @@ async def startup_services():
 
     from app.services.system_monitor import system_monitor
     from app.services.cluster_manager import cluster_manager
+    from app.services.runtime_settings import external_service_allowed
     from app.services.timing_engine import timing_engine
     system_monitor.start()
-    cluster_manager.start()
-    logger.info(" System monitor + Cluster manager started")
+    if (
+        external_service_allowed("trusted-lan")
+        and os.getenv("AEMAX_EDGE_CLUSTER_AUTOSTART", "0") == "1"
+    ):
+        cluster_manager.start()
+        logger.info(" System monitor + Cluster manager started")
+    else:
+        logger.info(" System monitor started; edge discovery awaits explicit user action")
     logger.info(f" Timing engine ready (history: {len(timing_engine._history.get('filter_timings', {}))} filters tracked)")
 
     # Run DSP benchmark in background (doesn't block startup)
@@ -175,6 +232,44 @@ async def get_system_preflight():
     return run_preflight(APP_VERSION)
 
 
+@app.get("/api/system/capabilities")
+async def get_system_capabilities():
+    """Expose the reviewed feature set so the browser UI never advertises unavailable engines."""
+    from app.services.cluster_manager import cluster_manager
+    from app.services.capability_registry import get_capability_registry
+    from app.services.runtime_settings import load_runtime_settings
+
+    capabilities = get_capability_registry()
+    capabilities.update({
+        "edge_cluster_available": True,
+        "edge_cluster_enabled": cluster_manager.enabled,
+        "runtime_privacy": load_runtime_settings(),
+    })
+    return capabilities
+
+
+@app.get("/api/settings/privacy")
+async def get_runtime_privacy_settings():
+    from app.services.runtime_settings import load_runtime_settings
+    return load_runtime_settings()
+
+
+@app.patch("/api/settings/privacy")
+async def update_runtime_privacy_settings(request: RuntimePrivacySettingsRequest):
+    from app.services.runtime_settings import save_runtime_settings
+    settings = save_runtime_settings(request.model_dump())
+    if not settings["trusted_lan_processing_allowed"]:
+        from app.services.cluster_manager import cluster_manager
+        cluster_manager.stop()
+    return settings
+
+
+@app.get("/api/output-profiles")
+async def get_output_profiles():
+    from app.services.output_profiles import list_output_profiles
+    return {"profiles": list_output_profiles()}
+
+
 @app.post("/api/system/preflight/configure")
 async def configure_system_preflight():
     """Configure private runtime storage and acknowledge the current build."""
@@ -197,6 +292,19 @@ async def get_cluster_status():
     return await cluster_manager.get_status()
 
 
+@app.post("/api/cluster/enable")
+async def enable_cluster_discovery():
+    """Start LAN discovery only after an explicit user action."""
+    from app.services.cluster_manager import cluster_manager
+    from app.services.runtime_settings import external_service_allowed
+
+    if not external_service_allowed("trusted-lan"):
+        raise HTTPException(403, "Trusted-LAN processing is disabled in Settings")
+
+    cluster_manager.start()
+    return await cluster_manager.get_status()
+
+
 class WorkerAddRequest(BaseModel):
     ip: str
     port: int = 8877
@@ -206,6 +314,9 @@ class WorkerAddRequest(BaseModel):
 async def add_cluster_worker(req: WorkerAddRequest):
     """Manually add a worker by IP address."""
     from app.services.cluster_manager import cluster_manager
+    from app.services.runtime_settings import external_service_allowed
+    if not external_service_allowed("trusted-lan"):
+        raise HTTPException(403, "Trusted-LAN processing is disabled in Settings")
     return await cluster_manager.add_worker(req.ip, req.port)
 
 
@@ -230,25 +341,25 @@ async def cluster_health_check():
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
+    return FileResponse(str(FRONTEND_DIR / "index.html"), media_type="text/html")
 
 
 @app.get("/landing", response_class=HTMLResponse)
 async def serve_landing():
     """Bilingual landing page presenting AudioEnhancerMAX."""
-    return FileResponse(str(FRONTEND_DIR / "landing.html"))
+    return FileResponse(str(FRONTEND_DIR / "landing.html"), media_type="text/html")
 
 
 @app.get("/roadmap", response_class=HTMLResponse)
 async def serve_roadmap():
     """Public roadmap page for upcoming AudioEnhancerMAX releases."""
-    return FileResponse(str(FRONTEND_DIR / "roadmap.html"))
+    return FileResponse(str(FRONTEND_DIR / "roadmap.html"), media_type="text/html")
 
 
 @app.get("/roadmap.html", response_class=HTMLResponse)
 async def serve_roadmap_html():
     """Static-compatible roadmap route."""
-    return FileResponse(str(FRONTEND_DIR / "roadmap.html"))
+    return FileResponse(str(FRONTEND_DIR / "roadmap.html"), media_type="text/html")
 
 
 # ══════════════════════════════════════════════════════════
@@ -396,12 +507,12 @@ async def get_audio(file_id: str, version: str = "original"):
         for ext in [".wav", ".mp3", ".flac"]:
             path = get_output_path(file_id, "_processed", ext)
             if path.exists():
-                return FileResponse(str(path), media_type=f"audio/{ext.lstrip('.')}")
+                return FileResponse(str(path), media_type=AUDIO_MEDIA_TYPES[ext])
 
     for ext in [".wav", ".mp3", ".mp4", ".flac", ".ogg", ".m4a"]:
         path = get_upload_path(file_id, ext)
         if path.exists():
-            return FileResponse(str(path), media_type=f"audio/{ext.lstrip('.')}")
+            return FileResponse(str(path), media_type=AUDIO_MEDIA_TYPES[ext])
 
     raise HTTPException(404, "Audio file not found")
 
@@ -417,6 +528,24 @@ async def process_audio(request: ProcessingRequest):
 
     file_id = _require_file_id(request.file_id)
     options = request.options
+    processing_started = _time.monotonic()
+
+    if options.output_profile:
+        from app.services.output_profiles import resolve_output_profile
+        try:
+            resolved_profile = resolve_output_profile(
+                options.output_profile, options.output_profile_overrides
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        for field, value in resolved_profile["resolved"].items():
+            if field == "output_format":
+                options.output_format = type(options.output_format)(value)
+            else:
+                setattr(options, field, value)
+
+    if APP_STORE_MODE and options.keep_music:
+        raise HTTPException(400, "Music separation is not included in the Mac App Store build")
 
     source_path = _find_source(file_id)
     if not source_path:
@@ -460,11 +589,24 @@ async def process_audio(request: ProcessingRequest):
         else:
             audio, sr = load_audio(source_path)
 
+        # Store measurements, not a duplicate long-form waveform, for the
+        # local before/after evidence report.
+        from app.services.processing_report import quality_summary
+        if completed_steps_set:
+            report_source_audio, report_source_sr = load_audio(source_path)
+        else:
+            report_source_audio, report_source_sr = audio, sr
+        report_input_summary = await asyncio.to_thread(
+            quality_summary, report_source_audio, report_source_sr
+        )
+        del report_source_audio
+
         await progress_tracker.send_progress(file_id, "loading", 0.05, "Audio loaded")
 
         total_steps = _count_steps(options)
-        if total_steps == 0:
+        if total_steps == 0 and not options.output_profile:
             raise HTTPException(400, "No processing options selected")
+        total_steps = max(1, total_steps)
 
         # ── Build ordered list of active steps ──
         opts_dict = options.model_dump()
@@ -509,7 +651,8 @@ async def process_audio(request: ProcessingRequest):
         distributed_filters = set()
         try:
             from app.services.cluster_manager import cluster_manager
-            if cluster_manager.can_distribute(opts_dict):
+            from app.services.runtime_settings import external_service_allowed
+            if external_service_allowed("trusted-lan") and cluster_manager.can_distribute(opts_dict):
                 n_workers = len(cluster_manager.online_workers)
                 await progress_tracker.send_progress(
                     file_id, "cluster", 0.08,
@@ -700,6 +843,50 @@ async def process_audio(request: ProcessingRequest):
 
         waveform = generate_waveform_data(audio, num_points=500)
         result_url = f"/outputs/{file_id}_processed.{fmt}"
+        report_url = None
+        report_summary = None
+        compliance_result = None
+        compliance_target = {
+            "youtube": "video",
+            "audiobook": "audiobook",
+            "archive": "archive",
+            "source-master": "source-master",
+        }.get(options.output_profile or "", "podcast")
+        try:
+            from app.services.delivery_compliance import analyze_delivery, save_delivery_result
+            compliance_result = await asyncio.to_thread(analyze_delivery, output_path, compliance_target)
+            await asyncio.to_thread(save_delivery_result, file_id, compliance_result)
+        except Exception as compliance_error:
+            logger.warning("Delivery compliance could not be measured: %s", compliance_error)
+        try:
+            from app.services.processing_report import create_processing_report
+
+            processing_report = await asyncio.to_thread(
+                create_processing_report,
+                file_id=file_id,
+                app_version=APP_VERSION,
+                input_summary=report_input_summary,
+                output_audio=audio,
+                output_sample_rate=sr,
+                options=options.model_dump(mode="json"),
+                active_steps=active_steps,
+                distributed_steps=sorted(distributed_filters),
+                elapsed_seconds=_time.monotonic() - processing_started,
+                app_build=APP_BUILD,
+                source_path=source_path,
+                output_path=output_path,
+                compliance=compliance_result,
+            )
+            report_url = f"/api/reports/{file_id}"
+            report_summary = {
+                "input_quality_score": processing_report["input"]["quality_score"],
+                "output_quality_score": processing_report["output"]["quality_score"],
+                "engine_count": len(processing_report["pipeline"]),
+                "warnings": len(processing_report["warnings"]),
+                "compliance_status": compliance_result["status"] if compliance_result else None,
+            }
+        except Exception as report_error:
+            logger.warning("Processing report could not be generated: %s", report_error)
 
         # Clean up checkpoints on success
         import shutil
@@ -717,6 +904,10 @@ async def process_audio(request: ProcessingRequest):
             "sample_rate": sr,
             "waveform_data": waveform,
             "format": fmt,
+            "report_url": report_url,
+            "report_summary": report_summary,
+            "compliance_url": f"/api/compliance/{file_id}" if compliance_result else None,
+            "compliance_summary": compliance_result,
         }
 
     except HTTPException:
@@ -736,7 +927,10 @@ async def process_audio(request: ProcessingRequest):
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/smart-mode/{file_id}")
-async def smart_mode_analyze(file_id: str):
+async def smart_mode_analyze(
+    file_id: str,
+    profile: SmartProfile = Query(default=SmartProfile.BALANCED),
+):
     file_id = _require_file_id(file_id)
     source_path = _find_source(file_id)
     if not source_path:
@@ -745,9 +939,118 @@ async def smart_mode_analyze(file_id: str):
     try:
         audio, sr = load_audio(source_path)
         from app.services.smart_mode import analyze_and_suggest
-        return analyze_and_suggest(audio, sr)
+        return await asyncio.to_thread(analyze_and_suggest, audio, sr, profile.value)
     except Exception as e:
         raise HTTPException(500, f"Smart mode failed: {str(e)}")
+
+
+@app.get("/api/reports/{file_id}")
+async def get_processing_report(file_id: str):
+    """Return the local quality and engine evidence for a completed job."""
+    file_id = _require_file_id(file_id)
+    from app.services.processing_report import load_processing_report
+
+    report = load_processing_report(file_id)
+    if report is None:
+        raise HTTPException(404, "Processing report not found")
+    return report
+
+
+@app.get("/api/compliance-targets")
+async def get_compliance_targets():
+    """Expose the fixed, inspectable delivery check presets."""
+    from app.services.delivery_compliance import list_delivery_targets
+    return {"targets": list_delivery_targets()}
+
+
+@app.get("/api/compliance/{file_id}")
+async def get_delivery_compliance(file_id: str, target_id: str = Query(default="podcast")):
+    """Measure the processed artifact locally and persist the current result."""
+    file_id = _require_file_id(file_id)
+    output_path = _find_processed_output(file_id)
+    if output_path is None:
+        raise HTTPException(404, "Processed output not found")
+    from app.services.delivery_compliance import analyze_delivery, save_delivery_result
+    try:
+        result = await asyncio.to_thread(analyze_delivery, output_path, target_id)
+        await asyncio.to_thread(save_delivery_result, file_id, result)
+        return result
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/reviews/{file_id}/blind-ab")
+async def save_blind_ab_review(file_id: str, request: BlindABReviewRequest):
+    """Persist a user-revealed blind A/B decision as local review evidence."""
+    file_id = _require_file_id(file_id)
+    if _find_source(file_id) is None or _find_processed_output(file_id) is None:
+        raise HTTPException(404, "Original and processed artifacts are required")
+    import json
+    from datetime import datetime, timezone
+    destination = OUTPUT_DIR / f"{file_id}_blind_ab_review.json"
+    record = {
+        "schema_version": 1,
+        "file_id": file_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "blind_slot": request.blind_slot,
+        "selected_version": request.selected_version,
+        "target_id": request.target_id,
+        "source_preserved": True,
+        "reviewer_assertion": "User-selected listening preference; not an objective quality score.",
+    }
+    temporary = destination.with_suffix(".tmp")
+    temporary.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    temporary.replace(destination)
+    return record
+
+
+@app.post("/api/projects/{file_id}/export")
+async def export_project(file_id: str, request: ProjectCapsuleRequest):
+    """Return a portable ZIP with evidence and optional original audio."""
+    file_id = _require_file_id(file_id)
+    source_path = _find_source(file_id)
+    output_path = _find_processed_output(file_id)
+    if source_path is None or output_path is None:
+        raise HTTPException(404, "Original and processed artifacts are required")
+
+    from app.services.delivery_compliance import analyze_delivery, compliance_path, save_delivery_result
+    from app.services.processing_report import report_path
+    from app.services.project_bundle import export_project_capsule
+    from app.services.speech_editor import speech_edl_path
+    try:
+        compliance = await asyncio.to_thread(analyze_delivery, output_path, request.target_id)
+        await asyncio.to_thread(save_delivery_result, file_id, compliance)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    candidates = {
+        "processing-report": report_path(file_id),
+        "delivery-compliance": compliance_path(file_id),
+        "speech-edl": speech_edl_path(file_id),
+        "transcript": OUTPUT_DIR / f"{file_id}_transcript.json",
+        "blind-ab-review": OUTPUT_DIR / f"{file_id}_blind_ab_review.json",
+    }
+    optional = {role: path for role, path in candidates.items() if path.is_file()}
+    execution_boundary = "local"
+    if candidates["processing-report"].is_file():
+        try:
+            import json
+            stored_report = json.loads(candidates["processing-report"].read_text(encoding="utf-8"))
+            execution_boundary = stored_report.get("privacy", {}).get("processing_location", "local")
+        except (OSError, ValueError):
+            pass
+    capsule, _ = await asyncio.to_thread(
+        export_project_capsule,
+        file_id=file_id,
+        app_version=APP_VERSION,
+        app_build=APP_BUILD,
+        source_path=source_path,
+        output_path=output_path,
+        optional_artifacts=optional,
+        include_source=request.include_source,
+        execution_boundary=execution_boundary,
+    )
+    return FileResponse(capsule, media_type="application/zip", filename=capsule.name)
 
 
 @app.post("/api/smart-mode/{file_id}/suggestions")
@@ -757,6 +1060,9 @@ async def get_editing_suggestions(file_id: str):
     source_path = _find_source(file_id)
     if not source_path:
         raise HTTPException(404, "File not found")
+    from app.services.runtime_settings import external_service_allowed
+    if not external_service_allowed("ollama"):
+        raise HTTPException(403, "Local Ollama editorial assistance is disabled in Settings")
 
     try:
         audio, sr = load_audio(source_path)
@@ -940,19 +1246,303 @@ async def check_transcript_resume(file_id: str):
 
 
 # ══════════════════════════════════════════════════════════
+# Routes - Precision Speech Editor (non-destructive EDL)
+# ══════════════════════════════════════════════════════════
+
+@app.post("/api/speech-editor/analyze")
+async def analyze_speech_edits(request: SpeechEditorAnalyzeRequest):
+    """Create a reviewable edit decision list without modifying source audio."""
+    file_id = _require_file_id(request.file_id)
+    source_path = _find_source(file_id)
+    if not source_path:
+        raise HTTPException(404, "File not found")
+
+    def analyze_sync():
+        audio, sr = load_audio(source_path)
+        from app.services.transcription import transcribe
+        from app.services.speech_editor import build_speech_edl
+
+        transcription = transcribe(audio, sr, language=request.language)
+        return build_speech_edl(
+            file_id=file_id,
+            audio=audio,
+            sr=sr,
+            transcription=transcription,
+            custom_fillers=request.custom_filler_words,
+        )
+
+    try:
+        return await asyncio.to_thread(analyze_sync)
+    except Exception as exc:
+        logger.error("Speech editor analysis failed: %s", exc, exc_info=True)
+        raise HTTPException(500, f"Speech editor analysis failed: {exc}") from exc
+
+
+@app.get("/api/speech-editor/{file_id}")
+async def get_speech_edits(file_id: str):
+    file_id = _require_file_id(file_id)
+    from app.services.speech_editor import load_speech_edl
+
+    edl = load_speech_edl(file_id)
+    if edl is None:
+        raise HTTPException(404, "Speech edit list not found")
+    return edl
+
+
+@app.patch("/api/speech-editor/{file_id}")
+async def update_speech_edits(file_id: str, request: SpeechEditorUpdateRequest):
+    file_id = _require_file_id(file_id)
+    from app.services.speech_editor import load_speech_edl, update_speech_edl
+
+    edl = load_speech_edl(file_id)
+    if edl is None:
+        raise HTTPException(404, "Speech edit list not found")
+    try:
+        return await asyncio.to_thread(
+            update_speech_edl,
+            edl,
+            [item.model_dump() for item in request.decisions],
+            request.revision,
+        )
+    except KeyError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except ValueError as exc:
+        status_code = 409 if "changed" in str(exc) else 400
+        raise HTTPException(status_code, str(exc)) from exc
+
+
+@app.post("/api/speech-editor/{file_id}/manual-edit")
+async def add_manual_speech_edit_endpoint(file_id: str, request: SpeechEditorManualEditRequest):
+    file_id = _require_file_id(file_id)
+    from app.services.speech_editor import add_manual_speech_edit, load_speech_edl
+
+    edl = load_speech_edl(file_id)
+    if edl is None:
+        raise HTTPException(404, "Speech edit list not found")
+    try:
+        return await asyncio.to_thread(
+            add_manual_speech_edit, edl, request.model_dump(), request.revision
+        )
+    except ValueError as exc:
+        status_code = 409 if "changed" in str(exc) else 400
+        raise HTTPException(status_code, str(exc)) from exc
+
+
+@app.post("/api/speech-editor/{file_id}/undo")
+async def undo_speech_edit(file_id: str, request: RevisionRequest):
+    return await _navigate_speech_edit_history(file_id, request.revision, "undo")
+
+
+@app.post("/api/speech-editor/{file_id}/redo")
+async def redo_speech_edit(file_id: str, request: RevisionRequest):
+    return await _navigate_speech_edit_history(file_id, request.revision, "redo")
+
+
+async def _navigate_speech_edit_history(file_id: str, revision: int, direction: str):
+    file_id = _require_file_id(file_id)
+    from app.services.speech_editor import load_speech_edl, navigate_speech_edl_history
+
+    edl = load_speech_edl(file_id)
+    if edl is None:
+        raise HTTPException(404, "Speech edit list not found")
+    try:
+        return await asyncio.to_thread(
+            navigate_speech_edl_history, edl, revision, direction
+        )
+    except ValueError as exc:
+        status_code = 409 if "changed" in str(exc) else 400
+        raise HTTPException(status_code, str(exc)) from exc
+
+
+@app.get("/api/speech-editor/{file_id}/export")
+async def export_speech_edits(file_id: str, format: str = Query(default="json")):
+    import csv
+    import io
+
+    file_id = _require_file_id(file_id)
+    format = _require_choice(format, {"json", "csv"}, "export format")
+    from app.services.speech_editor import load_speech_edl
+
+    edl = load_speech_edl(file_id)
+    if edl is None:
+        raise HTTPException(404, "Speech edit list not found")
+    filename = f"AudioEnhancerMAX-{file_id}-speech-edl.{format}"
+    if format == "json":
+        import json
+        content = json.dumps(edl, indent=2, ensure_ascii=False).encode("utf-8")
+        media_type = "application/json"
+    else:
+        output = io.StringIO()
+        fields = [
+            "id", "type", "label", "start", "end", "duration", "confidence",
+            "detector", "action", "decision", "text", "evidence",
+        ]
+        writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        for candidate in edl.get("candidates", []):
+            row = dict(candidate)
+            for field in {"id", "type", "label", "detector", "action", "decision", "text", "evidence"}:
+                value = str(row.get(field, ""))
+                if value.startswith(("=", "+", "-", "@")):
+                    value = "'" + value
+                row[field] = value
+            writer.writerow(row)
+        content = output.getvalue().encode("utf-8-sig")
+        media_type = "text/csv"
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"', "Cache-Control": "no-store"},
+    )
+
+
+@app.get("/api/speech-editor/{file_id}/preview/{candidate_id}")
+async def preview_speech_edit(
+    file_id: str,
+    candidate_id: str,
+    mode: str = Query(default="original"),
+):
+    """Stream an original or proposed edit preview with local context."""
+    import io
+    import soundfile as sf
+
+    file_id = _require_file_id(file_id)
+    mode = _require_choice(mode, {"original", "applied"}, "mode")
+    if re.fullmatch(r"edit-[0-9]{4}", candidate_id) is None:
+        raise HTTPException(400, "Invalid speech edit candidate")
+    source_path = _find_source(file_id)
+    if not source_path:
+        raise HTTPException(404, "File not found")
+
+    from app.services.speech_editor import load_speech_edl, render_candidate_preview
+
+    edl = load_speech_edl(file_id)
+    if edl is None:
+        raise HTTPException(404, "Speech edit list not found")
+    candidate = next((item for item in edl["candidates"] if item["id"] == candidate_id), None)
+    if candidate is None:
+        raise HTTPException(404, "Speech edit candidate not found")
+
+    audio, sr = await asyncio.to_thread(load_audio, source_path)
+    preview = await asyncio.to_thread(
+        render_candidate_preview,
+        audio,
+        sr,
+        candidate,
+        apply=mode == "applied",
+    )
+    buffer = io.BytesIO()
+    sf.write(buffer, preview, sr, format="WAV", subtype="PCM_16")
+    return Response(
+        content=buffer.getvalue(),
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.post("/api/speech-editor/{file_id}/render")
+async def render_speech_edits(file_id: str, request: SpeechEditorRenderRequest):
+    """Render approved EDL decisions to a new file while retaining the source."""
+    import time as _time
+
+    file_id = _require_file_id(file_id)
+    source_path = _find_source(file_id)
+    if not source_path:
+        raise HTTPException(404, "File not found")
+
+    from app.services.speech_editor import load_speech_edl, render_speech_edl
+
+    edl = load_speech_edl(file_id)
+    if edl is None:
+        raise HTTPException(404, "Speech edit list not found")
+    if int(edl.get("revision", 0)) != request.revision:
+        raise HTTPException(409, "Speech edit list changed; reload before rendering")
+    if not edl.get("summary", {}).get("selected_candidates"):
+        raise HTTPException(400, "No speech edits are approved")
+
+    def render_sync():
+        started = _time.monotonic()
+        audio, sr = load_audio(source_path)
+        from app.services.processing_report import create_processing_report, quality_summary
+
+        input_summary = quality_summary(audio, sr)
+        rendered = render_speech_edl(audio, sr, edl)
+        output_format = request.output_format.value
+        output_path = get_output_path(file_id, "_speech_edit", f".{output_format}")
+        save_audio(rendered, sr, output_path, format=output_format)
+        report = create_processing_report(
+            file_id=file_id,
+            app_version=APP_VERSION,
+            input_summary=input_summary,
+            output_audio=rendered,
+            output_sample_rate=sr,
+            options={
+                "operation": "speech_edl_render",
+                "edl_revision": edl["revision"],
+                "approved_candidate_ids": [
+                    item["id"] for item in edl["candidates"]
+                    if item["decision"] == "apply"
+                ],
+                "output_format": output_format,
+            },
+            active_steps=["speech_edl_render"],
+            speech_edl=edl,
+            elapsed_seconds=_time.monotonic() - started,
+        )
+        return rendered, sr, output_format, report
+
+    try:
+        rendered, sr, output_format, report = await asyncio.to_thread(render_sync)
+    except Exception as exc:
+        logger.error("Speech edit rendering failed: %s", exc, exc_info=True)
+        raise HTTPException(500, f"Speech edit rendering failed: {exc}") from exc
+
+    return {
+        "file_id": file_id,
+        "status": "completed",
+        "output_url": f"/outputs/{file_id}_speech_edit.{output_format}",
+        "duration_seconds": round(len(rendered) / sr, 3),
+        "sample_rate": sr,
+        "format": output_format,
+        "applied_edits": edl["summary"]["selected_candidates"],
+        "source_preserved": True,
+        "edl_revision": edl["revision"],
+        "report_url": f"/api/reports/{file_id}",
+        "report_summary": {
+            "input_quality_score": report["input"]["quality_score"],
+            "output_quality_score": report["output"]["quality_score"],
+            "approved_edits": report["speech_edits"]["approved_count"],
+        },
+    }
+
+
+# ══════════════════════════════════════════════════════════
 # Routes - Text-to-Speech (TTS)
 # ══════════════════════════════════════════════════════════
 
 @app.get("/api/tts/voices")
 async def get_voices():
     from app.services.tts import get_available_voices
-    return {"voices": get_available_voices()}
+    from app.services.runtime_settings import external_service_allowed
+    voices = get_available_voices()
+    if not external_service_allowed("external"):
+        voices = [voice for voice in voices if voice.get("engine") != "edge"]
+    return {"voices": voices}
 
 
 @app.post("/api/tts/synthesize")
 async def synthesize(request: TTSRequest):
     try:
         from app.services.tts import synthesize_speech
+        from app.services.runtime_settings import external_service_allowed
+
+        if request.expressive and not external_service_allowed("ollama"):
+            raise HTTPException(403, "Local Ollama editorial assistance is disabled in Settings")
+        if not external_service_allowed("external"):
+            if request.engine == "edge" or (request.voice_id or "").startswith(("it_", "en_", "es_", "fr_", "de_")):
+                raise HTTPException(403, "Optional external TTS services are disabled in Settings")
+            if request.engine == "auto":
+                request.engine = "kokoro"
 
         clone_path = None
         if request.clone_voice_file_id:
@@ -995,6 +1585,9 @@ async def synthesize(request: TTSRequest):
 async def rewrite_text(request: TTSRewriteRequest):
     """Preview Gemma's expressive rewrite of the input text."""
     try:
+        from app.services.runtime_settings import external_service_allowed
+        if not external_service_allowed("ollama"):
+            raise HTTPException(403, "Local Ollama editorial assistance is disabled in Settings")
         from app.services.tts import rewrite_expressive
         rewritten = await asyncio.to_thread(
             rewrite_expressive, request.text, request.language, request.style
@@ -1004,6 +1597,8 @@ async def rewrite_text(request: TTSRewriteRequest):
             "rewritten": rewritten,
             "changed": rewritten != request.text,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Rewrite failed: {str(e)}")
 
@@ -1207,7 +1802,10 @@ async def download_file(file_id: str, format: str = "wav", version: str = "proce
 
     path = get_output_path(file_id, suffix, f".{format}")
     if path.exists():
-        return FileResponse(str(path), media_type=f"audio/{format}", filename=f"AudioEnhancerMAX_{file_id}.{format}")
+        return FileResponse(
+            str(path), media_type=AUDIO_MEDIA_TYPES[f".{format}"],
+            filename=f"AudioEnhancerMAX_{file_id}.{format}",
+        )
 
     for ext in [".wav", ".mp3", ".flac"]:
         source = get_output_path(file_id, suffix, ext)
@@ -1216,13 +1814,22 @@ async def download_file(file_id: str, format: str = "wav", version: str = "proce
                 audio, sr = load_audio(source)
                 converted = get_output_path(file_id, suffix, f".{format}")
                 save_audio(audio, sr, converted, format=format)
-                return FileResponse(str(converted), filename=f"AudioEnhancerMAX_{file_id}.{format}")
-            return FileResponse(str(source), filename=f"AudioEnhancerMAX_{file_id}{ext}")
+                return FileResponse(
+                    str(converted), media_type=AUDIO_MEDIA_TYPES[f".{format}"],
+                    filename=f"AudioEnhancerMAX_{file_id}.{format}",
+                )
+            return FileResponse(
+                str(source), media_type=AUDIO_MEDIA_TYPES[ext],
+                filename=f"AudioEnhancerMAX_{file_id}{ext}",
+            )
 
     for ext in [".wav", ".mp3", ".mp4", ".flac"]:
         source = get_upload_path(file_id, ext)
         if source.exists():
-            return FileResponse(str(source), filename=f"AudioEnhancerMAX_{file_id}{ext}")
+            return FileResponse(
+                str(source), media_type=AUDIO_MEDIA_TYPES[ext],
+                filename=f"AudioEnhancerMAX_{file_id}{ext}",
+            )
 
     raise HTTPException(404, "File not found")
 
@@ -1305,7 +1912,7 @@ async def health():
 
     return {
         "status": "healthy",
-        "app": "AudioEnhancerMAX by Fd",
+        "app": "AudioEnhancerMAX by Fabrizio Degni",
         "version": APP_VERSION,
         "compute": gpu_info,
         "mps_available": torch.backends.mps.is_available(),
@@ -1379,6 +1986,17 @@ def _find_source(file_id: str, check_outputs: bool = False) -> Optional[Path]:
                 path = get_output_path(file_id, suffix, ext)
                 if path.exists():
                     return path
+    return None
+
+
+def _find_processed_output(file_id: str) -> Optional[Path]:
+    """Resolve only a completed primary processing artifact."""
+    if not _is_safe_file_id(file_id):
+        return None
+    for ext in [".wav", ".mp3", ".flac"]:
+        path = get_output_path(file_id, "_processed", ext)
+        if path.is_file():
+            return path
     return None
 
 

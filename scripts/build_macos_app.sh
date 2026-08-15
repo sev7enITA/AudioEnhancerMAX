@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="${0:A:h:h}"
-VERSION="3.5.2"
+VERSION="3.7.0"
 BUILD_DIR="${ROOT}/build/macos"
 DIST_DIR="${ROOT}/dist/macos"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"

@@ -5,7 +5,9 @@
 ### The open-source AI audio media center
 
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
-**16+ processing modules · Apple Silicon acceleration · local Ollama/Gemma smart mode · Android edge workers · local-first core · v3.5.2**
+**16+ processing modules · Apple Silicon acceleration · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.7.0**
+
+Version 3.7 turns the earlier editing preview into a reviewable release line: non-destructive transcript-linked editing, persisted undo/redo, five fixed delivery profiles, local delivery guidance, blind A/B listening, checksum-backed Project Capsules, enforceable privacy boundaries, and readable governance reports.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-06b6d4.svg)](https://python.org)
@@ -32,7 +34,7 @@ AudioEnhancerMAX turns raw recordings into cleaner, production-ready audio witho
 
 AudioEnhancerMAX is built for creators, podcasters, researchers, interviewers, and audio-heavy workflows where privacy, control, and auditability matter. It combines local DSP, AI-assisted decisions, real-time monitoring, transcription, text-to-speech, and optional Android edge workers in one FastAPI + vanilla JS application.
 
-The v3.5.2 macOS distribution adds an Apple Silicon desktop launcher that starts the local server and opens the interface without requiring Terminal. See [macOS App](docs/macos-app.md) for included components, external dependencies, data locations, and signing status.
+The v3.7.0 macOS release candidate includes an Apple Silicon desktop launcher that starts the private loopback service and presents the interface in an app-owned AppKit/WKWebView window without requiring Terminal or opening the default browser. See [macOS App](docs/macos-app.md) for included components, external dependencies, data locations, and signing status.
 
 The default architecture is local-first: uploads, DSP output, timing history, and local model inference stay on the host machine unless you explicitly enable an integration that sends data elsewhere. You decide when to use local AI through Ollama/Gemma, when to offload DSP chunks to trusted devices on your LAN, and which output format to export.
 
@@ -43,9 +45,11 @@ AudioEnhancerMAX has also been recognized with the **SourceForge Rising Star Awa
 | Area | What You Get |
 | --- | --- |
 | Audio cleanup | DeepFilterNet/noisereduce fallback, wind, buzz, static, reverb/echo, breath, mouth-click and silence handling |
-| Speech editing | Whisper-based filler word, hesitation, and stutter cleanup with natural crossfades |
+| Speech editing | Non-destructive EDL for fillers, repetitions, pauses, breaths and mouth clicks, with original/proposed preview |
 | Enhancement | Studio sound chain, Auto EQ, LUFS normalization, super-resolution, Demucs music preservation |
-| AI workflow | Smart mode, content classification, dynamic filter tuning, editing suggestions through local Ollama/Gemma |
+| Audio intelligence | Smart Enhance signal diagnosis, Conservative/Balanced/Maximum processing profiles, deterministic tuning and quality reports |
+| Delivery | Five fixed output profiles with WAV/MP3/FLAC overrides recorded in the processing report |
+| Delivery review | Local loudness/estimated-true-peak/clipping/sample-rate guidance, randomized blind A/B, and SHA-256 Project Capsules |
 | Transcription | Faster-Whisper, streaming SSE delivery, TXT/SRT/VTT/JSON export, crash-resilient partial saves |
 | TTS | Local Kokoro voices, optional Edge Neural voices, expressive rewrite mode, voice-clone input hook |
 | Monitoring | CPU/GPU/ANE/RAM/power/thermal dashboard with adaptive ETA and per-step timing history |
@@ -55,9 +59,9 @@ AudioEnhancerMAX has also been recognized with the **SourceForge Rising Star Awa
 
 ### macOS App (Apple Silicon)
 
-Download `AudioEnhancerMAX-v3.5.2-macOS-arm64.dmg` from the [v3.5.2 release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.5.2), open the disk image, and drag AudioEnhancerMAX into Applications. The app starts its private local server and opens the interface in the default browser; no Terminal command is required.
+The v3.7.0 release artifacts are prepared for Apple Silicon. The Mac App Store candidate starts its private loopback service inside an app-owned native window; no browser or Terminal command is required. Do not describe the app as available from the Mac App Store until Apple approves the submitted build.
 
-The package requires macOS 13 or later on Apple Silicon. It is ad-hoc signed and integrity-checked, but it is not yet notarized by Apple, so Gatekeeper may request explicit confirmation on first launch. See the [macOS app guide](docs/macos-app.md) for installation, data locations, privacy boundaries, and build instructions.
+The Mac App Store candidate requires macOS 13 or later on Apple Silicon and is signed with Mac App Store application and installer identities. App Store approval remains Apple-controlled. See the [macOS app guide](docs/macos-app.md) for installation, data locations, privacy boundaries, and build instructions.
 
 ### Run from Source
 
@@ -66,7 +70,7 @@ The package requires macOS 13 or later on Apple Silicon. It is ad-hoc signed and
 - Python 3.10+
 - FFmpeg
 - macOS Apple Silicon recommended, with Linux/Windows support for core local processing
-- Ollama + Gemma model optional for Smart Mode and expressive rewrite
+- Ollama + Gemma model optional for editorial suggestions and expressive TTS rewrite
 - Android Studio/JDK 17 or 21 optional for building the Android worker
 
 ### Install
@@ -104,7 +108,7 @@ brew install ollama
 ollama pull gemma4:e2b
 ```
 
-`gemma4:e2b` is the preferred model name when available; the app also auto-detects other local Gemma-family models exposed by Ollama. If Gemma is not available, Smart Mode falls back to deterministic heuristics and the core DSP pipeline still works.
+`gemma4:e2b` is the preferred optional model name when available; the app also auto-detects other local Gemma-family models exposed by Ollama. Smart Enhance diagnosis and DSP decisions never require Ollama: they are deterministic, local and available offline. Gemma is limited to explicitly requested editorial prose and expressive TTS rewriting.
 
 ## Android Edge Worker
 
@@ -122,7 +126,7 @@ Prebuilt debug APKs are stored in [releases](releases/).
 
 ```mermaid
 flowchart LR
-    Browser["Browser UI"] --> API["FastAPI backend"]
+    Native["AppKit + WKWebView"] --> API["Loopback FastAPI backend"]
     API --> DSP["DSP pipeline"]
     API --> STT["Whisper transcription"]
     API --> TTS["Edge/Kokoro TTS"]
@@ -130,6 +134,8 @@ flowchart LR
     API --> Cluster["Cluster manager"]
     Cluster --> Android["Android edge workers"]
     DSP --> Output["Processed WAV/MP3/FLAC"]
+    Output --> Review["Compliance + blind A/B"]
+    Review --> Capsule["SHA-256 Project Capsule"]
     STT --> Transcript["TXT/SRT/VTT/JSON"]
 ```
 
@@ -142,7 +148,11 @@ AudioEnhancerMAX should be evaluated as a **local-first, AI-assisted tool**, not
 | Uploads and processed audio | Stored locally under `app/uploads/` and `app/outputs/` | Original files are not modified by the pipeline. |
 | DSP filters | Run locally in Python, or on explicitly trusted LAN workers | Output quality depends on source material and selected settings. |
 | Faster-Whisper transcription | Runs locally when dependencies and models are installed | Transcript accuracy must be reviewed for high-stakes use. |
-| Ollama/Gemma smart mode | Runs locally through Ollama when configured | Suggestions and dynamic tuning are assistive; they should not be treated as authoritative labels. |
+| Audio Intelligence and Smart Enhance | Deterministic local signal analysis | Measured issues, profiles and fallback engines remain visible and auditable. |
+| Ollama/Gemma editorial assistance | Optional local Ollama process | Limited to explicitly requested prose and expressive TTS rewriting; it does not control DSP parameters. |
+| Precision Speech Editor | Local word timestamps and acoustic candidates | Every edit defaults to Keep, uses revisioned decisions and renders to a new file. |
+| Delivery Compliance Lab | Local BS.1770 loudness method plus measured/estimated signal facts | Workflow guidance only; results are not regulatory or third-party certification. |
+| Project Capsule | Local ZIP and SHA-256 manifest | Processed output and evidence are included; source audio is opt-in and off by default. |
 | Kokoro TTS | Runs locally when installed | Local model availability depends on installed packages and voice assets. |
 | Edge Neural TTS | Optional external service | Text is sent to Microsoft Edge TTS when this engine is selected. |
 | Android edge workers | Audio chunks are sent over trusted LAN | Use only with devices you control and networks you trust. |
@@ -158,6 +168,8 @@ Do not expose the FastAPI server directly to the public internet without adding 
 
 ## Documentation
 
+- [Signal Console Design Contract](DESIGN.md)
+- [Visual Design Reference](docs/design-preview.html)
 - [Getting Started](docs/getting-started.md)
 - [Feature Guide](docs/features.md)
 - [API Reference](docs/api.md)
@@ -165,7 +177,9 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - [Developer Onboarding](docs/developer-onboarding.md)
 - [AI Governance Notes](docs/ai-governance.md)
 - [macOS App and Packaging](docs/macos-app.md)
-- [v3.6 Implementation Plan](docs/v3.6-implementation-plan.md)
+- [v3.7 Release Notes](releases/RELEASE_NOTES_v3.7.0.md)
+- [3.7.2 Delivery Review Evidence](docs/delivery-review-evidence.md)
+- [v3.6-to-v3.7 Implementation Record](docs/v3.6-implementation-plan.md)
 - [Troubleshooting / FAQ](docs/faq.md)
 - [Translation Notes](docs/translation.md)
 
