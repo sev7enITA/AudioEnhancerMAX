@@ -1,7 +1,7 @@
 # AudioEnhancerMAX 3.7.0
 
 Release date: 20 August 2026
-Mac App Store candidate build: 3.7.2
+Mac App Store candidate build: 3.7.4
 Target: Apple Silicon, macOS 13 or later
 
 ## Release headline
@@ -85,11 +85,12 @@ Quality indicators are diagnostic summaries, not laboratory certification or an 
 
 ## Packaging changes
 
-- Marketing version is `3.7.0`; the current App Store candidate is build `3.7.2`.
+- Marketing version is `3.7.0`; the current App Store candidate is build `3.7.4`.
 - The App Store package targets native arm64 and macOS 13 or later.
 - Faster-Whisper Medium and Silero VAD assets are bundled for local transcription without runtime model download.
 - PyAV provides embedded FFmpeg libraries for media decoding and encoding in the Store distribution.
 - The package contains the privacy manifest, sandbox entitlements, third-party notices and component licenses.
+- Build 3.7.4 embeds the explicit Mac App Store Connect provisioning profile required for TestFlight and retains a single regular privacy manifest under `Contents/Resources`.
 - Demucs source separation and Kokoro voice cloning are not exposed in the Mac App Store build when their required runtime assets are unavailable.
 - The separate SourceForge DMG is signed with Developer ID Application, uses hardened runtime and secure timestamps, and was accepted by Apple notarization and stapled on 20 August 2026.
 - Gatekeeper accepts both the stapled DMG and its enclosed app as `Notarized Developer ID`; notarization submission ID: `0dfffff8-8d97-4fcf-bb3b-01f5dbeda7e2`.
@@ -106,7 +107,7 @@ Quality indicators are diagnostic summaries, not laboratory certification or an 
 
 ## Validation evidence
 
-The final 3.7.2 source is covered by 26 automated tests, including delivery-threshold, silence, clipping, SHA-256 manifest, source opt-in, ZIP path-safety, and 16 kHz AutoEQ signal-preservation checks. The signed 3.7.2 package passed signature, payload, native launch, local processing, Delivery Compliance, blind A/B evidence, Project Capsule, local Faster-Whisper transcription, and native lifecycle validation. On 20 August 2026 the direct-download DMG additionally passed Apple notarization, stapling, Gatekeeper assessment, deep signature verification, arm64 inspection, bundle-identifier verification, and version verification. Transporter processing, TestFlight installation, and Apple review remain separate Apple-controlled gates for the Mac App Store package.
+The final 3.7.4 source is covered by 26 automated tests, including delivery-threshold, silence, clipping, SHA-256 manifest, source opt-in, ZIP path-safety, and 16 kHz AutoEQ signal-preservation checks. The shared signed application payload passed native launch, local processing, Delivery Compliance, blind A/B evidence, Project Capsule, local Faster-Whisper transcription, and native lifecycle validation; the final 3.7.4 PKG then passed installer signature, deep payload signature, embedded-profile, bundle/version and privacy-manifest checks before Transporter delivered it without an issue or warning on 20 August 2026 at 22:13 CEST. The direct-download DMG additionally passed Apple notarization, stapling, Gatekeeper assessment, deep signature verification, arm64 inspection, bundle-identifier verification, and version verification. App Store Connect processing, TestFlight installation, and Apple review remain separate Apple-controlled gates.
 
 See:
 

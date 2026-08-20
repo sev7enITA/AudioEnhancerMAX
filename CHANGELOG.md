@@ -4,6 +4,32 @@ All notable changes to AudioEnhancerMAX are documented here.
 
 ## Unreleased
 
+### App Store candidate build 3.7.4 - 2026-08-20
+
+#### Fixed
+
+- Added the provisioning profile's explicit application identifier and Apple developer team identifier to the main application signature.
+- Added a build-time assertion that rejects any future Mac App Store package whose signed main bundle is missing either identifier.
+
+#### Validation
+
+- Build 3.7.3 reached App Store Connect but exposed warning 90886 because the identifiers were present in its profile but absent from its code-signature entitlements.
+- Build 3.7.4 supersedes 3.7.3 for TestFlight and App Review.
+- Transporter delivered build 3.7.4 to App Store Connect on 20 August 2026 at 22:13 CEST with no delivery issue or warning.
+
+### App Store candidate build 3.7.3 - 2026-08-20
+
+#### Fixed
+
+- Embedded the explicit Mac App Store Connect provisioning profile required for TestFlight eligibility.
+- Removed PyInstaller's mirrored `Contents/Frameworks/PrivacyInfo.xcprivacy` symlink so the package exposes only the canonical regular privacy manifest under `Contents/Resources`.
+- Made reused App Store bundles adopt the requested marketing and internal build versions before their complete nested re-signing.
+
+#### Validation
+
+- The 3.7.3 PKG passed installer-signature, deep code-signature, bundle/version, embedded-profile, privacy-manifest and payload checks before Transporter delivery.
+- App Store Connect profile scope was verified for `BR9VY292BU.com.fabriziodegni.audioenhancermax`, macOS, and the selected Mac App Distribution certificate.
+
 ### App Store candidate build 3.7.2 — 2026-08-15
 
 #### Added

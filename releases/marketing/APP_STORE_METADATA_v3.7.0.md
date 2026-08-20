@@ -1,7 +1,7 @@
 # AudioEnhancerMAX 3.7.0 — App Store Metadata
 
 Prepared: 15 August 2026
-Candidate build: 3.7.2
+Candidate build: 3.7.4
 
 All fields use factual, non-comparative wording. Recheck character/byte limits in App Store Connect before submission.
 
@@ -85,7 +85,7 @@ Results depend on the source recording. Review important audio and transcripts b
 
 ## Review Notes summary
 
-Use the dedicated `releases/app-review/APP_REVIEW_NOTES_3.7.0_BUILD_3.7.2.md` after the final package validation. It should point the reviewer to:
+Use the dedicated `releases/app-review/APP_REVIEW_NOTES_3.7.0_BUILD_3.7.4.md` after the final package validation. It should point the reviewer to:
 
 1. native launch and About;
 2. developer-owned sample upload through the Open panel;

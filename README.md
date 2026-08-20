@@ -178,7 +178,7 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - [AI Governance Notes](docs/ai-governance.md)
 - [macOS App and Packaging](docs/macos-app.md)
 - [v3.7 Release Notes](releases/RELEASE_NOTES_v3.7.0.md)
-- [3.7.2 Delivery Review Evidence](docs/delivery-review-evidence.md)
+- [3.7.4 Delivery Review Evidence](docs/delivery-review-evidence.md)
 - [v3.6-to-v3.7 Implementation Record](docs/v3.6-implementation-plan.md)
 - [Troubleshooting / FAQ](docs/faq.md)
 - [Translation Notes](docs/translation.md)

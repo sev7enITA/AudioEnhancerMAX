@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="${0:A:h:h}"
 VERSION="${AEMAX_MARKETING_VERSION:-3.7.0}"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.7.2}"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.7.4}"
 BUILD_DIR="${ROOT}/build/macos-app-store"
 DIST_DIR="${ROOT}/dist/macos-app-store"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
@@ -180,12 +180,34 @@ PY
     UNSIGNED_APP="${BUILD_DIR}/dist/AudioEnhancerMAX.app"
     ditto --norsrc --noextattr --noqtn --noacl "${UNSIGNED_APP}" "${SIGNED_APP}"
 
-    if [[ -n "${PROVISIONING_PROFILE}" ]]; then
-        cp "${PROVISIONING_PROFILE}" "${SIGNED_APP}/Contents/embedded.provisionprofile"
-    fi
+fi
+
+# A reused PyInstaller bundle may come from an earlier internal build. Stamp
+# the requested version before signing so App Store Connect receives a unique
+# CFBundleVersion, and embed the distribution profile in both build paths.
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "${SIGNED_APP}/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" "${SIGNED_APP}/Contents/Info.plist"
+if [[ -n "${PROVISIONING_PROFILE}" ]]; then
+    cp "${PROVISIONING_PROFILE}" "${SIGNED_APP}/Contents/embedded.provisionprofile"
+else
+    rm -f "${SIGNED_APP}/Contents/embedded.provisionprofile"
 fi
 
 cp "${PRIVACY_MANIFEST}" "${SIGNED_APP}/Contents/Resources/PrivacyInfo.xcprivacy"
+
+# PyInstaller mirrors top-level data files into Contents/Frameworks with a
+# symlink back to Contents/Resources. App Store Connect requires every
+# PrivacyInfo.xcprivacy it encounters to be a regular file, so retain only the
+# canonical Resources copy and reject any unexpected directory at this path.
+FRAMEWORK_PRIVACY_MANIFEST="${SIGNED_APP}/Contents/Frameworks/PrivacyInfo.xcprivacy"
+if [[ -L "${FRAMEWORK_PRIVACY_MANIFEST}" || -f "${FRAMEWORK_PRIVACY_MANIFEST}" ]]; then
+    rm -f "${FRAMEWORK_PRIVACY_MANIFEST}"
+elif [[ -e "${FRAMEWORK_PRIVACY_MANIFEST}" ]]; then
+    print -u2 "Invalid privacy manifest path is not a removable file or symlink: ${FRAMEWORK_PRIVACY_MANIFEST}"
+    exit 1
+fi
+[[ -f "${SIGNED_APP}/Contents/Resources/PrivacyInfo.xcprivacy" ]]
+[[ ! -e "${FRAMEWORK_PRIVACY_MANIFEST}" && ! -L "${FRAMEWORK_PRIVACY_MANIFEST}" ]]
 
 if [[ "${SKIP_NESTED_SIGN}" == "1" ]]; then
     print "Reusing existing nested code signatures"
@@ -195,6 +217,17 @@ fi
 xattr -cr "${SIGNED_APP}"
 codesign --force --sign "${APP_IDENTITY}" --timestamp --entitlements "${APP_ENTITLEMENTS}" "${SIGNED_APP}"
 codesign --verify --deep --strict --verbose=2 "${SIGNED_APP}"
+
+SIGNED_ENTITLEMENTS="${SIGNING_ROOT}/signed-main-entitlements.plist"
+codesign -d --entitlements :- "${SIGNED_APP}" > "${SIGNED_ENTITLEMENTS}" 2>/dev/null
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :com.apple.application-identifier' "${SIGNED_ENTITLEMENTS}")" == "BR9VY292BU.com.fabriziodegni.audioenhancermax" ]] || {
+    print -u2 "Signed app is missing the required Mac App Store application identifier"
+    exit 1
+}
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :com.apple.developer.team-identifier' "${SIGNED_ENTITLEMENTS}")" == "BR9VY292BU" ]] || {
+    print -u2 "Signed app is missing the required Apple developer team identifier"
+    exit 1
+}
 
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${SIGNED_APP}/Contents/Info.plist")" == "${VERSION}" ]]
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "${SIGNED_APP}/Contents/Info.plist")" == "${BUILD_NUMBER}" ]]

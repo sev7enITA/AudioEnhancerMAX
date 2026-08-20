@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pkg-size", required=True)
     parser.add_argument("--signed-at", required=True)
     parser.add_argument("--marketing-version", default="3.7.0")
-    parser.add_argument("--build-number", default="3.7.2")
+    parser.add_argument("--build-number", default="3.7.4")
     parser.add_argument(
         "--review-date",
         default=date.today().strftime("%d %B %Y").lstrip("0"),
@@ -191,7 +191,9 @@ def main() -> None:
         ("PASS", "Sandbox data, logs, locks, uploads, outputs, and settings are stored under the app container."),
     ], styles))
 
-    story += [p("2. Signature and package evidence", styles, "Section")]
+    # Keep the package evidence table clear of the footer. The preceding
+    # rejection-remediation table is intentionally dense and fills page two.
+    story += [PageBreak(), p("2. Signature and package evidence", styles, "Section")]
     signature_rows = [
         [p("Evidence", styles, "Subsection"), p("Result", styles, "Subsection")],
         [p("Application identity", styles), p("3rd Party Mac Developer Application: Fabrizio Degni (BR9VY292BU)", styles)],
@@ -267,7 +269,7 @@ def main() -> None:
     story.append(status_table([
         ("ACTION", "Record an unedited three-to-five-minute workflow on a physical Apple silicon Mac running the latest public macOS release. Show About This Mac without the serial number, native-window launch, upload, DSP, A/B comparison, WAV/MP3/FLAC export, offline transcription, and quit."),
         ("ACTION", "Attach the recording, AudioEnhancerMAX-review-sample.wav, and this dossier under App Review Information. Paste the prepared Review Notes and include the exact public macOS build number used for the recording."),
-        ("ACTION", f"Upload build {args.build_number} with Transporter, wait for processing, validate it through TestFlight, select it in the version record, then reply in Resolution Center referencing Guidelines 2.1 and 2.4.5."),
+        ("ACTION", f"Confirm build {args.build_number} has completed App Store Connect processing, validate it through TestFlight, select it in the version record, then reply in Resolution Center referencing Guidelines 2.1 and 2.4.5."),
     ], styles))
 
     story += [p("9. Apple and component references", styles, "Section")]

@@ -2,7 +2,7 @@
 
 Status date: 15 August 2026
 
-This is the source of truth for launch copy. A public claim is approved only when the corresponding evidence is present in the 3.7 source and, for packaged-app claims, repeated on the final signed build 3.7.2.
+This is the source of truth for launch copy. A public claim is approved only when the corresponding evidence is present in the 3.7 source and, for packaged-app claims, repeated on the final signed build 3.7.4.
 
 ## Approved product claims
 
@@ -46,7 +46,7 @@ This is the source of truth for launch copy. A public claim is approved only whe
 
 ## Evidence rules for campaign assets
 
-1. Screenshots must come from the 3.7.2 packaged app, not the source server.
+1. Screenshots must come from the 3.7.4 packaged app, not the source server.
 2. Demo audio must be owned or created by the developer, and the unprocessed input must be retained.
 3. A/B examples must use level-matched playback where possible and identify the selected profile/options.
 4. Performance numbers may be published only with Mac model, OS build, input duration/format, selected pipeline and sample count.

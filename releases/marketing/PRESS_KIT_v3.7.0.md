@@ -24,7 +24,7 @@ The release is designed around a simple principle: automation may propose, but t
 
 ## Verified product facts
 
-- Version: 3.7.0; candidate App Store build: 3.7.2.
+- Version: 3.7.0; candidate App Store build: 3.7.4.
 - Target package: native arm64, macOS 13 or later.
 - License: MIT.
 - Five fixed delivery profiles.

@@ -1,6 +1,6 @@
-# AudioEnhancerMAX 3.7.2 — Delivery Review Evidence
+# AudioEnhancerMAX 3.7.4 — Delivery Review Evidence
 
-Status: implemented and source-tested on 15 August 2026. Final signed-package validation is recorded separately.
+Status: implemented, source-tested, packaged and signed as build 3.7.4 on 20 August 2026. Apple-controlled processing and review remain separate gates.
 
 ## Wave 1 — Delivery Compliance Lab
 
