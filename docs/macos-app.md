@@ -44,4 +44,14 @@ The build produces a DMG containing the signed application and keeps the unpacka
 - `dist/macos/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg`
 - a SHA-256 checksum alongside the DMG
 
-The local script applies ad-hoc signing so the bundle can be verified after packaging. Public distribution should use a Developer ID Application certificate and Apple notarization. Ad-hoc signing is not equivalent to notarization, and macOS Gatekeeper may still warn on first launch.
+The direct-distribution build requires an installed `Developer ID Application` identity with its private key. It signs every nested Mach-O component and the application with hardened runtime and a secure timestamp, then signs the DMG.
+
+For a public, notarized build, first store Apple notarization credentials in the macOS Keychain with `notarytool`, then run:
+
+```bash
+AEMAX_NOTARY_PROFILE="AudioEnhancerMAX-notary" ./scripts/build_macos_app.sh
+```
+
+When `AEMAX_NOTARY_PROFILE` is set, the script submits the signed DMG to Apple, waits for acceptance, staples and validates the ticket, checks the result with Gatekeeper, and only then writes the final SHA-256 sidecar. Without that variable the output is Developer ID signed but intentionally not submitted for notarization.
+
+The published 3.7.0 direct-download DMG was accepted by Apple notarization on 20 August 2026, stapled successfully, and accepted by Gatekeeper as `Notarized Developer ID`.

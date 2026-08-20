@@ -14,10 +14,16 @@ Extract `AudioEnhancerMAX-Website-3.7.0-Hostinger.zip` into the public directory
 
 ## SourceForge
 
-Upload:
+Create the `v3.7.0` folder and upload these public files:
 
+- `AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg`
+- `AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg.sha256`
+- `AudioEnhancerMAX-Worker-v1.2.0-debug.apk`
+- `AudioEnhancerMAX-Worker-v1.2.0-debug.apk.sha256`
 - `AudioEnhancerMAX-3.7.0-SourceForge-source.zip`
 - `RELEASE_NOTES_v3.7.0.md`
 - `CHECKSUMS_v3.7.2.txt`
 
-Do not upload the Mac App Store PKG. A direct-install Mac binary must first be signed with Developer ID Application, packaged, notarized, and stapled as a separate artifact.
+The DMG is the separate direct-download build signed with `Developer ID Application: Fabrizio Degni (BR9VY292BU)`, accepted by Apple notarization, and stapled. The Android worker is a development/debug companion and must remain visibly labelled **debug**; it is not a production Play Store APK.
+
+Do not upload the Mac App Store PKG to SourceForge. Keep the DMG and PKG channel-specific even though both report version 3.7.0 (build 3.7.2).
