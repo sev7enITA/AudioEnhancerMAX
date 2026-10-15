@@ -1,4 +1,4 @@
-# AudioEnhancerMAX 3.7.0 — App Store Metadata
+# AudioEnhancerMAX 3.7.0: App Store Metadata
 
 Updated: 28 August 2026
 Candidate build: 3.7.5
@@ -11,19 +11,19 @@ All fields use factual, non-comparative wording. Recheck character/byte limits i
 AudioEnhancerMAX
 ```
 
-## Subtitle — maximum 30 characters
+## Subtitle: maximum 30 characters
 
 ```text
 Local audio, reviewed by you
 ```
 
-## Promotional text — maximum 170 characters where available
+## Promotional text: maximum 170 characters where available
 
 ```text
 New in 3.7: reviewable speech editing, local delivery checks, blind A/B listening, SHA-256 evidence, and portable project capsules.
 ```
 
-## Keywords — maximum 100 bytes
+## Keywords: maximum 100 bytes
 
 ```text
 audio,enhance,podcast,transcribe,cleanup,voice,editor,local,whisper,loudness,recording
@@ -31,14 +31,14 @@ audio,enhance,podcast,transcribe,cleanup,voice,editor,local,whisper,loudness,rec
 
 Do not add competitor names, unrelated trending terms, prices or unverifiable superlatives.
 
-## Description — English
+## Description: English
 
 ```text
 AudioEnhancerMAX is a local-first audio production workspace for podcasters, interviewers, journalists, educators, researchers, and voice creators.
 
 REVIEW BEFORE YOU RENDER
 
-Smart Enhance measures common recording risks—including level, estimated noise, clipping, silence, bandwidth, DC offset, and possible mains hum—then proposes deterministic processing settings. The analysis runs locally and does not require a language model to control DSP.
+Smart Enhance measures common recording risks, including level, estimated noise, clipping, silence, bandwidth, DC offset, and possible mains hum, then proposes deterministic processing settings. The analysis runs locally and does not require a language model to control DSP.
 
 EDIT SPEECH NON-DESTRUCTIVELY
 
@@ -100,34 +100,34 @@ Use the dedicated `releases/app-review/APP_REVIEW_NOTES_3.7.0_BUILD_3.7.5.md` af
 
 ## Screenshot captions
 
-1. **Diagnose before processing** — Local measurements explain the selected Smart Enhance profile.
-2. **Review every speech edit** — Transcript-linked cut and mute decisions preserve the source.
-3. **Undo, redo, then render** — Revisioned decisions keep the workflow reversible.
-4. **Choose the delivery target** — Five fixed profiles make format and loudness explicit.
-5. **See what actually ran** — Local processing reports disclose engines, options, warnings, and privacy state.
-6. **Control every optional path** — External services, local Ollama, and trusted-LAN processing are independent.
+1. **Diagnose before processing**: Local measurements explain the selected Smart Enhance profile.
+2. **Review every speech edit**: Transcript-linked cut and mute decisions preserve the source.
+3. **Undo, redo, then render**: Revisioned decisions keep the workflow reversible.
+4. **Choose the delivery target**: Five fixed profiles make format and loudness explicit.
+5. **See what actually ran**: Local processing reports disclose engines, options, warnings, and privacy state.
+6. **Control every optional path**: External services, local Ollama, and trusted-LAN processing are independent.
 
 ## Localizzazione italiana
 
-### Sottotitolo — massimo 30 caratteri
+### Sottotitolo: massimo 30 caratteri
 
 ```text
 Audio locale, sotto controllo
 ```
 
-### Testo promozionale — massimo 170 caratteri dove disponibile
+### Testo promozionale: massimo 170 caratteri dove disponibile
 
 ```text
 Novità 3.7: Smart Enhance deterministico, editing da trascrizione, cinque profili di consegna, report locali e controlli privacy espliciti.
 ```
 
-### Keyword — massimo 100 byte
+### Keyword: massimo 100 byte
 
 ```text
 audio,migliora,podcast,trascrivi,pulizia,voce,editor,locale,whisper,loudness,registrazione
 ```
 
-### Descrizione — italiano
+### Descrizione: italiano
 
 ```text
 AudioEnhancerMAX è uno spazio di produzione audio local-first per podcaster, intervistatori, giornalisti, docenti, ricercatori e creator vocali.
@@ -157,7 +157,7 @@ I risultati audio e l’accuratezza della trascrizione dipendono dalla sorgente.
 Richiede un Mac Apple silicon con macOS 13 o successivo.
 ```
 
-### Novità della versione 3.7 — italiano
+### Novità della versione 3.7: italiano
 
 ```text
 AudioEnhancerMAX 3.7 introduce un flusso verificabile dalla diagnosi all’esportazione.

@@ -1,4 +1,4 @@
-# Current 3.8.0 direct preview
+# Current 3.8.1 direct preview
 
 The new Developer ID DMG is awaiting Apple notarization because the team must accept an updated agreement (HTTP 403 on 15 October 2026). The notarized 3.7.0 remains the stable Mac download. The 3.8 source and build scripts require Python 3.11+. Direct builds use optional/runtime-managed transcription models; App Store builds have a separate bundled-model workflow. No new App Store approval is claimed.
 

@@ -1,4 +1,4 @@
-# TestFlight e nuova submission — AudioEnhancerMAX 3.7.0 build 3.7.1
+# TestFlight e nuova submission: AudioEnhancerMAX 3.7.0 build 3.7.1
 
 1. In App Store Connect crea o seleziona la versione macOS `3.7.0`.
 2. Apri Transporter e accedi con l’Apple ID associato ad App Store Connect.

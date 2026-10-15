@@ -1,4 +1,4 @@
-# AudioEnhancerMAX 3.7.0 (Build 3.7.4) — App Review Notes
+# AudioEnhancerMAX 3.7.0 (Build 3.7.4): App Review Notes
 
 ## Access and typical workflow
 

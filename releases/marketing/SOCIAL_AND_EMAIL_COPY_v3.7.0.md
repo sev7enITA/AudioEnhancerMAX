@@ -1,4 +1,4 @@
-# AudioEnhancerMAX 3.7.0 — Social and Email Copy
+# AudioEnhancerMAX 3.7.0: Social and Email Copy
 
 > For publication after 28 August 2026, use the updated and status-qualified
 > copy in `COMUNICATI_STAMPA_2026-08-28_IT.md` or
@@ -8,7 +8,7 @@
 
 Replace `[LIVE URL]` only after the release channel is actually live.
 
-## Copy italiana — post di lancio
+## Copy italiana: post di lancio
 
 ```text
 AudioEnhancerMAX 3.7 nasce da un principio: l’automazione può proporre, ma sei tu a decidere cosa entra nell’output.
@@ -18,7 +18,7 @@ Smart Enhance deterministico, editing collegato alla trascrizione, controlli di 
 [LIVE URL]
 ```
 
-## Copy italiana — LinkedIn
+## Copy italiana: LinkedIn
 
 ```text
 Molti strumenti audio chiedono di fidarsi del risultato. Con AudioEnhancerMAX 3.7 ho voluto rendere verificabile l’intero flusso.
@@ -32,12 +32,12 @@ AudioEnhancerMAX 3.7: ascolta il cambiamento, verifica ogni decisione.
 [LIVE URL]
 ```
 
-## Email italiana — lancio
+## Email italiana: lancio
 
 Oggetto:
 
 ```text
-AudioEnhancerMAX 3.7 — ascolta il cambiamento, verifica ogni decisione
+AudioEnhancerMAX 3.7: ascolta il cambiamento, verifica ogni decisione
 ```
 
 Corpo:
@@ -58,19 +58,19 @@ Risultati audio e trascrizioni dipendono sempre dalla sorgente: gli output impor
 Note di rilascio: [LIVE URL]
 ```
 
-## Launch post — compact
+## Launch post: compact
 
 ```text
 AudioEnhancerMAX 3.7 is built around one idea: automation may propose, but you review what becomes part of the output.
 
-New: deterministic Smart Enhance, transcript-linked editing, local delivery checks, blind A/B listening, and SHA-256 Project Capsules—all inside a native Mac window.
+New: deterministic Smart Enhance, transcript-linked editing, local delivery checks, blind A/B listening, and SHA-256 Project Capsules, all inside a native Mac window.
 
 Build 3.7.5 fixes the macOS filter crash by removing the packaged librosa/Numba/llvmlite JIT path. The notarized app completed a 12-step filter chain without crashing and preserved the input duration.
 
 [LIVE URL]
 ```
 
-## Launch post — technical
+## Launch post: technical
 
 ```text
 AudioEnhancerMAX 3.7 turns audio cleanup into a traceable workflow:
@@ -84,7 +84,7 @@ AudioEnhancerMAX 3.7 turns audio cleanup into a traceable workflow:
 • randomized blind A/B and checksum-backed Project Capsule export
 • loopback-only native Mac shell
 
-No “magic quality” claims—just visible decisions and evidence.
+No “magic quality” claims, just visible decisions and evidence.
 
 [LIVE URL]
 ```
@@ -134,7 +134,7 @@ Subject options:
 ```text
 AudioEnhancerMAX 3.7: every edit becomes reviewable
 A new local-first workflow is coming to AudioEnhancerMAX
-From audio diagnosis to export—with an audit trail
+From audio diagnosis to export, with an audit trail
 ```
 
 Body:
@@ -154,7 +154,7 @@ I’ll share the verified build, release notes, and a complete evidence matrix w
 Subject:
 
 ```text
-AudioEnhancerMAX 3.7 — hear the change, see every decision
+AudioEnhancerMAX 3.7: hear the change, see every decision
 ```
 
 Body:
@@ -170,7 +170,7 @@ What changed:
 • Per-job reports disclose selected options, actual engines, warnings, privacy state, and approved edits.
 • The Mac app runs in an AudioEnhancerMAX-owned native window and keeps its private service on this Mac.
 
-Audio and transcript results still depend on the source material, so important outputs should be reviewed. That boundary is part of the product—not hidden in the small print.
+Audio and transcript results still depend on the source material, so important outputs should be reviewed. That boundary is part of the product, not hidden in the small print.
 
 Release notes: [LIVE URL]
 ```

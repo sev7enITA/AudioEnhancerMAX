@@ -1,4 +1,4 @@
-# 📱 AudioEnhancerMAX — Android Edge Worker
+# 📱 AudioEnhancerMAX: Android Edge Worker
 
 **App nativa Android per il calcolo distribuito con AudioEnhancerMAX.**
 
@@ -6,11 +6,11 @@ Questa app trasforma il tuo smartphone Android in un **nodo di calcolo** per la 
 
 ## ✨ Features
 
-- 🎵 **12 filtri DSP** — Noise reduction, studio sound, EQ, compressor, normalizer, e altro
-- 🌐 **Auto-discovery** — Il Mac master trova automaticamente il telefono sulla rete LAN
-- 📡 **HTTP Server integrato** — API REST compatibile al 100% con il cluster manager
-- 🔋 **Foreground Service** — Continua a funzionare in background con notifica persistente
-- 🎨 **Material 3 Dark UI** — Interfaccia moderna con status in tempo reale
+- 🎵 **12 filtri DSP**: Noise reduction, studio sound, EQ, compressor, normalizer, e altro
+- 🌐 **Auto-discovery**: Il Mac master trova automaticamente il telefono sulla rete LAN
+- 📡 **HTTP Server integrato**: API REST compatibile al 100% con il cluster manager
+- 🔋 **Foreground Service**: Continua a funzionare in background con notifica persistente
+- 🎨 **Material 3 Dark UI**: Interfaccia moderna con status in tempo reale
 
 ## 📦 Installazione
 
@@ -40,7 +40,7 @@ L'APK si troverà in `app/build/outputs/apk/debug/app-debug.apk`.
 ## 🚀 Utilizzo
 
 1. **Avvia l'app** sul tuo smartphone Android
-2. **Premi START WORKER** — il server HTTP si avvia sulla porta 8877
+2. **Premi START WORKER**: il server HTTP si avvia sulla porta 8877
 3. **Connetti alla stessa rete Wi-Fi** del Mac con AudioEnhancerMAX
 4. Il worker verrà **scoperto automaticamente** tramite UDP broadcast
 5. Oppure aggiungilo manualmente dalla dashboard inserendo l'IP del telefono
@@ -97,4 +97,4 @@ L'APK si troverà in `app/build/outputs/apk/debug/app-debug.apk`.
 
 ## 📄 License
 
-MIT — Parte del progetto [AudioEnhancerMAX](../)
+MIT: Parte del progetto [AudioEnhancerMAX](../)

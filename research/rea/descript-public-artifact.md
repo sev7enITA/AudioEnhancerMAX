@@ -27,21 +27,21 @@ REA 6.5.0 ha analizzato esclusivamente i due worklet estratti. Evidenza: `ev_e1e
 
 ## Osservazioni
 
-**DS-001 — Noise gate convenzionale.** Il worklet calcola l'RMS del canale e lo confronta con una soglia. Gestisce cinque stati: Closed, Opening, Open, Holding e Closing. Una funzione applica rampe lineari di guadagno durante apertura e chiusura. Questa evidenza descrive un gate; non dimostra un denoiser neurale, il funzionamento di Studio Sound o la qualità percepita.
+**DS-001: Noise gate convenzionale.** Il worklet calcola l'RMS del canale e lo confronta con una soglia. Gestisce cinque stati: Closed, Opening, Open, Holding e Closing. Una funzione applica rampe lineari di guadagno durante apertura e chiusura. Questa evidenza descrive un gate; non dimostra un denoiser neurale, il funzionamento di Studio Sound o la qualità percepita.
 
-**DS-002 — Controlli e assunzione sul campionamento.** I descrittori espongono threshold, attack, hold e release, tutti con automazione `k-rate`. I valori predefiniti sono 0,1, 1 ms, 1 ms e 100 ms. I rispettivi intervalli sono 0–1, 0,1–10 ms, 0,1–100 ms e 50–500 ms. Il metodo di elaborazione converte i tempi in campioni usando la costante `44100`; il messaggio GainReduction restituisce lo stato del gate. Il collegamento al grafo principale e gli eventuali ricampionamenti non sono stati analizzati, quindi la costante non basta a dimostrare un difetto.
+**DS-002: Controlli e assunzione sul campionamento.** I descrittori espongono threshold, attack, hold e release, tutti con automazione `k-rate`. I valori predefiniti sono 0,1, 1 ms, 1 ms e 100 ms. I rispettivi intervalli sono 0-1, 0,1-10 ms, 0,1-100 ms e 50-500 ms. Il metodo di elaborazione converte i tempi in campioni usando la costante `44100`; il messaggio GainReduction restituisce lo stato del gate. Il collegamento al grafo principale e gli eventuali ricampionamenti non sono stati analizzati, quindi la costante non basta a dimostrare un difetto.
 
-**DS-003 — Acquisizione per la trascrizione.** Il worklet `transcription-processor` legge il primo canale del primo ingresso e converte campioni float in PCM16 little-endian. Accumula buffer da 131.072 byte, li trasferisce con `timeOffset` e `isDone`, emette `first-frame` e `no-data`, e invia un buffer quando riceve `stop`. Ogni invio incrementa l'offset temporale di `131072 / sampleRate / 2`. Il codice riguarda acquisizione e trasporto dei buffer: il riconoscimento vocale, la destinazione remota e la gestione a valle della coda parzialmente riempita restano sconosciuti.
+**DS-003: Acquisizione per la trascrizione.** Il worklet `transcription-processor` legge il primo canale del primo ingresso e converte campioni float in PCM16 little-endian. Accumula buffer da 131.072 byte, li trasferisce con `timeOffset` e `isDone`, emette `first-frame` e `no-data`, e invia un buffer quando riceve `stop`. Ogni invio incrementa l'offset temporale di `131072 / sampleRate / 2`. Il codice riguarda acquisizione e trasporto dei buffer: il riconoscimento vocale, la destinazione remota e la gestione a valle della coda parzialmente riempita restano sconosciuti.
 
 I riferimenti sotto indicano offset a base zero, con fine esclusa, all'interno dei file estratti originali. La minificazione concentra il codice in poche righe.
 
 | Evidenza | File | Riga | Byte |
 |---|---|---:|---|
-| RMS, rampe, enum | `NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js` | 2 | 10.863–11.498 |
-| Registrazione e stati | stesso file | 2 | 95.129–96.384 |
-| Messaggi e costante 44100 | stesso file | 2 | 95.287–95.595 |
-| Parametri | stesso file | 2 | 96.351–96.713 |
-| Buffer per trascrizione | `TranscriptionAudioProcessor.worklet.54bd93cadb52c21f0212.js` | 1 | 19–994 |
+| RMS, rampe, enum | `NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js` | 2 | 10.863-11.498 |
+| Registrazione e stati | stesso file | 2 | 95.129-96.384 |
+| Messaggi e costante 44100 | stesso file | 2 | 95.287-95.595 |
+| Parametri | stesso file | 2 | 96.351-96.713 |
+| Buffer per trascrizione | `TranscriptionAudioProcessor.worklet.54bd93cadb52c21f0212.js` | 1 | 19-994 |
 
 Gli offset assoluti dei membri nell'ASAR, gli hash dei derivati e i percorsi delle evidenze REA sono nel [registro strutturato](descript-findings-2026-10-15.json).
 

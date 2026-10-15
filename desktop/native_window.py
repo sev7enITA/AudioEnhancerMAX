@@ -200,7 +200,7 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         if self is None:
             return None
         self.app_name = "AudioEnhancerMAX"
-        self.app_version = "3.8.0"
+        self.app_version = "3.8.1"
         self.build_number = "development"
         self.distribution = "direct"
         self.frontend_url = None

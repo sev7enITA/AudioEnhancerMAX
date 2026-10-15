@@ -1,8 +1,8 @@
-# AudioEnhancerMAX 3.7.4 — Delivery Review Evidence
+# AudioEnhancerMAX 3.7.4: Delivery Review Evidence
 
 Status: implemented, source-tested, packaged and signed as build 3.7.4 on 20 August 2026. Apple-controlled processing and review remain separate gates.
 
-## Wave 1 — Delivery Compliance Lab
+## Wave 1: Delivery Compliance Lab
 
 The Lab analyzes the completed local output and reports:
 
@@ -21,7 +21,7 @@ Primary references:
 
 Implementation: `app/services/delivery_compliance.py` and `/api/compliance/*`.
 
-## Wave 2 — Evidence Chain and Project Capsule
+## Wave 2: Evidence Chain and Project Capsule
 
 Each version-2 processing report can retain SHA-256 identifiers for the source and processed artifact. The Project Capsule adds a portable `manifest.json` and packages the processed output with any available processing report, compliance result, transcript, speech EDL, and blind A/B review.
 
@@ -36,7 +36,7 @@ Privacy and safety properties:
 
 Implementation: `app/services/project_bundle.py`, report schema 2, `/api/projects/*`, and `/api/reviews/*`.
 
-## UI/UX wave — Review Deck
+## UI/UX wave: Review Deck
 
 The post-processing Review Deck unifies delivery checks, blind A/B audition, evidence inspection, and Project Capsule export. The workflow progresses through Diagnose, Process, Review, and Deliver. Target changes trigger a new local measurement; A/B mapping remains hidden until the user decides; the original-audio export control defaults to off.
 

@@ -1,4 +1,4 @@
-# AudioEnhancerMAX — Technology & State-of-the-Art Audit
+# AudioEnhancerMAX: Technology & State-of-the-Art Audit
 
 **Data del report:** 14 agosto 2026
 **Prodotto esaminato:** AudioEnhancerMAX 3.5.2, build Mac App Store 3.5.5
@@ -122,7 +122,7 @@ Per AudioEnhancerMAX la prima prova dovrebbe essere Qwen3-TTS 0.6B quantizzato, 
 
 ### 2.6 Smart Mode e SLM
 
-Il codice preferisce Gemma 4 via Ollama, ma non invia l'audio al modello. Calcola una manciata di feature con librosa—RMS, centroide, banda, tempo, ZCR e rapporto di silenzio—e chiede al modello testuale di classificarle o scegliere valori di intensità.
+Il codice preferisce Gemma 4 via Ollama, ma non invia l'audio al modello. Calcola una manciata di feature con librosa (RMS, centroide, banda, tempo, ZCR e rapporto di silenzio) e chiede al modello testuale di classificarle o scegliere valori di intensità.
 
 Gemma 4 è moderno; l'integrazione non lo è. Un LLM non aggiunge informazione acustica a sei statistiche e può produrre confidenze non calibrate. Inoltre Ollama è un'app esterna e la build Store deve restare pienamente funzionale senza di essa.
 
@@ -191,7 +191,7 @@ Reddit è stato usato come fonte di segnali e problemi reali, non come prova sci
 - Le community Apple Silicon stanno convergendo su Qwen3-ASR/TTS, MLX/Core ML e pipeline Swift native; esempi includono discussioni su [speech-swift](https://www.reddit.com/r/iOSProgramming/comments/1s5v29h/open_source_swift_library_for_ondevice_speech_ai/) e [Qwen3-ASR Swift](https://www.reddit.com/r/Qwen_AI/comments/1r3ixmk/i_opensourced_qwen3asrswift_native_ondevice_asr/).
 - I test reali di diarizzazione continuano a segnalare errori con overlap e speaker emotivi anche nei modelli moderni; [Community-1 migliora 3.1 ma non risolve tutto](https://www.reddit.com/r/LocalLLaMA/comments/1qieb5n/best_diarization_model/).
 - I progetti emergenti come [Transcria](https://www.reddit.com/r/speechtech/comments/1unepso/transcria_yet_another_opensource_transcription/) combinano preflight acustico, più backend ASR, pyannote/Sortformer e DNSMOS invece di affidarsi a un unico modello.
-- La community TTS distingue nettamente Kokoro—rapido e leggero—da modelli più espressivi/clonabili come Qwen3-TTS, CosyVoice, Fish e Chatterbox; non esiste un vincitore universale.
+- La community TTS distingue nettamente Kokoro, rapido e leggero, da modelli più espressivi/clonabili come Qwen3-TTS, CosyVoice, Fish e Chatterbox; non esiste un vincitore universale.
 - Per il denoise real-time, sviluppatori e live sound continuano a usare DeepFilterNet/RNNoise/ONNX per latenza e stabilità, mentre modelli più grandi vengono preferiti offline.
 
 Conclusione community: **backend modulari e benchmark per dominio battono la ricerca del “modello migliore” universale**.
@@ -258,7 +258,7 @@ Un nuovo backend entra nella build Store solo se:
 
 ## 8. Roadmap raccomandata
 
-### P0 — 1/2 settimane: verità del prodotto e riproducibilità
+### P0: 1/2 settimane: verità del prodotto e riproducibilità
 
 - Creare `requirements-app-store.lock` con versioni e hash reali.
 - Generare automaticamente SBOM e inventory dei modelli dal `.pkg`.
@@ -267,21 +267,21 @@ Un nuovo backend entra nella build Store solo se:
 - Eliminare dal payload Kokoro e altri moduli bloccati nello Store.
 - Aggiungere il benchmark harness e il corpus manifest.
 
-### P1 — 3/5 settimane: backend modulari
+### P1: 3/5 settimane: backend modulari
 
 - Interfacce comuni per ASR, denoise, diarizzazione, TTS e watermark.
 - Capability registry derivato dal bundle, non da flag statici.
 - Report per job con modello, versione, parametri, local/external e metriche.
 - EDL non distruttiva per filler, respiri, mouth clicks e stutter.
 
-### P2 — 6/9 settimane: bake-off tecnico
+### P2: 6/9 settimane: bake-off tecnico
 
 - ASR: Whisper Medium vs WhisperKit vs Qwen3-ASR 0.6B; Parakeet v3 come challenger.
 - Denoise: noisereduce vs DeepFilterNet vs DPDFNet vs ClearerVoice 48 kHz.
 - Diarizzazione: Community-1 vs Sortformer v2.1 vs DiariZen, dopo audit licenze.
 - Apple runtime: PyTorch/MPS vs MLX vs Core ML/ANE.
 
-### P3 — 10/12 settimane: candidati differenzianti
+### P3: 10/12 settimane: candidati differenzianti
 
 - Qwen3-TTS 0.6B italiano, locale, con consenso cloning e watermark.
 - AudioSeal per TTS generato.
@@ -321,6 +321,6 @@ Sono state privilegiate model card ufficiali, repository originali, documentazio
 
 **Aggiornamento richiesto:** questo audit va rieseguito prima di ogni major release e almeno una volta al trimestre. La classifica dei modelli deve derivare dal benchmark interno versionato, non da claim dei vendor o dal numero di stelle GitHub.
 
-## Nota di avanzamento post-audit — 14 agosto 2026
+## Nota di avanzamento post-audit: 14 agosto 2026
 
 Le prime remediation sono state implementate nel sorgente dopo l'ispezione del pacchetto firmato: capability registry derivato dai moduli realmente disponibili, Smart Enhance 2.0 deterministico, profili Conservative/Balanced/Maximum, quality report per job e Precision Speech Editor con EDL revisionata e non distruttiva. Ollama/Gemma non controlla più i parametri DSP. Questa nota descrive il sorgente successivo all'audit; le conclusioni sul `.pkg` 3.5.2 build 3.5.5 restano valide finché non viene generata e verificata una nuova build.
