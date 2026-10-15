@@ -1,4 +1,4 @@
-# AudioEnhancerMAX 3.7.0 (Build 3.7.1) — Validation Report
+# AudioEnhancerMAX 3.7.0 (Build 3.7.1): Validation Report
 
 Validation date: 14 August 2026
 
@@ -11,41 +11,41 @@ Validation date: 14 August 2026
 
 ## Package and identity
 
-- PASS — Installer signature accepted by `pkgutil --check-signature` with trusted timestamp `2026-08-14 17:25:57 +0000`.
-- PASS — Installer identity: `3rd Party Mac Developer Installer: Fabrizio Degni (BR9VY292BU)`.
-- PASS — Application identity: `3rd Party Mac Developer Application: Fabrizio Degni (BR9VY292BU)`.
-- PASS — Extracted PKG payload passed `codesign --verify --deep --strict`.
-- PASS — Marketing version 3.7.0, build 3.7.1, bundle ID `com.fabriziodegni.audioenhancermax`, native arm64 executable.
-- PASS — App Sandbox, user-selected file read/write, network client and network server entitlements are present.
-- PASS — Privacy manifest, third-party notices, Faster-Whisper Medium model and Silero VAD asset are packaged.
+- PASS: Installer signature accepted by `pkgutil --check-signature` with trusted timestamp `2026-08-14 17:25:57 +0000`.
+- PASS: Installer identity: `3rd Party Mac Developer Installer: Fabrizio Degni (BR9VY292BU)`.
+- PASS: Application identity: `3rd Party Mac Developer Application: Fabrizio Degni (BR9VY292BU)`.
+- PASS: Extracted PKG payload passed `codesign --verify --deep --strict`.
+- PASS: Marketing version 3.7.0, build 3.7.1, bundle ID `com.fabriziodegni.audioenhancermax`, native arm64 executable.
+- PASS: App Sandbox, user-selected file read/write, network client and network server entitlements are present.
+- PASS: Privacy manifest, third-party notices, Faster-Whisper Medium model and Silero VAD asset are packaged.
 
 ## Native and loopback lifecycle
 
-- PASS — The packaged process appears to macOS as `AudioEnhancerMAX`, not Python.
-- PASS — The interface runs in the native AppKit/WKWebView shell without opening an external browser.
-- PASS — `/api/health` reported AudioEnhancerMAX 3.7.0 from the extracted signed payload.
-- PASS — The embedded server listened only on `127.0.0.1` during validation.
-- PASS — Native Quit released the loopback port in 0.683 seconds; the process then exited.
-- PASS — Trusted-LAN processing and discovery remained disabled at launch.
+- PASS: The packaged process appears to macOS as `AudioEnhancerMAX`, not Python.
+- PASS: The interface runs in the native AppKit/WKWebView shell without opening an external browser.
+- PASS: `/api/health` reported AudioEnhancerMAX 3.7.0 from the extracted signed payload.
+- PASS: The embedded server listened only on `127.0.0.1` during validation.
+- PASS: Native Quit released the loopback port in 0.683 seconds; the process then exited.
+- PASS: Trusted-LAN processing and discovery remained disabled at launch.
 
 ## Functional validation
 
-- PASS — 19 automated unit tests cover deterministic tuning, capability fallback, output profiles, processing reports, runtime privacy, desktop sandbox paths, revisioned speech editing and trusted-LAN opt-in defaults.
-- PASS — Review WAV uploaded and decoded as 16 kHz mono PCM from the signed PKG payload.
-- PASS — Lossless Archive profile exported FLAC; the result decoded successfully as FLAC, 16 kHz, mono.
-- PASS — Auto EQ and loudness normalization completed; WAV, MP3 and FLAC downloads each decoded successfully as 16 kHz mono audio.
-- PASS — Processing report recorded app version 3.7.0, archive profile, FLAC format, local processing and no external-service use by the job.
-- PASS — Bundled Faster-Whisper transcription returned English text with 123 characters across two timestamped segments without a model download.
-- PASS — Runtime controls exposed independent permissions for external services, local Ollama editorial assistance and trusted-LAN processing.
-- PASS — Five output profiles were exposed: Podcast, YouTube/video, Audiobook, Lossless archive and Source-quality master.
-- PASS — Website landing and roadmap passed independent desktop/mobile evaluation after correction of mobile navigation, word wrapping and supporting-text contrast.
+- PASS: 19 automated unit tests cover deterministic tuning, capability fallback, output profiles, processing reports, runtime privacy, desktop sandbox paths, revisioned speech editing and trusted-LAN opt-in defaults.
+- PASS: Review WAV uploaded and decoded as 16 kHz mono PCM from the signed PKG payload.
+- PASS: Lossless Archive profile exported FLAC; the result decoded successfully as FLAC, 16 kHz, mono.
+- PASS: Auto EQ and loudness normalization completed; WAV, MP3 and FLAC downloads each decoded successfully as 16 kHz mono audio.
+- PASS: Processing report recorded app version 3.7.0, archive profile, FLAC format, local processing and no external-service use by the job.
+- PASS: Bundled Faster-Whisper transcription returned English text with 123 characters across two timestamped segments without a model download.
+- PASS: Runtime controls exposed independent permissions for external services, local Ollama editorial assistance and trusted-LAN processing.
+- PASS: Five output profiles were exposed: Podcast, YouTube/video, Audiobook, Lossless archive and Source-quality master.
+- PASS: Website landing and roadmap passed independent desktop/mobile evaluation after correction of mobile navigation, word wrapping and supporting-text contrast.
 
 ## Marketing evidence validation
 
-- PASS — English and Italian App Store subtitles, promotional text, keywords, descriptions and What’s New copy fit the documented Apple field limits.
-- PASS — Claims matrix maps public wording to implementation and test/package evidence.
-- PASS — No unsupported performance percentage, universal quality promise, App Store availability claim or false six-profile claim is present in the launch assets.
-- PASS — Roadmap separates delivered 3.7 foundations from research candidates and community signals.
+- PASS: English and Italian App Store subtitles, promotional text, keywords, descriptions and What’s New copy fit the documented Apple field limits.
+- PASS: Claims matrix maps public wording to implementation and test/package evidence.
+- PASS: No unsupported performance percentage, universal quality promise, App Store availability claim or false six-profile claim is present in the launch assets.
+- PASS: Roadmap separates delivered 3.7 foundations from research candidates and community signals.
 
 ## Remaining Apple-controlled/manual gates
 

@@ -13,7 +13,7 @@ Thank you for considering contributing to AudioEnhancerMAX! 🎙️
 ### 💡 Suggesting Features
 
 1. Open a new issue using the **Feature Request** template.
-2. Describe the use case — who benefits and why.
+2. Describe the use case: who benefits and why.
 3. If possible, reference similar implementations in other tools.
 
 ### 🔧 Submitting Code

@@ -1,4 +1,4 @@
-# TestFlight e nuova submission — AudioEnhancerMAX 3.7.0 build 3.7.4
+# TestFlight e nuova submission: AudioEnhancerMAX 3.7.0 build 3.7.4
 
 ## Upload e TestFlight
 

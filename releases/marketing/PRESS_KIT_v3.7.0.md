@@ -1,4 +1,4 @@
-# AudioEnhancerMAX 3.7.0 — Press Kit Copy
+# AudioEnhancerMAX 3.7.0: Press Kit Copy
 
 > Updated publication copy prepared on 28 August 2026 is available in
 > `COMUNICATI_STAMPA_2026-08-28_IT.md` and

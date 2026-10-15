@@ -1,4 +1,4 @@
-# Final Resubmission Checklist — AudioEnhancerMAX 3.7.0 build 3.7.4
+# Final Resubmission Checklist: AudioEnhancerMAX 3.7.0 build 3.7.4
 
 ## Automated and signed-artifact gates
 
@@ -18,7 +18,7 @@
 - [ ] Complete export-compliance questions if requested.
 - [ ] Add build 3.7.4 to Internal Testing and reinstall through TestFlight on the physical Mac.
 - [ ] Repeat the complete workflow from the TestFlight install.
-- [ ] Record one continuous 3–5 minute video on the latest public macOS available that day; show exact version/build and hide the serial number.
+- [ ] Record one continuous 3-5 minute video on the latest public macOS available that day; show exact version/build and hide the serial number.
 - [ ] Capture all App Store screenshots from the same TestFlight build.
 - [ ] Select build 3.7.4 in the macOS 3.7.0 version record.
 - [ ] Paste the prepared Review Notes and attach video, review WAV, and dossier PDF.

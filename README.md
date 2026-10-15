@@ -5,9 +5,9 @@
 ### The open-source AI audio media center
 
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
-**16+ processing modules · Apple Silicon acceleration · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.8.0**
+**16+ processing modules · Apple Silicon acceleration · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.8.1**
 
-Version 3.8 binds checkpoints, playback, conversions, delivery guidance and project evidence to a specific completed output. It also publishes the REA developer research workflow. [Release notes](releases/RELEASE_NOTES_v3.8.0.md) · [Validation](docs/revision-delivery.md).
+Version 3.8 binds checkpoints, playback, conversions, delivery guidance and project evidence to a specific completed output. It also publishes the REA developer research workflow. [Release notes](releases/RELEASE_NOTES_v3.8.1.md) · [Validation](docs/revision-delivery.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-06b6d4.svg)](https://python.org)
@@ -34,7 +34,7 @@ AudioEnhancerMAX turns raw recordings into cleaner, production-ready audio witho
 
 AudioEnhancerMAX is built for creators, podcasters, researchers, interviewers, and audio-heavy workflows where privacy, control, and auditability matter. It combines local DSP, AI-assisted decisions, real-time monitoring, transcription, text-to-speech, and optional Android edge workers in one FastAPI + vanilla JS application.
 
-The v3.8.0 source release and direct macOS preview use an app-owned AppKit/WKWebView window. Apple notarization of the new DMG is awaiting the developer team's updated agreement; the notarized 3.7.0 remains the stable Mac download. See [macOS App](docs/macos-app.md).
+The v3.8.1 source release and direct macOS preview use an app-owned AppKit/WKWebView window. Apple notarization of the new DMG is awaiting the developer team's updated agreement; the notarized 3.7.0 remains the stable Mac download. See [macOS App](docs/macos-app.md).
 
 The default architecture is local-first: uploads, DSP output, timing history, and local model inference stay on the host machine unless you explicitly enable an integration that sends data elsewhere. You decide when to use local AI through Ollama/Gemma, when to offload DSP chunks to trusted devices on your LAN, and which output format to export.
 
@@ -59,7 +59,7 @@ AudioEnhancerMAX has also been recognized with the **SourceForge Rising Star Awa
 
 ### macOS App (Apple Silicon)
 
-Download the appropriate artifact from [GitHub releases](https://github.com/sev7enITA/AudioEnhancerMAX/releases) or [SourceForge](https://sourceforge.net/projects/audioenhancermax/files/). The 3.8.0 direct DMG is a signed preview pending Apple notarization; 3.7.0 remains the notarized stable Mac package. Requires Apple Silicon and macOS 13+. Mac App Store approval is a separate stage.
+Download the appropriate artifact from [GitHub releases](https://github.com/sev7enITA/AudioEnhancerMAX/releases) or [SourceForge](https://sourceforge.net/projects/audioenhancermax/files/). The 3.8.1 direct DMG is a signed preview pending Apple notarization; 3.7.0 remains the notarized stable Mac package. Requires Apple Silicon and macOS 13+. Mac App Store approval is a separate stage.
 
 ### Run from Source
 
@@ -187,7 +187,7 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - [REA Audio Competitor Research](research/rea/README.md)
 - [AI Governance Notes](docs/ai-governance.md)
 - [macOS App and Packaging](docs/macos-app.md)
-- [v3.7 Release Notes](releases/RELEASE_NOTES_v3.8.0.md)
+- [v3.8.1 Release Notes](releases/RELEASE_NOTES_v3.8.1.md)
 - [3.7.4 Delivery Review Evidence](docs/delivery-review-evidence.md)
 - [v3.6-to-v3.7 Implementation Record](docs/v3.6-implementation-plan.md)
 - [Troubleshooting / FAQ](docs/faq.md)

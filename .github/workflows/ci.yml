@@ -91,6 +91,9 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import html
+          import re
+          import subprocess
 
           roots = [Path("app"), Path("frontend"), Path("web"), Path("desktop")]
           suffixes = {".py", ".html", ".js", ".css"}
@@ -98,7 +101,7 @@ jobs:
           def is_disallowed_symbol(char: str) -> bool:
               codepoint = ord(char)
               return (
-                  char in {"—", "–", "✓", "↗"}
+                  codepoint in {0x2013, 0x2014, 0x2015, 0x2713, 0x2197}
                   or 0x1F000 <= codepoint <= 0x1FAFF
                   or 0x2600 <= codepoint <= 0x27BF
                   or 0x1F1E6 <= codepoint <= 0x1F1FF
@@ -109,9 +112,19 @@ jobs:
               for path in root.rglob("*"):
                   if path.suffix not in suffixes or "outputs" in path.parts or "uploads" in path.parts:
                       continue
-                  text = path.read_text(encoding="utf-8")
+                  text = html.unescape(path.read_text(encoding="utf-8"))
                   symbols = sorted({char for char in text if is_disallowed_symbol(char)})
                   assert not symbols, (path, symbols)
+
+          # Check rendered entities and escaped punctuation across owned text.
+          text_suffixes = {".md", ".html", ".js", ".css", ".py", ".json", ".yml", ".yaml", ".txt", ".svg"}
+          for name in subprocess.check_output(["git", "ls-files"], text=True).splitlines():
+              path = Path(name)
+              if path.suffix not in text_suffixes or "vendor" in path.parts:
+                  continue
+              text = html.unescape(path.read_text(encoding="utf-8"))
+              assert not any(ord(char) in {0x2013, 0x2014, 0x2015} for char in text), path
+              assert not re.search(r"\\(?:u(?:201[345]|\{201[345]\})|201[345](?:\s|$))", text, re.I), path
           PY
 
       - name: Set up Node for frontend regressions

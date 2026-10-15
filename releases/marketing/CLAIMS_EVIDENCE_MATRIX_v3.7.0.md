@@ -1,4 +1,4 @@
-# AudioEnhancerMAX 3.7.0 — Claims and Evidence Matrix
+# AudioEnhancerMAX 3.7.0: Claims and Evidence Matrix
 
 Status date: 28 August 2026
 

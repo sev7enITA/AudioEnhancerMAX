@@ -3001,7 +3001,7 @@ function setComplianceLoading(message) {
     document.getElementById('compliance-summary').textContent = message;
     ['metric-loudness', 'metric-true-peak', 'metric-clipping', 'metric-sample-rate'].forEach((id) => {
         const element = document.getElementById(id);
-        if (element) element.textContent = '\u2014';
+        if (element) element.textContent = '-';
     });
     const rules = document.getElementById('compliance-rules');
     if (rules) rules.innerHTML = '<li class="is-loading">Awaiting measured rules.</li>';
@@ -3020,7 +3020,7 @@ function setComplianceError(message) {
 }
 
 function formatEvidenceNumber(value, digits = 2) {
-    if (value === null || value === undefined || !Number.isFinite(Number(value))) return '\u2014';
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return '-';
     return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
 }
 
@@ -4170,7 +4170,7 @@ async function initAboutPanel() {
                 ['RAM', (s.ram_used_gb || 0).toFixed(1) + ' / ' + (s.ram_total_gb || 0).toFixed(1) + ' GB'],
                 ['GPU', health.compute || 'N/A'],
                 ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
-                ['Version', health.version || '3.8.0'],
+                ['Version', health.version || '3.8.1'],
                 ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
             ];
             sysEl.innerHTML = items.map(([label, value]) =>

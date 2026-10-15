@@ -50,11 +50,11 @@ Violet means a person can decide or change something. Cyan means the system is l
 
 Use Inter when it is already bundled by the product, followed by `-apple-system`, `BlinkMacSystemFont`, and `sans-serif`. Do not add a remote font dependency to the local app.
 
-- Page title: 32–40 px, 700, line-height 1.1.
-- Section title: 20–24 px, 650–700, line-height 1.25.
-- Body: 15–16 px, 400–500, line-height 1.55–1.65.
-- UI label: 12–14 px, 600, line-height 1.3.
-- Eyebrow/status: 11–12 px, 700, uppercase, `0.08em` letter spacing.
+- Page title: 32-40 px, 700, line-height 1.1.
+- Section title: 20-24 px, 650-700, line-height 1.25.
+- Body: 15-16 px, 400-500, line-height 1.55-1.65.
+- UI label: 12-14 px, 600, line-height 1.3.
+- Eyebrow/status: 11-12 px, 700, uppercase, `0.08em` letter spacing.
 - Measurements, hashes, timestamps, and logs: `ui-monospace`, SFMono-Regular, Menlo, monospace with tabular numbers.
 
 Sentence case is the default. Reserve all caps for compact categories, never paragraphs or buttons.
@@ -72,7 +72,7 @@ Sentence case is the default. Reserve all caps for compact categories, never par
 
 Every interactive control must expose a visible `:focus-visible` state: a 2 px cyan outline with at least 2 px offset. Keyboard focus must never depend on a color change inside the control.
 
-Use the existing 150 ms, 250 ms, and 400 ms motion timings. Motion should explain a state transition—progress, expansion, or completion—not decorate idle screens. Honor `prefers-reduced-motion: reduce` by removing non-essential animation and smooth scrolling.
+Use the existing 150 ms, 250 ms, and 400 ms motion timings. Motion should explain a state transition, progress, expansion, or completion, not decorate idle screens. Honor `prefers-reduced-motion: reduce` by removing non-essential animation and smooth scrolling.
 
 ## Layout
 
@@ -91,7 +91,7 @@ Use more white space than the application. Alternate concise editorial explanati
 ### Breakpoints
 
 - **≥ 1024 px:** persistent navigation and multi-column work area.
-- **640–1023 px:** compact navigation; two columns only when content remains readable.
+- **640-1023 px:** compact navigation; two columns only when content remains readable.
 - **< 640 px:** one-column flow, 16 px gutters, full-width primary controls, and no clipped tables or charts.
 
 Do not merely shrink the desktop layout. Reorder content so task, state, and action remain first.
@@ -112,7 +112,7 @@ The active destination uses a cyan edge or marker plus stronger text. Violet rem
 
 ### Panels
 
-A panel needs a title, purpose, and relationship to the task. Avoid grids of identical cards. Use panels to group controls, compare states, or hold evidence—not to decorate empty space.
+A panel needs a title, purpose, and relationship to the task. Avoid grids of identical cards. Use panels to group controls, compare states, or hold evidence, not to decorate empty space.
 
 ### Status and proof surfaces
 
@@ -165,7 +165,7 @@ Never present an estimate as a measurement, a listening preference as a fact, or
 
 ## Prompt for future agents
 
-> Design this AudioEnhancerMAX surface in the **Signal Console** language. Preserve the graphite foundation and existing token values. Use violet only for decisions, cyan for live signal or measurement, green for confirmed success, and amber/red for real cautions or failures. Keep workstation layouts dense but calm, use square 5–8 px radii, visible keyboard focus, semantic HTML, responsive task-first reflow, and reduced-motion support. Label product claims as Measured, Estimated, Subjective, or Research candidate. Avoid generic glassmorphism, excessive glow, identical card grids, unsupported quality claims, and remote runtime dependencies.
+> Design this AudioEnhancerMAX surface in the **Signal Console** language. Preserve the graphite foundation and existing token values. Use violet only for decisions, cyan for live signal or measurement, green for confirmed success, and amber/red for real cautions or failures. Keep workstation layouts dense but calm, use square 5-8 px radii, visible keyboard focus, semantic HTML, responsive task-first reflow, and reduced-motion support. Label product claims as Measured, Estimated, Subjective, or Research candidate. Avoid generic glassmorphism, excessive glow, identical card grids, unsupported quality claims, and remote runtime dependencies.
 
 ## Inspiration and originality
 

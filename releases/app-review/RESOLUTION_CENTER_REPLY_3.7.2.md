@@ -1,4 +1,4 @@
-# Resolution Center Reply — AudioEnhancerMAX 3.7.0 build 3.7.2
+# Resolution Center Reply: AudioEnhancerMAX 3.7.0 build 3.7.2
 
 Hello App Review Team,
 

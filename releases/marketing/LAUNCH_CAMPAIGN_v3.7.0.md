@@ -1,4 +1,4 @@
-# AudioEnhancerMAX 3.7.0 — Evidence-Led Launch Campaign
+# AudioEnhancerMAX 3.7.0: Evidence-Led Launch Campaign
 
 Updated: 28 August 2026
 
@@ -12,7 +12,7 @@ Version 3.7 is positioned around control rather than automation hype. The produc
 
 | Audience | Problem | 3.7 message | Evidence asset |
 | --- | --- | --- | --- |
-| Podcasters and interviewers | Cleanup is slow and automated cuts can damage pacing | Review transcript-linked cut/mute decisions and export from a podcast profile | 60–90 second Precision Editor demo |
+| Podcasters and interviewers | Cleanup is slow and automated cuts can damage pacing | Review transcript-linked cut/mute decisions and export from a podcast profile | 60-90 second Precision Editor demo |
 | Journalists and researchers | Source preservation and traceability matter | Keep the original, render approved decisions to a new file, retain JSON report/EDL | Source/output/report walkthrough |
 | Educators and voice creators | Too many audio settings and delivery formats | Start from five explicit delivery profiles and see applied overrides | Output-profile carousel |
 | Producers and delivery teams | It is easy to miss loudness, peak, or clipping problems | Inspect rule-level local delivery guidance before export | Compliance Lab walkthrough |
@@ -34,10 +34,10 @@ Version 3.7 is positioned around control rather than automation hype. The produc
 
 - Final signed 3.7.5 PKG and checksum.
 - TestFlight installation on the physical Mac.
-- Apple-requested continuous 3–5 minute reviewer video.
+- Apple-requested continuous 3-5 minute reviewer video.
 - Six App Store screenshots from the packaged build.
-- One 16:9 launch video, 60–90 seconds.
-- One 20–30 second vertical cut using the same verified workflow.
+- One 16:9 launch video, 60-90 seconds.
+- One 20-30 second vertical cut using the same verified workflow.
 - Developer-owned before/after WAV pair, level-matched for comparison.
 - Processing report JSON from that exact example.
 - Release notes, claims matrix, privacy page, support page and roadmap.
@@ -56,16 +56,16 @@ AudioEnhancerMAX-3.7-launch/
   evidence/
 ```
 
-## Demonstration script — 75 seconds
+## Demonstration script: 75 seconds
 
-1. **0–7 s:** Launch AudioEnhancerMAX as a native Mac app; title: “Hear the change. See every decision.”
-2. **7–18 s:** Upload the developer-owned WAV and show local diagnosis.
-3. **18–30 s:** Select Balanced Smart Enhance; show the measured reasons, not an unsupported quality score claim.
-4. **30–48 s:** Open Precision Editor, select transcript words, create a cut or mute, preview, undo and redo.
-5. **48–58 s:** Choose Podcast and inspect loudness, estimated true peak, clipping, and sample-rate rules.
-6. **58–67 s:** Complete one blind A/B round and export the Project Capsule with original audio left off.
-7. **67–72 s:** Open the report: profile, engines, provenance, privacy state, and approved edits.
-8. **72–75 s:** Close the app; end card: “AudioEnhancerMAX 3.7 — local-first audio, reviewed by you.”
+1. **0-7 s:** Launch AudioEnhancerMAX as a native Mac app; title: “Hear the change. See every decision.”
+2. **7-18 s:** Upload the developer-owned WAV and show local diagnosis.
+3. **18-30 s:** Select Balanced Smart Enhance; show the measured reasons, not an unsupported quality score claim.
+4. **30-48 s:** Open Precision Editor, select transcript words, create a cut or mute, preview, undo and redo.
+5. **48-58 s:** Choose Podcast and inspect loudness, estimated true peak, clipping, and sample-rate rules.
+6. **58-67 s:** Complete one blind A/B round and export the Project Capsule with original audio left off.
+7. **67-72 s:** Open the report: profile, engines, provenance, privacy state, and approved edits.
+8. **72-75 s:** Close the app; end card: “AudioEnhancerMAX 3.7: local-first audio, reviewed by you.”
 
 Use only the packaged app. Keep the mouse and clock visible for the Apple review version; edit pacing only for the public campaign version.
 
@@ -74,7 +74,7 @@ Use only the packaged app. Keep the mouse and clock visible for the Apple review
 ### T−7 to T−3: establish the problem
 
 - Post 1: why automatic speech cuts can damage cadence.
-- Post 2: what “local” actually means—core, local model, separate local process, trusted LAN, external.
+- Post 2: what “local” actually means, core, local model, separate local process, trusted LAN, external.
 - Post 3: five-second native-window reveal; no availability claim.
 - Collect community questions for the launch FAQ.
 
@@ -109,7 +109,7 @@ Use only the packaged app. Keep the mouse and clock visible for the Apple review
 | App Store | Accurate screenshots, description, What’s New | Download after approval |
 | GitHub | Tagged release, changelog, technical notes | Inspect source / report issue |
 | SourceForge | Matching release notes and checksums | Download verified artifact |
-| LinkedIn | 45–75 second product narrative | Read how reviewability works |
+| LinkedIn | 45-75 second product narrative | Read how reviewability works |
 | X / Mastodon | Proof-led thread | Open claims matrix / demo |
 | Reddit/community posts | Technical build story, disclosed affiliation | Discuss workflow; no vote/review manipulation |
 | Email | Problem → proof → availability | View release and documentation |
