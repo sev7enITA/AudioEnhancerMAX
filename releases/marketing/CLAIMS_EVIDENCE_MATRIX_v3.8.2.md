@@ -8,6 +8,6 @@
 | Current result UI | Four JavaScript state regressions | Not a full accessibility or all-browser audit |
 | Local operation | Complete local source tree, loopback server, runtime privacy gates | Optional TTS/LAN boundaries remain explicit |
 | 75 Python tests + 4 JS tests | Local release validation, 2026-10-15 | Synthetic/functional coverage, not universal audio-quality proof |
-| Signed direct Mac preview | Developer ID package | Apple notarization blocked by team agreement; stable 3.7 remains available |
+| Signed direct Mac preview | Developer ID package | Apple agreement accepted; direct-package notarization remains pending; stable 3.7 remains available |
 
 Optional neural components and MakeMyVoice require their own available runtimes. The Android debug worker remains experimental and disabled by default. No App Store publication claim.

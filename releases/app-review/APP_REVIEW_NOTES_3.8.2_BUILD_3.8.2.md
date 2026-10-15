@@ -5,7 +5,7 @@
 No account, login, purchase, activation key, special hardware, sample credential, or external installation is required.
 
 1. Launch AudioEnhancerMAX. The interface opens in an app-owned AppKit/WKWebView window; the default browser is not opened.
-2. Choose the attached `AudioEnhancerMAX-review-sample.wav` with the standard macOS Open panel.
+2. Extract `AudioEnhancerMAX-review-sample.wav` from the attached ZIP and choose it with the standard macOS Open panel.
 3. Run Smart Enhance or choose a delivery profile and process the file.
 4. In the Review Deck, inspect the local Delivery Compliance result, complete a randomized blind A/B comparison, and export a Project Capsule. Original audio is excluded from the capsule unless the reviewer explicitly enables “Include original audio.”
 5. Open the Processing Report to inspect the selected profile, pipeline engines, privacy boundary, delivery checks, and SHA-256 provenance; export WAV, MP3, or FLAC with the standard Save panel.

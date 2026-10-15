@@ -15,18 +15,32 @@
 - English and Italian listing text and reviewer notes are prepared. Public release text remains focused on the delivered audio workflow.
 - Build inputs and artifacts are local outside Desktop/iCloud. This Store package must not be published as a direct-download installer.
 
+## Account and listing updates
+
+- The account holder accepted the required Apple Developer agreement on 15 October 2026. Safari shows restored Developer resources and an active Free Apps Agreement in App Store Connect.
+- Delivery of the exact package was retried through authenticated Transporter. Package analysis succeeded and the upload started. The last observed state is **Uploading to App Store Connect**; delivery and processing are not yet confirmed.
+- The editable Store version is now 3.8.2. English and Italian descriptions, promotional text, keywords, and subtitles are saved.
+- Reviewer notes, the developer-created review sample ZIP, and the loopback listener justification are saved in App Review Information and App Sandbox Information.
+- The privacy label is published as Other User Content used for App Functionality, not linked to identity and not used for tracking, consistent with the bundled privacy manifest and optional text-to-speech disclosure.
+- Automatic release after App Review approval is selected.
+- TestFlight is installed and authenticated on the physical Mac. The internal `Release Validation` group contains only the account holder; automatic distribution is disabled. TestFlight description, feedback address, marketing URL, and privacy URL are saved.
+
 ## Not completed
 
-Transporter identified the correct app, version and build. Delivery was attempted and rejected by Apple with HTTP 403: required contracts are missing. The package has not been delivered to App Store Connect. No review submission, TestFlight availability or App Store publication is claimed.
+The upload is still in progress and has variable throughput. No successful delivery, processed 3.8.2 TestFlight build, new review submission, or App Store publication is claimed.
 
-Direct execution of the extracted distribution payload was stopped by macOS before application startup because no eligible local provisioning profile was available for this production signature. This is distinct from structural signature verification. Validate the Store-signed runtime through an authorized TestFlight installation after delivery is unblocked; do not treat the earlier direct-download smoke tests as a substitute for that channel check.
+The existing rejected submission is from July and still has build 3.5.2 attached. Changing the editable version label to 3.8.2 does not mean Apple has reviewed or rejected the new candidate. Replace the old build only when the verified 3.8.2 build is available.
 
-## Next steps after account access is restored
+Apple's existing correspondence requests a physical-device recording beginning with app launch, the tested device/OS, and details about the app's purpose, access, external services, regional behavior, and relevant regulated or third-party material. The response and recording must describe the actual installed candidate.
 
-1. The account holder must resolve Apple's required agreement status.
-2. Retry delivery of the exact package and confirm successful processing in App Store Connect.
-3. Review the existing App Review correspondence and validate the delivered build through TestFlight.
-4. Apply the prepared listing and review notes, supply requested evidence, select the verified build and submit it for review.
-5. Claim storefront availability only after Apple approval and visible publication.
+Direct execution of the extracted distribution payload was stopped by macOS before application startup because no eligible local provisioning profile was available for this production signature. This is distinct from structural signature verification. Validate the Store-signed runtime through the authorized TestFlight installation; earlier direct-download smoke tests do not substitute for this channel check.
+
+## Remaining steps
+
+1. Confirm successful Transporter delivery and Apple processing of build 3.8.2.
+2. Add that build to the owner-only internal group, install it through TestFlight, and perform the physical-Mac checks in `RESUBMISSION_CHECKLIST_3.8.2.md`.
+3. Capture current screenshots and the continuous review recording; reply to the seven points in Apple's existing correspondence with verified results.
+4. Select build 3.8.2, verify the final metadata and attachments, and resubmit for review.
+5. Report storefront availability only after Apple approval and visible publication.
 
 Prepared copy: `releases/marketing/APP_STORE_METADATA_v3.8.2.md` and `releases/app-review/APP_REVIEW_NOTES_3.8.2_BUILD_3.8.2.md`.

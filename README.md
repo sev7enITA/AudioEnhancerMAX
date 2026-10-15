@@ -34,7 +34,7 @@ AudioEnhancerMAX turns raw recordings into cleaner, production-ready audio witho
 
 AudioEnhancerMAX is built for creators, podcasters, researchers, interviewers, and audio-heavy workflows where privacy, control, and auditability matter. It combines local DSP, AI-assisted decisions, real-time monitoring, transcription, text-to-speech, and optional Android edge workers in one FastAPI + vanilla JS application.
 
-The v3.8.2 source release and direct macOS preview use an app-owned AppKit/WKWebView window. Apple notarization of the new DMG is awaiting the developer team's updated agreement; the notarized 3.7.0 remains the stable Mac download. See [macOS App](docs/macos-app.md).
+The v3.8.2 source release and direct macOS preview use an app-owned AppKit/WKWebView window. Apple notarization of the new DMG remains pending; the notarized 3.7.0 remains the stable Mac download. See [macOS App](docs/macos-app.md).
 
 The default architecture is local-first: uploads, DSP output, timing history, and local model inference stay on the host machine unless you explicitly enable an integration that sends data elsewhere. You decide when to use local AI through Ollama/Gemma, when to offload DSP chunks to trusted devices on your LAN, and which output format to export.
 
