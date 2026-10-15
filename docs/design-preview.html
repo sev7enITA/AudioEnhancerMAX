@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="AudioEnhancerMAX Signal Console design system visual reference.">
+  <title>Signal Console — AudioEnhancerMAX Design Reference</title>
+  <style>
+    :root {
+      --bg-primary: #080a0c;
+      --bg-secondary: #0c0f11;
+      --bg-tertiary: #14181c;
+      --bg-card: #101418;
+      --bg-card-hover: #151a1f;
+      --bg-input: #0b0e11;
+      --border: #252b31;
+      --border-hover: #3a444d;
+      --violet: #7457d9;
+      --violet-light: #a791ff;
+      --cyan: #16bdd1;
+      --cyan-light: #4dd8e8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --info: #3b82f6;
+      --text-primary: #eef2f5;
+      --text-secondary: #aab3bb;
+      --text-tertiary: #78838d;
+      --radius-sm: 5px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --shadow: 0 18px 48px rgba(0, 0, 0, .38);
+      --content: 1180px;
+      color-scheme: dark;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(rgba(37, 43, 49, .2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 43, 49, .2) 1px, transparent 1px),
+        var(--bg-primary);
+      background-size: 48px 48px;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    a { color: var(--cyan-light); text-underline-offset: .2em; }
+    button, input { font: inherit; }
+    button, input, a { -webkit-tap-highlight-color: transparent; }
+    :focus-visible {
+      outline: 2px solid var(--cyan-light);
+      outline-offset: 3px;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 100;
+      padding: 10px 14px;
+      color: var(--bg-primary);
+      background: var(--cyan-light);
+      border-radius: var(--radius-sm);
+      font-weight: 800;
+      transform: translateY(-160%);
+      transition: transform 150ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
+
+    .shell { width: min(calc(100% - 40px), var(--content)); margin-inline: auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8, 10, 12, .94);
+    }
+    .topbar-inner {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }
+    .brand img { width: 36px; height: 36px; border-radius: 8px; box-shadow: 0 8px 24px rgba(22, 189, 209, .14); }
+    .brand strong { font-size: 14px; letter-spacing: -.01em; }
+    .brand small { display: block; color: var(--text-tertiary); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+    nav { display: flex; align-items: center; gap: 20px; }
+    nav a { color: var(--text-secondary); font-size: 13px; font-weight: 650; text-decoration: none; }
+    nav a:hover { color: var(--text-primary); }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+      gap: clamp(40px, 8vw, 112px);
+      align-items: end;
+      min-height: 620px;
+      padding: 96px 0 72px;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 440px;
+      height: 440px;
+      right: -240px;
+      top: 70px;
+      border: 1px solid rgba(22, 189, 209, .24);
+      border-radius: 50%;
+      box-shadow: 0 0 0 74px rgba(22, 189, 209, .025), 0 0 0 148px rgba(116, 87, 217, .025);
+      pointer-events: none;
+    }
+    .eyebrow { margin: 0 0 20px; color: var(--cyan-light); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 720px; margin-bottom: 28px; font-size: clamp(58px, 9vw, 120px); line-height: .82; letter-spacing: -.075em; }
+    h1 span { display: block; color: var(--violet-light); margin-left: .66em; }
+    .lede { max-width: 660px; margin-bottom: 0; color: var(--text-secondary); font-size: clamp(17px, 2.2vw, 21px); }
+
+    .hero-proof {
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+      border-top: 2px solid var(--cyan);
+      border-bottom: 1px solid var(--border);
+      background: rgba(16, 20, 24, .72);
+      box-shadow: var(--shadow);
+    }
+    .proof-row { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .proof-row:last-child { border-bottom: 0; }
+    .proof-row span { color: var(--text-tertiary); font-size: 12px; }
+    .proof-row strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+    .section { padding: 88px 0; border-top: 1px solid var(--border); }
+    .section-heading { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; margin-bottom: 44px; }
+    .section-index { color: var(--cyan); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    h2 { margin-bottom: 12px; font-size: clamp(32px, 5vw, 56px); line-height: 1; letter-spacing: -.045em; }
+    .section-intro { max-width: 660px; color: var(--text-secondary); }
+
+    .token-grid { display: grid; grid-template-columns: repeat(6, 1fr); border: 1px solid var(--border); }
+    .swatch { min-height: 172px; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; border-right: 1px solid var(--border); }
+    .swatch:last-child { border-right: 0; }
+    .swatch::before { content: ""; width: 32px; height: 32px; background: var(--swatch); border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 8px color-mix(in srgb, var(--swatch), transparent 88%); }
+    .swatch b { display: block; font-size: 13px; }
+    .swatch code { color: var(--text-tertiary); font-size: 11px; }
+
+    .type-stage { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, .6fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .type-display, .type-specimen { padding: clamp(28px, 5vw, 56px); background: var(--bg-card); }
+    .type-display p { max-width: 700px; margin-bottom: 0; font-size: clamp(40px, 7vw, 84px); font-weight: 750; line-height: .96; letter-spacing: -.06em; }
+    .type-display em { color: var(--cyan-light); font-style: normal; }
+    .type-specimen dl { margin: 0; }
+    .type-specimen div { padding: 15px 0; border-bottom: 1px solid var(--border); }
+    .type-specimen div:last-child { border-bottom: 0; }
+    dt { color: var(--text-tertiary); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    dd { margin: 5px 0 0; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(220px, .52fr) minmax(0, 1.48fr);
+      min-height: 500px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-secondary);
+      box-shadow: var(--shadow);
+    }
+    .rail { padding: 24px 16px; border-right: 1px solid var(--border); }
+    .rail-label { margin: 0 8px 12px; color: var(--text-tertiary); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .rail a { display: block; margin-bottom: 4px; padding: 11px 12px; border-left: 2px solid transparent; color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 650; }
+    .rail a[aria-current="page"] { border-color: var(--cyan); color: var(--text-primary); background: var(--bg-tertiary); }
+    .workspace { padding: clamp(24px, 5vw, 48px); }
+    .workspace-header { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+    .workspace-header h3 { margin-bottom: 4px; font-size: 24px; }
+    .workspace-header p { margin-bottom: 0; color: var(--text-tertiary); font-size: 13px; }
+    .live { display: inline-flex; align-items: center; gap: 8px; color: var(--cyan-light); font: 700 11px ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; }
+    .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 5px rgba(22,189,209,.1); animation: pulse 2s ease-in-out infinite; }
+
+    .signal-panel { padding: 20px; border: 1px solid var(--border); border-top-color: var(--cyan); background: var(--bg-card); }
+    .signal-meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .signal-meta strong { font-size: 13px; }
+    .signal-meta span { color: var(--text-tertiary); font-size: 11px; }
+    .waveform { display: block; width: 100%; height: 140px; border-block: 1px solid var(--border); }
+    .waveform .grid { stroke: #252b31; stroke-width: 1; }
+    .waveform .signal { fill: none; stroke: var(--cyan); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .waveform .decision { fill: rgba(116, 87, 217, .16); stroke: var(--violet-light); stroke-width: 1; }
+    .waveform .zero { stroke: #3a444d; stroke-dasharray: 3 4; }
+    .axis { display: flex; justify-content: space-between; margin-top: 7px; color: var(--text-tertiary); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .controls { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; margin-top: 24px; }
+    label { display: block; color: var(--text-secondary); font-size: 12px; font-weight: 700; }
+    .range-head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+    output { color: var(--text-primary); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    input[type="range"] { width: 100%; accent-color: var(--violet); }
+    .button-row { display: flex; gap: 8px; }
+    .button {
+      min-height: 44px;
+      padding: 0 16px;
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    }
+    .button:hover { border-color: var(--text-tertiary); background: var(--bg-card-hover); }
+    .button:active { transform: translateY(1px); }
+    .button-primary { border-color: var(--violet); background: var(--violet); }
+    .button-primary:hover { border-color: var(--violet-light); background: #8468e5; }
+    .button:disabled { cursor: not-allowed; opacity: .52; }
+
+    .status-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .chip { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; padding: 3px 9px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-secondary); font-size: 11px; font-weight: 750; }
+    .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .chip-measured { color: var(--cyan-light); }
+    .chip-estimated { color: var(--violet-light); }
+    .chip-subjective { color: var(--warning); }
+    .chip-research { color: var(--text-secondary); border-style: dashed; }
+
+    .evidence-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); gap: 24px; align-items: start; }
+    .evidence-primary { padding: clamp(28px, 5vw, 48px); border-left: 3px solid var(--cyan); background: var(--bg-card); }
+    .evidence-label { color: var(--cyan-light); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .measurement { margin: 20px 0 14px; font: 750 clamp(52px, 9vw, 92px)/.9 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -.08em; }
+    .measurement small { color: var(--text-secondary); font-size: .24em; letter-spacing: 0; }
+    .method { max-width: 580px; margin-bottom: 0; color: var(--text-secondary); }
+    .evidence-notes { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
+    .evidence-notes li { padding: 18px 0; border-bottom: 1px solid var(--border); }
+    .evidence-notes strong { display: block; margin-bottom: 4px; font-size: 13px; }
+    .evidence-notes span { color: var(--text-secondary); font-size: 13px; }
+
+    .principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .principle { padding-top: 16px; border-top: 2px solid var(--border-hover); }
+    .principle:nth-child(2) { margin-top: 44px; border-top-color: var(--violet); }
+    .principle:nth-child(3) { margin-top: 88px; border-top-color: var(--cyan); }
+    .principle span { color: var(--text-tertiary); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .principle h3 { margin: 24px 0 10px; font-size: 20px; }
+    .principle p { margin-bottom: 0; color: var(--text-secondary); font-size: 14px; }
+
+    footer { padding: 36px 0 52px; border-top: 1px solid var(--border); color: var(--text-tertiary); font-size: 12px; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 24px; }
+
+    @keyframes pulse { 50% { opacity: .45; transform: scale(.82); } }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 72px; }
+      .hero-proof { max-width: 520px; }
+      .token-grid { grid-template-columns: repeat(3, 1fr); }
+      .swatch:nth-child(3) { border-right: 0; }
+      .swatch:nth-child(-n+3) { border-bottom: 1px solid var(--border); }
+      .type-stage, .evidence-layout { grid-template-columns: 1fr; }
+      .workbench { grid-template-columns: 180px minmax(0, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .shell { width: min(calc(100% - 32px), var(--content)); }
+      nav a:not(:last-child) { display: none; }
+      .hero { padding: 60px 0; gap: 42px; }
+      h1 { font-size: clamp(56px, 19vw, 86px); }
+      h1 span { margin-left: .28em; }
+      .section { padding: 64px 0; }
+      .section-heading { grid-template-columns: 1fr; gap: 12px; }
+      .token-grid { grid-template-columns: repeat(2, 1fr); }
+      .swatch { min-height: 148px; border-bottom: 1px solid var(--border); }
+      .swatch:nth-child(2n) { border-right: 0; }
+      .swatch:nth-last-child(-n+2) { border-bottom: 0; }
+      .workbench { display: block; }
+      .rail { display: flex; gap: 4px; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+      .rail-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      .rail a { flex: 0 0 auto; border-left: 0; border-bottom: 2px solid transparent; }
+      .workspace-header, .controls { display: block; }
+      .live { margin-top: 14px; }
+      .button-row { margin-top: 20px; }
+      .button { flex: 1; }
+      .principles { grid-template-columns: 1fr; }
+      .principle:nth-child(n) { margin-top: 0; }
+      .footer-inner { display: block; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to design reference</a>
+
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="../README.md" aria-label="AudioEnhancerMAX repository overview">
+        <img src="../frontend/img/audioenhancermax-logo.png" alt="">
+        <span><strong>AudioEnhancerMAX</strong><small>Design reference · 3.7</small></span>
+      </a>
+      <nav aria-label="Design reference sections">
+        <a href="#foundation">Foundation</a>
+        <a href="#interface">Interface</a>
+        <a href="#evidence">Evidence</a>
+        <a href="../DESIGN.md">Read the contract</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="shell hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Local audio · observable systems · reversible choices</p>
+        <h1 id="hero-title">Signal <span>Console</span></h1>
+        <p class="lede">A visual language for professional audio work: decisions in violet, live signal in cyan, confirmed outcomes in emerald, and every claim attached to evidence.</p>
+      </div>
+      <aside class="hero-proof" aria-label="Reference signal snapshot">
+        <div class="proof-row"><span>Processing</span><strong>LOCAL · ACTIVE</strong></div>
+        <div class="proof-row"><span>Loudness</span><strong>−16.0 LUFS</strong></div>
+        <div class="proof-row"><span>True peak</span><strong>EST. −1.1 dBTP</strong></div>
+        <div class="proof-row"><span>Source</span><strong>PRESERVED</strong></div>
+      </aside>
+    </section>
+
+    <section class="section" id="foundation" aria-labelledby="foundation-title">
+      <div class="shell">
+        <header class="section-heading">
+          <span class="section-index">01 / FOUNDATION</span>
+          <div><h2 id="foundation-title">Color has a job.</h2><p class="section-intro">Graphite creates the work surface. Violet marks a decision. Cyan represents signal or measurement. Semantic colors appear only when a real outcome earns them.</p></div>
+        </header>
+        <div class="token-grid" aria-label="Core color tokens">
+          <article class="swatch" style="--swatch:#080a0c"><div><b>Canvas</b><code>#080a0c</code></div></article>
+          <article class="swatch" style="--swatch:#14181c"><div><b>Surface</b><code>#14181c</code></div></article>
+          <article class="swatch" style="--swatch:#7457d9"><div><b>Decision</b><code>#7457d9</code></div></article>
+          <article class="swatch" style="--swatch:#16bdd1"><div><b>Live signal</b><code>#16bdd1</code></div></article>
+          <article class="swatch" style="--swatch:#10b981"><div><b>Confirmed</b><code>#10b981</code></div></article>
+          <article class="swatch" style="--swatch:#f59e0b"><div><b>Caution</b><code>#f59e0b</code></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="type-title">
+      <div class="shell">
+        <header class="section-heading">
+          <span class="section-index">02 / TYPE</span>
+          <div><h2 id="type-title">Editorial clarity. Instrument precision.</h2><p class="section-intro">Human-readable prose uses a disciplined sans serif. Measurements, timing, hashes, and logs switch to tabular monospace.</p></div>
+        </header>
+        <div class="type-stage">
+          <div class="type-display"><p>Clean audio.<br><em>Clear proof.</em></p></div>
+          <div class="type-specimen">
+            <dl>
+              <div><dt>Page title</dt><dd><strong>Upload and process</strong></dd></div>
+              <div><dt>Instruction</dt><dd>Choose a delivery target and preserve the source.</dd></div>
+              <div><dt>Measurement</dt><dd class="mono">−16.0 LUFS · 48 kHz</dd></div>
+              <div><dt>Evidence ID</dt><dd class="mono">SHA256 · 50f45aab…</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="interface" aria-labelledby="interface-title">
+      <div class="shell">
+        <header class="section-heading">
+          <span class="section-index">03 / INTERFACE</span>
+          <div><h2 id="interface-title">Dense, never noisy.</h2><p class="section-intro">Stable navigation, aligned values, compact controls, and one dominant action keep the workspace calm even when the pipeline is complex.</p></div>
+        </header>
+        <div class="workbench">
+          <aside class="rail" aria-label="Example application navigation">
+            <p class="rail-label">Workspace</p>
+            <a href="#interface" aria-current="page">Signal review</a>
+            <a href="#interface">Delivery target</a>
+            <a href="#interface">Project capsule</a>
+          </aside>
+          <div class="workspace">
+            <header class="workspace-header">
+              <div><h3>Signal review</h3><p>interview_master.wav · 48 kHz · stereo</p></div>
+              <span class="live">Live analysis</span>
+            </header>
+            <div class="signal-panel">
+              <div class="signal-meta"><strong>Voice region · 00:12–00:28</strong><span class="mono">−23.4 dBFS RMS</span></div>
+              <svg class="waveform" viewBox="0 0 800 140" preserveAspectRatio="none" role="img" aria-labelledby="wave-title wave-desc">
+                <title id="wave-title">Example audio waveform with an edit selection</title>
+                <desc id="wave-desc">A cyan waveform around the zero line. A violet region from 12 to 16 seconds shows a reversible selection.</desc>
+                <path class="grid" d="M0 35H800M0 70H800M0 105H800M100 0V140M200 0V140M300 0V140M400 0V140M500 0V140M600 0V140M700 0V140"/>
+                <line class="zero" x1="0" y1="70" x2="800" y2="70"/>
+                <rect class="decision" x="360" y="8" width="140" height="124" rx="3"/>
+                <path class="signal" d="M0 70L18 67L30 74L42 52L55 88L68 62L80 79L94 45L108 91L122 58L135 76L148 65L160 70L175 34L188 101L202 60L216 80L230 43L244 94L258 55L272 83L286 61L300 72L316 51L330 88L344 30L358 104L372 48L386 89L400 40L414 95L428 56L442 78L456 49L470 91L484 60L498 74L514 57L528 86L542 46L556 99L570 61L584 79L598 54L612 87L628 39L642 96L658 64L672 78L686 59L700 83L716 50L730 91L744 63L758 76L774 66L790 72L800 70"/>
+              </svg>
+              <div class="axis" aria-hidden="true"><span>00:12</span><span>00:16</span><span>00:20</span><span>00:24</span><span>00:28</span></div>
+              <div class="controls">
+                <label for="strength"><span class="range-head"><span>Cleanup strength</span><output for="strength">42%</output></span><input id="strength" type="range" min="0" max="100" value="42"></label>
+                <div class="button-row"><button class="button" type="button">Preview A/B</button><button class="button button-primary" type="button">Apply decision</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="evidence" aria-labelledby="evidence-title">
+      <div class="shell">
+        <header class="section-heading">
+          <span class="section-index">04 / EVIDENCE</span>
+          <div><h2 id="evidence-title">Confidence is part of the content.</h2><p class="section-intro">A value alone is not proof. Every quality claim identifies whether it was measured, estimated, heard by a reviewer, or is still research.</p></div>
+        </header>
+        <div class="status-strip" aria-label="Evidence label examples">
+          <span class="chip chip-measured">Measured</span>
+          <span class="chip chip-estimated">Estimated</span>
+          <span class="chip chip-subjective">Subjective</span>
+          <span class="chip chip-research">Research candidate</span>
+        </div>
+        <div class="evidence-layout">
+          <article class="evidence-primary">
+            <span class="evidence-label">Measured · integrated loudness</span>
+            <div class="measurement">−16.0 <small>LUFS</small></div>
+            <p class="method">Calculated locally from the processed artifact. Target met for the selected Podcast Stereo delivery profile.</p>
+          </article>
+          <ul class="evidence-notes">
+            <li><strong style="color:var(--violet-light)">Estimated · true peak −1.1 dBTP</strong><span>Approximation; confirm with a certified meter when required.</span></li>
+            <li><strong style="color:var(--warning)">Subjective · voice presence</strong><span>Reviewer preferred B in a randomized local comparison.</span></li>
+            <li><strong>Research candidate · source separation</strong><span>Exploration only; not presented as a shipped capability.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="principles-title">
+      <div class="shell">
+        <header class="section-heading">
+          <span class="section-index">05 / BEHAVIOR</span>
+          <div><h2 id="principles-title">Designed for trust.</h2><p class="section-intro">The interface earns confidence through visible boundaries and reversible actions, not visual spectacle.</p></div>
+        </header>
+        <div class="principles">
+          <article class="principle"><span>01</span><h3>Local is explicit</h3><p>State where processing occurs at the decision point, before a file or text can leave the Mac.</p></article>
+          <article class="principle"><span>02</span><h3>Focus is visible</h3><p>Every action works with a keyboard and carries a high-contrast cyan focus outline.</p></article>
+          <article class="principle"><span>03</span><h3>Motion has meaning</h3><p>Animation explains progress or transition and yields completely to reduced-motion preferences.</p></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner"><span>AudioEnhancerMAX · Signal Console · v3.7</span><span>Original project identity · local assets only</span></div>
+  </footer>
+</body>
+</html>

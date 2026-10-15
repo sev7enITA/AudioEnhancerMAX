@@ -3,6 +3,7 @@ AudioEnhancerMAX by Fd - Text-to-Speech Service v2.0
 Engines:
   1. Edge Neural TTS - Microsoft neural voices, 400+ voices, 100+ languages
   2. Kokoro TTS - Local 82M-param model, very expressive (English)
+  3. Personal voices - Named reusable profiles through the MakeMyVoice adapter
 
 Expressive Mode:
   Uses a local Ollama LLM, preferably a Gemma-family model, to rewrite text in natural spoken style
@@ -20,6 +21,8 @@ from pathlib import Path
 import tempfile
 import logging
 import soundfile as sf
+
+from app.config import APP_STORE_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +116,8 @@ PRESET_VOICES = [
 
 def get_available_voices() -> List[dict]:
     """Get list of available voices."""
+    if APP_STORE_MODE:
+        return [voice for voice in PRESET_VOICES if voice["engine"] == "edge"]
     return PRESET_VOICES
 
 
@@ -353,6 +358,7 @@ def synthesize_speech(
     warmth: float = 0.5,
     style: str = "neutral",
     clone_voice_path: Optional[str] = None,
+    voice_profile_id: Optional[str] = None,
     expressive: bool = False,
     engine: str = "auto",
 ) -> tuple:
@@ -361,7 +367,7 @@ def synthesize_speech(
 
     Args:
         expressive: If True, uses Gemma to rewrite text for natural spoken delivery
-        engine: "edge", "kokoro", or "auto" (auto selects based on voice_id)
+        engine: "edge", "kokoro", "voice-clone", or "auto"
 
     Returns (audio_array, sample_rate, metadata_dict)
     """
@@ -374,9 +380,44 @@ def synthesize_speech(
         text = rewritten_text
 
     # ── Step 2: Determine engine ──
+    is_voice_clone = bool(voice_profile_id) or engine == "voice-clone"
     is_kokoro = voice_id.startswith("kokoro_") or engine == "kokoro"
 
-    if is_kokoro:
+    if clone_voice_path and not voice_profile_id:
+        raise RuntimeError(
+            "A raw voice sample is not a clone profile. Create or select a named personal voice."
+        )
+
+    if APP_STORE_MODE and is_kokoro:
+        raise RuntimeError("Kokoro is not included in the Mac App Store build.")
+    if APP_STORE_MODE and is_voice_clone:
+        raise RuntimeError("Personal voice cloning is not included in the Mac App Store build.")
+
+    clone_metadata = {}
+    if is_voice_clone:
+        if not voice_profile_id:
+            raise RuntimeError("No personal voice profile was selected")
+        from app.services.voice_profiles import synthesize_voice_profile
+
+        clone_speed = speed
+        if style == "energetic":
+            clone_speed *= 1.10
+        elif style == "calm":
+            clone_speed *= 0.90
+        elif style == "expressive":
+            clone_speed *= 1.05
+        audio, sr, clone_metadata = synthesize_voice_profile(
+            text, voice_profile_id, speed=max(0.5, min(2.0, clone_speed))
+        )
+        audio = _apply_pitch(audio, sr, pitch)
+        engine_used = clone_metadata.get("engine", "makemyvoice")
+        logger.info(
+            " Personal voice TTS: %s via %s - %.1fs generated",
+            clone_metadata.get("voice_profile_name", voice_profile_id),
+            engine_used,
+            len(audio) / sr,
+        )
+    elif is_kokoro:
         # Kokoro local engine
         kokoro_info = KOKORO_VOICES.get(voice_id, KOKORO_VOICES["kokoro_heart"])
         audio, sr = _synthesize_kokoro(
@@ -402,6 +443,8 @@ def synthesize_speech(
         "expressive": expressive,
         "rewritten_text": rewritten_text,
         "voice_id": voice_id,
+        "execution": "external-network" if engine_used == "edge" else "local-cpu",
+        **clone_metadata,
     }
 
     return audio, sr, metadata
@@ -410,6 +453,21 @@ def synthesize_speech(
 # ══════════════════════════════════════════════════════════
 # Post-Processing
 # ══════════════════════════════════════════════════════════
+
+def _apply_pitch(audio: np.ndarray, sr: int, pitch: float) -> np.ndarray:
+    """Shift a cloned voice while preserving its duration."""
+    if abs(float(pitch) - 1.0) < 0.01:
+        return audio
+    try:
+        import pedalboard as pb
+
+        steps = 12.0 * np.log2(max(0.5, min(2.0, float(pitch))))
+        board = pb.Pedalboard([pb.PitchShift(semitones=float(steps))])
+        shifted = board(np.asarray(audio, dtype=np.float32), int(sr))
+        return np.asarray(shifted, dtype=np.float32).reshape(np.asarray(audio).shape)
+    except Exception as exc:
+        logger.warning("Personal voice pitch shift unavailable: %s", exc)
+        return audio
 
 def _apply_warmth(audio: np.ndarray, sr: int, warmth: float = 0.5, style: str = "neutral") -> np.ndarray:
     """Apply warmth and style EQ adjustments via pedalboard."""

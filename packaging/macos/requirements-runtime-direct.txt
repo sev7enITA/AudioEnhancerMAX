@@ -1,0 +1,4 @@
+# Hardened direct-download runtime. Keep this channel aligned with the
+# JIT-free App Store core so Developer ID builds cannot reintroduce
+# librosa/Numba/llvmlite executable-memory crashes.
+-r requirements-runtime-app-store.txt

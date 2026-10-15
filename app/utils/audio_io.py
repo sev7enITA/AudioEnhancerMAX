@@ -2,23 +2,16 @@
 AudioEnhancerMAX by Fd - Audio I/O Utilities
 Handles loading, converting, and saving audio in multiple formats.
 """
-import os
 import uuid
-import subprocess
-import tempfile
+from fractions import Fraction
 from pathlib import Path
 from typing import Tuple, Optional
 
 import numpy as np
 import soundfile as sf
-import librosa
-
-# Ensure Homebrew binaries (ffmpeg, ffprobe) are on PATH for Apple Silicon
-_homebrew_bin = "/opt/homebrew/bin"
-if _homebrew_bin not in os.environ.get("PATH", ""):
-    os.environ["PATH"] = _homebrew_bin + ":" + os.environ.get("PATH", "")
 
 from app.config import UPLOAD_DIR, OUTPUT_DIR, ALLOWED_EXTENSIONS, HIGH_QUALITY_SAMPLE_RATE
+from app.utils.signal_processing import resample_audio
 
 
 def generate_file_id() -> str:
@@ -43,17 +36,100 @@ def validate_extension(filename: str) -> bool:
 
 
 def extract_audio_from_video(video_path: Path, output_path: Path) -> Path:
-    """Extract audio track from MP4/video files using FFmpeg."""
-    cmd = [
-        "ffmpeg", "-y", "-i", str(video_path),
-        "-vn",  # no video
-        "-acodec", "pcm_s16le",
-        "-ar", str(HIGH_QUALITY_SAMPLE_RATE),
-        "-ac", "1",  # mono
-        str(output_path)
-    ]
-    subprocess.run(cmd, capture_output=True, check=True)
+    """Extract an audio track with the bundled PyAV/FFmpeg libraries."""
+    audio, sample_rate = _load_with_pyav(
+        Path(video_path),
+        sr=HIGH_QUALITY_SAMPLE_RATE,
+        mono=True,
+    )
+    sf.write(str(output_path), audio, sample_rate, subtype="PCM_24")
     return output_path
+
+
+def _load_with_pyav(
+    file_path: Path,
+    sr: Optional[int] = None,
+    mono: bool = True,
+) -> Tuple[np.ndarray, int]:
+    """Decode media using PyAV without invoking an external executable."""
+    import av
+
+    with av.open(str(file_path), mode="r") as container:
+        stream = next((item for item in container.streams if item.type == "audio"), None)
+        if stream is None:
+            raise ValueError(f"No audio stream found in {file_path.name}")
+
+        source_rate = int(stream.codec_context.sample_rate or HIGH_QUALITY_SAMPLE_RATE)
+        target_rate = int(sr or source_rate)
+        source_layout = stream.codec_context.layout
+        source_channels = len(source_layout.channels) if source_layout else 1
+        target_layout = "mono" if mono else ("stereo" if source_channels > 1 else "mono")
+        resampler = av.AudioResampler(format="fltp", layout=target_layout, rate=target_rate)
+        chunks: list[np.ndarray] = []
+
+        def append_frames(frames) -> None:
+            if frames is None:
+                return
+            if not isinstance(frames, list):
+                frames = [frames]
+            for resampled in frames:
+                array = resampled.to_ndarray().astype(np.float32, copy=False)
+                if array.ndim == 1:
+                    array = array.reshape(1, -1)
+                chunks.append(array)
+
+        for frame in container.decode(stream):
+            append_frames(resampler.resample(frame))
+        append_frames(resampler.resample(None))
+
+    if not chunks:
+        raise ValueError(f"No decodable audio samples found in {file_path.name}")
+
+    planar = np.concatenate(chunks, axis=1)
+    if mono:
+        return planar[0], target_rate
+    return planar, target_rate
+
+
+def _as_planar_float32(audio: np.ndarray) -> np.ndarray:
+    """Normalize mono/interleaved/planar arrays for PyAV encoders."""
+    array = np.asarray(audio, dtype=np.float32)
+    if array.ndim == 1:
+        return array.reshape(1, -1)
+    if array.ndim != 2:
+        raise ValueError("Audio must be a mono or stereo array")
+    if array.shape[0] <= 8 and array.shape[0] < array.shape[1]:
+        return array
+    return array.T
+
+
+def _save_mp3_with_pyav(audio: np.ndarray, sr: int, output_path: Path, bitrate: str) -> None:
+    """Encode MP3 with the FFmpeg libraries bundled in the PyAV wheel."""
+    import av
+
+    planar = np.ascontiguousarray(_as_planar_float32(audio))
+    channels = planar.shape[0]
+    if channels not in {1, 2}:
+        planar = planar[:2]
+        channels = planar.shape[0]
+    layout = "mono" if channels == 1 else "stereo"
+    bitrate_kbps = int(str(bitrate).lower().removesuffix("k"))
+
+    with av.open(str(output_path), mode="w", format="mp3") as container:
+        stream = container.add_stream("libmp3lame", rate=int(sr))
+        stream.bit_rate = bitrate_kbps * 1000
+        stream.layout = layout
+        frame_size = 1152
+        for offset in range(0, planar.shape[1], frame_size):
+            chunk = np.ascontiguousarray(planar[:, offset:offset + frame_size])
+            frame = av.AudioFrame.from_ndarray(chunk, format="fltp", layout=layout)
+            frame.sample_rate = int(sr)
+            frame.pts = offset
+            frame.time_base = Fraction(1, int(sr))
+            for packet in stream.encode(frame):
+                container.mux(packet)
+        for packet in stream.encode(None):
+            container.mux(packet)
 
 
 def load_audio(file_path: Path, sr: Optional[int] = None, mono: bool = True) -> Tuple[np.ndarray, int]:
@@ -65,16 +141,20 @@ def load_audio(file_path: Path, sr: Optional[int] = None, mono: bool = True) -> 
     file_path = Path(file_path)
     ext = file_path.suffix.lower()
 
-    # Handle video files - extract audio first
-    if ext in {".mp4", ".m4a", ".avi", ".mkv", ".mov"}:
-        wav_path = file_path.with_suffix(".wav")
-        extract_audio_from_video(file_path, wav_path)
-        file_path = wav_path
-
-    # Load with librosa (handles mp3, wav, flac, ogg)
-    y, sr_loaded = librosa.load(str(file_path), sr=sr, mono=mono)
-
-    return y, sr_loaded
+    try:
+        return _load_with_pyav(file_path, sr=sr, mono=mono)
+    except Exception:
+        # libsndfile remains a self-contained fallback for WAV/FLAC/OGG.
+        if ext in {".wav", ".flac", ".ogg"}:
+            y, sr_loaded = sf.read(str(file_path), dtype="float32", always_2d=True)
+            y = y.T
+            if mono:
+                y = np.mean(y, axis=0)
+            if sr is not None and int(sr) != int(sr_loaded):
+                y = resample_audio(y, int(sr_loaded), int(sr))
+                sr_loaded = int(sr)
+            return np.asarray(y, dtype=np.float32), int(sr_loaded)
+        raise
 
 
 def save_audio(
@@ -94,18 +174,7 @@ def save_audio(
         sf.write(str(output_path), audio, sr, subtype="PCM_24")
 
     elif format == "mp3":
-        # Save as temp WAV first, then convert with FFmpeg
-        temp_wav = output_path.with_suffix(".tmp.wav")
-        sf.write(str(temp_wav), audio, sr, subtype="PCM_24")
-
-        cmd = [
-            "ffmpeg", "-y", "-i", str(temp_wav),
-            "-codec:a", "libmp3lame",
-            "-b:a", bitrate,
-            str(output_path)
-        ]
-        subprocess.run(cmd, capture_output=True, check=True)
-        temp_wav.unlink(missing_ok=True)
+        _save_mp3_with_pyav(audio, sr, output_path, bitrate)
 
     elif format == "flac":
         sf.write(str(output_path), audio, sr, subtype="PCM_24")
@@ -118,30 +187,30 @@ def get_audio_info(file_path: Path) -> dict:
     file_path = Path(file_path)
     ext = file_path.suffix.lower()
 
-    # For video files, probe with ffmpeg
-    if ext in {".mp4", ".m4a", ".avi", ".mkv", ".mov"}:
-        try:
-            cmd = [
-                "ffprobe", "-v", "quiet", "-print_format", "json",
-                "-show_streams", "-show_format", str(file_path)
-            ]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            import json
-            probe = json.loads(result.stdout)
-            audio_stream = next(
-                (s for s in probe.get("streams", []) if s.get("codec_type") == "audio"),
-                {}
-            )
-            fmt = probe.get("format", {})
-            return {
-                "duration": float(fmt.get("duration", 0)),
-                "sample_rate": int(audio_stream.get("sample_rate", 44100)),
-                "channels": int(audio_stream.get("channels", 1)),
-                "bitrate": int(fmt.get("bit_rate", 0)) // 1000,
-                "format": ext.lstrip("."),
-            }
-        except Exception:
-            pass
+    try:
+        import av
+
+        with av.open(str(file_path), mode="r") as container:
+            stream = next((item for item in container.streams if item.type == "audio"), None)
+            if stream is not None:
+                if stream.duration is not None and stream.time_base is not None:
+                    duration = float(stream.duration * stream.time_base)
+                elif container.duration is not None:
+                    duration = float(container.duration / av.time_base)
+                else:
+                    duration = 0.0
+                layout = stream.codec_context.layout
+                channels = len(layout.channels) if layout else 1
+                bitrate = stream.bit_rate or container.bit_rate or 0
+                return {
+                    "duration": duration,
+                    "sample_rate": int(stream.codec_context.sample_rate or 44100),
+                    "channels": channels,
+                    "bitrate": int(bitrate) // 1000 if bitrate else None,
+                    "format": ext.lstrip("."),
+                }
+    except Exception:
+        pass
 
     # For audio files
     try:
@@ -153,18 +222,8 @@ def get_audio_info(file_path: Path) -> dict:
             "bitrate": None,
             "format": info.format,
         }
-    except Exception:
-        # Fallback with librosa
-        y, sr = librosa.load(str(file_path), sr=None, mono=False)
-        duration = librosa.get_duration(y=y, sr=sr)
-        channels = 1 if y.ndim == 1 else y.shape[0]
-        return {
-            "duration": duration,
-            "sample_rate": sr,
-            "channels": channels,
-            "bitrate": None,
-            "format": ext.lstrip("."),
-        }
+    except Exception as exc:
+        raise ValueError(f"Unable to read audio metadata from {file_path.name}") from exc
 
 
 def generate_waveform_data(audio: np.ndarray, num_points: int = 1000) -> list:

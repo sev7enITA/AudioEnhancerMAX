@@ -8,6 +8,8 @@ from typing import List, Optional
 from pathlib import Path
 import tempfile
 import logging
+
+from app.utils.signal_processing import mfcc as compute_mfcc, rms_frames
 import soundfile as sf
 
 logger = logging.getLogger(__name__)
@@ -131,14 +133,12 @@ def _diarize_energy_fallback(
     Simple energy-based speaker change detection fallback.
     Not as accurate as pyannote but works without extra dependencies.
     """
-    import librosa
-
     frame_length = int(sr * 0.05)  # 50ms frames
     hop_length = int(sr * 0.025)  # 25ms hop
 
     # Extract features
-    mfcc = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=13, hop_length=hop_length)
-    rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
+    mfcc = compute_mfcc(audio, sr, n_mfcc=13, hop_length=hop_length)
+    rms = rms_frames(audio, frame_length=frame_length, hop_length=hop_length)
 
     # Detect speaker changes via MFCC distance
     segments = []

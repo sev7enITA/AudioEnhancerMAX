@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioEnhancerMAX Privacy Notice</title>
+    <meta name="description" content="AudioEnhancerMAX privacy notice covering local audio processing, optional external integrations, local storage, public website services, retention, and user control.">
+    <meta property="og:title" content="AudioEnhancerMAX Privacy Notice">
+    <meta property="og:description" content="A transparent account of where AudioEnhancerMAX data is processed and when optional services transfer content.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/privacy.html">
+    <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+    <link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/public-info.css">
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to privacy content</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">
+                <img src="img/icons/aem-mark.svg" alt="">
+                <span>AudioEnhancerMAX</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
+                <li><a href="roadmap.html">Roadmap</a></li>
+                <li><a href="privacy.html" aria-current="page">Privacy</a></li>
+                <li><a href="accessibility.html">Accessibility</a></li>
+                <li><a href="support.html">Support</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <span class="eyebrow">Privacy notice</span>
+        <h1>Know where your audio goes</h1>
+        <p class="hero-copy">AudioEnhancerMAX is local-first, not absolutely offline. Core processing is local, while clearly identified optional features can contact local-network devices or external services.</p>
+        <div class="hero-meta">
+            <span><span class="meta-label">Effective</span> <strong>August 22, 2026</strong></span>
+            <span><span class="meta-label">Notice version</span> <strong>1.1</strong></span>
+            <span><span class="meta-label">Controller</span> <strong>Fabrizio Degni</strong></span>
+        </div>
+    </header>
+
+    <main id="main-content" class="page-grid">
+        <aside class="toc" aria-label="Page contents">
+            <p class="toc-title">On this page</p>
+            <ol>
+                <li><a href="#scope">Scope and principles</a></li>
+                <li><a href="#flows">Application data flows</a></li>
+                <li><a href="#storage">Local storage and retention</a></li>
+                <li><a href="#website">Website and support</a></li>
+                <li><a href="#third-parties">Third parties</a></li>
+                <li><a href="#rights">Choices and rights</a></li>
+                <li><a href="#security">Security and changes</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ol>
+        </aside>
+
+        <div>
+            <section id="scope" class="content-section">
+                <span class="section-index">01 / Scope</span>
+                <h2>What this notice covers</h2>
+                <p>This notice applies to the AudioEnhancerMAX macOS application, source distribution, Android edge worker and official project pages hosted at <strong>fabriziodegni.com/AudioEnhancerMAX</strong>. It explains processing performed by the software and separate processing that can occur through optional integrations or public project services.</p>
+                <div class="notice aqua">
+                    <strong>Core position</strong>
+                    <p>The maintainer does not operate an AudioEnhancerMAX account service, advertising network or behavioral analytics service. The application does not automatically send recordings, outputs or diagnostic telemetry to the maintainer.</p>
+                </div>
+                <p>"Local-first" means that the core audio workflow is designed to run on the user's Mac. It does not mean that every optional feature is offline. The user controls whether to invoke network-dependent TTS, connect a trusted LAN worker, use local Ollama or visit an external project link.</p>
+            </section>
+
+            <section id="flows" class="content-section">
+                <span class="section-index">02 / Data flows</span>
+                <h2>Application processing by function</h2>
+                <div class="data-table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Function</th>
+                                <th>Data involved</th>
+                                <th>Default destination</th>
+                                <th>User control</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Import and enhancement</td>
+                                <td>Selected audio or media, processing settings and outputs</td>
+                                <td>Local application storage</td>
+                                <td>The user selects the source file, modules and export action.</td>
+                            </tr>
+                            <tr>
+                                <td>Transcription</td>
+                                <td>Audio and generated transcript</td>
+                                <td>Local Faster-Whisper processing when local models are available</td>
+                                <td>The user starts transcription and chooses whether to export the result.</td>
+                            </tr>
+                            <tr>
+                                <td>Smart Mode</td>
+                                <td>Audio-derived analysis and prompt context</td>
+                                <td>User-controlled Ollama service, normally on the same Mac</td>
+                                <td>Optional. Core DSP remains available without Ollama.</td>
+                            </tr>
+                            <tr>
+                                <td>Kokoro TTS</td>
+                                <td>User-entered text and generated speech</td>
+                                <td>Local processing when the engine and assets are installed</td>
+                                <td>The user selects the local engine and voice.</td>
+                            </tr>
+                            <tr>
+                                <td>Personal Voice Studio (development head)</td>
+                                <td>Consensual voice samples, profile name, synthesis settings, training metadata and generated speech</td>
+                                <td>Local AudioEnhancerMAX storage and the separately installed local MakeMyVoice workspace/runtime</td>
+                                <td>The user must confirm consent, names the profile, starts synthesis, and can re-enrol or remove locally stored profile data.</td>
+                            </tr>
+                            <tr>
+                                <td>Edge Neural TTS</td>
+                                <td>User-entered text, voice and synthesis settings</td>
+                                <td>Microsoft's network service</td>
+                                <td>Optional. Transfer occurs only when this engine is selected and synthesis is started.</td>
+                            </tr>
+                            <tr>
+                                <td>Trusted LAN workers</td>
+                                <td>Audio chunks, filter settings and processing status</td>
+                                <td>Devices selected on the user's local network</td>
+                                <td>Optional. Use only on networks and devices the user controls or trusts.</td>
+                            </tr>
+                            <tr>
+                                <td>Readiness and monitoring</td>
+                                <td>OS, architecture, memory, storage and processing status</td>
+                                <td>Local interface and local log files</td>
+                                <td>No automatic diagnostic submission to the maintainer.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>AI-assisted transcripts, classifications and parameter suggestions can be inaccurate. They remain reviewable outputs and should not be treated as authoritative decisions in legal, medical, employment or other high-stakes contexts.</p>
+            </section>
+
+            <section id="storage" class="content-section">
+                <span class="section-index">03 / Storage</span>
+                <h2>Local storage and retention</h2>
+                <p>The packaged GitHub application stores imported files, generated outputs, presets, timing history, readiness state and roadmap votes under <code>~/Library/Application Support/AudioEnhancerMAX</code>. Development-head personal-voice profiles can also store a profile manifest, consent record, reference-audio copy or link, and synthesis defaults there. MakeMyVoice keeps its own datasets, checkpoints, comparisons and activated models in its separate local workspace. Launcher logs are stored under <code>~/Library/Logs/AudioEnhancerMAX</code>. A sandboxed Mac App Store build stores equivalent supported data within its Apple-managed application container; MakeMyVoice integration is not currently claimed for that build.</p>
+                <p>Project data is retained locally until the user removes it. Some temporary processing files are deleted when their operation finishes, but imported files, outputs and saved settings can persist between sessions. AudioEnhancerMAX does not currently promise automatic deletion after a fixed period.</p>
+                <p>Deleting local data or uninstalling the app does not delete content separately submitted to GitHub, SourceForge, Microsoft or another selected third-party service. Those services apply their own retention rules.</p>
+            </section>
+
+            <section id="website" class="content-section">
+                <span class="section-index">04 / Public services</span>
+                <h2>Website and support activity</h2>
+                <p>The project website does not intentionally set first-party advertising or analytics cookies. Hosting infrastructure can process standard request information such as IP address, date, requested page, browser information and error status for delivery, security and operational logging.</p>
+                <p>The overview and roadmap pages can request fonts from Google and award metadata from SourceForge. Those providers receive normal web request data, which can include IP address and browser information. The privacy, support and accessibility pages use system fonts and do not load the SourceForge badge script.</p>
+                <p>When a user follows a link to GitHub or SourceForge, opens a support ticket, stars the project or signals roadmap interest, the destination platform processes account and activity data under its own policy. GitHub issues are public unless GitHub explicitly indicates otherwise.</p>
+            </section>
+
+            <section id="third-parties" class="content-section">
+                <span class="section-index">05 / Third parties</span>
+                <h2>Optional services and independent providers</h2>
+                <ul>
+                    <li><strong>Microsoft Edge Neural TTS:</strong> receives text and synthesis settings when that engine is selected.</li>
+                    <li><strong>MakeMyVoice:</strong> is a separate local project/runtime used by development-head personal-voice profiles. AudioEnhancerMAX does not upload those samples to a maintainer-operated service.</li>
+                    <li><strong>GitHub:</strong> hosts source code, releases, issues and roadmap feedback.</li>
+                    <li><strong>SourceForge:</strong> hosts releases, project activity and the Rising Star badge.</li>
+                    <li><strong>Google Fonts:</strong> can serve font files on the overview and roadmap pages.</li>
+                    <li><strong>Model and package providers:</strong> can receive network request data if the user chooses to obtain optional models or dependencies outside the packaged core.</li>
+                </ul>
+                <p>AudioEnhancerMAX does not sell personal data and does not provide user recordings to advertisers. Optional providers are not controlled by the project maintainer, and their policies should be reviewed before enabling a network-dependent workflow.</p>
+            </section>
+
+            <section id="rights" class="content-section">
+                <span class="section-index">06 / Control</span>
+                <h2>User choices and data protection rights</h2>
+                <p>Users can choose local engines, avoid optional network features, disconnect LAN workers, remove local project files and refrain from creating public support tickets. Source audio is not intentionally overwritten by the processing pipeline.</p>
+                <p>Depending on applicable law, a person can request access, correction, deletion, restriction, portability or objection regarding personal data controlled by the project maintainer, and can lodge a complaint with a competent supervisory authority.</p>
+                <p>Most application content is held only on the user's device and is therefore not accessible to the maintainer. Requests about information held by GitHub, Microsoft, SourceForge, Google or a hosting provider may need to be directed to that provider.</p>
+            </section>
+
+            <section id="security" class="content-section">
+                <span class="section-index">07 / Security</span>
+                <h2>Safeguards, limitations and policy changes</h2>
+                <p>The desktop service is designed to bind to the loopback interface <code>127.0.0.1</code>. The project validates key storage identifiers and documents that the FastAPI service must not be exposed directly to the public internet without authentication, rate limits and an appropriate reverse-proxy policy.</p>
+                <p>No software or transmission method is risk-free. Users remain responsible for device access controls, backups, network trust, lawful consent to use a voice, and review of sensitive outputs. Trusted LAN processing should be enabled only on networks and devices the user controls. The Android worker path is currently treated as experimental while pairing, authentication, revocation, and workload limits are strengthened.</p>
+                <p>This notice will be updated when a release materially changes data flows. The effective date and notice version at the top identify the current text. Earlier behavior can also be reviewed through the open-source version history.</p>
+            </section>
+
+            <section id="contact" class="content-section">
+                <span class="section-index">08 / Contact</span>
+                <h2>Privacy contact</h2>
+                <p>The data controller for project-maintained processing is <strong>Fabrizio Degni</strong>, maintainer of AudioEnhancerMAX.</p>
+                <p>To initiate a privacy request, create a minimal issue in the official repository identifying it as a privacy request. Do not include recordings, transcripts, identifiers or other private information in the public issue. The maintainer will identify an appropriate follow-up channel when needed.</p>
+                <div class="btn-row">
+                    <a class="btn primary" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new?title=Privacy%20request&amp;body=Please%20contact%20me%20about%20a%20privacy%20request.%20I%20have%20not%20included%20personal%20data%20in%20this%20public%20ticket." target="_blank" rel="noopener noreferrer">Start a privacy request</a>
+                    <a class="btn" href="support.html">Visit support</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div>AudioEnhancerMAX Privacy Notice 1.1 | Effective August 22, 2026</div>
+            <ul class="footer-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
+                <li><a href="support.html">Support</a></li>
+                <li><a href="accessibility.html">Accessibility</a></li>
+                <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+</html>

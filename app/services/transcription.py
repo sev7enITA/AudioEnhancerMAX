@@ -27,15 +27,19 @@ def _init_model(model_size: str = "medium"):
     if _model is None:
         try:
             from faster_whisper import WhisperModel
+            from app.config import whisper_model_source
+
+            model_source, local_only = whisper_model_source(model_size)
             # CTranslate2 doesn't support MPS, but ARM NEON on M3 MAX
             # makes CPU inference very fast with int8 quantization
             _model = WhisperModel(
-                model_size,
+                model_source,
                 device="cpu",
                 compute_type="int8",
                 num_workers=4,  # M3 MAX has plenty of cores
+                local_files_only=local_only,
             )
-            logger.info(f"faster-whisper model '{model_size}' loaded (ARM NEON optimized)")
+            logger.info("faster-whisper model '%s' loaded (local_only=%s)", model_source, local_only)
         except ImportError:
             try:
                 import whisper
@@ -65,13 +69,7 @@ def transcribe(
     _init_model(model_size)
 
     if _model is None:
-        logger.error("Transcription model failed to load - returning error")
-        return {
-            "text": "[Transcription model not available. Please check that faster-whisper is installed.]",
-            "language": "",
-            "segments": [],
-            "duration": len(audio) / sr,
-        }
+        raise RuntimeError("The bundled local transcription model could not be loaded")
 
     # Save temp file for model input
     temp_path = _temporary_wav_path()
@@ -85,12 +83,8 @@ def transcribe(
         result = _transcribe_faster_whisper(temp_path, language)
         logger.info(f"Transcription complete: {len(result.get('text', ''))} chars, language={result.get('language')}")
     except Exception as e:
-        logger.error(f"faster-whisper failed: {e}, trying openai whisper...")
-        try:
-            result = _transcribe_openai_whisper(temp_path, language)
-        except Exception as e2:
-            logger.error(f"All transcription methods failed: {e2}")
-            result = {"text": f"[Transcription failed: {str(e)}]", "language": "", "segments": []}
+        logger.error("Bundled faster-whisper transcription failed: %s", e)
+        raise RuntimeError(f"Local transcription failed: {e}") from e
     finally:
         temp_path.unlink(missing_ok=True)
 

@@ -27,6 +27,7 @@ Thank you for considering contributing to AudioEnhancerMAX! 🎙️
    - Python: PEP 8, type hints where practical
    - JavaScript: ES6+, no frameworks (vanilla JS)
    - CSS: BEM-inspired naming, CSS custom properties
+   - UI: follow the [Signal Console design contract](DESIGN.md) and preserve its semantic color roles
 
 3. **Write meaningful commit messages:**
    ```
@@ -43,7 +44,9 @@ Thank you for considering contributing to AudioEnhancerMAX! 🎙️
 5. **Submit a Pull Request** with:
    - Clear description of what changed and why
    - Before/after comparison if it's a DSP change
-   - Screenshots if it's a UI change
+   - Screenshots at desktop and mobile widths if it's a UI change
+   - UI verification for keyboard focus, contrast, 200% zoom, and reduced-motion behavior
+   - Correct `Measured`, `Estimated`, `Subjective`, or `Research candidate` labels for quality and capability claims
 
 ### 🌍 Translations
 
@@ -96,7 +99,7 @@ AudioEnhancerMAX/
 ├── frontend/
 │   ├── index.html            # Main app UI
 │   ├── landing.html          # Product landing page (EN/IT)
-│   ├── css/style.css         # Glassmorphism dark theme
+│   ├── css/style.css         # Signal Console design tokens and UI
 │   └── js/app.js             # Frontend logic
 ├── docs/                     # Documentation
 ├── android-worker/           # Native Android edge worker
@@ -105,6 +108,18 @@ AudioEnhancerMAX/
 ├── LICENSE
 └── README.md
 ```
+
+### UI and UX checklist
+
+Before requesting review for a visual change:
+
+- Compare the result with [DESIGN.md](DESIGN.md) and the [visual reference](docs/design-preview.html).
+- Test the task flow at desktop, tablet, and 320 px mobile widths.
+- Complete the flow using only the keyboard; confirm every action has visible focus.
+- Check text and state contrast, including disabled controls and error messages.
+- Verify the page at 200% zoom and with `prefers-reduced-motion: reduce` enabled.
+- Give charts and waveforms a text summary or accessible description.
+- Label evidence precisely and keep experimental work out of released-feature language.
 
 ---
 

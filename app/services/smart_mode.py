@@ -1,7 +1,8 @@
-"""
-AudioEnhancerMAX by Fd - Smart Mode Service via local Ollama/Gemma.
-Uses a locally available Gemma-family model for assistive content classification
-and editing suggestions, with deterministic heuristics as fallback.
+"""Smart Enhance analysis and optional local-language-model suggestions.
+
+Audio diagnosis and DSP parameter selection are deterministic and local. A
+Gemma-family model may still provide explicitly requested editorial prose, but
+does not control the processing pipeline.
 """
 import numpy as np
 import json
@@ -16,6 +17,15 @@ import soundfile as sf
 
 from app.config import SMART_PRESETS
 from app.models.schemas import ContentType, ProcessingOptions
+from app.utils.signal_processing import (
+    db_to_amplitude,
+    estimate_tempo,
+    onset_strength,
+    rms_frames,
+    spectral_features,
+    stft,
+    zero_crossing_rate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -113,16 +123,8 @@ def detect_content_type(
     audio: np.ndarray,
     sr: int,
 ) -> dict:
-    """
-    Detect content type using local Ollama/Gemma first, with spectral heuristics fallback.
-    """
-    # Try local Gemma first
-    gemma_result = _detect_with_gemma(audio, sr)
-    if gemma_result:
-        return gemma_result
-
-    # Fallback to spectral heuristics
-    logger.info("Using spectral heuristics fallback for content detection")
+    """Detect content type using deterministic local spectral analysis."""
+    logger.info("Using deterministic spectral analysis for content detection")
     return _detect_with_heuristics(audio, sr)
 
 
@@ -131,23 +133,22 @@ def _detect_with_gemma(audio: np.ndarray, sr: int) -> Optional[dict]:
     if not _check_ollama_available():
         return None
 
-    import librosa
-
     # Extract audio features for local model analysis
     duration = len(audio) / sr
     preview = audio[:int(min(30, duration) * sr)]
 
-    spectral_centroid = float(np.mean(librosa.feature.spectral_centroid(y=preview, sr=sr)))
-    spectral_bandwidth = float(np.mean(librosa.feature.spectral_bandwidth(y=preview, sr=sr)))
-    rms = librosa.feature.rms(y=preview)[0]
+    centroids, bandwidths = spectral_features(preview, sr)
+    spectral_centroid = float(np.mean(centroids))
+    spectral_bandwidth = float(np.mean(bandwidths))
+    rms = rms_frames(preview)
     rms_mean = float(np.mean(rms))
     rms_dynamic_range = float(np.std(rms) / (rms_mean + 1e-10))
 
-    onset_env = librosa.onset.onset_strength(y=preview, sr=sr)
-    tempo = float(librosa.feature.tempo(onset_envelope=onset_env, sr=sr)[0])
+    onset_env = onset_strength(preview, sr)
+    tempo = estimate_tempo(onset_env, sr)
 
-    zcr = float(np.mean(librosa.feature.zero_crossing_rate(preview)))
-    silence_threshold = librosa.db_to_amplitude(-40)
+    zcr = float(np.mean(zero_crossing_rate(preview)))
+    silence_threshold = db_to_amplitude(-40)
     silence_ratio = float(np.sum(rms < silence_threshold) / len(rms))
 
     # Build descriptive prompt with extracted features
@@ -220,21 +221,20 @@ Respond ONLY with a valid JSON object:
 
 def _detect_with_heuristics(audio: np.ndarray, sr: int) -> dict:
     """Fallback spectral analysis for content classification."""
-    import librosa
-
     duration = len(audio) / sr
 
-    spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=audio, sr=sr))
-    spectral_bandwidth = np.mean(librosa.feature.spectral_bandwidth(y=audio, sr=sr))
-    rms = librosa.feature.rms(y=audio)[0]
+    centroids, bandwidths = spectral_features(audio, sr)
+    spectral_centroid = np.mean(centroids)
+    spectral_bandwidth = np.mean(bandwidths)
+    rms = rms_frames(audio)
     rms_mean = np.mean(rms)
     rms_std = np.std(rms)
     rms_dynamic_range = rms_std / (rms_mean + 1e-10)
 
-    onset_env = librosa.onset.onset_strength(y=audio, sr=sr)
-    tempo = librosa.feature.tempo(onset_envelope=onset_env, sr=sr)[0]
+    onset_env = onset_strength(audio, sr)
+    tempo = estimate_tempo(onset_env, sr)
 
-    silence_threshold = librosa.db_to_amplitude(-40)
+    silence_threshold = db_to_amplitude(-40)
     silence_ratio = np.sum(rms < silence_threshold) / len(rms)
 
     scores = {ct: 0.0 for ct in ContentType if ct != ContentType.CUSTOM}
@@ -261,7 +261,7 @@ def _detect_with_heuristics(audio: np.ndarray, sr: int) -> dict:
     if rms_dynamic_range > 0.6:
         scores[ContentType.OUTDOOR] += 2
 
-    S = np.abs(librosa.stft(audio, n_fft=2048))
+    S = np.abs(stft(audio, n_fft=2048))
     low_energy = np.mean(S[:10, :])
     high_energy = np.mean(S[100:, :])
     if low_energy > high_energy * 3:
@@ -293,18 +293,58 @@ def get_smart_preset(content_type: ContentType) -> ProcessingOptions:
     return ProcessingOptions(**preset)
 
 
-def analyze_and_suggest(audio: np.ndarray, sr: int) -> dict:
-    """Full smart mode: detect + suggest processing chain."""
-    detection = detect_content_type(audio, sr)
-    preset = get_smart_preset(detection["type"])
+def analyze_and_suggest(audio: np.ndarray, sr: int, profile: str = "balanced") -> dict:
+    """Diagnose audio and build an explainable local processing proposal.
+
+    The DSP policy is deterministic. Ollama remains available elsewhere for
+    optional prose suggestions, but it never decides this processing chain.
+    """
+    from app.services.audio_intelligence import PROFILE_NAMES, analyze_audio_quality, build_processing_profiles
+    from app.services.capability_registry import engine_for_step, get_capability_registry
+
+    if profile not in PROFILE_NAMES:
+        raise ValueError(f"Unknown Smart Enhance profile: {profile}")
+
+    diagnosis = analyze_audio_quality(audio, sr)
+    preview = audio[: min(len(audio), sr * 60)]
+    detection = _detect_with_heuristics(preview, sr)
+    content_type = detection["type"].value
+    capabilities = get_capability_registry()
+    profiles = build_processing_profiles(diagnosis, content_type, capabilities)
+    selected = profiles[profile]
+    pipeline = [
+        {"step": step, **engine_for_step(step)}
+        for step in selected["active_steps"]
+    ]
+
+    issues = diagnosis["issues"]
+    if issues:
+        issue_labels = ", ".join(item["label"].lower() for item in issues[:3])
+        description = (
+            f"Local analysis found {len(issues)} area(s) to review: {issue_labels}. "
+            f"Quality score {diagnosis['quality_score']}/100."
+        )
+    else:
+        description = (
+            f"No material signal defect was detected. Quality score "
+            f"{diagnosis['quality_score']}/100; conservative processing is recommended."
+        )
 
     return {
-        "detected_type": detection["type"],
+        "schema_version": 2,
+        "detected_type": content_type,
         "confidence": detection["confidence"],
-        "description": detection["description"],
-        "engine": detection.get("engine", "unknown"),
-        "ai_suggestions": detection.get("ai_suggestions", []),
-        "suggested_options": preset.model_dump(),
+        "description": description,
+        "engine": "audio-intelligence-v1",
+        "decision_mode": "deterministic-local",
+        "local_only": True,
+        "selected_profile": profile,
+        "quality": diagnosis,
+        "profiles": profiles,
+        "pipeline": pipeline,
+        "ai_suggestions": [item["recommendation"] for item in issues],
+        # Compatibility with the existing Apply Suggestions action.
+        "suggested_options": selected["options"],
     }
 
 
@@ -343,119 +383,32 @@ def get_dynamic_parameters(
     enabled_filters: dict,
 ) -> dict:
     """
-    v2.0: Use local Ollama/Gemma to dynamically tune processing parameters based on
-    the specific audio characteristics. Instead of using static defaults,
-    this analyzes the audio and returns optimized strength values per filter.
+    Tune enabled filters from measured audio characteristics.
 
-    Returns dict of filter_name -> { strength, reason } overrides.
-    Falls back to conservative defaults if Gemma is unavailable.
+    This path is deliberately deterministic: a language model may explain a
+    completed decision elsewhere, but it never controls DSP parameters.
     """
-    import librosa
-
-    # Extract audio features for analysis
-    duration = len(audio) / sr
-    preview = audio[:int(min(30, duration) * sr)]
-
-    rms = librosa.feature.rms(y=preview)[0]
-    rms_mean = float(np.mean(rms))
-    rms_db = float(20 * np.log10(rms_mean + 1e-10))
-
-    spectral_centroid = float(np.mean(librosa.feature.spectral_centroid(y=preview, sr=sr)))
-    spectral_bandwidth = float(np.mean(librosa.feature.spectral_bandwidth(y=preview, sr=sr)))
-    zcr = float(np.mean(librosa.feature.zero_crossing_rate(preview)))
-
-    # Estimate SNR (simple: ratio of speech energy to noise floor)
-    silence_threshold = librosa.db_to_amplitude(-40)
-    speech_frames = rms[rms > silence_threshold]
-    noise_frames = rms[rms <= silence_threshold]
-    snr_estimate = 0.0
-    if len(noise_frames) > 0 and np.mean(noise_frames) > 0:
-        snr_estimate = float(20 * np.log10(
-            np.mean(speech_frames) / (np.mean(noise_frames) + 1e-10)
-        ))
-
-    # Get list of active filters
-    active_filters = [k for k, v in enabled_filters.items() if v is True]
+    # Only these filters expose a strength value that the processing route can
+    # safely tune. Other boolean steps keep their explicit request parameters.
+    tunable_filters = {"remove_noise", "remove_breaths", "remove_mouth_sounds"}
+    active_filters = [
+        key for key, value in enabled_filters.items()
+        if value is True and key in tunable_filters
+    ]
 
     if not active_filters:
         return {}
 
-    # Try local Gemma for intelligent tuning
-    if _check_ollama_available():
-        gemma_result = _get_gemma_tuning(
-            active_filters, rms_db, snr_estimate,
-            spectral_centroid, spectral_bandwidth, zcr, duration
-        )
-        if gemma_result:
-            logger.info(f"Ollama/Gemma dynamic tuning: {len(gemma_result)} filters adjusted")
-            return gemma_result
+    from app.services.audio_intelligence import analyze_audio_quality
 
-    # Fallback: heuristic-based tuning
-    logger.info("Using heuristic dynamic tuning (Gemma unavailable)")
+    diagnosis = analyze_audio_quality(audio, sr)
+    metrics = diagnosis["metrics"]
+    rms_db = float(metrics["rms_dbfs"])
+    snr_estimate = float(metrics["estimated_snr_db"])
+    spectral_centroid = float(metrics["spectral_centroid_hz"])
+
+    logger.info("Using deterministic audio-measurement tuning")
     return _get_heuristic_tuning(active_filters, rms_db, snr_estimate, spectral_centroid)
-
-
-def _get_gemma_tuning(
-    active_filters: list,
-    rms_db: float,
-    snr_estimate: float,
-    spectral_centroid: float,
-    spectral_bandwidth: float,
-    zcr: float,
-    duration: float,
-) -> Optional[dict]:
-    """Query local Ollama/Gemma for per-filter parameter tuning."""
-
-    filters_str = ", ".join(active_filters)
-
-    prompt = f"""You are an expert audio engineer tuning a podcast/speech processing pipeline.
-
-AUDIO ANALYSIS:
-- RMS level: {rms_db:.1f} dB (higher = louder)
-- Estimated SNR: {snr_estimate:.1f} dB (higher = cleaner audio)
-- Spectral centroid: {spectral_centroid:.0f} Hz
-- Spectral bandwidth: {spectral_bandwidth:.0f} Hz
-- Zero crossing rate: {zcr:.4f}
-- Duration: {duration:.1f}s
-
-ACTIVE FILTERS: {filters_str}
-
-For each active filter, recommend a strength value (0.0 to 1.0) that will produce NATURAL sounding results.
-Rules:
-- For clean audio (SNR > 20dB), use LOW noise reduction (0.3-0.5)
-- For noisy audio (SNR < 10dB), use MODERATE noise reduction (0.6-0.8), never higher
-- Studio sound and EQ should always be subtle (0.4-0.7)
-- Breath removal should be gentle (0.3-0.5) to sound natural
-- NEVER use 1.0 for any filter - always leave some natural character
-
-Respond with JSON only:
-{{{", ".join(f'"{f}": {{"strength": 0.5, "reason": ""}}' for f in active_filters)}}}"""
-
-    response = _query_gemma(prompt)
-    if not response:
-        return None
-
-    try:
-        json_start = response.find("{")
-        json_end = response.rfind("}") + 1
-        if json_start >= 0 and json_end > json_start:
-            data = json.loads(response[json_start:json_end])
-            # Validate and cap all strength values
-            result = {}
-            for key, val in data.items():
-                if key in active_filters and isinstance(val, dict):
-                    strength = float(val.get("strength", 0.5))
-                    # Safety caps: never below 0.1, never above 0.85
-                    strength = max(0.1, min(0.85, strength))
-                    result[key] = {
-                        "strength": strength,
-                        "reason": str(val.get("reason", f"Ollama/Gemma tuned via {OLLAMA_MODEL or 'local model'}")),
-                    }
-            return result
-    except (json.JSONDecodeError, ValueError, TypeError) as e:
-        logger.warning(f"Failed to parse Gemma tuning: {e}")
-
-    return None
 
 
 def _get_heuristic_tuning(
@@ -493,11 +446,11 @@ def _get_heuristic_tuning(
 
     for f in active_filters:
         if f in noise_filters:
-            result[f] = {"strength": s["noise"], "reason": f"Heuristic: {quality} audio -> {s['noise']}"}
+            result[f] = {"strength": s["noise"], "reason": f"Deterministic analysis: {quality} audio -> {s['noise']}"}
         elif f in speech_filters:
-            result[f] = {"strength": s["speech"], "reason": f"Heuristic: {quality} audio -> {s['speech']}"}
+            result[f] = {"strength": s["speech"], "reason": f"Deterministic analysis: {quality} audio -> {s['speech']}"}
         elif f in enhance_filters:
-            result[f] = {"strength": s["enhance"], "reason": f"Heuristic: {quality} audio -> {s['enhance']}"}
+            result[f] = {"strength": s["enhance"], "reason": f"Deterministic analysis: {quality} audio -> {s['enhance']}"}
         else:
             result[f] = {"strength": 0.5, "reason": "Default"}
 

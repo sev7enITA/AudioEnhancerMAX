@@ -2,24 +2,148 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
-## Unreleased
+## [3.8.0] - 2026-10-15
+
+### Added
+
+- Revision-bound processing and speech-edit outputs, exact-export compliance evidence, and revision-bound A/B reviews and Project Capsules.
+- Source/options/build/runtime-aware checkpoints with lossless float snapshots and explicit non-resumable paths.
+- REA 6.5.0 research wrapper, evidence receipts, private artifact exclusion and competitor study documentation.
+- Thirteen API/audio regressions and four frontend state regressions.
+
+### Fixed
+
+- Reprocessing an existing file can no longer serve an old cached WAV/MP3/FLAC conversion.
+- A missing processed result no longer falls through to the original audio.
+- Changed source bytes, effective settings, application build or corrupt checkpoint data force a clean run.
+- Dynamic tuning now always measures the original, including during resumption.
+- Delivery guidance, speech-edit review and capsule export follow the selected revision and encoded format.
+- New runs clear old results, and late frontend responses are discarded.
+- Preserved and published the previously local JIT-free macOS, personal-voice and telemetry changes.
+
+### Dependencies and validation
+
+- Updated FastAPI 0.143.2, Starlette 1.8.0, python-multipart 0.0.32 and multidict 6.9.1; source runtime requires Python 3.11+.
+- 75 Python tests and 4 JavaScript state tests passed. Installed build environment: pip check passed, pip-audit reported no known vulnerabilities on 2026-10-15.
+- Apple notarization is pending a developer-team agreement (HTTP 403). The new direct macOS build remains a preview until accepted and stapled; source publication is independent of this gate.
+
+See [release notes](releases/RELEASE_NOTES_v3.8.0.md).
+
+## Historical development and App Store candidates
+
+### Development line - 2026-08-22
+
+#### Added
+
+- Added named reusable personal-voice profiles with saved language, style, speed, pitch and warmth defaults, explicit voice-owner consent, repeated enrollment, and automatic discovery of existing MakeMyVoice voice banks.
+- Added a versioned subprocess adapter that probes MakeMyVoice's current backend/model/version at runtime, keeps the two Python environments isolated, and uses an approved profile-specific fine-tuned model when MakeMyVoice exposes one.
+- Added API-level profile enrollment, listing and settings updates, plus runtime engine/version/execution metadata on personal-voice synthesis.
+- Added AudioEnhancer backend-and-worker CPU/RAM metrics alongside whole-system and Apple SoC CPU readings.
+
+#### Fixed
+
+- Voice samples are no longer accepted by an upload control and then silently ignored in favor of the selected stock voice; synthesis now requires and uses a saved personal profile.
+- TTS operations without fractional engine progress now show elapsed time and an explicit execution-boundary explanation instead of extrapolating a false one-second ETA from a synthetic 5% milestone.
+- Apple `macmon` CPU cluster residency no longer overwrites the whole-system CPU value collected by `psutil`.
+
+#### Validation
+
+- Exercised the linked `FabFab` profile end-to-end with the current MakeMyVoice `f5_mlx` runtime and confirmed a 24 kHz cloned output conditioned by the stored voice bank.
+- Added profile persistence, consent, dynamic-adapter and TTS-routing regression tests.
+
+### App Store candidate build 3.7.4 - 2026-08-20
+
+#### Fixed
+
+- Added the provisioning profile's explicit application identifier and Apple developer team identifier to the main application signature.
+- Added a build-time assertion that rejects any future Mac App Store package whose signed main bundle is missing either identifier.
+
+#### Validation
+
+- Build 3.7.3 reached App Store Connect but exposed warning 90886 because the identifiers were present in its profile but absent from its code-signature entitlements.
+- Build 3.7.4 supersedes 3.7.3 for TestFlight and App Review.
+- Transporter delivered build 3.7.4 to App Store Connect on 20 August 2026 at 22:13 CEST with no delivery issue or warning.
+
+### App Store candidate build 3.7.3 - 2026-08-20
+
+#### Fixed
+
+- Embedded the explicit Mac App Store Connect provisioning profile required for TestFlight eligibility.
+- Removed PyInstaller's mirrored `Contents/Frameworks/PrivacyInfo.xcprivacy` symlink so the package exposes only the canonical regular privacy manifest under `Contents/Resources`.
+- Made reused App Store bundles adopt the requested marketing and internal build versions before their complete nested re-signing.
+
+#### Validation
+
+- The 3.7.3 PKG passed installer-signature, deep code-signature, bundle/version, embedded-profile, privacy-manifest and payload checks before Transporter delivery.
+- App Store Connect profile scope was verified for `BR9VY292BU.com.fabriziodegni.audioenhancermax`, macOS, and the selected Mac App Distribution certificate.
+
+### App Store candidate build 3.7.2 — 2026-08-15
+
+#### Added
+
+- Delivery Compliance Lab with local integrated-loudness, 4× oversampled true-peak estimate, clipping and sample-rate checks across podcast, video, audiobook, EBU R128 broadcast, source-master and archive targets.
+- Rule-level pass/warn/fail evidence with an explicit workflow-guidance disclaimer; no certification claim is made.
+- SHA-256 provenance for original and processed artifacts in the processing report.
+- Portable Project Capsule ZIP containing the processed output and available report, compliance, transcript, EDL and blind A/B review evidence; original audio is opt-in and excluded by default.
+- Blind A/B decision endpoint that records the revealed listening preference as subjective review evidence.
+- Review Deck UI for compliance inspection, blind listening and privacy-aware evidence export.
+
+#### Changed
+
+- Processing report schema advanced to version 2 with application build, delivery-compliance and provenance fields.
+- App Store candidate build advanced from 3.7.1 to 3.7.2 while retaining marketing version 3.7.0.
+- Public features and roadmap now distinguish the eight delivered foundations from remaining research candidates.
+
+#### Validation
+
+- Added six automated tests for delivery thresholds, silence, clipping, manifest hashing, source opt-in and archive path safety.
+- Final signed-package, TestFlight and Apple review validation remain separate gates until the 3.7.2 artifact is built and uploaded.
+
+## [3.7.0] - 2026-08-14
+
+Version 3.7 promotes the trustworthy-editing work originally planned for 3.6 into a major product step: the Mac app is now native-windowed, core processing is deterministic and auditable, speech edits are non-destructive and reviewable, delivery is profile-driven, and optional data flows are independently controlled.
 
 ### Added
 
 - First-launch system readiness flow for macOS with required and optional capability checks.
 - Local runtime configuration endpoint with versioned acknowledgement in private app storage.
 - Vendored WaveSurfer 7.12.10 runtime and BSD-3-Clause license for offline waveform rendering.
+- Smart Enhance 2.0 local diagnosis for level, noise, clipping, silence, hum and bandwidth.
+- Conservative, Balanced and Maximum explainable processing profiles.
+- Runtime capability registry that discloses packaged neural engines and active DSP/heuristic fallbacks.
+- Per-job local JSON quality report with before/after indicators, pipeline engines and privacy evidence.
+- Unit and API-path coverage for diagnosis, profiles, registry and report generation.
+- Precision Speech Editor with revisioned non-destructive EDL, word-level and acoustic candidates, per-edit preview and reviewed rendering.
+- Transcript-linked manual cut/mute proposals, persisted bounded undo/redo, and EDL JSON/CSV export.
+- Fixed Podcast, YouTube, Audiobook, Lossless Archive, and Source Master delivery profiles with auditable overrides.
+- Persisted privacy controls enforced for external TTS, local Ollama editorial assistance, and trusted-LAN processing.
+- Readable and printable governance reports while retaining canonical JSON downloads.
+- Native AppKit/WKWebView shell with an AudioEnhancerMAX-owned application menu and About window.
+- Native Open and Save panels for sandbox-compliant file selection and export.
+- Bundled Faster-Whisper Medium model and Silero VAD asset in the Mac App Store distribution.
+- Embedded PyAV/FFmpeg media path for App Store builds, removing the prior dependency on an external FFmpeg executable.
 
 ### Changed
 
 - Desktop UI no longer loads WaveSurfer or SourceForge scripts from external domains.
 - Desktop packaging records its distribution channel so App Store checks can enforce stricter self-contained requirements.
 - macOS setup documentation now distinguishes direct-download and future App Store packages.
+- DSP parameters are selected from deterministic audio measurements; Ollama/Gemma no longer controls the processing chain.
+- Smart Mode interface renamed to Smart Enhance and now shows the selected profile, measured issues and actual local engine.
+- Destructive speech-cleanup toggles are replaced in the primary UI by candidate-by-candidate review; legacy processing fields remain API-compatible.
+- Public feature and roadmap pages distinguish delivered v3.7 capabilities from future research candidates and document local/LAN/external boundaries.
+- App name, version, build metadata, About content, website and release documentation now identify the product as AudioEnhancerMAX 3.7.0.
+- The public website now separates delivered 3.7 foundations from future research candidates and links claims to release evidence.
 
 ### Security and governance
 
 - Readiness diagnostics remain local and do not invoke package managers, request administrator privileges, or silently install third-party software.
 - Missing mandatory Store components block startup; unavailable optional engines remain visible with their fallback impact.
+- Smart Enhance profiles no longer enable destructive speech edits; filler, repetition, pause, breath and mouth-click changes route through Precision Editor.
+- The embedded HTTP service binds only to `127.0.0.1`, terminates with the native app, and no longer opens the user's default browser.
+- Trusted-LAN cluster discovery and processing are opt-in and disabled at launch.
+- Runtime permissions independently gate external TTS, local Ollama editorial assistance, and trusted-LAN processing.
+- App Store capabilities are derived from packaged modules and assets; unavailable engines are disclosed or hidden instead of being advertised optimistically.
 
 ## [3.5.2] - 2026-07-16
 

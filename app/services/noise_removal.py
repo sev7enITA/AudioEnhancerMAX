@@ -6,6 +6,8 @@ import numpy as np
 from typing import Optional
 import logging
 
+from app.utils.signal_processing import resample_audio
+
 logger = logging.getLogger(__name__)
 
 # Lazy-loaded models
@@ -46,8 +48,7 @@ def remove_noise_deepfilter(
             # DeepFilterNet expects 48kHz
             target_sr = _df_state.sr()
             if sr != target_sr:
-                import librosa
-                audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
+                audio = resample_audio(audio, sr, target_sr)
 
             # Convert to tensor
             audio_tensor = torch.from_numpy(audio).unsqueeze(0).float()
@@ -64,7 +65,7 @@ def remove_noise_deepfilter(
 
             # Resample back if needed
             if sr != target_sr:
-                enhanced_np = librosa.resample(enhanced_np, orig_sr=target_sr, target_sr=sr)
+                enhanced_np = resample_audio(enhanced_np, target_sr, sr)
 
             return enhanced_np
 

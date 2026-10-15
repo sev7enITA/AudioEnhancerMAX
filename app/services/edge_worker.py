@@ -101,12 +101,9 @@ def _detect_device() -> dict:
 DEVICE_INFO = _detect_device()
 
 # Available DSP filters on this worker
-AVAILABLE_FILTERS = [
-    "remove_noise", "wind_noise_remover", "buzzing_noise_remover",
-    "static_noise_remover", "reverb_echo_remover", "remove_mouth_sounds",
-    "remove_breaths", "remove_long_silences", "auto_eq", "studio_sound",
-    "normalize", "frequency_restoration",
-]
+# Keep this list strictly aligned with process_chunk().  Advertising a filter
+# that is not implemented makes the orchestrator skip the real local step.
+AVAILABLE_FILTERS = ["remove_noise", "auto_eq", "studio_sound"]
 
 
 # ══════════════════════════════════════════════════════════
@@ -158,14 +155,19 @@ def _apply_auto_eq(audio: np.ndarray, sr: int) -> np.ndarray:
     """Auto EQ for broadcast voice."""
     try:
         import pedalboard as pb
+        max_cutoff = max(100.0, float(sr) * 0.45)
+
+        def safe_cutoff(requested_hz: float) -> float:
+            return min(float(requested_hz), max_cutoff)
+
         board = pb.Pedalboard([
             pb.HighpassFilter(cutoff_frequency_hz=80.0),
             pb.LowShelfFilter(cutoff_frequency_hz=150.0, gain_db=1.0),
             pb.LowShelfFilter(cutoff_frequency_hz=250.0, gain_db=-1.5),
-            pb.PeakFilter(cutoff_frequency_hz=2500.0, gain_db=1.5, q=1.0),
-            pb.PeakFilter(cutoff_frequency_hz=5000.0, gain_db=1.0, q=0.7),
-            pb.HighShelfFilter(cutoff_frequency_hz=8000.0, gain_db=0.5),
-            pb.LowpassFilter(cutoff_frequency_hz=16000.0),
+            pb.PeakFilter(cutoff_frequency_hz=safe_cutoff(2500.0), gain_db=1.5, q=1.0),
+            pb.PeakFilter(cutoff_frequency_hz=safe_cutoff(5000.0), gain_db=1.0, q=0.7),
+            pb.HighShelfFilter(cutoff_frequency_hz=safe_cutoff(8000.0), gain_db=0.5),
+            pb.LowpassFilter(cutoff_frequency_hz=safe_cutoff(16000.0)),
         ])
         audio_2d = audio.reshape(1, -1) if audio.ndim == 1 else audio
         processed = board(audio_2d, sr)

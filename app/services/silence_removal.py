@@ -6,6 +6,8 @@ import numpy as np
 from typing import List, Tuple
 import logging
 
+from app.utils.signal_processing import db_to_amplitude, rms_frames
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,18 +21,14 @@ def detect_silences(
     Detect silent segments in audio.
     Returns list of (start_sample, end_sample) tuples.
     """
-    import librosa
-
     # Convert threshold from dB to amplitude
-    threshold_amp = librosa.db_to_amplitude(threshold_db)
+    threshold_amp = db_to_amplitude(threshold_db)
 
     # Calculate RMS energy in frames
     frame_length = int(sr * 0.025)  # 25ms frames
     hop_length = int(sr * 0.010)  # 10ms hop
 
-    rms = librosa.feature.rms(
-        y=audio, frame_length=frame_length, hop_length=hop_length
-    )[0]
+    rms = rms_frames(audio, frame_length=frame_length, hop_length=hop_length)
 
     # Find silent frames
     silent_frames = rms < threshold_amp

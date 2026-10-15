@@ -39,15 +39,37 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          for html_path in [Path("web/index.html"), Path("frontend/landing.html"), Path("web/roadmap.html"), Path("frontend/roadmap.html")]:
+          public_pages = [
+              Path("web/index.html"),
+              Path("web/roadmap.html"),
+              Path("web/support.html"),
+              Path("web/privacy.html"),
+              Path("web/accessibility.html"),
+          ]
+
+          for html_path in [*public_pages, Path("frontend/landing.html"), Path("frontend/roadmap.html")]:
               html = html_path.read_text(encoding="utf-8")
               assert "sev7enITA/AudioEnhancerMAX" in html, html_path
-              assert "sourceforge.net/projects/audioenhancermax" in html, html_path
-              if "roadmap" not in html_path.name:
+              if html_path.name in {"index.html", "roadmap.html"} or html_path.parent.name == "frontend":
+                  assert "sourceforge.net/projects/audioenhancermax" in html, html_path
+              if html_path == Path("web/index.html"):
                   assert "oss-rising-star-white" in html, html_path
+              if html_path == Path("frontend/landing.html"):
+                  assert "sourceforge-fallback" in html, html_path
               assert "sev7en2507" not in html, html_path
               for banned in ["100% local", "zero cloud", "No limits", "never leaves"]:
                   assert banned not in html, (html_path, banned)
+
+          for html_path in public_pages:
+              html = html_path.read_text(encoding="utf-8")
+              if html_path.name != "support.html":
+                  assert "support.html" in html, html_path
+              if html_path.name != "privacy.html":
+                  assert "privacy.html" in html, html_path
+
+          privacy = Path("web/privacy.html").read_text(encoding="utf-8")
+          for disclosure in ["Edge Neural TTS", "trusted LAN", "does not automatically send recordings"]:
+              assert disclosure in privacy, disclosure
 
           readme = Path("README.md").read_text(encoding="utf-8")
           assert "Transparency and AI Governance" in readme
@@ -91,3 +113,17 @@ jobs:
                   symbols = sorted({char for char in text if is_disallowed_symbol(char)})
                   assert not symbols, (path, symbols)
           PY
+
+      - name: Set up Node for frontend regressions
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install the tested core runtime
+        run: python -m pip install -r packaging/macos/requirements-runtime-app-store.txt pytest
+
+      - name: Audio, API and research regressions
+        run: python -m pytest -q
+
+      - name: Frontend result-state regressions
+        run: node --test tests/test_review_state.cjs

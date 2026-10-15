@@ -29,10 +29,7 @@ WORKER_API_PORT = 8877
 
 # DSP-only filters that can be offloaded to workers
 OFFLOADABLE_FILTERS = {
-    "remove_noise", "wind_noise_remover", "buzzing_noise_remover",
-    "static_noise_remover", "reverb_echo_remover", "remove_mouth_sounds",
-    "remove_breaths", "remove_long_silences", "auto_eq", "studio_sound",
-    "normalize", "frequency_restoration",
+    "remove_noise", "auto_eq", "studio_sound",
 }
 
 # Filters requiring heavy ML models - NEVER offload these
@@ -120,6 +117,10 @@ class ClusterManager:
         )
         self._announce_thread.start()
         logger.info("Cluster manager started - listener UDP:%d, announcer UDP:%d", DISCOVERY_PORT, SERVER_ANNOUNCE_PORT)
+
+    @property
+    def enabled(self) -> bool:
+        return self._running
 
     def stop(self):
         self._running = False
@@ -302,9 +303,10 @@ class ClusterManager:
         online = sum(1 for w in self._workers.values() if w.status in ("online", "busy"))
 
         # Get local machine IP for worker setup
-        local_ip = self._get_local_ip()
+        local_ip = self._get_local_ip() if self._running else "disabled"
 
         return {
+            "enabled": self._running,
             "total_workers": len(self._workers),
             "online_workers": online,
             "workers": workers,
@@ -351,15 +353,17 @@ class ClusterManager:
 
     def can_distribute(self, options_dict: dict) -> bool:
         """Check if the current filter set can benefit from distribution."""
+        return bool(self.distributable_filters(options_dict))
+
+    def distributable_filters(self, options_dict: dict) -> set[str]:
+        """Return requested filters implemented by every active worker."""
         workers = self.online_workers
         if not workers:
-            return False
-
-        # Check if any enabled filter is offloadable
-        for key in OFFLOADABLE_FILTERS:
-            if options_dict.get(key):
-                return True
-        return False
+            return set()
+        common = set(OFFLOADABLE_FILTERS)
+        for worker in workers:
+            common.intersection_update(worker.available_filters)
+        return {key for key in common if options_dict.get(key) is True}
 
     async def process_distributed(
         self,
@@ -379,24 +383,24 @@ class ClusterManager:
             return audio
 
         # Only offload offloadable filters
-        offload_filters = {
-            k: v for k, v in filters.items()
-            if k in OFFLOADABLE_FILTERS and v is True
-        }
+        supported = self.distributable_filters(filters)
+        offload_filters = {key: True for key in supported}
 
         if not offload_filters:
             return audio
 
-        # Split audio into N+1 chunks (N workers + self)
+        # Split audio into N+1 overlapping chunks (N workers + self).
         n_nodes = len(workers) + 1  # +1 for local processing
-        chunk_size = len(audio) // n_nodes
         crossfade_samples = int(sr * 0.05)  # 50ms crossfade overlap
-
-        chunks = []
-        for i in range(n_nodes):
-            start = max(0, i * chunk_size - crossfade_samples)
-            end = min(len(audio), (i + 1) * chunk_size + crossfade_samples)
-            chunks.append(audio[start:end])
+        boundaries = np.linspace(0, len(audio), n_nodes + 1, dtype=int)
+        ranges = [
+            (
+                max(0, int(boundaries[i]) - crossfade_samples),
+                min(len(audio), int(boundaries[i + 1]) + crossfade_samples),
+            )
+            for i in range(n_nodes)
+        ]
+        chunks = [audio[start:end] for start, end in ranges]
 
         if progress_callback:
             await progress_callback(
@@ -414,8 +418,9 @@ class ClusterManager:
                     )
                 )
 
-        # Process last chunk locally
-        local_chunk = chunks[-1]
+        # Process last chunk locally with the same lightweight implementation.
+        from app.services.edge_worker import process_chunk
+        local_task = asyncio.to_thread(process_chunk, chunks[-1], sr, offload_filters)
 
         # Gather remote results
         results = [None] * n_nodes
@@ -424,13 +429,14 @@ class ClusterManager:
             for i, result in enumerate(remote_results):
                 if isinstance(result, Exception):
                     logger.warning(f"Worker {workers[i].name} failed: {result}, processing locally")
-                    results[i] = chunks[i]  # fallback: use original chunk
+                    results[i] = await asyncio.to_thread(
+                        process_chunk, chunks[i], sr, offload_filters
+                    )
                 else:
                     results[i] = result
                     workers[i].tasks_completed += 1
 
-        # Local chunk stays unprocessed here (will be processed in main pipeline)
-        results[-1] = local_chunk
+        results[-1] = await local_task
 
         if progress_callback:
             await progress_callback(
@@ -438,8 +444,25 @@ class ClusterManager:
                 f" Reassembling {n_nodes} chunks..."
             )
 
-        # Reassemble with crossfade
-        return self._reassemble_chunks(results, chunk_size, crossfade_samples)
+        # Weighted overlap-add preserves the exact original duration while
+        # smoothing independently processed chunk boundaries.
+        output = np.zeros(len(audio), dtype=np.float64)
+        weights = np.zeros(len(audio), dtype=np.float64)
+        for index, (chunk, (start, end)) in enumerate(zip(results, ranges)):
+            values = np.asarray(chunk, dtype=np.float64)[: end - start]
+            weight = np.ones(len(values), dtype=np.float64)
+            if index > 0:
+                overlap = min(crossfade_samples * 2, len(values))
+                weight[:overlap] = np.linspace(0.0, 1.0, overlap, endpoint=False)
+            if index < n_nodes - 1:
+                overlap = min(crossfade_samples * 2, len(values))
+                weight[-overlap:] *= np.linspace(1.0, 0.0, overlap, endpoint=False)
+            output[start:start + len(values)] += values * weight
+            weights[start:start + len(values)] += weight
+        missing = weights <= np.finfo(float).eps
+        weights[missing] = 1.0
+        output[missing] = np.asarray(audio, dtype=np.float64)[missing]
+        return (output / weights).astype(np.float32)
 
     async def _send_chunk_to_worker(
         self,

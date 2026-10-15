@@ -1,0 +1,140 @@
+{
+  "checked_on": "2026-10-15",
+  "selection_basis": "Functional relevance to AudioEnhancerMAX; not a worldwide usage ranking. Vendor adoption figures are not comparable market shares.",
+  "targets": [
+    {
+      "id": "izotope-rx",
+      "product": "iZotope RX 12 Advanced",
+      "priority": 1,
+      "questions": [
+        "How do spectral selections and repair history interact?",
+        "How are dialogue, music and effects exposed as editable stems?",
+        "What can users audition before applying Repair Assistant suggestions?"
+      ],
+      "surface": "Local application and plugins; native analysis requires an engine.",
+      "sources": [
+        "https://www.izotope.com/products/rx-advanced"
+      ],
+      "research": {
+        "status": "official_documentation_only",
+        "artifact_access": "Official download requires account access; no binary acquired."
+      }
+    },
+    {
+      "id": "adobe-podcast",
+      "product": "Adobe Podcast Enhance Speech v2",
+      "priority": 1,
+      "questions": [
+        "How are enhancement controls and job states represented in the client?",
+        "Which processing steps are remote?",
+        "How does the user preview speech and background balance?"
+      ],
+      "surface": "Public browser assets and explicitly selected browser sessions; remote DSP internals remain unknown.",
+      "sources": [
+        "https://podcast.adobe.com/en/enhancespeech",
+        "https://podcast.adobe.com/enhance"
+      ],
+      "research": {
+        "status": "public_client_analyzed",
+        "report": "adobe-podcast-public-client.md",
+        "coverage": "partial static client graph; no cloud DSP or audio test"
+      }
+    },
+    {
+      "id": "descript",
+      "product": "Descript",
+      "priority": 1,
+      "questions": [
+        "How are transcript edits mapped to audio regions?",
+        "How are filler and retake suggestions reviewed and undone?",
+        "How are Studio Sound intensity and export choices exposed?"
+      ],
+      "surface": "Desktop package or browser client; client evidence does not reveal remote inference models.",
+      "sources": [
+        "https://www.descript.com/features",
+        "https://www.descript.com/pricing",
+        "https://descript.canny.io/changelog"
+      ],
+      "research": {
+        "status": "official_fallback_client_analyzed",
+        "version": "114.0.4-release.20250509.32955",
+        "report": "descript-public-artifact.md",
+        "coverage": "historical fallback build; selected gate and transcription worklets; not current Studio Sound"
+      }
+    },
+    {
+      "id": "auphonic",
+      "product": "Auphonic",
+      "priority": 2,
+      "questions": [
+        "How are per-speaker leveling and gain curves reviewed?",
+        "How do multitrack ducking and microphone bleed controls interact?",
+        "How are loudness statistics and multiple deliverables reported?"
+      ],
+      "surface": "Browser client and documented API schemas; remote audio algorithms are not present in frontend bundles.",
+      "sources": [
+        "https://auphonic.com/features",
+        "https://auphonic.com/help/web/auphoniceditor.html",
+        "https://us.auphonic.com/about_us"
+      ],
+      "research": {
+        "status": "official_documentation_only",
+        "artifact_access": "No selected client binary or authenticated processing session acquired."
+      }
+    },
+    {
+      "id": "adobe-audition",
+      "product": "Adobe Audition 26.5",
+      "priority": 2,
+      "questions": [
+        "How do noise prints and spectral selections constrain restoration?",
+        "How are diagnostics and non-destructive multitrack effects reviewed?"
+      ],
+      "surface": "Local native application, resources and controlled audio tests.",
+      "sources": [
+        "https://helpx.adobe.com/audition/desktop/introduction/audition-releasenotes.html",
+        "https://helpx.adobe.com/uk/audition/desktop/effects-reference/noise-reduction-restoration-effects.html"
+      ],
+      "research": {
+        "status": "official_documentation_only",
+        "artifact_access": "Public trial route leads to plan/account/checkout; no trial activated or binary acquired."
+      }
+    },
+    {
+      "id": "waves-clarity",
+      "product": "Waves Clarity Vx Pro",
+      "priority": 2,
+      "questions": [
+        "How do six processing bands expose solo, bypass and removed-signal monitoring?",
+        "What quality, latency and CPU changes follow network and ECO settings?"
+      ],
+      "surface": "Local plugin, parameters and presets; runtime performance requires measured tests.",
+      "sources": [
+        "https://www.waves.com/plugins/clarity-vx-pro",
+        "https://assets.wavescdn.com/pdf/plugins/clarity-vx-pro-v16-update.pdf"
+      ],
+      "research": {
+        "status": "official_documentation_only",
+        "artifact_access": "Waves Central is public but Clarity plugin download requires account access; manager is not a substitute."
+      }
+    },
+    {
+      "id": "antinode-clear",
+      "product": "Antinode Clear, formerly Supertone Clear",
+      "priority": 3,
+      "questions": [
+        "How are voice, ambience and reverb independently controlled and auditioned?"
+      ],
+      "surface": "Local plugin; current installed build must be recorded independently.",
+      "sources": [
+        "https://antinodeaudio.com/clear"
+      ],
+      "research": {
+        "status": "official_binary_inspected",
+        "version": "1.1.6",
+        "report": "clear-native-analysis.md",
+        "coverage": "package, Mach-O and selected arm64 functions; no plugin execution"
+      }
+    }
+  ]
+}

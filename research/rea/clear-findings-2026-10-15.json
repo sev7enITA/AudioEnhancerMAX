@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-15",
+  "target": "antinode-clear",
+  "version": "1.1.6",
+  "method": "Static package expansion, REA Mach-O inspection and focused LLVM disassembly. No target code executed.",
+  "acquisition": {
+    "name": "clear",
+    "source_url": "https://clear.api.supertone.ai/api/installer?platform=darwin&arch=arm64",
+    "final_host": "keygen-dist.c3c9112df8df715f42d1162cdce5dba1.r2.cloudflarestorage.com",
+    "bytes": 134568452,
+    "sha256": "6eb6bb93906bdc0df6f4de6275c98bd74609e5e25f203002c628965f917ea85f",
+    "expected_sha256": null,
+    "verified": null,
+    "acquired_utc": "2026-10-15T03:40:05.603552+00:00",
+    "executed": false
+  },
+  "selected_binary": {
+    "name": "Clear",
+    "digest": {
+      "sha256": "8bb9eae3a5c49b48318dde907403c16156962631b8862d74079e4955d0b5fa2f"
+    },
+    "local_path": "/Users/fabriziodegni/Desktop/EVENTS, SPEECH, MY RESEARCHES and FRAMEWORKS/AudioEnhancer/AudioEnhancer/research/rea/private/clear-1.1.6-2026-10-15/expanded/VST3.pkg/Payload/Library/Audio/Plug-Ins/VST3/Clear.vst3/Contents/MacOS/Clear",
+    "format": "mach-o-universal",
+    "architecture": "arm64"
+  },
+  "rea": {
+    "evidence_id": "ev_b0935a50d672a615ffbb356d5ba2ce5e140a560c28b770b3efcb2a718b4f5755",
+    "local_directory": "private/runs/antinode-clear-20261015T034053Z-sk5yk3re",
+    "evidence_sha256": "fdb0dd7dfc998a576fdbd6d6cd87850cf497f390cbc560a2f858216c6043d980",
+    "selected_architecture": {
+      "name": "arm64",
+      "container_file_offset": 34340864
+    },
+    "limitations": [
+      "Imports and exports combine dyld_info and nm; stripped or toolchain-hidden symbols may be absent.",
+      "vtool output is retained as provenance but only otool build metadata is normalized."
+    ]
+  },
+  "supplementary_system_evidence": [
+    {
+      "path": "private/clear-1.1.6-2026-10-15/package-signature.txt",
+      "sha256": "a4497a1d650e7d4a2e4db708e6d88d901e86d02798df6582d619246df90f3708"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/binary-signature.txt",
+      "sha256": "bacb1f93df06b21359e18cb5b94abaa1a039ee877a25ae2807ba70d951209632"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/binary-verify.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/payload-inventory.json",
+      "sha256": "a64a2fc015cae09fcfe2b6db5bdf7f1ed5bf92d7729f136a74ff6e1811488c4f"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/latency.llvm.txt",
+      "sha256": "35ae406763c6c7868a8f53b288b1077cd1cc13665a0f37fe1e450c6d3c170ac3"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/latency-implementation.llvm.txt",
+      "sha256": "3b4e89a72f6bd84010e3dca3b4558db18cda299ad1b879b6b282adab33e3b833"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/process-separated.llvm.txt",
+      "sha256": "7e6b4d04e43238f53f36c0299d8b5e4a1d80e6d45fefaf8e9d6b7a841e6b8a87"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/get_buffer_size.llvm.txt",
+      "sha256": "e1dc97ac504cef4def002c23ef863577dfaa85c26a99d472efbdb8d37ade7ef8"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/get_optimal_buffer_size.llvm.txt",
+      "sha256": "0fdc253a585d5cc0ed3b83c58b474f8a61ccd48112bb57628f563a2c23daef08"
+    },
+    {
+      "path": "private/clear-1.1.6-2026-10-15/get_sample_rate.llvm.txt",
+      "sha256": "3ab9a693d8be28abeafe141dd09ecdea461fe54239188b13fd8f344d93f7c2d6"
+    }
+  ],
+  "claims": [
+    {
+      "id": "CLEAR-01",
+      "classification": "observed-static",
+      "claim": "Standard and eco exported speech enhancer APIs include sample rate, buffer size, latency, ordinary and separated processing.",
+      "unknown": "Active mode and runtime resource use."
+    },
+    {
+      "id": "CLEAR-02",
+      "classification": "observed-static-llvm",
+      "claim": "Latency implementation at 0xb0ec10 reads current and optimal buffer fields, identified using the exported getters.",
+      "unknown": "Measured end-to-end latency and interpretation of all internal structure fields."
+    },
+    {
+      "id": "CLEAR-03",
+      "classification": "observed-static-llvm",
+      "claim": "process_separated wrapper chunks input and prepares multiple optional output buffers before calling the internal implementation.",
+      "unknown": "Component semantics, additive reconstruction, runtime branch selection."
+    },
+    {
+      "id": "CLEAR-04",
+      "classification": "observed-static",
+      "claim": "ONNX/protobuf symbols and ONNX Runtime, STFT, PQMF and Rust source path strings are present.",
+      "unknown": "Complete model graph, active weights and processing quality."
+    },
+    {
+      "id": "CLEAR-05",
+      "classification": "observed-static-partial-ghidra",
+      "claim": "Selected latency function decompilation reads fields at 0x360 and 0x50, corroborating LLVM getter mapping.",
+      "unknown": "External error path, full binary context and numerical/runtime equivalence."
+    }
+  ],
+  "runtime_audio_tests": "not_performed",
+  "product_dsp_changes": "none",
+  "ghidra": {
+    "version": "12.1.4",
+    "whole_binary_attempt": {
+      "status": "failed",
+      "code": "provider_timeout",
+      "timeout_ms": 330000,
+      "receipt": "private/runs/antinode-clear-20261015T040317Z-7rfbjj62/receipt.json"
+    },
+    "focused_attempt": {
+      "status": "recorded_partial",
+      "evidence_id": "ev_e0de71c1a6c45c107b2e7cc267c63ec58a89d1eb31611d48a9cb0702c1a9e0aa",
+      "directory": "private/runs/antinode-clear-20261015T040908Z-xokmqbtx",
+      "evidence_sha256": "9e62b5c7189312b7ff7b85676272c0999dc65ca3cd8e4f815888ef6a6681948a",
+      "subject": {
+        "name": "latency-arm64.bin",
+        "digest": {
+          "sha256": "0e042969210d845bc922decec9996744aa3cb87952ddb371c0fd755d021fa69f"
+        },
+        "local_path": "/Users/fabriziodegni/Desktop/EVENTS, SPEECH, MY RESEARCHES and FRAMEWORKS/AudioEnhancer/AudioEnhancer/research/rea/private/clear-1.1.6-2026-10-15/latency-arm64.bin",
+        "format": "raw-binary",
+        "architecture": "arm64"
+      },
+      "limitations": "112-byte derived function only; explicit architecture/address; external panic context excluded and pseudocode control-flow warnings retained."
+    }
+  }
+}

@@ -25,6 +25,7 @@ app/presets/
 app/roadmap_votes.json
 app/timing_history.json
 app/preflight_state.json
+app/voice_profiles/
 
 ## Model cache
 /models/
@@ -38,6 +39,7 @@ app/preflight_state.json
 ## Desktop packaging artifacts
 build/
 dist/
+output/
 packaging/macos/*.icns
 
 ## OS
@@ -52,3 +54,9 @@ android-worker/local.properties
 android-worker/.idea/
 *.apk
 !releases/*.apk
+
+# Local evidence and user runtime state
+app/projects/
+app/runtime_settings.json
+.pytest_cache/
+.ruff_cache/

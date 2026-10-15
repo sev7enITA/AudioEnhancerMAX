@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioEnhancerMAX Support</title>
+    <meta name="description" content="Official AudioEnhancerMAX support page with troubleshooting, system requirements, support channels, privacy-safe reporting guidance, and release resources.">
+    <meta property="og:title" content="AudioEnhancerMAX Support">
+    <meta property="og:description" content="Get help with installation, audio workflows, local processing, optional integrations, and issue reporting.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/support.html">
+    <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+    <link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/public-info.css">
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to support content</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">
+                <img src="img/icons/aem-mark.svg" alt="">
+                <span>AudioEnhancerMAX</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
+                <li><a href="roadmap.html">Roadmap</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="accessibility.html">Accessibility</a></li>
+                <li><a href="support.html" aria-current="page">Support</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <span class="eyebrow">Official support</span>
+        <h1>Answers grounded in the software</h1>
+        <p class="hero-copy">Installation help, troubleshooting and reporting guidance for AudioEnhancerMAX. Support is community-based and does not require an AudioEnhancerMAX account.</p>
+        <div class="hero-meta">
+            <span><span class="meta-label">Current release</span> <strong>3.8.0</strong></span>
+            <span><span class="meta-label">License</span> <strong>MIT</strong></span>
+            <span><span class="meta-label">Support model</span> <strong>Open-source community</strong></span>
+        </div>
+    </header>
+
+    <main id="main-content" class="page-grid">
+        <aside class="toc" aria-label="Page contents">
+            <p class="toc-title">On this page</p>
+            <ol>
+                <li><a href="#contact">Contact and tickets</a></li>
+                <li><a href="#before">Before opening a ticket</a></li>
+                <li><a href="#quick-fixes">Quick checks</a></li>
+                <li><a href="#requirements">System requirements</a></li>
+                <li><a href="#data">Support and your data</a></li>
+                <li><a href="#scope">Support scope</a></li>
+            </ol>
+        </aside>
+
+        <div>
+            <section id="contact" class="content-section">
+                <span class="section-index">01 / Contact</span>
+                <h2>Start with the right channel</h2>
+                <p>Bug reports and support requests are tracked in the public GitHub repository. Search existing tickets first, then open a new issue with the smallest amount of information needed to reproduce the problem.</p>
+                <div class="action-panel">
+                    <strong>Public support ticket</strong>
+                    <p>Use GitHub Issues for installation problems, unexpected behavior, feature questions and documentation gaps. Tickets and attachments are public.</p>
+                    <div class="btn-row">
+                        <a class="btn primary" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new/choose" target="_blank" rel="noopener noreferrer">Open a support ticket</a>
+                        <a class="btn" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank" rel="noopener noreferrer">Search existing tickets</a>
+                        <a class="btn" href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer">Release downloads</a>
+                    </div>
+                </div>
+                <div class="notice coral">
+                    <strong>Do not publish sensitive material.</strong>
+                    <p>Do not attach confidential recordings, transcripts, credentials, personal identifiers or private system logs to a public ticket. Describe the issue using a synthetic or redacted sample whenever possible.</p>
+                </div>
+            </section>
+
+            <section id="before" class="content-section">
+                <span class="section-index">02 / Good report</span>
+                <h2>What to include</h2>
+                <ol>
+                    <li>AudioEnhancerMAX version and distribution channel, such as Mac App Store, GitHub DMG or source installation.</li>
+                    <li>macOS version, Mac model and chip family.</li>
+                    <li>Exact steps that led to the problem and what you expected instead.</li>
+                    <li>Selected processing modules, output format and whether an optional integration was enabled.</li>
+                    <li>The complete error message, with usernames, file paths and personal data redacted.</li>
+                    <li>Whether the same issue occurs with a short, non-confidential test recording.</li>
+                </ol>
+                <p>For audio quality reports, describe the source conditions and the selected parameters. Quality depends on the recording, settings and enabled engines, so a result cannot be assessed from the feature name alone.</p>
+            </section>
+
+            <section id="quick-fixes" class="content-section">
+                <span class="section-index">03 / Quick checks</span>
+                <h2>Resolve common problems first</h2>
+                <div class="status-list">
+                    <div class="status-item">
+                        <img src="img/icons/power.svg" alt="">
+                        <strong>The app does not start</strong>
+                        <span>Restart the app and review the first-run readiness result. A missing mandatory bundled component should be reported as a packaging defect.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/folder-upload.svg" alt="">
+                        <strong>A file will not import</strong>
+                        <span>Confirm that the file is within the 500 MB application limit and uses WAV, MP3, MP4, FLAC, OGG, M4A, AAC or WMA.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/controls.svg" alt="">
+                        <strong>Processing sounds too strong</strong>
+                        <span>Reduce noise strength or wet/dry balance, disable modules one at a time and compare against the preserved original.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/smart-ai.svg" alt="">
+                        <strong>Smart Mode is unavailable</strong>
+                        <span>Core DSP remains usable. Ollama and a compatible local Gemma model are optional and are not prerequisites for the core workflow.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/tts.svg" alt="">
+                        <strong>A TTS voice cannot connect</strong>
+                        <span>Local Kokoro and network-dependent Edge Neural voices have different requirements. Check which engine is selected before troubleshooting.</span>
+                    </div>
+                    <div class="status-item">
+                        <img src="img/icons/edge-device.svg" alt="">
+                        <strong>A phone worker is not found</strong>
+                        <span>Verify both devices are on a trusted local network. Worker discovery and audio offload are optional and require local network access.</span>
+                    </div>
+                </div>
+                <p>More detailed procedures are maintained in the <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/docs/faq.md" target="_blank" rel="noopener noreferrer">troubleshooting guide</a>.</p>
+            </section>
+
+            <section id="requirements" class="content-section">
+                <span class="section-index">04 / Compatibility</span>
+                <h2>System requirements</h2>
+                <p>The packaged macOS release targets <strong>Apple Silicon</strong> and <strong>macOS 13 or later</strong>. Storage, memory and optional engine requirements vary with file duration, processing modules and model selection.</p>
+                <p>The Mac App Store package is expected to include all components required for its core workflow. Ollama, compatible local models, trusted LAN workers and network TTS voices remain optional capabilities and must not be required to open or use the core application.</p>
+                <div class="notice">
+                    <strong>Distribution packages are not interchangeable.</strong>
+                    <p>The Mac App Store build, GitHub DMG and source installation can have different sandbox, signing and dependency boundaries. Always identify the distribution when requesting support.</p>
+                </div>
+            </section>
+
+            <section id="data" class="content-section">
+                <span class="section-index">05 / Safe support</span>
+                <h2>Support and your data</h2>
+                <p>AudioEnhancerMAX does not automatically upload diagnostics to the maintainer. Support information is provided only when you choose to create a ticket or contact a third-party platform.</p>
+                <ul>
+                    <li>Share text logs only after reviewing and redacting local paths and identifiers.</li>
+                    <li>Use generated test audio instead of a private recording.</li>
+                    <li>Do not share model prompts or transcripts that contain confidential content.</li>
+                    <li>GitHub processes ticket content under its own terms and privacy policy.</li>
+                </ul>
+                <p>For privacy-related requests, open a minimal ticket labeled as a privacy request and do not include the underlying personal data. The maintainer can then identify an appropriate follow-up channel.</p>
+            </section>
+
+            <section id="scope" class="content-section">
+                <span class="section-index">06 / Scope</span>
+                <h2>What open-source support means</h2>
+                <p>Support is provided on a reasonable-effort basis by the project maintainer and contributors. No guaranteed response or resolution time is offered unless a separate written agreement exists.</p>
+                <p>AudioEnhancerMAX is provided under the MIT License without warranty. Support can help diagnose behavior, but it cannot guarantee restoration of damaged source media, transcript accuracy, compliance outcomes or suitability for a specific professional decision.</p>
+                <div class="btn-row">
+                    <a class="btn" href="privacy.html">Read the privacy notice</a>
+                    <a class="btn" href="accessibility.html">Read the accessibility statement</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div>AudioEnhancerMAX 3.8.0 | Open source under the MIT License | Updated October 15, 2026</div>
+            <ul class="footer-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="accessibility.html">Accessibility</a></li>
+                <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+</html>

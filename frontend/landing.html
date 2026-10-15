@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioEnhancerMAX - Local-First AI Audio Media Center</title>
-    <meta name="description" content="Open-source, local-first audio processing suite with 16+ modules, streaming transcription, Apple Silicon acceleration, transparent optional external services, and Android edge workers.">
+    <title>AudioEnhancerMAX 3.8.0 - Local-First, Reviewable Audio Production</title>
+    <meta name="description" content="AudioEnhancerMAX is an open-source, local-first audio production workspace. Version 3.8 links processing, review and export to one audio revision, with verifiable checkpoints and format-specific delivery evidence.">
     <meta name="keywords" content="audio enhancer, podcast processing, AI audio, noise removal, Apple Silicon, Metal GPU, edge computing, open source">
-    <meta property="og:title" content="AudioEnhancerMAX v3.5.2 - SourceForge Rising Star">
-    <meta property="og:description" content="Award-winning open-source, local-first audio processing suite with streaming transcription, Metal acceleration, transparent optional external services, and edge workers.">
+    <meta property="og:title" content="AudioEnhancerMAX 3.8.0 - Local-First Audio Production">
+    <meta property="og:description" content="Reviewable audio production with verified release evidence, explicit runtime boundaries, and a public engineering status.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/">
     <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/img/icons/aem-mark.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -23,8 +23,8 @@
             --bg-card: rgba(255,255,255,0.03);
             --border: rgba(255,255,255,0.06);
             --text-1: #f0f0f5;
-            --text-2: #a0a0b8;
-            --text-3: #5a5a72;
+            --text-2: #b2b2c7;
+            --text-3: #7f7f98;
             --accent: #7c3aed;
             --accent-2: #06b6d4;
             --accent-3: #10b981;
@@ -40,6 +40,12 @@
             color: var(--text-1);
             line-height: 1.6;
             overflow-x: hidden;
+        }
+        a:focus-visible, button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 4px; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+            .reveal { opacity: 1; transform: none; }
         }
 
         /* Navigation */
@@ -63,6 +69,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
         }
         .nav-logo {
             display: flex;
@@ -122,6 +129,19 @@
             transition: color 0.2s;
         }
         .nav-links a:hover { color: var(--text-1); }
+        .nav-toggle {
+            display: none;
+            width: 42px;
+            height: 42px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.055);
+            color: var(--text-1);
+            font: 700 0.72rem/1 'JetBrains Mono', monospace;
+            cursor: pointer;
+        }
         .nav-award {
             color: #fed7aa !important;
         }
@@ -156,7 +176,7 @@
             inset: 0;
             background:
                 linear-gradient(180deg, rgba(10,10,15,0.38) 0%, rgba(10,10,15,0.72) 52%, var(--bg) 100%),
-                url("img/social-preview.png") center / cover no-repeat;
+                radial-gradient(ellipse at 50% 20%, rgba(124,58,237,.20), transparent 65%);
             z-index: -2;
         }
         .hero::after {
@@ -168,7 +188,7 @@
             z-index: -1;
         }
         .hero-content {
-            max-width: 860px;
+            max-width: 1120px;
             text-shadow: 0 2px 28px rgba(0,0,0,0.55);
         }
         .hero-badge {
@@ -202,8 +222,9 @@
             line-height: 1.05;
             margin-bottom: 20px;
             animation: fadeUp 0.8s ease 0.1s both;
-            overflow-wrap: anywhere;
         }
+        .brand-line { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.22em; }
+        .product-name { white-space: nowrap; }
         .hero h1 .gradient {
             background: linear-gradient(135deg, #a78bfa, #06b6d4, #10b981);
             -webkit-background-clip: text;
@@ -213,7 +234,7 @@
         .hero-sub {
             font-size: clamp(1rem, 2vw, 1.25rem);
             color: var(--text-2);
-            max-width: 620px;
+            max-width: 760px;
             margin: 0 auto 36px;
             animation: fadeUp 0.8s ease 0.2s both;
         }
@@ -275,17 +296,20 @@
             border-color: rgba(255,255,255,0.12);
         }
         .hero-stats {
-            display: flex;
-            justify-content: center;
-            gap: 48px;
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
             margin-top: 60px;
             animation: fadeUp 0.8s ease 0.4s both;
         }
         .hero-stat {
             text-align: center;
+            padding: 16px 10px;
+            border-top: 1px solid rgba(16,185,129,0.38);
+            background: rgba(5,10,14,0.52);
         }
         .hero-stat .num {
-            font-size: 2.2rem;
+            font-size: 1rem;
             font-weight: 800;
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
             -webkit-background-clip: text;
@@ -299,6 +323,57 @@
             font-weight: 600;
             margin-top: 2px;
         }
+
+        /* -- Proof ledger -- */
+        .proof-ledger {
+            border: 1px solid rgba(6,182,212,0.22);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(6,182,212,0.055), rgba(124,58,237,0.035));
+            box-shadow: 0 24px 70px rgba(0,0,0,0.22);
+        }
+        .ledger-head, .ledger-row {
+            display: grid;
+            grid-template-columns: minmax(170px, 0.8fr) minmax(150px, 0.65fr) minmax(260px, 1.55fr);
+            gap: 20px;
+            align-items: center;
+            padding: 17px 22px;
+        }
+        .ledger-head {
+            color: var(--text-3);
+            background: rgba(255,255,255,0.035);
+            font: 700 0.66rem/1.3 'JetBrains Mono', monospace;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+        }
+        .ledger-row { border-top: 1px solid var(--border); }
+        .ledger-row strong { font-size: 0.9rem; }
+        .ledger-boundary {
+            color: #67e8f9;
+            font: 600 0.7rem/1.4 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+        .ledger-evidence { color: var(--text-2); font-size: 0.82rem; }
+        .evidence-callout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+            gap: 28px;
+            align-items: center;
+            padding: 30px;
+            border: 1px solid rgba(16,185,129,0.25);
+            border-left: 3px solid var(--accent-3);
+            background: rgba(16,185,129,0.045);
+        }
+        .evidence-callout h3 { margin-bottom: 8px; }
+        .evidence-callout p { color: var(--text-2); font-size: 0.86rem; }
+        .evidence-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+        .evidence-links a {
+            color: #a7f3d0;
+            border-bottom: 1px solid rgba(16,185,129,0.45);
+            text-decoration: none;
+            font: 600 0.72rem/1.5 'JetBrains Mono', monospace;
+        }
+        .evidence-links a:focus-visible, .evidence-links a:hover { color: #fff; border-color: #fff; }
 
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
@@ -391,9 +466,9 @@
             margin-bottom: 8px;
         }
         .feature-card p {
-            font-size: 0.82rem;
+            font-size: 0.9rem;
             color: var(--text-2);
-            line-height: 1.6;
+            line-height: 1.68;
         }
         .feature-card .tech-tag {
             display: inline-block;
@@ -492,10 +567,16 @@
             flex-wrap: wrap;
         }
         .recognition-note {
-            color: var(--text-3);
-            font-size: 0.76rem;
+            color: var(--text-2);
+            font-size: 0.84rem;
             max-width: 680px;
         }
+        .recognition-compact { padding: 42px 24px; background: rgba(249,115,22,0.018); }
+        .recognition-compact .recognition-layout { grid-template-columns: minmax(0, 1fr) 190px; }
+        .recognition-compact .section-title { font-size: 1.35rem; margin-bottom: 8px; }
+        .recognition-compact .section-desc { font-size: 0.9rem; margin-bottom: 12px; max-width: 740px; }
+        .recognition-compact .recognition-proof { padding: 14px; box-shadow: none; }
+        .recognition-compact .sourceforge-badge-stack { min-height: 92px; }
         @media (max-width: 820px) {
             .recognition-layout { grid-template-columns: 1fr; }
             .recognition-proof { align-items: flex-start; }
@@ -802,7 +883,26 @@
 
         /* -- Mobile nav -- */
         @media (max-width: 768px) {
-            .nav-links { display: none; }
+            .nav-toggle { display: inline-flex; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: calc(100% + 12px);
+                left: 18px;
+                right: 18px;
+                padding: 14px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                border: 1px solid rgba(124,58,237,0.3);
+                border-radius: 14px;
+                background: rgba(10,10,15,0.98);
+                box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+            }
+            .nav-links.is-open { display: flex; }
+            .nav-links a { display: block; padding: 11px 12px; border-radius: 8px; }
+            .nav-logo-text { font-size: 0.92rem; }
+            .nav-logo .v-badge { display: none; }
             .hero {
                 padding-inline: 18px;
             }
@@ -815,7 +915,8 @@
                 justify-content: center;
             }
             .hero h1 {
-                font-size: clamp(2.15rem, 12vw, 3rem);
+                font-size: clamp(1.48rem, 7.6vw, 2.35rem);
+                line-height: 1.12;
             }
             .hero-actions {
                 align-items: stretch;
@@ -828,15 +929,27 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 22px 14px;
             }
+            .ledger-head { display: none; }
+            .ledger-row { grid-template-columns: 1fr; gap: 7px; padding: 18px; }
+            .evidence-callout { grid-template-columns: 1fr; }
+            .evidence-links { justify-content: flex-start; }
             .hero-stat .num {
-                font-size: 1.6rem;
-                overflow-wrap: anywhere;
+                font-size: 1rem;
             }
             .footer-links {
                 flex-wrap: wrap;
                 gap: 12px 16px;
                 max-width: 100%;
             }
+        }
+        @media (max-width: 360px) {
+            .nav-inner { padding-inline: 14px; }
+            .nav-logo-icon { width: 32px; height: 32px; }
+            .hero { padding-inline: 14px; }
+            .hero h1 { font-size: 1.42rem; }
+        }
+        @media (min-width: 769px) and (max-width: 1000px) {
+            .hero-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
 
         /* -- Scroll reveal -- */
@@ -856,18 +969,19 @@
 <!-- Navigation -->
 <nav class="nav" id="nav">
     <div class="nav-inner">
-        <a href="#" class="nav-logo">
-            <div class="nav-logo-icon"><img class="icon-img" src="img/icons/aem-mark.svg" alt="AudioEnhancerMAX mark"></div>
+        <a href="#" class="nav-logo" aria-current="page">
+            <div class="nav-logo-icon"><img class="icon-img" src="/static/img/icons/aem-mark.svg" alt="AudioEnhancerMAX mark"></div>
             <span class="nav-logo-text">AudioEnhancerMAX</span>
-            <span class="v-badge">v3.5.2</span>
+            <span class="v-badge">v3.8.0</span>
         </a>
-        <ul class="nav-links">
-            <li><a href="#features">Features</a></li>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation menu">Menu</button>
+        <ul class="nav-links" id="primary-navigation">
+            <li><a href="#foundations">Foundations</a></li>
             <li><a href="#transparency">Transparency</a></li>
+            <li><a href="https://fabriziodegni.com/AudioEnhancerMAX/status.html">Status</a></li>
             <li><a href="roadmap.html">Roadmap</a></li>
             <li><a href="#architecture">Architecture</a></li>
-            <li><a href="#benchmark">Benchmark</a></li>
-            <li><a href="#compare">Compare</a></li>
+            <li><a href="https://fabriziodegni.com/AudioEnhancerMAX/support.html">Support</a></li>
             <li><a href="#recognition" class="nav-award">Rising Star</a></li>
             <li><a href="#download" class="nav-cta">Download</a></li>
         </ul>
@@ -879,60 +993,78 @@
     <div class="hero-content">
         <div class="hero-badge">
             <span class="dot"></span>
-            v3.5.2 - macOS Desktop + Community Roadmap
+            Current release · 3.8.0
         </div>
-        <h1>AudioEnhancerMAX<br><span class="gradient">AI Audio Media Center</span></h1>
-        <p class="hero-sub">Professional podcast audio processing suite with Apple Metal GPU acceleration, streaming transcription, and optional trusted-LAN edge workers. The core pipeline is local-first; external services are explicit and documented.</p>
+        <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span><span class="gradient">3.8</span></span>Local-first. Reviewable.</h1>
+        <p class="hero-sub">A macOS audio production workspace for processing, transcribing, editing, and exporting speech with visible decisions, reversible edits, and evidence recorded for every job.</p>
         <div class="hero-actions">
-            <a href="#download" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Download Free</a>
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer" class="btn btn-secondary"><img class="icon-img btn-icon-svg" src="img/icons/github-star.svg" alt="" aria-hidden="true">Star on GitHub</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.0" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="" aria-hidden="true">Get 3.8 from GitHub</a>
+            <a href="#proof" class="btn btn-secondary">Inspect the evidence</a>
         </div>
-        <a href="#recognition" class="hero-recognition"><img class="icon-img btn-icon-svg" src="img/icons/award-star.svg" alt="" aria-hidden="true">SourceForge Rising Star Award Winner</a>
         <div class="hero-stats">
             <div class="hero-stat">
-                <div class="num">16+</div>
-                <div class="label">Processing Modules</div>
+                <div class="num">Native</div>
+                <div class="label">macOS window</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">127.0.0.1</div>
+                <div class="label">Loopback core</div>
             </div>
             <div class="hero-stat">
                 <div class="num">Local</div>
-                <div class="label">Core Pipeline</div>
+                <div class="label">Optional models</div>
             </div>
             <div class="hero-stat">
-                <div class="num">Opt-in</div>
-                <div class="label">External Services</div>
+                <div class="num">5 fixed</div>
+                <div class="label">Delivery profiles</div>
             </div>
             <div class="hero-stat">
-                <div class="num">3.8ms</div>
-                <div class="label">FFT Latency</div>
+                <div class="num">Per job</div>
+                <div class="label">Processing report</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">75 + 4</div>
+                <div class="label">Python + JS tests</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Recognition -->
-<section id="recognition" style="background: rgba(249,115,22,0.025);">
-    <div class="container recognition-layout">
-        <div class="recognition-copy reveal">
-            <span class="section-label">Recognition</span>
-            <h2 class="section-title">SourceForge Rising Star Award</h2>
-            <p class="section-desc">AudioEnhancerMAX has been recognized by SourceForge with the Rising Star award, a milestone reserved for select open-source projects with meaningful community engagement.</p>
-            <div class="recognition-actions">
-                <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">View on SourceForge</a>
-                <a href="https://fabriziodegni.com/AudioEnhancerMAX/" class="btn btn-secondary">Official Website</a>
-            </div>
-            <p class="recognition-note">The official SourceForge badge loads a third-party SourceForge script in this recognition area. It is presentation metadata and is separate from the audio processing pipeline.</p>
+<!-- Current status -->
+<section id="status" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <span class="section-label">Verified · October 15, 2026</span>
+        <h2 class="section-title">Every export belongs to a completed result.</h2>
+        <p class="section-desc">Version 3.8 verifies resumable DSP work, retains distinct output revisions, and measures the exact WAV, MP3 or FLAC selected for delivery. Release status and remaining limits are visible below.</p>
+        <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX current project status">
+            <div class="ledger-head" role="row"><span>Scope</span><span>Status</span><span>What that means</span></div>
+            <div class="ledger-row" role="row"><strong>Verified checkpoints</strong><span class="ledger-boundary">Local DSP</span><span class="ledger-evidence">Changed source, settings or build restarts cleanly. Compatible float snapshots preserve processing precision.</span></div>
+            <div class="ledger-row" role="row"><strong>Revision-bound delivery</strong><span class="ledger-boundary">WAV / MP3 / FLAC</span><span class="ledger-evidence">Playback, conversions, reports and capsules identify the completed result. Guidance records the exact export hash.</span></div>
+            <div class="ledger-row" role="row"><strong>3.8 source + Mac preview</strong><span class="ledger-boundary">75 Python + 4 JS tests</span><span class="ledger-evidence">New Mac preview is Developer ID signed; Apple notarization awaits the developer team's agreement. Stable notarized Mac download remains 3.7.0.</span></div>
+            <div class="ledger-row" role="row"><strong>REA research workflow</strong><span class="ledger-boundary">Developer tooling</span><span class="ledger-evidence">Source-backed static observations and reproducible receipts. No commercial DSP clone or audio-quality ranking is claimed.</span></div>
         </div>
-        <div class="recognition-proof reveal">
-            <div class="sourceforge-badge-stack use-fallback">
-                <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star">
-                    <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a>
-                </div>
-                <a class="sourceforge-fallback" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" aria-label="AudioEnhancerMAX SourceForge Rising Star Award">
-                    <img src="img/icons/award-star.svg" alt="" aria-hidden="true">
-                    <span>SourceForge<strong>Rising Star</strong></span>
-                </a>
-            </div>
-            <div class="recognition-proof-text">Official SourceForge award badge for AudioEnhancerMAX.</div>
+        <div class="hero-actions" style="margin-top:28px;">
+            <a href="https://fabriziodegni.com/AudioEnhancerMAX/status.html" class="btn btn-secondary">Read the full project status</a>
+        </div>
+    </div>
+</section>
+
+<!-- Release evidence -->
+<section id="proof">
+    <div class="container">
+        <span class="section-label">Release proof ledger</span>
+        <h2 class="section-title">Capability, boundary, evidence.</h2>
+        <p class="section-desc">The capabilities below describe the implemented workflow. Runtime availability and validation limits are documented in the release notes.</p>
+        <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX 3.8 capability evidence">
+            <div class="ledger-head" role="row"><span>Capability</span><span>Runs where</span><span>Validation evidence</span></div>
+            <div class="ledger-row" role="row"><strong>Native macOS workspace</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Standalone AppKit/WebKit window with AudioEnhancerMAX application identity.</span></div>
+            <div class="ledger-row" role="row"><strong>Core application server</strong><span class="ledger-boundary">Loopback only</span><span class="ledger-evidence">Bound to 127.0.0.1 and released when the native application quits.</span></div>
+            <div class="ledger-row" role="row"><strong>Speech transcription</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Local Faster-Whisper; direct builds manage models at runtime. App Store packaging is a separate bundled-model path.</span></div>
+            <div class="ledger-row" role="row"><strong>Delivery profiles</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Five fixed targets: podcast, video, audiobook, lossless archive, and source-quality master.</span></div>
+            <div class="ledger-row" role="row"><strong>Processing report</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Readable report and canonical JSON capture options, engines, warnings, privacy state, and output facts per job.</span></div>
+            <div class="ledger-row" role="row"><strong>Delivery Compliance Lab</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Measured loudness, estimated true peak, clipping, and sample-rate checks with rule-level results; workflow guidance, not certification.</span></div>
+            <div class="ledger-row" role="row"><strong>Project Capsule</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Portable ZIP with a SHA-256 manifest, processed output, and available report, compliance, transcript, EDL, and listening-review evidence.</span></div>
+            <div class="ledger-row" role="row"><strong>Release checks</strong><span class="ledger-boundary">Automated + packaged</span><span class="ledger-evidence">75 Python tests and 4 JavaScript state tests passed for 3.8. Scope and limitations are recorded on the status page.</span></div>
         </div>
     </div>
 </section>
@@ -941,93 +1073,170 @@
 <section id="transparency" style="background: rgba(255,255,255,0.01);">
     <div class="container">
         <span class="section-label">Transparency</span>
-        <h2 class="section-title">Local-first, not vague-first.</h2>
-        <p class="section-desc">AudioEnhancerMAX is built for governance-sensitive workflows: data movement is explicit, AI suggestions are assistive, and original media stays available for review.</p>
+        <h2 class="section-title">What runs where&mdash;without fine print.</h2>
+        <p class="section-desc">AudioEnhancerMAX separates local processing, optional local helper software, trusted-LAN workers, and external services so each boundary can be understood and controlled.</p>
 
         <div class="features-grid">
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/local-core.svg" alt="" aria-hidden="true"></div>
-                <h3>Local Core Pipeline</h3>
-                <p>Uploads, DSP processing, Whisper transcription, Kokoro TTS, timing history, and Ollama/Gemma inference run on the host machine when those local dependencies are installed.</p>
-                <span class="tech-tag dsp">Local-first</span>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/local-core.svg" alt="" aria-hidden="true"></div>
+                <h3>On this Mac</h3>
+                <p>Uploads, DSP, deterministic Smart Enhance analysis, local Whisper transcription, EDL history, reports, and interface assets remain on the host Mac.</p>
+                <span class="tech-tag dsp">Default path</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/external-flow.svg" alt="" aria-hidden="true"></div>
-                <h3>Optional External Services</h3>
-                <p>Edge Neural TTS sends selected text to Microsoft when that engine is used. The public SourceForge badge loads a SourceForge script in the browser.</p>
-                <span class="tech-tag ai">Explicit opt-in</span>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
+                <h3>Local helper process</h3>
+                <p>Optional Ollama/Gemma editorial assistance runs through a local process. It may draft text suggestions, but it never chooses DSP parameters.</p>
+                <span class="tech-tag ai">User controlled</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/explainability.svg" alt="" aria-hidden="true"></div>
-                <h3>Explainability Boundaries</h3>
-                <p>Selected filters, preset options, ETA confidence, and Smart Mode suggestions are visible. Audio quality and transcript accuracy still require human review for high-stakes use.</p>
-                <span class="tech-tag edge">Reviewable</span>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <h3>Personal voice runtime</h3>
+                <p>The source supports named, consent-based profiles through the separately evolving MakeMyVoice project. Voice samples and generated audio stay local.</p>
+                <span class="tech-tag metal">Development head · local Metal</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true"></div>
+                <h3>Trusted local network</h3>
+                <p>Selected DSP chunks can reach Android workers only when trusted-LAN processing is enabled and a worker is connected by the user.</p>
+                <span class="tech-tag edge">Separate boundary</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/external-flow.svg" alt="" aria-hidden="true"></div>
+                <h3>Optional external service</h3>
+                <p>Edge Neural TTS sends only the submitted text to Microsoft. A persisted privacy control can disable this path independently of local features.</p>
+                <span class="tech-tag ai">Explicit setting</span>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Features -->
-<section id="features">
+<!-- 3.7 foundations -->
+<section id="foundations">
     <div class="container">
-        <span class="section-label">Features</span>
-        <h2 class="section-title">Processing modules<br>you can inspect.</h2>
-        <p class="section-desc">Each module maps to a visible option or preset. The app favors concrete controls over hidden automatic edits.</p>
+        <span class="section-label">Delivered in 3.7</span>
+        <h2 class="section-title">Eight foundations for<br>reviewable production.</h2>
+        <p class="section-desc">The 3.7 release connects signal-led enhancement, transcript editing, revision history, export intent, compliance guidance, evidence portability, reporting, and privacy controls into one workflow.</p>
 
         <div class="features-grid">
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/noise.svg" alt="" aria-hidden="true"></div>
-                <h3>Noise Removal</h3>
-                <p>DeepFilterNet v3 when available, plus spectral gating and wet/dry mixing. Designed to reduce artifacts while preserving voice texture.</p>
-                <span class="tech-tag dsp">DeepFilterNet</span>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/filler.svg" alt="" aria-hidden="true"></div>
+                <h3>Smart Enhance 2</h3>
+                <p>Measured signal characteristics drive Conservative, Balanced, or Maximum DSP recommendations with readable evidence for each decision.</p>
+                <span class="tech-tag dsp">Deterministic DSP · delivered</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/filler.svg" alt="" aria-hidden="true"></div>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
+                <h3>Precision Speech Editor</h3>
+                <p>Select transcript words, review automatic suggestions, propose cuts or mutes, and export editorial decisions before rendering.</p>
+                <span class="tech-tag ai">Local model inference · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true"></div>
+                <h3>Revisioned, Non-Destructive EDL</h3>
+                <p>Accepted cut and mute decisions preserve the uploaded source, with persisted revisions, undo, redo, preview, and JSON or CSV export.</p>
+                <span class="tech-tag metal">Local timeline · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/save.svg" alt="" aria-hidden="true"></div>
+                <h3>Five Fixed Delivery Profiles</h3>
+                <p>Podcast, video, audiobook, lossless archive, and source-quality master targets make output intent repeatable; overrides remain visible.</p>
+                <span class="tech-tag metal">Local export · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></div>
+                <h3>Processing &amp; Governance Report</h3>
+                <p>Each job can produce a readable report and canonical JSON covering settings, engines, privacy state, warnings, approved edits, and output facts.</p>
+                <span class="tech-tag edge">Evidence trail · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></div>
+                <h3>Enforced Privacy Controls</h3>
+                <p>Separate persisted controls gate optional local Ollama assistance, Microsoft TTS, and trusted-LAN audio workers without disabling core local DSP.</p>
+                <span class="tech-tag dsp">Server enforced · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/benchmark.svg" alt="" aria-hidden="true"></div>
+                <h3>Delivery Compliance Lab</h3>
+                <p>Inspect integrated loudness, estimated true peak, clipping, and sample rate against transparent podcast, video, audiobook, broadcast, and preservation targets.</p>
+                <span class="tech-tag dsp">Measured locally · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/package.svg" alt="" aria-hidden="true"></div>
+                <h3>Evidence Chain &amp; Project Capsule</h3>
+                <p>Export a portable ZIP with SHA-256 provenance and the available output, report, compliance, EDL, transcript, and blind-listening evidence; source audio stays excluded by default.</p>
+                <span class="tech-tag edge">Portable evidence · delivered</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Processing modules -->
+<section id="features" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <span class="section-label">Processing toolkit</span>
+        <h2 class="section-title">Audio modules<br>you can inspect.</h2>
+        <p class="section-desc">Core DSP stays deterministic. Local model inference, optional local editorial assistance, optional external TTS, and optional LAN workers are labeled as distinct execution boundaries.</p>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/noise.svg" alt="" aria-hidden="true"></div>
+                <h3>Noise Removal</h3>
+                <p>DeepFilterNet v3 when installed, with spectral-gating fallback and wet/dry mixing. The active engine is reported by the runtime capability registry.</p>
+                <span class="tech-tag dsp">Conditional engine</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/filler.svg" alt="" aria-hidden="true"></div>
                 <h3>Filler Word Removal</h3>
                 <p>Whisper-based timestamps help identify common filler patterns such as "uhm", "eh", and "basically" for reviewable cleanup.</p>
                 <span class="tech-tag ai">Whisper AI</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
                 <h3>Studio Sound v2.0</h3>
                 <p>Voice-focused chain with warmth at 150Hz, presence around 4kHz, de-essing, gentle 2:1 compression, and limiting.</p>
                 <span class="tech-tag dsp">Pedalboard</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/metal-chip.svg" alt="" aria-hidden="true"></div>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/metal-chip.svg" alt="" aria-hidden="true"></div>
                 <h3>Metal GPU Acceleration</h3>
-                <p>Demucs music separation runs on Apple Metal GPU via PyTorch MPS. ARM NEON optimized CTranslate2 for Whisper inference.</p>
-                <span class="tech-tag metal">Metal MPS</span>
+                <p>Compatible model paths can use Apple Metal through PyTorch MPS. Whisper uses ARM-optimized CTranslate2; accelerator use depends on the active operation.</p>
+                <span class="tech-tag metal">Operation dependent</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
-                <h3>Ollama/Gemma Smart Mode</h3>
-                <p>When Ollama/Gemma is configured locally, Smart Mode suggests a content type and processing settings. Suggestions remain reviewable.</p>
-                <span class="tech-tag ai">Local Ollama</span>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
+                <h3>Optional Editorial Assistant</h3>
+                <p>When Ollama/Gemma is enabled locally, it can provide explicitly requested editorial prose. Deterministic signal analysis remains responsible for DSP recommendations.</p>
+                <span class="tech-tag ai">Local optional helper</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/edge-device.svg" alt="" aria-hidden="true"></div>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true"></div>
                 <h3>Edge Cluster Computing</h3>
-                <p>Turn trusted Android devices into LAN workers for selected DSP tasks. Discovery and manual registration stay under user control.</p>
-                <span class="tech-tag edge">UDP Discovery</span>
+                <p>Experimental Android workers can run selected DSP tasks on a user-enabled trusted LAN. Pairing, authentication, and workload limits are next-release hardening gates.</p>
+                <span class="tech-tag edge">Experimental boundary</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/music.svg" alt="" aria-hidden="true"></div>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/music.svg" alt="" aria-hidden="true"></div>
                 <h3>Music Preservation</h3>
-                <p>Meta's Demucs separates vocals from music. Process speech only, remix with original background music intact.</p>
-                <span class="tech-tag metal">Demucs + Metal</span>
+                <p>When Demucs and its assets are installed, vocals can be separated, processed, and remixed with background music. This engine is not universal across distributions.</p>
+                <span class="tech-tag metal">Demucs · conditional</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/monitor.svg" alt="" aria-hidden="true"></div>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/monitor.svg" alt="" aria-hidden="true"></div>
                 <h3>Real-time Monitoring</h3>
-                <p>Per-core CPU heatmap, GPU usage, power watts, ANE status. Processing dashboard with live pipeline visualization.</p>
-                <span class="tech-tag dsp">psutil + macmon</span>
+                <p>The monitor separates system CPU from app-process CPU and labels GPU, ANE, power, and temperature values as measured, estimated, or unavailable.</p>
+                <span class="tech-tag dsp">Truthful telemetry · dev head</span>
             </div>
             <div class="feature-card reveal">
-                <div class="feature-icon"><img class="icon-img" src="img/icons/file-report.svg" alt="" aria-hidden="true"></div>
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true"></div>
                 <h3>AI Transcription</h3>
-                <p>Word-level timestamps with export to SRT, VTT, and JSON. Speaker diarization uses pyannote.audio when available, with fallback behavior.</p>
-                <span class="tech-tag ai">Whisper + pyannote</span>
+                <p>Word-level timestamps export to SRT, VTT, and JSON. Speaker diarization uses pyannote when available; the heuristic fallback is not presented as production-grade diarization.</p>
+                <span class="tech-tag ai">Whisper · conditional diarization</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <h3>Personal Voice Studio</h3>
+                <p>Create or link a named voice profile, save synthesis defaults, re-enrol it, and use a validated MakeMyVoice engine. Advanced training and model promotion remain in MakeMyVoice.</p>
+                <span class="tech-tag metal">Development head</span>
             </div>
         </div>
     </div>
@@ -1043,14 +1252,15 @@
         <div class="arch-visual reveal">
             <div class="arch-grid">
                 <div class="arch-node">
-                    <div class="arch-node-title"><span class="dot"></span><img class="icon-img inline-icon" src="img/icons/desktop-node.svg" alt="" aria-hidden="true">Mac - Master Node</div>
+                    <div class="arch-node-title"><span class="dot"></span><img class="icon-img inline-icon" src="/static/img/icons/desktop-node.svg" alt="" aria-hidden="true">Mac - Master Node</div>
                     <div class="arch-services">
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/api-node.svg" alt="" aria-hidden="true">FastAPI Backend <span class="badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;">Core</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/smart-ai.svg" alt="" aria-hidden="true">Whisper Large-v3 <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/music.svg" alt="" aria-hidden="true">Demucs (Metal GPU) <span class="badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">GPU</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/smart-ai.svg" alt="" aria-hidden="true">Ollama/Gemma <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/monitor.svg" alt="" aria-hidden="true">System Monitor <span class="badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;">Core</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/cluster.svg" alt="" aria-hidden="true">Cluster Manager <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">Edge</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/api-node.svg" alt="" aria-hidden="true">FastAPI Backend <span class="badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;">Core</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">Whisper Medium <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/music.svg" alt="" aria-hidden="true">Demucs (Metal GPU) <span class="badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">GPU</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">Ollama/Gemma <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">MakeMyVoice adapter <span class="badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">Dev</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/monitor.svg" alt="" aria-hidden="true">System Monitor <span class="badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;">Core</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true">Cluster Manager <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">Edge</span></div>
                     </div>
                 </div>
 
@@ -1061,12 +1271,12 @@
                 </div>
 
                 <div class="arch-node">
-                    <div class="arch-node-title"><span class="dot"></span><img class="icon-img inline-icon" src="img/icons/edge-device.svg" alt="" aria-hidden="true">Edge Workers</div>
+                    <div class="arch-node-title"><span class="dot"></span><img class="icon-img inline-icon" src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">Edge Workers</div>
                     <div class="arch-services">
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/noise.svg" alt="" aria-hidden="true">Noise Removal <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/studio-mic.svg" alt="" aria-hidden="true">Studio Sound <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/auto-eq.svg" alt="" aria-hidden="true">Auto EQ <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
-                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/volume.svg" alt="" aria-hidden="true">Volume Normalize <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/noise.svg" alt="" aria-hidden="true">Noise Removal <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">Studio Sound <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/auto-eq.svg" alt="" aria-hidden="true">Auto EQ <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="/static/img/icons/volume.svg" alt="" aria-hidden="true">Volume Normalize <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
                         <div class="arch-svc">Samsung S24 Ultra</div>
                         <div class="arch-svc">Xiaomi 17 Ultra</div>
                     </div>
@@ -1076,148 +1286,57 @@
     </div>
 </section>
 
-<!-- Benchmark -->
-<section id="benchmark">
+<section aria-labelledby="release-evidence-title">
     <div class="container">
-        <span class="section-label">Performance</span>
-        <h2 class="section-title">Built for Speed</h2>
-        <p class="section-desc">Benchmarked on Apple M3 Max with Metal GPU, ARM NEON, and Apple Accelerate optimizations.</p>
-
-        <div class="bench-cards reveal">
-            <div class="bench-card">
-                <div class="score">264</div>
-                <div class="name">FFT/IFFT</div>
-                <div class="detail">ops/sec - 3.8ms avg</div>
+        <div class="evidence-callout reveal">
+            <div>
+                <span class="section-label">Release evidence</span>
+                <h3 id="release-evidence-title">Read the facts behind the 3.8 release.</h3>
+                <p>Release notes describe shipped behavior. The claims matrix connects each public statement to code, tests, or packaged-app validation.</p>
             </div>
-            <div class="bench-card">
-                <div class="score">55</div>
-                <div class="name">FIR Filter</div>
-                <div class="detail">ops/sec - 256-tap</div>
+            <div class="evidence-links">
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.8.0.md" target="_blank" rel="noopener noreferrer">Release notes</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/marketing/CLAIMS_EVIDENCE_MATRIX_v3.8.0.md" target="_blank" rel="noopener noreferrer">Claims matrix</a>
+                <a href="https://fabriziodegni.com/AudioEnhancerMAX/status.html">Current audit status</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source repository</a>
             </div>
-            <div class="bench-card">
-                <div class="score">52</div>
-                <div class="name">Spectral Gate</div>
-                <div class="detail">ops/sec - 426 frames</div>
-            </div>
-            <div class="bench-card">
-                <div class="score">356</div>
-                <div class="name">Resample</div>
-                <div class="detail">ops/sec - 44.1 to 48kHz</div>
-            </div>
-        </div>
-
-        <div style="text-align:center;margin-top:24px;color:var(--text-3);font-size:0.72rem;">
-            Overall Score: <strong style="color:var(--accent-3);">112 ops/s</strong> - Apple M3 Max - 16 cores - PyTorch MPS - CTranslate2 ARM NEON
         </div>
     </div>
 </section>
 
-<!-- Comparison -->
-<section id="compare" style="background: rgba(255,255,255,0.01);">
-    <div class="container">
-        <span class="section-label">Comparison</span>
-        <h2 class="section-title">Why AudioEnhancerMAX?</h2>
-        <p class="section-desc">A capability-level comparison. Pricing and product limits can change, so verify vendor terms before making procurement decisions.</p>
-
-        <div style="overflow-x:auto;" class="reveal">
-            <table class="comparison-table">
-                <thead>
-                    <tr>
-                        <th>Feature</th>
-                        <th class="highlight-col">AudioEnhancerMAX</th>
-                        <th>Adobe Podcast</th>
-                        <th>Descript</th>
-                        <th>Auphonic</th>
-                        <th>iZotope RX 11</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td data-label="Feature">Price</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><strong>Free / OSS</strong></td>
-                        <td data-label="Adobe Podcast">$9.99/mo</td>
-                        <td data-label="Descript">$24/mo</td>
-                        <td data-label="Auphonic">$11-99/mo</td>
-                        <td data-label="iZotope RX 11">$399-$1,349</td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">Local-first core processing</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><img class="state-icon" src="img/icons/check.svg" alt="Yes"> Core pipeline</td>
-                        <td data-label="Adobe Podcast"><img class="state-icon" src="img/icons/cross.svg" alt="No"> Cloud</td>
-                        <td data-label="Descript"><img class="state-icon" src="img/icons/cross.svg" alt="No"> Cloud</td>
-                        <td data-label="Auphonic"><img class="state-icon" src="img/icons/cross.svg" alt="No"> Cloud</td>
-                        <td data-label="iZotope RX 11"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">AI Noise Removal</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                        <td data-label="Adobe Podcast"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                        <td data-label="Descript"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                        <td data-label="Auphonic"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                        <td data-label="iZotope RX 11"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">Filler Word Removal</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                        <td data-label="Adobe Podcast"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Descript"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                        <td data-label="Auphonic"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="iZotope RX 11"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">GPU Acceleration</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><img class="state-icon" src="img/icons/check.svg" alt="Yes"> Metal</td>
-                        <td data-label="Adobe Podcast"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Descript"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Auphonic"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="iZotope RX 11"><img class="state-icon only" src="img/icons/partial.svg" alt="Partial"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">Edge Cluster Computing</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><img class="state-icon" src="img/icons/check.svg" alt="Yes"></td>
-                        <td data-label="Adobe Podcast"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Descript"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Auphonic"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="iZotope RX 11"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">AI Content Classification</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><img class="state-icon" src="img/icons/check.svg" alt="Yes"> Local Ollama/Gemma</td>
-                        <td data-label="Adobe Podcast"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Descript"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Auphonic"><img class="state-icon only" src="img/icons/partial.svg" alt="Partial"></td>
-                        <td data-label="iZotope RX 11"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">Vendor processing quota</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><strong>No SaaS quota</strong></td>
-                        <td data-label="Adobe Podcast">1-4 hrs/day</td>
-                        <td data-label="Descript">10-30 hrs/mo</td>
-                        <td data-label="Auphonic">2-100 hrs/mo</td>
-                        <td data-label="iZotope RX 11">Unlimited</td>
-                    </tr>
-                    <tr>
-                        <td data-label="Feature">Open Source</td>
-                        <td data-label="AudioEnhancerMAX" class="highlight-col"><img class="state-icon" src="img/icons/check.svg" alt="Yes"> MIT</td>
-                        <td data-label="Adobe Podcast"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Descript"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="Auphonic"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                        <td data-label="iZotope RX 11"><img class="state-icon" src="img/icons/cross.svg" alt="No"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-<!-- Download CTA -->
 <section id="download" class="cta-section">
     <div class="cta-card reveal">
-        <h2>Install, Open,<br>Start Processing</h2>
-        <p>The macOS application performs its own local readiness check. No Terminal commands or package manager setup are required for the supported desktop build.</p>
+        <h2>Explore the 3.8<br>release.</h2>
+        <p>Get the 3.8 source release or signed Mac preview. The new preview awaits Apple notarization; the stable notarized Mac download remains 3.7.0. Mac App Store publication is a separate stage.</p>
+        <code class="cta-code">
+            <span class="comment"># Clone &amp; install</span><br>
+            git clone https://github.com/sev7enITA/AudioEnhancerMAX.git<br>
+            cd AudioEnhancerMAX &amp;&amp; pip install -r requirements.txt<br><br>
+            <span class="comment"># Launch</span><br>
+            python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+        </code>
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/package.svg" alt="" aria-hidden="true">macOS Releases</a>
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer" class="btn btn-secondary"><img class="icon-img btn-icon-svg" src="img/icons/github-star.svg" alt="" aria-hidden="true">Source Repository</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.0" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="" aria-hidden="true">GitHub releases</a>
+            <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">SourceForge</a>
+            <a href="https://fabriziodegni.com/AudioEnhancerMAX/status.html" class="btn btn-secondary">Project status</a>
+            <a href="roadmap.html" class="btn btn-secondary">Roadmap</a>
+        </div>
+    </div>
+</section>
+
+<section id="recognition" class="recognition-compact" aria-labelledby="recognition-title">
+    <div class="container recognition-layout">
+        <div class="recognition-copy">
+            <span class="section-label">Project metadata</span>
+            <h2 class="section-title" id="recognition-title">SourceForge Rising Star</h2>
+            <p class="section-desc">SourceForge displays its Rising Star badge for AudioEnhancerMAX. This recognition is not presented as evidence of audio quality, performance, or market leadership.</p>
+            <p class="recognition-note">The optional badge script belongs only to this metadata module and is separate from the local audio-processing pipeline.</p>
+        </div>
+        <div class="recognition-proof">
+            <div class="sourceforge-badge-stack use-fallback">
+                <div class="sourceforge-fallback" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star"><a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a></div>
+                <a class="sourceforge-fallback" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" aria-label="View the AudioEnhancerMAX SourceForge badge"><img src="/static/img/icons/award-star.svg" alt="" aria-hidden="true"><span>SourceForge<strong>Rising Star</strong></span></a>
+            </div>
         </div>
     </div>
 </section>
@@ -1226,11 +1345,15 @@
 <footer>
     <div class="footer-inner">
         <div class="footer-left">
-            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX v3.5.2 - SourceForge Rising Star - MIT License - (c) 2026 Fd</span>
+            <span class="footer-brand"><img class="icon-img" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX 3.8.0 · local-first · MIT License · © 2026 Fd</span>
         </div>
         <ul class="footer-links">
             <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             <li><a href="roadmap.html">Roadmap</a></li>
+            <li><a href="https://fabriziodegni.com/AudioEnhancerMAX/status.html">Status</a></li>
+            <li><a href="https://fabriziodegni.com/AudioEnhancerMAX/support.html">Support</a></li>
+            <li><a href="https://fabriziodegni.com/AudioEnhancerMAX/privacy.html">Privacy</a></li>
+            <li><a href="https://fabriziodegni.com/AudioEnhancerMAX/accessibility.html">Accessibility</a></li>
             <li><a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">SourceForge</a></li>
             <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
             <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a></li>
@@ -1256,15 +1379,41 @@
 
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
+    // Accessible mobile navigation
+    const navToggle = document.querySelector('.nav-toggle');
+    const navLinks = document.getElementById('primary-navigation');
+    const closeMenu = () => {
+        navLinks.classList.remove('is-open');
+        navToggle.setAttribute('aria-expanded', 'false');
+        navToggle.setAttribute('aria-label', 'Open navigation menu');
+        navToggle.textContent = 'Menu';
+    };
+    navToggle.addEventListener('click', () => {
+        const opening = navToggle.getAttribute('aria-expanded') !== 'true';
+        navLinks.classList.toggle('is-open', opening);
+        navToggle.setAttribute('aria-expanded', String(opening));
+        navToggle.setAttribute('aria-label', opening ? 'Close navigation menu' : 'Open navigation menu');
+        navToggle.textContent = opening ? 'Close' : 'Menu';
+    });
+    navLinks.addEventListener('click', (event) => { if (event.target.closest('a')) closeMenu(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeMenu(); navToggle.focus(); } });
+    document.addEventListener('click', (event) => { if (!nav.contains(event.target)) closeMenu(); });
+    window.addEventListener('resize', () => { if (window.innerWidth > 768) closeMenu(); });
+
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(a => {
         a.addEventListener('click', (e) => {
+            const href = a.getAttribute('href');
+            if (href === '#') return;
             e.preventDefault();
-            const target = document.querySelector(a.getAttribute('href'));
+            const target = document.querySelector(href);
             if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
 </script>
+
+<!-- SourceForge Rising Star badge -->
+
 
 </body>
 </html>

@@ -6,6 +6,8 @@ import numpy as np
 from typing import Optional
 import logging
 
+from app.utils.signal_processing import istft, stft
+
 logger = logging.getLogger(__name__)
 
 
@@ -155,12 +157,10 @@ def remove_reverb_echo(
     Reduce reverb and echo using spectral processing.
     Method: spectral subtraction of the estimated reverb tail.
     """
-    import librosa
-
     # STFT analysis
     n_fft = 2048
     hop_length = 512
-    S = librosa.stft(audio, n_fft=n_fft, hop_length=hop_length)
+    S = stft(audio, n_fft=n_fft, hop_length=hop_length)
     magnitude = np.abs(S)
     phase = np.angle(S)
 
@@ -190,7 +190,9 @@ def remove_reverb_echo(
 
     # Reconstruct
     S_clean = clean_magnitude * np.exp(1j * phase)
-    result = librosa.istft(S_clean, hop_length=hop_length, length=len(audio))
+    result = istft(
+        S_clean, n_fft=n_fft, hop_length=hop_length, length=len(audio)
+    )
 
     # v2.0: Reduced blend factor (was strength*0.7, now strength*0.5)
     # to preserve more of the original signal's natural character

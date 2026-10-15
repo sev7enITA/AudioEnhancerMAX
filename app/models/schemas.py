@@ -2,7 +2,7 @@
 AudioEnhancerMAX by Fd - Pydantic Schemas
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from enum import Enum
 
 
@@ -13,6 +13,12 @@ class ContentType(str, Enum):
     MUSIC = "music"
     OUTDOOR = "outdoor_recording"
     CUSTOM = "custom"
+
+
+class SmartProfile(str, Enum):
+    CONSERVATIVE = "conservative"
+    BALANCED = "balanced"
+    MAXIMUM = "maximum"
 
 
 class OutputFormat(str, Enum):
@@ -79,6 +85,8 @@ class ProcessingOptions(BaseModel):
 
     # Output
     output_format: OutputFormat = OutputFormat.WAV
+    output_profile: Optional[str] = Field(default=None, max_length=64)
+    output_profile_overrides: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ProcessingRequest(BaseModel):
@@ -110,6 +118,64 @@ class TranscriptionResponse(BaseModel):
     duration: float
 
 
+class SpeechEditorAnalyzeRequest(BaseModel):
+    file_id: str
+    language: Optional[str] = None
+    custom_filler_words: Optional[List[str]] = None
+
+
+class SpeechEditDecision(BaseModel):
+    candidate_id: str = Field(min_length=1, max_length=64)
+    decision: Literal["keep", "apply"]
+
+
+class SpeechEditorUpdateRequest(BaseModel):
+    revision: int = Field(ge=1)
+    decisions: List[SpeechEditDecision]
+
+
+class SpeechEditorRenderRequest(BaseModel):
+    revision: int = Field(ge=1)
+    output_format: OutputFormat = OutputFormat.WAV
+
+
+class SpeechEditorManualEditRequest(BaseModel):
+    revision: int = Field(ge=1)
+    start: float = Field(ge=0.0)
+    end: float = Field(gt=0.0)
+    action: Literal["cut", "mute"]
+    decision: Literal["keep", "apply"] = "keep"
+    text: str = Field(default="", max_length=500)
+    word_start: Optional[int] = Field(default=None, ge=0)
+    word_end: Optional[int] = Field(default=None, ge=0)
+
+
+class RevisionRequest(BaseModel):
+    revision: int = Field(ge=1)
+
+
+class RuntimePrivacySettingsRequest(BaseModel):
+    external_services_allowed: bool
+    ollama_editorial_allowed: bool
+    trusted_lan_processing_allowed: bool
+
+
+class ProjectCapsuleRequest(BaseModel):
+    output_version: Literal["processed", "speech_edit"] = "processed"
+    revision: Optional[str] = Field(default=None, max_length=64)
+    format: Optional[OutputFormat] = None
+    include_source: bool = False
+    target_id: str = Field(default="podcast", min_length=1, max_length=64)
+
+
+class BlindABReviewRequest(BaseModel):
+    output_version: Literal["processed", "speech_edit"] = "processed"
+    revision: Optional[str] = Field(default=None, max_length=64)
+    selected_version: Literal["original", "processed", "no_difference"]
+    blind_slot: Literal["A", "B", "tie"]
+    target_id: str = Field(default="podcast", min_length=1, max_length=64)
+
+
 # ── Text-to-Speech ──────────────────────────────────
 
 class TTSVoice(BaseModel):
@@ -129,9 +195,32 @@ class TTSRequest(BaseModel):
     pitch: float = Field(default=1.0, ge=0.5, le=2.0)
     warmth: float = Field(default=0.5, ge=0.0, le=1.0)
     style: str = "neutral"  # neutral, expressive, calm, energetic
-    clone_voice_file_id: Optional[str] = None  # File ID for voice cloning
+    clone_voice_file_id: Optional[str] = None  # Deprecated one-shot upload hook
+    voice_profile_id: Optional[str] = None  # Persistent personal voice profile
     expressive: bool = False  # Use Gemma to rewrite text for natural delivery
-    engine: str = "auto"  # "edge", "kokoro", or "auto"
+    engine: str = "auto"  # "edge", "kokoro", "voice-clone", or "auto"
+
+
+class VoiceProfileSettings(BaseModel):
+    language: str = Field(default="it", min_length=2, max_length=16)
+    style: Literal["neutral", "expressive", "calm", "energetic"] = "neutral"
+    speed: float = Field(default=1.0, ge=0.5, le=2.0)
+    pitch: float = Field(default=1.0, ge=0.5, le=2.0)
+    warmth: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class VoiceProfileEnrollRequest(BaseModel):
+    file_id: str
+    name: str = Field(min_length=1, max_length=80)
+    profile_id: Optional[str] = None
+    transcript: str = Field(default="", max_length=20000)
+    consent_confirmed: bool = False
+    settings: VoiceProfileSettings = Field(default_factory=VoiceProfileSettings)
+
+
+class VoiceProfileUpdateRequest(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    settings: VoiceProfileSettings
 
 
 class TTSRewriteRequest(BaseModel):

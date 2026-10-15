@@ -107,11 +107,11 @@ def detect_watermark(
 
 def _detect_ultrasonic(audio: np.ndarray, sr: int) -> Optional[dict]:
     """Detect ultrasonic watermark."""
-    import librosa
+    from app.utils.signal_processing import stft
 
     # Analyze energy in watermark frequency band
-    S = np.abs(librosa.stft(audio, n_fft=4096))
-    freqs = librosa.fft_frequencies(sr=sr, n_fft=4096)
+    S = np.abs(stft(audio, n_fft=4096))
+    freqs = np.fft.rfftfreq(4096, d=1.0 / float(sr))
 
     band_mask = (freqs >= WATERMARK_FREQ_BAND[0]) & (freqs <= WATERMARK_FREQ_BAND[1])
     band_energy = np.mean(S[band_mask, :], axis=0)
