@@ -11,7 +11,6 @@ This release makes processing, review and export refer to the same completed aud
 - Every processed or speech-edited result has an immutable revision. WAV/MP3/FLAC conversions belong to that revision. Requests for a superseded revision return HTTP 409; a missing processed result returns HTTP 404.
 - Delivery guidance measures the selected encoded format and records its SHA-256, size, operation and revision. Project Capsules and blind A/B decisions use the corresponding output. A/B remains a subjective preference.
 - Starting a new run clears the previous result from review and download controls. Late responses cannot replace evidence for another result.
-- REA 6.5.0 research tooling and documented competitor observations are included for developers. Commercial artifacts remain private and excluded. Static analysis is not a claim of DSP equivalence or superior audio quality.
 - Previously local JIT-free macOS fixes, personal-voice adapter support and corrected process telemetry are preserved in the repository. Optional engines still depend on installed runtimes and assets.
 - The web runtime updates FastAPI, Starlette, python-multipart and multidict. The validated installed build environment reports no known advisories in the 15 October 2026 pip-audit snapshot; this is not a general security certification.
 
@@ -26,5 +25,3 @@ The 3.8.0 direct-download DMG is a Developer ID build for Apple Silicon, macOS 1
 ## Operational notes
 
 Keep a single backend worker per data directory. Completed revisions are retained so existing playback URLs remain valid; they consume local disk space. Old pre-revision outputs are adopted using their most recent modification time; rerun processing if the provenance of a legacy result is uncertain. Reports distinguish processing-master facts from export-format delivery measurements. The source is never overwritten.
-
-Aligned residual listening and separately exposed stems remain research work, not delivered features. No competitor proprietary code or models are bundled.

@@ -44,8 +44,8 @@ from app.utils.progress import progress_tracker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "3.8.1"
-APP_BUILD = os.getenv("AEMAX_BUILD_NUMBER", "3.8.1")
+APP_VERSION = "3.8.2"
+APP_BUILD = os.getenv("AEMAX_BUILD_NUMBER", "3.8.2")
 _PROCESSING_FILES: set[str] = set()
 SAFE_FILE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 STREAMABLE_AUDIO_VERSIONS = {"original", "processed"}

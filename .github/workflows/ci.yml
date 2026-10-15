@@ -135,7 +135,7 @@ jobs:
       - name: Install the tested core runtime
         run: python -m pip install -r packaging/macos/requirements-runtime-app-store.txt pytest
 
-      - name: Audio, API and research regressions
+      - name: Core regression suite
         run: python -m pytest -q
 
       - name: Frontend result-state regressions

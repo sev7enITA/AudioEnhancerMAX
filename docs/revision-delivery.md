@@ -19,4 +19,4 @@ Neural/model-dependent and trusted-LAN execution paths restart rather than asser
 
 `python -m pytest -q` passed 75 cases; `node --test tests/test_review_state.cjs` passed 4 on 15 October 2026. Thirteen audio/API cases use generated fixtures. Three repeated deterministic normalization runs had a zero decoded-sample difference in this runtime; interrupted/resumed DSP matched the corresponding clean run. This is a measured fixture baseline, not a universal hash/null threshold or a perceptual-quality claim.
 
-No competitor audio-quality benchmark, aligned residual player or independently exposed stem mixer is claimed. See the [research validation plan](../research/rea/audioenhancer-validation-plan.md).
+Aligned residual playback and independently exposed stems are not included in this release.

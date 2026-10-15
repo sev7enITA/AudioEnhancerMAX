@@ -12,4 +12,4 @@ The existing 75 Python tests, 4 JavaScript state tests and repository presentati
 
 The macOS arm64 DMG is a Developer ID signed preview for macOS 13+. Apple notarization remains blocked by HTTP 403 pending the developer-team agreement. The notarized 3.7.0 remains the stable Mac download. No new App Store submission or approval is claimed.
 
-Source archives exclude user recordings, private voice profiles, credentials and commercial research binaries. Third-party vendored sources and licenses are preserved.
+Source archives exclude user recordings, private voice profiles and credentials. Third-party vendored sources and licenses are preserved.

@@ -2,6 +2,14 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
+## [3.8.2] - 2026-10-15
+
+### Release presentation
+
+- Refine release descriptions and feature lists around the delivered audio workflow.
+- Align website, desktop landing page, documentation and distribution metadata.
+- Refresh source, website and signed macOS preview packages. Audio processing behavior is unchanged.
+
 ## [3.8.1] - 2026-10-15
 
 ### Presentation corrections
@@ -17,7 +25,6 @@ All notable changes to AudioEnhancerMAX are documented here.
 
 - Revision-bound processing and speech-edit outputs, exact-export compliance evidence, and revision-bound A/B reviews and Project Capsules.
 - Source/options/build/runtime-aware checkpoints with lossless float snapshots and explicit non-resumable paths.
-- REA 6.5.0 research wrapper, evidence receipts, private artifact exclusion and competitor study documentation.
 - Thirteen API/audio regressions and four frontend state regressions.
 
 ### Fixed
