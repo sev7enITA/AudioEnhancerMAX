@@ -16,4 +16,4 @@
 
 The DMG is Developer ID signed, not notarized or stapled. Apple notarization remains blocked by the developer-team agreement reported as HTTP 403 during the 3.8.0 release. This maintenance release did not retry that unchanged external gate. The existing notarized 3.7.0 remains the stable Mac download.
 
-Audio processing behavior is unchanged. These checks do not establish perceptual audio quality, competitor equivalence, optional-model quality, or production readiness of the experimental trusted-LAN worker.
+Audio processing behavior is unchanged. These checks do not establish perceptual audio quality, optional-model quality, or production readiness of the experimental trusted-LAN worker.

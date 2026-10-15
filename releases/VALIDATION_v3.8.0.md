@@ -17,6 +17,6 @@
 
 Apple notarization returned HTTP 403: the developer team must accept an agreement. The DMG is signed but not notarized or stapled; it is distributed as a preview. Stable macOS remains the existing notarized 3.7.0 artifact. No Mac App Store release is claimed.
 
-The synthetic tests do not establish perceptual audio quality, competitor equivalence, optional-model quality, or production readiness of the experimental trusted-LAN worker. Only deterministic local DSP paths use resumable checkpoints. Keep one backend worker per data directory.
+The synthetic tests do not establish perceptual audio quality, optional-model quality, or production readiness of the experimental trusted-LAN worker. Only deterministic local DSP paths use resumable checkpoints. Keep one backend worker per data directory.
 
 The current GitHub workflow runs the Python/JavaScript suite on Linux; its execution result is recorded separately by GitHub Actions. Local test results do not imply a remote CI pass.
