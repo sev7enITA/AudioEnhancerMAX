@@ -11,6 +11,6 @@
 
 ## Limits
 
-The DMG is Developer ID signed, not notarized or stapled. The Apple developer-team agreement still needs acceptance before notarization can complete. The existing notarized 3.7.0 remains the stable Mac download.
+The DMG is Developer ID signed, not notarized or stapled. The account holder accepted the required Apple agreement on 15 October 2026. A separate successful notarization and stapling result is still required for this direct-download package. The existing notarized 3.7.0 remains the stable Mac download.
 
 Audio processing behavior is unchanged. These checks do not establish perceptual audio quality, optional-model quality, or production readiness of the experimental trusted-LAN worker. The GitHub workflow records remote CI results separately.
