@@ -270,8 +270,8 @@ def keep_music(
 
         # Resample back if needed
         if sr != model.samplerate:
-            import librosa
-            result = librosa.resample(result, orig_sr=model.samplerate, target_sr=sr)
+            from app.utils.signal_processing import resample_audio
+            result = resample_audio(result, model.samplerate, sr)
 
         return result
 

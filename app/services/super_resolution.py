@@ -6,6 +6,8 @@ import numpy as np
 from typing import Optional
 import logging
 
+from app.utils.signal_processing import istft, resample_audio, stft
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,11 +69,9 @@ def _spectral_enhance(
     Fallback super-resolution using high-quality resampling
     + spectral enhancement to synthesize high frequencies.
     """
-    import librosa
-
     # Step 1: High-quality resample
     if sr < target_sr:
-        audio_hr = librosa.resample(audio, orig_sr=sr, target_sr=target_sr, res_type='soxr_hq')
+        audio_hr = resample_audio(audio, sr, target_sr)
     else:
         audio_hr = audio
         target_sr = sr
@@ -79,7 +79,7 @@ def _spectral_enhance(
     # Step 2: Spectral enhancement - add harmonics
     # Analyze existing spectrum to generate plausible high-frequency content
     n_fft = 4096
-    S = librosa.stft(audio_hr, n_fft=n_fft)
+    S = stft(audio_hr, n_fft=n_fft)
     magnitude = np.abs(S)
     phase = np.angle(S)
 
@@ -99,7 +99,7 @@ def _spectral_enhance(
 
     # Reconstruct with enhanced spectrum
     S_enhanced = magnitude * np.exp(1j * phase)
-    audio_enhanced = librosa.istft(S_enhanced, length=len(audio_hr))
+    audio_enhanced = istft(S_enhanced, n_fft=n_fft, length=len(audio_hr))
 
     # v2.0: Reduced blending (was 0.3, now 0.15)
     # Subtler enhancement preserves natural character

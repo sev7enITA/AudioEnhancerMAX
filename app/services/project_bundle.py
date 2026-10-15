@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import zipfile
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -62,7 +63,7 @@ def export_project_capsule(
         execution_boundary=execution_boundary,
     )
     PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
-    destination = PROJECTS_DIR / f"AudioEnhancerMAX-{file_id}-project-capsule.zip"
+    destination = PROJECTS_DIR / f"AudioEnhancerMAX-{file_id}-{uuid.uuid4().hex[:12]}-project-capsule.zip"
     temporary = destination.with_suffix(".tmp")
     included_roles = {"processed-output"}
     if include_source:

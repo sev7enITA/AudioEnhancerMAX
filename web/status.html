@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioEnhancerMAX Project Status - October 2026</title>
+    <meta name="description" content="Verified release, development, runtime, testing, security, and distribution status for AudioEnhancerMAX as of October 15, 2026.">
+    <meta property="og:title" content="AudioEnhancerMAX Project Status">
+    <meta property="og:description" content="A public, evidence-based view of what is released, what is in development, what is conditional, and what remains to be hardened.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/status.html">
+    <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+    <link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/public-info.css">
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to project status</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">
+                <img src="img/icons/aem-mark.svg" alt="">
+                <span>AudioEnhancerMAX</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html" aria-current="page">Status</a></li>
+                <li><a href="roadmap.html">Roadmap</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="support.html">Support</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <span class="eyebrow">Verified project status</span>
+        <h1>AudioEnhancerMAX 3.8: release evidence.</h1>
+        <p class="hero-copy">Verified processing revisions, exact-format delivery evidence, and an explicit macOS distribution status.</p>
+        <div class="hero-meta">
+            <span><span class="meta-label">Audited</span> <strong>October 15, 2026</strong></span>
+            <span><span class="meta-label">Public release</span> <strong>3.8.0 source</strong></span>
+            <span><span class="meta-label">Signed package</span> <strong>3.8.0 preview</strong></span>
+        </div>
+    </header>
+
+    <main id="main-content" class="container">
+        <section class="content-section" id="release">
+            <span class="section-index">01 / Distribution</span><h2>Source release and macOS preview</h2>
+            <p>The 3.8.0 source is published on GitHub and SourceForge. The new direct macOS DMG is Developer ID signed. Apple currently returns HTTP 403 for notarization because the developer team must accept an updated agreement. The new Mac build remains a preview until notarization and stapling succeed; the existing notarized 3.7.0 stays available as the stable Mac download.</p>
+            <p>No new Mac App Store submission, TestFlight approval or App Store availability is claimed.</p>
+        </section>
+        <section class="content-section" id="workflow">
+            <span class="section-index">02 / Implemented</span><h2>One completed revision through delivery</h2>
+            <ul><li>DSP checkpoints verify source bytes, requested and effective settings, step order, application build and runtime versions. Incompatible or corrupt work restarts cleanly.</li>
+            <li>Every processed or speech-edited result has a distinct revision. Cached exports cannot be reused for another revision.</li>
+            <li>WAV, MP3 and FLAC delivery checks record the exact exported file's SHA-256 and format. Speech-edit reviews and capsules follow the selected operation.</li>
+            <li>New runs clear the previous UI result; late responses cannot replace evidence for another revision.</li></ul>
+        </section>
+        <section class="content-section" id="quality">
+            <span class="section-index">03 / Verification</span><h2>75 Python tests and 4 JavaScript tests passed</h2>
+            <p>Thirteen new audio/API cases cover interrupted processing, resumption, changed source/settings/build, corrupt checkpoints, three-run deterministic repeatability, cached conversions, stereo preservation, format changes, exact-export hash binding, speech-edit capsules and duplicate-job rejection. Four JavaScript cases exercise stale responses and disabled result actions.</p>
+            <p>The installed build environment passed dependency integrity checks and pip-audit reported no known vulnerabilities on 15 October 2026. These checks are scoped evidence, not a general security or audio-quality certification.</p>
+        </section>
+        <section class="content-section" id="research">
+            <span class="section-index">04 / Research</span><h2>REA integration with documented limits</h2>
+            <p>Developer tooling pins REA 6.5.0 and records source hashes, results and partial or failed outcomes. Studies cover public Adobe Podcast client code, selected Clear native artifacts and historical Descript worklets. Commercial binaries and private research artifacts are excluded from the source release.</p>
+            <p>Static observations do not establish active cloud models, DSP equivalence or a competitor quality ranking. Aligned residual listening and independently exposed stems remain research candidates.</p>
+        </section>
+        <section class="content-section" id="limits">
+            <span class="section-index">05 / Boundaries</span><h2>Local runtime and optional engines</h2>
+            <p>Core processing runs locally. Direct macOS transcription models are runtime-managed; the App Store packaging path is separate. MakeMyVoice personal-voice synthesis needs an installed compatible runtime and explicit voice-owner consent. Optional external TTS and trusted-LAN processing remain independently controlled.</p>
+            <p>Model-dependent and LAN paths do not claim resumable identity. Android debug workers remain experimental and disabled by default. Keep one backend worker per data directory. Completed revisions are retained locally, so disk usage grows until the user removes unneeded artifacts.</p>
+            <p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.8.0.md">Release notes</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/docs/revision-delivery.md">API and validation contract</a> · <a href="https://sourceforge.net/projects/audioenhancermax/files/">SourceForge downloads</a></p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <div>AudioEnhancerMAX Project Status | Audited October 15, 2026</div>
+            <ul class="footer-links">
+                <li><a href="index.html">Overview</a></li>
+                <li><a href="roadmap.html">Roadmap</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="accessibility.html">Accessibility</a></li>
+                <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Optional model-backed engines for direct-development environments only.
+# They are intentionally excluded from hardened and Mac App Store builds.
+deepfilternet==0.5.6
+demucs==4.0.1
+pyannote.audio==4.0.3

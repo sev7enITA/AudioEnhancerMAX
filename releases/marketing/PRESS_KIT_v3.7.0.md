@@ -1,5 +1,11 @@
 # AudioEnhancerMAX 3.7.0 — Press Kit Copy
 
+> Updated publication copy prepared on 28 August 2026 is available in
+> `COMUNICATI_STAMPA_2026-08-28_IT.md` and
+> `PRESS_RELEASES_2026-08-28_EN.md`. Those dated files reflect the live
+> SourceForge 3.7.0 channel, signed build 3.7.5, ready for internal testing and pending App Review,
+> and the separation between signed-release and development-head features.
+
 ## One-line description
 
 AudioEnhancerMAX 3.7 is a local-first Mac audio production workspace that makes enhancement and speech-editing decisions reviewable from diagnosis to export.
@@ -24,7 +30,7 @@ The release is designed around a simple principle: automation may propose, but t
 
 ## Verified product facts
 
-- Version: 3.7.0; candidate App Store build: 3.7.4.
+- Version: 3.7.0; candidate App Store build: 3.7.5.
 - Target package: native arm64, macOS 13 or later.
 - License: MIT.
 - Five fixed delivery profiles.
@@ -35,7 +41,8 @@ The release is designed around a simple principle: automation may propose, but t
 - Trusted-LAN processing disabled by default.
 - Delivery Compliance Lab with rule-level local guidance, not certification.
 - SHA-256 Project Capsule with original audio excluded by default.
-- 26 focused automated tests plus signed-payload validation for the 3.7 foundations.
+- JIT-free packaged DSP path; no librosa, Numba, or llvmlite in the signed runtime.
+- 51 focused automated tests plus signed-payload and notarized-app filter-chain validation.
 
 ## Suggested interview angles
 

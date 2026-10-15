@@ -58,6 +58,12 @@ def get_capability_registry() -> dict[str, Any]:
     audiosr = _module_available("audiosr")
     kokoro = _module_available("kokoro") and not APP_STORE_MODE
     edge_tts = _module_available("edge_tts")
+    try:
+        from app.services.voice_profiles import clone_adapter_capabilities
+
+        voice_clone = clone_adapter_capabilities()
+    except Exception:
+        voice_clone = {"available": False, "detail": "Voice clone adapter unavailable"}
 
     engines = {
         "transcription": _engine(
@@ -128,6 +134,17 @@ def get_capability_registry() -> dict[str, Any]:
             version=_package_version("edge-tts") if edge_tts else None,
             detail="Text leaves this Mac only after the user starts synthesis.",
         ),
+        "voice_clone": _engine(
+            voice_clone.get("backend") or "makemyvoice-adapter",
+            "MakeMyVoice Personal Voices",
+            available=bool(voice_clone.get("available")) and not APP_STORE_MODE,
+            mode=voice_clone.get("execution", "unavailable"),
+            version=voice_clone.get("version"),
+            detail=(
+                "Not exposed in the Mac App Store build."
+                if APP_STORE_MODE else voice_clone.get("detail", "")
+            ),
+        ),
         "smart_analysis": _engine(
             "audio-intelligence-v1",
             "Audio Intelligence v1",
@@ -150,6 +167,7 @@ def get_capability_registry() -> dict[str, Any]:
         "transcription_model": engines["transcription"]["label"],
         "transcription_bundled": bundled_whisper_model_available(),
         "kokoro_local_tts": engines["local_tts"]["available"],
+        "personal_voice_profiles": engines["voice_clone"]["available"],
         "demucs_music_separation": engines["source_separation"]["available"],
         "neural_denoise": engines["noise_reduction"]["mode"] == "neural",
         "neural_diarization": engines["diarization"]["mode"] == "neural",

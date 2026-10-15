@@ -39,14 +39,21 @@
 
 - Kokoro local voices for expressive English narration when installed locally.
 - Edge Neural voices for multilingual synthesis as an optional external TTS engine; selected text is sent to Microsoft Edge TTS when used.
+- Personal Voice Studio creates named reusable profiles with per-voice language, style, speed, pitch and warmth defaults. Enrollment and synthesis remain local and require explicit confirmation that the user owns or may clone the voice.
+- The versioned adapter probes the configured MakeMyVoice sibling runtime at execution time instead of hard-coding its current backend. Existing MakeMyVoice voice banks are linked without copying their recordings.
+- Adding another recording improves the reusable zero-shot reference. For profiles linked from a MakeMyVoice bank, the interface reads and reports MakeMyVoice's current fine-tuning dataset target (currently 15 minutes); training, A/B validation and activation remain explicit MakeMyVoice workflow gates. An activated profile model is used automatically when compatible with the active backend. AudioEnhancer-owned profiles remain zero-shot/reference profiles until handed off to MakeMyVoice.
 - Expressive rewrite mode can prepare text for more natural spoken delivery.
 
 ## Monitoring and ETA
 
-- System monitor tracks CPU, GPU, ANE, RAM, power, and thermal state where supported.
-- Adaptive ETA engine learns from real processing history and reports per-step timing.
+- System monitor distinguishes whole-system CPU, Apple SoC cluster residency, and the AudioEnhancerMAX backend plus active model workers; GPU, ANE, RAM, power, and thermal state remain system-wide where supported.
+- Adaptive ETA uses history or live progress when the engine exposes meaningful milestones. Monolithic local-model calls and remote TTS show elapsed time instead of a fabricated remaining-time estimate.
 
 ## Edge Workers
 
 - Android worker app receives safe DSP tasks from the master node.
 - UDP discovery and manual registration are supported on trusted local networks.
+
+## 3.8 delivery integrity
+
+Verified float checkpoints, immutable result revisions, conversion invalidation, exact-format delivery evidence and revision-bound capsules are implemented. See [validation and limits](revision-delivery.md). REA is a developer research tool, not a bundled commercial DSP engine.

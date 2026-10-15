@@ -21,7 +21,9 @@ This project has three main surfaces:
 - `app/services/specific_noise.py`: wind, buzz, static, reverb, and echo cleanup.
 - `app/services/speech_cleanup.py`: filler words, hesitations, stutters, breaths, mouth sounds.
 - `app/services/transcription.py`: faster-whisper transcription and streaming.
-- `app/services/tts.py`: Edge and Kokoro TTS.
+- `app/services/tts.py`: Edge, Kokoro and personal-profile TTS routing.
+- `app/services/voice_profiles.py`: stable named-profile store and MakeMyVoice subprocess adapter.
+- `app/services/voice_clone_worker.py`: compatibility boundary executed in MakeMyVoice's own environment.
 - `app/services/timing_engine.py`: adaptive ETA history.
 - `app/services/cluster_manager.py`: worker discovery and task routing.
 

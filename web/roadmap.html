@@ -560,6 +560,7 @@
             <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="roadmap-navigation" aria-label="Open navigation menu">Menu</button>
             <ul class="nav-links" id="roadmap-navigation">
                 <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
                 <li><a href="roadmap.html" aria-current="page">Roadmap</a></li>
                 <li><a href="#v37">v3.7 delivered</a></li>
                 <li><a href="#signal">Signal board</a></li>
@@ -575,7 +576,7 @@
         <div>
             <span class="eyebrow">3.7 delivered · future work clearly labeled</span>
             <h1>Delivered foundations.<br>Open research horizon.</h1>
-            <p class="hero-copy">AudioEnhancerMAX 3.7 now connects eight reviewable-production foundations. All eight foundations passed signed 3.7.2 package validation. Everything beyond that line is a research candidate or community signal&mdash;not a release commitment.</p>
+            <p class="hero-copy">AudioEnhancerMAX 3.7 connects eight reviewable-production foundations. All eight passed signed build 3.7.4 package validation. Personal Voice Studio and telemetry corrections are tracked separately as development-head work; everything else remains a research candidate or community signal.</p>
             <div class="hero-actions">
                 <a class="btn primary" href="#signal">Signal interest</a>
                 <a class="btn" id="propose-idea-top" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Propose a new idea</a>
@@ -616,8 +617,8 @@
                 <span>Offline and no-external modes remain product constraints.</span>
             </div>
             <div class="metric">
-                <strong>Eight delivered</strong>
-                <span>Six packaged plus two source-validated 3.7.2 waves.</span>
+                <strong>Eight signed</strong>
+                <span>Validated in the 3.7.0 build 3.7.4 package.</span>
             </div>
             <div class="metric">
                 <strong>No promises hidden</strong>
@@ -627,13 +628,14 @@
     </div>
 
     <main>
-        <section class="section" id="v37">
+        <section class="container" style="padding-top:32px"><h2>Delivered in 3.8: verified processing and export revisions</h2><p>Compatible DSP checkpoints, current WAV/MP3/FLAC conversions, exact-format delivery checks and revision-bound review evidence are implemented and tested. Aligned residual listening and separate stems remain research work. <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.8.0.md">Read the 3.8 release notes</a>.</p></section>
+<section class="section" id="v37">
             <div class="section-head">
                 <div>
-                    <span class="section-label">Current release · 3.7.0</span>
-                    <h2>Eight foundations delivered in 3.7.2</h2>
+                    <span class="section-label">Current release · 3.8.0</span>
+                    <h2>Eight foundations in signed build 3.7.4</h2>
                 </div>
-                <p class="section-note">These eight capabilities are implemented in the 3.7.2 source and covered by automated checks. Final packaged-application validation and Mac App Store approval are not claimed while submission preparation remains in progress.</p>
+                <p class="section-note">These eight capabilities passed packaged-application validation. The App Store package was signed and delivered to App Store Connect; public Mac App Store availability remains pending Apple review.</p>
             </div>
 
             <div class="grid">
@@ -743,6 +745,44 @@
             </div>
         </section>
 
+        <section class="section" id="development-head">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Current development head · not in signed 3.7.4</span>
+                    <h2>Validated source work awaiting release hardening</h2>
+                </div>
+                <p class="section-note">These capabilities work in the audited source tree but do not inherit the signed package status above. See the public status page for testing, security, and distribution boundaries.</p>
+            </div>
+
+            <div class="grid">
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Personal voices</span>
+                        <span class="badge p1">Development head</span>
+                    </div>
+                    <h3>Personal Voice Studio</h3>
+                    <p>Create or link a named, consent-based personal voice, save its synthesis settings, select it independently from stock voices, and re-enrol it later.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Boundary</strong><span>Local MakeMyVoice adapter and local Metal synthesis; unavailable in the App Store build.</span></div>
+                        <div class="meta-row"><strong>Next gate</strong><span>Clean-package validation, compatibility contract, quality comparison, and model rollback evidence.</span></div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-top">
+                        <span class="phase">Observability</span>
+                        <span class="badge p1">Development head</span>
+                    </div>
+                    <h3>Truthful Resource Telemetry</h3>
+                    <p>Separate machine CPU from app-process CPU and label GPU, ANE, power, and temperature values as measured, estimated, or unavailable.</p>
+                    <div class="meta">
+                        <div class="meta-row"><strong>Boundary</strong><span>Uses locally available macOS telemetry; accelerator visibility varies by OS and active engine.</span></div>
+                        <div class="meta-row"><strong>Next gate</strong><span>Packaged regression tests across supported Apple Silicon generations and long-running jobs.</span></div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
         <section class="section" id="signal">
             <div class="section-head">
                 <div>
@@ -775,7 +815,7 @@
                     <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
                 </article>
 
-                <article class="spotlight" data-feature="Local neural voice restoration" data-track="Restoration R&D">
+                <article class="spotlight" data-feature="Local neural voice restoration" data-track="Restoration R&amp;D">
                     <span class="tag">Research candidate · Restoration R&amp;D</span>
                     <h3>Local Neural Voice Restoration</h3>
                     <p>Explore local speech restoration models with A/B review, model cards, quality limits, and clear experimental labeling.</p>
@@ -849,18 +889,18 @@
                     <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
                 </article>
 
-                <article class="idea-card" data-feature="Blind A/B listening review" data-track="Quality control">
+                <article class="idea-card" data-feature="Advanced blind A/B experiment suite" data-track="Quality control">
                     <div class="idea-top"><span class="tag">Quality control</span><span class="badge p2">Research candidate</span></div>
-                    <h3>Blind A/B Listening Review</h3>
-                    <p>Compare original, processed, and alternate settings without bias, then store the chosen version in the report.</p>
+                    <h3>Advanced Blind A/B Experiments</h3>
+                    <p>Extend the delivered original-versus-processed review with multiple variants, repeat trials, confidence capture, and profile-level comparison history.</p>
                     <div class="tracks"><span class="track">QC</span><span class="track">Governance</span></div>
                     <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
                 </article>
 
-                <article class="idea-card" data-feature="Batch processing queue" data-track="Studio workflow">
+                <article class="idea-card" data-feature="Resilient batch processing queue" data-track="Studio workflow">
                     <div class="idea-top"><span class="tag">Studio workflow</span><span class="badge p2">Research candidate</span></div>
-                    <h3>Batch Processing Queue</h3>
-                    <p>Queue multiple files with profiles, ETA, retry handling, and per-file governance reports.</p>
+                    <h3>Resilient Batch Queue</h3>
+                    <p>Extend current batch processing with persisted queues, pause/resume, bounded concurrency, retry policy, recovery, and per-file governance reports.</p>
                     <div class="tracks"><span class="track">Automation</span><span class="track">Reports</span></div>
                     <a class="signal-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new" target="_blank" rel="noopener noreferrer">Signal interest</a>
                 </article>
@@ -1027,9 +1067,9 @@
             <div class="callout">
                 <div>
                     <strong>Roadmap status</strong>
-                    <p>Only the eight 3.7 foundations above are marked delivered. Every remaining feature in the signal board and radar is a research candidate or community signal, not a delivery guarantee or release commitment.</p>
+                    <p>Only the eight 3.7 foundations above are signed-release features. Personal Voice Studio and resource telemetry corrections are explicitly marked development head. Every item in the signal board and feature radar is a research candidate or community signal, not a delivery guarantee.</p>
                 </div>
-                <a class="btn" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">Follow on SourceForge</a>
+                <a class="btn" href="status.html">Read project status</a>
             </div>
         </section>
     </main>
@@ -1039,6 +1079,7 @@
             <div>AudioEnhancerMAX 3.7 roadmap · delivered facts and future research</div>
             <ul class="footer-links">
                 <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
                 <li><a href="support.html">Support</a></li>
                 <li><a href="privacy.html">Privacy</a></li>
                 <li><a href="accessibility.html">Accessibility</a></li>

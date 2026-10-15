@@ -1,8 +1,8 @@
 # AudioEnhancerMAX 3.7.0 — Claims and Evidence Matrix
 
-Status date: 15 August 2026
+Status date: 28 August 2026
 
-This is the source of truth for launch copy. A public claim is approved only when the corresponding evidence is present in the 3.7 source and, for packaged-app claims, repeated on the final signed build 3.7.4.
+This is the source of truth for launch copy. A public claim is approved only when the corresponding evidence is present in the 3.7 source and, for packaged-app claims, repeated on signed build 3.7.5.
 
 ## Approved product claims
 
@@ -27,7 +27,8 @@ This is the source of truth for launch copy. A public claim is approved only whe
 | Delivery Compliance Lab provides measurable delivery guidance | Local guidance only; not certification | `app/services/delivery_compliance.py` | Four threshold, silence, and clipping tests | Approved with disclaimer |
 | Project Capsule exports checksum-backed evidence | Processed output included; original audio opt-in | `app/services/project_bundle.py` | Manifest hash, source exclusion, ZIP content, and path-safety tests | Approved |
 | Blind A/B records a user listening preference | Subjective review evidence, not an objective score | Blind A/B API and Review Deck | Mapping/reveal exercised in UI validation | Approved with subjective wording |
-| 26 automated tests cover the 3.7 foundations | Focused suite, not proof of every legacy module | `tests/` | `python -m pytest -q` | Approved while count remains 26 |
+| The packaged filter path is JIT-free | Signed Mac runtimes exclude librosa, Numba, llvmlite and unsigned-executable-memory entitlements | `app/utils/signal_processing.py`, package requirements and spec | Package inspection plus notarized 12-step filter-chain test | Approved |
+| 51 automated tests cover the 3.7 foundations and stability correction | Focused suite, not proof of every optional legacy engine | `tests/` | Project Python 3.11 test environment | Approved while count remains 51 |
 
 ## Claims that require qualification
 
@@ -46,7 +47,7 @@ This is the source of truth for launch copy. A public claim is approved only whe
 
 ## Evidence rules for campaign assets
 
-1. Screenshots must come from the 3.7.4 packaged app, not the source server.
+1. Screenshots must come from the 3.7.5 packaged app, not the source server.
 2. Demo audio must be owned or created by the developer, and the unprocessed input must be retained.
 3. A/B examples must use level-matched playback where possible and identify the selected profile/options.
 4. Performance numbers may be published only with Mac model, OS build, input duration/format, selected pipeline and sample count.

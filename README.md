@@ -5,13 +5,13 @@
 ### The open-source AI audio media center
 
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
-**16+ processing modules · Apple Silicon acceleration · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.7.0**
+**16+ processing modules · Apple Silicon acceleration · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.8.0**
 
-Version 3.7 turns the earlier editing preview into a reviewable release line: non-destructive transcript-linked editing, persisted undo/redo, five fixed delivery profiles, local delivery guidance, blind A/B listening, checksum-backed Project Capsules, enforceable privacy boundaries, and readable governance reports.
+Version 3.8 binds checkpoints, playback, conversions, delivery guidance and project evidence to a specific completed output. It also publishes the REA developer research workflow. [Release notes](releases/RELEASE_NOTES_v3.8.0.md) · [Validation](docs/revision-delivery.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-06b6d4.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-10b981.svg)](https://fastapi.tiangolo.com)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-06b6d4.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.143-10b981.svg)](https://fastapi.tiangolo.com)
 [![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-Optimized-f59e0b.svg)](#)
 [![SourceForge](https://img.shields.io/badge/SourceForge-Rising_Star-ff6600.svg)](https://sourceforge.net/projects/audioenhancermax/)
 
@@ -34,7 +34,7 @@ AudioEnhancerMAX turns raw recordings into cleaner, production-ready audio witho
 
 AudioEnhancerMAX is built for creators, podcasters, researchers, interviewers, and audio-heavy workflows where privacy, control, and auditability matter. It combines local DSP, AI-assisted decisions, real-time monitoring, transcription, text-to-speech, and optional Android edge workers in one FastAPI + vanilla JS application.
 
-The v3.7.0 macOS release candidate includes an Apple Silicon desktop launcher that starts the private loopback service and presents the interface in an app-owned AppKit/WKWebView window without requiring Terminal or opening the default browser. See [macOS App](docs/macos-app.md) for included components, external dependencies, data locations, and signing status.
+The v3.8.0 source release and direct macOS preview use an app-owned AppKit/WKWebView window. Apple notarization of the new DMG is awaiting the developer team's updated agreement; the notarized 3.7.0 remains the stable Mac download. See [macOS App](docs/macos-app.md).
 
 The default architecture is local-first: uploads, DSP output, timing history, and local model inference stay on the host machine unless you explicitly enable an integration that sends data elsewhere. You decide when to use local AI through Ollama/Gemma, when to offload DSP chunks to trusted devices on your LAN, and which output format to export.
 
@@ -51,23 +51,21 @@ AudioEnhancerMAX has also been recognized with the **SourceForge Rising Star Awa
 | Delivery | Five fixed output profiles with WAV/MP3/FLAC overrides recorded in the processing report |
 | Delivery review | Local loudness/estimated-true-peak/clipping/sample-rate guidance, randomized blind A/B, and SHA-256 Project Capsules |
 | Transcription | Faster-Whisper, streaming SSE delivery, TXT/SRT/VTT/JSON export, crash-resilient partial saves |
-| TTS | Local Kokoro voices, optional Edge Neural voices, expressive rewrite mode, voice-clone input hook |
-| Monitoring | CPU/GPU/ANE/RAM/power/thermal dashboard with adaptive ETA and per-step timing history |
+| TTS | Local Kokoro, optional Edge Neural, expressive rewrite, and named MakeMyVoice personal-voice profiles |
+| Monitoring | Whole-system, SoC, and AudioEnhancer process CPU plus GPU/ANE/RAM/power/thermal data; adaptive ETA only when real progress exists |
 | Edge compute | Android Kotlin worker app with HTTP processing and UDP discovery on trusted LANs |
 
 ## Quick Start
 
 ### macOS App (Apple Silicon)
 
-The v3.7.0 release artifacts are prepared for Apple Silicon. The Mac App Store candidate starts its private loopback service inside an app-owned native window; no browser or Terminal command is required. Do not describe the app as available from the Mac App Store until Apple approves the submitted build.
-
-The Mac App Store candidate requires macOS 13 or later on Apple Silicon and is signed with Mac App Store application and installer identities. App Store approval remains Apple-controlled. See the [macOS app guide](docs/macos-app.md) for installation, data locations, privacy boundaries, and build instructions.
+Download the appropriate artifact from [GitHub releases](https://github.com/sev7enITA/AudioEnhancerMAX/releases) or [SourceForge](https://sourceforge.net/projects/audioenhancermax/files/). The 3.8.0 direct DMG is a signed preview pending Apple notarization; 3.7.0 remains the notarized stable Mac package. Requires Apple Silicon and macOS 13+. Mac App Store approval is a separate stage.
 
 ### Run from Source
 
 ### Requirements
 
-- Python 3.10+
+- Python 3.11+
 - FFmpeg
 - macOS Apple Silicon recommended, with Linux/Windows support for core local processing
 - Ollama + Gemma model optional for editorial suggestions and expressive TTS rewrite
@@ -110,6 +108,14 @@ ollama pull gemma4:e2b
 
 `gemma4:e2b` is the preferred optional model name when available; the app also auto-detects other local Gemma-family models exposed by Ollama. Smart Enhance diagnosis and DSP decisions never require Ollama: they are deterministic, local and available offline. Gemma is limited to explicitly requested editorial prose and expressive TTS rewriting.
 
+## Optional Personal Voices
+
+When running from source, AudioEnhancerMAX looks for MakeMyVoice in the sibling `MakeMyVoice/` project directory. Set `AEMAX_MAKEMYVOICE_ROOT` when it lives elsewhere. The adapter reads the current MakeMyVoice engine, model, version and fine-tuning target dynamically; it does not install or mutate that environment during synthesis.
+
+```bash
+export AEMAX_MAKEMYVOICE_ROOT="/absolute/path/to/MakeMyVoice"
+```
+
 ## Android Edge Worker
 
 The native Android worker lives in [android-worker](android-worker/). It exposes a small HTTP service on port `8877` and advertises itself to the master over UDP on trusted local networks.
@@ -130,6 +136,8 @@ flowchart LR
     API --> DSP["DSP pipeline"]
     API --> STT["Whisper transcription"]
     API --> TTS["Edge/Kokoro TTS"]
+    API --> VoiceAdapter["Personal-voice adapter"]
+    VoiceAdapter --> MMV["MakeMyVoice runtime"]
     API --> Monitor["System monitor"]
     API --> Cluster["Cluster manager"]
     Cluster --> Android["Android edge workers"]
@@ -155,6 +163,7 @@ AudioEnhancerMAX should be evaluated as a **local-first, AI-assisted tool**, not
 | Project Capsule | Local ZIP and SHA-256 manifest | Processed output and evidence are included; source audio is opt-in and off by default. |
 | Kokoro TTS | Runs locally when installed | Local model availability depends on installed packages and voice assets. |
 | Edge Neural TTS | Optional external service | Text is sent to Microsoft Edge TTS when this engine is selected. |
+| MakeMyVoice personal voices | Optional local sibling runtime | Named profiles and defaults are owned by AudioEnhancerMAX; reference selection, cloning and approved fine-tuned models are resolved through the current MakeMyVoice runtime. Explicit voice-owner consent is required for enrollment. |
 | Android edge workers | Audio chunks are sent over trusted LAN | Use only with devices you control and networks you trust. |
 | SourceForge badge | Browser loads SourceForge badge script on public pages | This is presentation metadata, not part of the audio pipeline. |
 
@@ -175,9 +184,10 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - [API Reference](docs/api.md)
 - [Edge Computing Setup](docs/edge-computing.md)
 - [Developer Onboarding](docs/developer-onboarding.md)
+- [REA Audio Competitor Research](research/rea/README.md)
 - [AI Governance Notes](docs/ai-governance.md)
 - [macOS App and Packaging](docs/macos-app.md)
-- [v3.7 Release Notes](releases/RELEASE_NOTES_v3.7.0.md)
+- [v3.7 Release Notes](releases/RELEASE_NOTES_v3.8.0.md)
 - [3.7.4 Delivery Review Evidence](docs/delivery-review-evidence.md)
 - [v3.6-to-v3.7 Implementation Record](docs/v3.6-implementation-plan.md)
 - [Troubleshooting / FAQ](docs/faq.md)
@@ -188,6 +198,8 @@ Do not expose the FastAPI server directly to the public internet without adding 
 ```bash
 source venv/bin/activate
 python -m compileall -q app
+python -m pytest -q
+node --test tests/test_review_state.cjs
 pip install -r requirements-dev.txt
 ruff check app
 bandit -r app

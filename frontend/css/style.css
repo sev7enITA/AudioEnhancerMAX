@@ -1368,6 +1368,25 @@ select:focus {
     font-weight: 500;
 }
 
+.tts-control-group textarea {
+    min-height: 58px;
+    resize: vertical;
+}
+
+.tts-control-group .voice-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 0.68rem;
+    line-height: 1.35;
+    color: var(--text-muted);
+}
+
+.tts-control-group .voice-consent input {
+    margin-top: 2px;
+    flex: 0 0 auto;
+}
+
 /* -- Preset Cards -------------------------- */
 .preset-grid {
     display: grid;

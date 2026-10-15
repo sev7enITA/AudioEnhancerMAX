@@ -113,3 +113,17 @@ jobs:
                   symbols = sorted({char for char in text if is_disallowed_symbol(char)})
                   assert not symbols, (path, symbols)
           PY
+
+      - name: Set up Node for frontend regressions
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install the tested core runtime
+        run: python -m pip install -r packaging/macos/requirements-runtime-app-store.txt pytest
+
+      - name: Audio, API and research regressions
+        run: python -m pytest -q
+
+      - name: Frontend result-state regressions
+        run: node --test tests/test_review_state.cjs

@@ -161,11 +161,16 @@ class RuntimePrivacySettingsRequest(BaseModel):
 
 
 class ProjectCapsuleRequest(BaseModel):
+    output_version: Literal["processed", "speech_edit"] = "processed"
+    revision: Optional[str] = Field(default=None, max_length=64)
+    format: Optional[OutputFormat] = None
     include_source: bool = False
     target_id: str = Field(default="podcast", min_length=1, max_length=64)
 
 
 class BlindABReviewRequest(BaseModel):
+    output_version: Literal["processed", "speech_edit"] = "processed"
+    revision: Optional[str] = Field(default=None, max_length=64)
     selected_version: Literal["original", "processed", "no_difference"]
     blind_slot: Literal["A", "B", "tie"]
     target_id: str = Field(default="podcast", min_length=1, max_length=64)
@@ -190,9 +195,32 @@ class TTSRequest(BaseModel):
     pitch: float = Field(default=1.0, ge=0.5, le=2.0)
     warmth: float = Field(default=0.5, ge=0.0, le=1.0)
     style: str = "neutral"  # neutral, expressive, calm, energetic
-    clone_voice_file_id: Optional[str] = None  # File ID for voice cloning
+    clone_voice_file_id: Optional[str] = None  # Deprecated one-shot upload hook
+    voice_profile_id: Optional[str] = None  # Persistent personal voice profile
     expressive: bool = False  # Use Gemma to rewrite text for natural delivery
-    engine: str = "auto"  # "edge", "kokoro", or "auto"
+    engine: str = "auto"  # "edge", "kokoro", "voice-clone", or "auto"
+
+
+class VoiceProfileSettings(BaseModel):
+    language: str = Field(default="it", min_length=2, max_length=16)
+    style: Literal["neutral", "expressive", "calm", "energetic"] = "neutral"
+    speed: float = Field(default=1.0, ge=0.5, le=2.0)
+    pitch: float = Field(default=1.0, ge=0.5, le=2.0)
+    warmth: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class VoiceProfileEnrollRequest(BaseModel):
+    file_id: str
+    name: str = Field(min_length=1, max_length=80)
+    profile_id: Optional[str] = None
+    transcript: str = Field(default="", max_length=20000)
+    consent_confirmed: bool = False
+    settings: VoiceProfileSettings = Field(default_factory=VoiceProfileSettings)
+
+
+class VoiceProfileUpdateRequest(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    settings: VoiceProfileSettings
 
 
 class TTSRewriteRequest(BaseModel):

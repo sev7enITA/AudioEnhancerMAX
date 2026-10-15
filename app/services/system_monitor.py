@@ -48,6 +48,10 @@ class SystemMonitor:
         # Current snapshot (merged)
         self._current = {
             "cpu_percent": 0.0,
+            "soc_cpu_percent": 0.0,
+            "app_cpu_percent": 0.0,
+            "app_cpu_core_percent": 0.0,
+            "app_ram_mb": 0.0,
             "cpu_per_core": [],
             "ram_percent": 0.0,
             "ram_used_gb": 0.0,
@@ -69,6 +73,7 @@ class SystemMonitor:
             "platform": self._platform,
             "chip": self._chip,
             "macmon_available": False,
+            "metric_scope": "system",
         }
 
         # History ring buffers
@@ -90,6 +95,9 @@ class SystemMonitor:
         # See: https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
         psutil.cpu_percent(interval=None)
         psutil.cpu_percent(interval=None, percpu=True)
+        self._process = psutil.Process(os.getpid())
+        self._process.cpu_percent(interval=None)
+        self._tracked_children: dict[int, psutil.Process] = {}
 
     @staticmethod
     def _detect_chip() -> str:
@@ -172,6 +180,36 @@ class SystemMonitor:
         cpu_per_core = psutil.cpu_percent(interval=None, percpu=True)
         cpu_freq = psutil.cpu_freq()
 
+        # Backend process plus active model workers. psutil reports process CPU
+        # as 100% per fully occupied core, so keep both the core-equivalent
+        # value and a whole-machine-normalized value for an honest dashboard.
+        process_cpu = 0.0
+        process_ram = 0
+        try:
+            live_children = {
+                child.pid: child for child in self._process.children(recursive=True)
+            }
+            for pid, child in live_children.items():
+                if pid not in self._tracked_children:
+                    # Prime the per-process counter once; subsequent polls on
+                    # this cached object report the interval instead of zero.
+                    child.cpu_percent(interval=None)
+                    self._tracked_children[pid] = child
+            for pid in list(self._tracked_children):
+                if pid not in live_children:
+                    self._tracked_children.pop(pid, None)
+
+            processes = [self._process, *self._tracked_children.values()]
+            for process in processes:
+                try:
+                    process_cpu += process.cpu_percent(interval=None)
+                    process_ram += process.memory_info().rss
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+        logical_cpus = max(1, psutil.cpu_count(logical=True) or 1)
+
         # RAM
         mem = psutil.virtual_memory()
         swap = psutil.swap_memory()
@@ -197,6 +235,9 @@ class SystemMonitor:
 
         self._psutil_data = {
             "cpu_percent": round(cpu_pct, 1),
+            "app_cpu_percent": round(min(100.0, process_cpu / logical_cpus), 1),
+            "app_cpu_core_percent": round(process_cpu, 1),
+            "app_ram_mb": round(process_ram / 1024**2, 1),
             "cpu_per_core": [round(c, 1) for c in cpu_per_core],
             "cpu_freq_ghz": round(cpu_freq.current / 1000, 2) if cpu_freq else 0,
             "ram_percent": round(mem.percent, 1),
@@ -250,10 +291,12 @@ class SystemMonitor:
 
         result = {}
 
-        # CPU usage - macmon gives 0-1 float
+        # macmon's cpu_usage_pct is a SoC/cluster residency signal, not the
+        # same whole-machine percentage psutil reports. Keep it separately so
+        # it cannot overwrite the dashboard's System CPU value.
         cpu_pct = data.get("cpu_usage_pct", 0)
         if isinstance(cpu_pct, (int, float)) and cpu_pct > 0:
-            result["cpu_percent"] = round(cpu_pct * 100, 1)
+            result["soc_cpu_percent"] = round(cpu_pct * 100, 1)
 
         # GPU usage - macmon gives [freq_mhz, usage_fraction]
         gpu_data = data.get("gpu_usage")

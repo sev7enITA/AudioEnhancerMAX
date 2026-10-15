@@ -1,6 +1,6 @@
 # AudioEnhancerMAX 3.7.0 — Evidence-Led Launch Campaign
 
-Prepared: 14 August 2026
+Updated: 28 August 2026
 
 ## Campaign idea
 
@@ -32,7 +32,7 @@ Version 3.7 is positioned around control rather than automation hype. The produc
 
 ### Required before public launch
 
-- Final signed 3.7.4 PKG and checksum.
+- Final signed 3.7.5 PKG and checksum.
 - TestFlight installation on the physical Mac.
 - Apple-requested continuous 3–5 minute reviewer video.
 - Six App Store screenshots from the packaged build.
@@ -141,9 +141,9 @@ No analytics SDK is currently claimed in the package. If analytics are added lat
 
 ## Go/no-go checklist
 
-- [ ] Final 3.7.4 package passes the complete automated and signed-payload validation.
+- [x] Final 3.7.5 package passes the complete automated and signed-payload validation.
 - [ ] TestFlight install passes on a physical Mac.
-- [ ] App Store screenshots match build 3.7.4 exactly.
+- [ ] App Store screenshots match build 3.7.5 exactly.
 - [ ] Every launch claim is Approved in the claims matrix.
 - [ ] Privacy policy and App Store privacy answers match actual optional data flows.
 - [ ] Store URL is live before any “available now” post.

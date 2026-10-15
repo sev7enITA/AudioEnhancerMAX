@@ -140,11 +140,19 @@ def evaluate_measurements(measurements: dict[str, Any], target_id: str) -> dict[
 
 
 def analyze_delivery(path: Path, target_id: str) -> dict[str, Any]:
-    audio, sample_rate = load_audio(Path(path), mono=False)
+    from app.services.artifact_store import sha256_file
+    path = Path(path)
+    digest = sha256_file(path)
+    audio, sample_rate = load_audio(path, mono=False)
     if audio.ndim == 2 and audio.shape[0] <= 8 and audio.shape[1] > audio.shape[0]:
         audio = audio.T
     result = evaluate_measurements(measure_audio(audio, sample_rate), target_id)
-    result["artifact"] = Path(path).name
+    if digest != sha256_file(path):
+        raise ValueError("Audio artifact changed while it was being measured")
+    result["artifact"] = path.name
+    result["artifact_sha256"] = digest
+    result["format"] = path.suffix.lstrip(".")
+    result["size_bytes"] = path.stat().st_size
     return result
 
 

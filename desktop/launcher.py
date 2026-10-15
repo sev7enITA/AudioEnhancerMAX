@@ -18,11 +18,29 @@ import urllib.request
 
 
 APP_NAME = "AudioEnhancerMAX"
-APP_VERSION = "3.7.0"
-APP_BUILD = "3.7.2"
-UI_REVISION = "20260815.v37reviewdeck1"
+APP_VERSION = "3.8.0"
+APP_BUILD = "3.8.0"
+UI_REVISION = "20261015.v38revision1"
 DEFAULT_PORT = 8000
 BUNDLE_IDENTIFIER = "com.fabriziodegni.audioenhancermax"
+
+
+def _bundle_metadata() -> tuple[str, str]:
+    """Return the version/build advertised by the installed app bundle."""
+    version = APP_VERSION
+    build = APP_BUILD
+    if not getattr(sys, "frozen", False):
+        return version, build
+
+    info_plist = Path(sys.executable).resolve().parents[1] / "Info.plist"
+    try:
+        with info_plist.open("rb") as stream:
+            bundle_info = plistlib.load(stream)
+        version = str(bundle_info.get("CFBundleShortVersionString", version))
+        build = str(bundle_info.get("CFBundleVersion", build))
+    except (OSError, ValueError, plistlib.InvalidFileException):
+        logging.exception("Could not read version metadata from %s", info_plist)
+    return version, build
 
 
 def _distribution_channel() -> str:
@@ -128,6 +146,8 @@ def _write_state(state_path: Path, port: int) -> None:
 
 def main() -> int:
     multiprocessing.freeze_support()
+    app_version, app_build = _bundle_metadata()
+    os.environ.setdefault("AEMAX_BUILD_NUMBER", app_build)
     distribution = _distribution_channel()
     os.environ.setdefault("AEMAX_DISTRIBUTION", distribution)
     if distribution == "app-store":
@@ -208,8 +228,8 @@ def main() -> int:
         server_thread.start()
         run_native_application(
             app_name=APP_NAME,
-            app_version=APP_VERSION,
-            build_number=APP_BUILD,
+            app_version=app_version,
+            build_number=app_build,
             distribution=distribution,
             frontend_url=_frontend_url(port),
             health_check=lambda: _is_audioenhancermax(port),

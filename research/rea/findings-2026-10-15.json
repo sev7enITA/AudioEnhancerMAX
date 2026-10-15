@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-15",
+  "target": "adobe-podcast",
+  "build_identifier": "ca7050cd2d913a41ab4a",
+  "method": "REA static module reconstruction plus manual static confirmation in the same digest-bound artifact. No target runtime or audio processing was executed.",
+  "evidence": {
+    "broad": {
+      "id": "ev_6a38ea59199dfe8e3dc5af4431c15ab3bcf67949038c94c4ebab5c8a9f005bb4",
+      "local_directory": "private/runs/adobe-podcast-20261015T031310Z-wm1nmj45",
+      "coverage": "partial; semantic worker heap exhausted; inline scripts and lazy chunks outside scope"
+    },
+    "focused": {
+      "id": "ev_d878b6867e2e6b5139c550d4729baeea864a1b3a619b6e3dacd3e55818fafb2c",
+      "local_directory": "private/runs/adobe-podcast-20261015T031539Z-_damtqli",
+      "coverage": "partial; unresolved dependencies/dynamic relationships and semantic node ceilings"
+    }
+  },
+  "artifact": {
+    "url": "https://podcast.adobe.com/wp_flex_EnhanceSpeech.ca7050cd2d913a41ab4a.js",
+    "sha256": "0fdb04cf5b0cebe0383cc97de94cd37f72dd7336c68d4caad8dd2cd506c4a773",
+    "bytes": 203334,
+    "module_key": "90875",
+    "rea_node_id": "jag_node_15d8a24545035a2bf1225e2f493f0b78e8e3ead752bfa137e0af0106efb27d13"
+  },
+  "findings": [
+    {
+      "id": "ADOBE-CLIENT-01",
+      "classification": "observed-static",
+      "source_line": 18,
+      "claim": "Track state and preflight checks precede upload progress and track creation; processing errors and timestamps are explicit.",
+      "unknown": "Which conditional paths are enabled for a particular user/account and the runtime outcomes."
+    },
+    {
+      "id": "ADOBE-CLIENT-02",
+      "classification": "observed-static",
+      "source_line": 285,
+      "claim": "Preview graph code constructs separate original/enhanced/isolated-speech/background gain nodes and a music node in another branch; player code handles merged-media fallback.",
+      "unknown": "Remote stem-generation algorithm, actual branch selection, playback latency and output quality."
+    },
+    {
+      "id": "ADOBE-CLIENT-03",
+      "classification": "observed-static",
+      "source_line": 198,
+      "claim": "Export requests retain component/model/strength/mute choices and use separate creation/polling states with ready/error/timeout handling.",
+      "unknown": "Remote export execution and bit-level correspondence between preview and downloaded output."
+    }
+  ],
+  "adjudication": [
+    {
+      "candidate": "34 endpoint graph nodes from the broad snapshot",
+      "decision": "Do not present this as a service endpoint inventory.",
+      "reason": "Candidate heuristics include UI property getters, header access and other non-network calls; runtime traffic was not observed."
+    }
+  ],
+  "product_changes": "Research integration only; no DSP or application behavior changed."
+}

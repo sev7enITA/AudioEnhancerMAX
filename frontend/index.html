@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AudioEnhancerMAX by Fabrizio Degni - Local-first audio processing, transcription, monitoring and trusted-LAN edge workers.">
     <title>AudioEnhancerMAX by Fabrizio Degni</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=3.7.2-review-deck1">
+    <link rel="stylesheet" href="/static/css/style.css?v=3.8.0-revision1">
     <link rel="icon" href="/static/img/audioenhancermax-logo.png" type="image/png">
 </head>
 <body>
@@ -111,7 +111,7 @@
     </div>
 
     <div class="sidebar-version">
-        <span>v3.7.0</span> - <span id="sidebar-chip">M3 Max</span>
+        <span>v3.8.0</span> - <span id="sidebar-chip">M3 Max</span>
     </div>
 </nav>
 <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
@@ -273,6 +273,10 @@
                     </label>
                     <button class="btn btn-primary capsule-export-button" id="btn-export-capsule" type="button" onclick="exportProjectCapsule()"><img class="icon-img btn-icon-svg" src="/static/img/icons/package.svg" alt="" aria-hidden="true">Export ZIP capsule</button>
                     <p class="capsule-status" id="capsule-status" role="status">Original audio excluded.</p>
+                    <label for="compliance-format">Delivery checks and capsule format</label>
+                    <select id="compliance-format" onchange="handleComplianceFormatChange(this.value)">
+                        <option value="wav">WAV</option><option value="mp3">MP3</option><option value="flac">FLAC</option>
+                    </select>
                     <div class="direct-downloads">
                         <span>Quick audio export</span>
                         <div>
@@ -422,7 +426,7 @@
                         <div class="feature-icon"><img class="icon-img" src="/static/img/icons/auto-eq.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">AutoEQ</div>
-                            <div class="feature-desc">AI-powered equalization</div>
+                            <div class="feature-desc">Deterministic broadcast EQ profile</div>
                         </div>
                         <label class="toggle"><input type="checkbox" aria-label="Auto EQ" data-option="auto_eq" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
@@ -446,7 +450,7 @@
                         <div class="feature-icon"><img class="icon-img" src="/static/img/icons/activity-live.svg" alt="" aria-hidden="true"></div>
                         <div class="feature-info">
                             <div class="feature-name">Frequency Restoration</div>
-                            <div class="feature-desc">AI super-resolution / bandwidth extension</div>
+                            <div class="feature-desc">Resampling + harmonic bandwidth extension</div>
                         </div>
                         <label class="toggle"><input type="checkbox" aria-label="Frequency restoration" data-option="frequency_restoration" onchange="toggleFeature(this)"><span class="toggle-slider"></span></label>
                     </div>
@@ -752,7 +756,10 @@
             <div class="tts-controls mt-16">
                 <div class="tts-control-group">
                     <label>Voice</label>
-                    <select id="tts-voice">
+                    <select id="tts-voice" onchange="handleTTSVoiceChange()">
+                        <optgroup id="tts-personal-voices" label="My Voices (MakeMyVoice)">
+                            <option value="" disabled>Loading personal voices...</option>
+                        </optgroup>
                         <optgroup label="Italiano (Edge Neural)">
                             <option value="it_giuseppe" selected>Giuseppe - Maschile, espressivo</option>
                             <option value="it_isabella">Isabella - Femminile, chiara</option>
@@ -789,12 +796,17 @@
                     </select>
                 </div>
                 <div class="tts-control-group" id="voice-clone-control">
-                    <label>Voice Clone (optional)</label>
+                    <label>Personal Voice Studio</label>
+                    <input type="text" id="clone-profile-name" maxlength="80" placeholder="Voice name (for example: FabFab)">
                     <button class="btn btn-sm btn-secondary w-full" onclick="document.getElementById('clone-file-input').click()">
-                        <img class="icon-img btn-icon-svg" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">Upload Voice Sample
+                        <img class="icon-img btn-icon-svg" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">Create / Improve from Sample
                     </button>
                     <input type="file" id="clone-file-input" accept=".mp3,.wav,.m4a" hidden onchange="handleCloneUpload(event)">
-                    <span class="text-xs text-muted" id="clone-status">No voice sample loaded</span>
+                    <textarea id="clone-transcript" rows="2" placeholder="Exact sample transcript (optional; generated locally when omitted)"></textarea>
+                    <label class="voice-consent"><input type="checkbox" id="clone-consent"> I confirm I own or have permission to clone this voice</label>
+                    <button class="btn btn-sm btn-secondary w-full" id="btn-save-voice-settings" style="display:none" onclick="saveVoiceProfileSettings()">Save settings for this voice</button>
+                    <span class="text-xs text-muted" id="clone-status">Create a named reusable voice, or select one above to improve it.</span>
+                    <span class="text-xs text-muted" id="clone-engine-status"></span>
                 </div>
             </div>
             <div class="mt-12">
@@ -979,7 +991,7 @@
 <div class="panel" id="settings-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/settings.svg" alt="" aria-hidden="true">Settings</h2>
-        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.7.0</p>
+        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.8.0</p>
     </div>
     <div class="panel-body settings-grid">
         <div class="settings-group">
@@ -1101,14 +1113,14 @@
 <div class="panel" id="about-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/info.svg" alt="" aria-hidden="true">About AudioEnhancerMAX</h2>
-        <p class="panel-subtitle">v3.7.0 - Local-first, reviewable audio production</p>
+        <p class="panel-subtitle">v3.8.0 - Local-first, reviewable audio production</p>
     </div>
     <div class="panel-body about-content">
         <div class="about-hero">
             <div class="about-logo"><img src="/static/img/audioenhancermax-logo.png" alt="AudioEnhancerMAX logo"></div>
             <div class="about-identity">
                 <span class="about-kicker">Open source audio workspace</span>
-                <h3>AudioEnhancerMAX <span class="about-version">v3.7.0</span></h3>
+                <h3>AudioEnhancerMAX <span class="about-version">v3.8.0</span></h3>
                 <p>Audio processing, transcription, monitoring and trusted-LAN edge workers in one local-first suite.</p>
                 <p class="about-by">Created and maintained by <strong>Fabrizio Degni</strong></p>
             </div>
@@ -1268,7 +1280,7 @@
                 <strong>Updates</strong>
                 <span>Direct releases are published on <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer">GitHub</a>. Store builds use their store update channel.</span>
             </div>
-            <p>Built with FastAPI, PyTorch, faster-whisper, Demucs, pedalboard, noisereduce, scipy, numpy, librosa and pyannote.audio.</p>
+            <p>Built with FastAPI, faster-whisper, PyAV, pedalboard, noisereduce, SciPy and NumPy. Optional model engines vary by distribution.</p>
         </div>
     </div>
 </div>
@@ -1325,17 +1337,17 @@
                 <div class="proc-node-chip" id="proc-master-chip">Apple M3 Max</div>
                 <div class="proc-node-meters">
                     <div class="proc-meter">
-                        <span class="proc-meter-label">CPU</span>
+                        <span class="proc-meter-label">System CPU</span>
                         <div class="proc-meter-bar"><div class="proc-meter-fill" id="proc-master-cpu" style="width:0%"></div></div>
                         <span class="proc-meter-val" id="proc-master-cpu-val">-</span>
                     </div>
                     <div class="proc-meter">
-                        <span class="proc-meter-label">GPU</span>
+                        <span class="proc-meter-label">System GPU</span>
                         <div class="proc-meter-bar"><div class="proc-meter-fill gpu" id="proc-master-gpu" style="width:0%"></div></div>
                         <span class="proc-meter-val" id="proc-master-gpu-val">-</span>
                     </div>
                     <div class="proc-meter">
-                        <span class="proc-meter-label">RAM</span>
+                        <span class="proc-meter-label">System RAM</span>
                         <div class="proc-meter-bar"><div class="proc-meter-fill ram" id="proc-master-ram" style="width:0%"></div></div>
                         <span class="proc-meter-val" id="proc-master-ram-val">-</span>
                     </div>
@@ -1369,7 +1381,7 @@
 </div>
 
 <!-- --- Application Scripts --- -->
-<script src="/static/js/app.js?v=3.7.2-review-deck1"></script>
+<script src="/static/js/app.js?v=3.7.4-personal-voice1"></script>
 <script>
 (() => {
     const sidebar = document.getElementById('sidebar');

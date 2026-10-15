@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioEnhancerMAX 3.7.0 - Local-First, Reviewable Audio Production</title>
-    <meta name="description" content="AudioEnhancerMAX 3.7.0 is an open-source, local-first audio production workspace with reviewable speech editing, deterministic DSP, five delivery profiles, and per-job reports.">
+    <title>AudioEnhancerMAX 3.8.0 - Local-First, Reviewable Audio Production</title>
+    <meta name="description" content="AudioEnhancerMAX is an open-source, local-first audio production workspace. Version 3.8 links processing, review and export to one audio revision, with verifiable checkpoints and format-specific delivery evidence.">
     <meta name="keywords" content="audio enhancer, podcast processing, AI audio, noise removal, Apple Silicon, Metal GPU, edge computing, open source">
-    <meta property="og:title" content="AudioEnhancerMAX 3.7.0 - Local-First Audio Production">
-    <meta property="og:description" content="Reviewable speech editing, deterministic audio processing, local transcription, five fixed delivery profiles, and per-job evidence reports.">
+    <meta property="og:title" content="AudioEnhancerMAX 3.8.0 - Local-First Audio Production">
+    <meta property="og:description" content="Reviewable audio production with verified release evidence, explicit runtime boundaries, and a public engineering status.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/">
     <meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
@@ -176,7 +176,7 @@
             inset: 0;
             background:
                 linear-gradient(180deg, rgba(10,10,15,0.38) 0%, rgba(10,10,15,0.72) 52%, var(--bg) 100%),
-                url("img/social-preview.png") center / cover no-repeat;
+                radial-gradient(ellipse at 50% 20%, rgba(124,58,237,.20), transparent 65%);
             z-index: -2;
         }
         .hero::after {
@@ -972,12 +972,13 @@
         <a href="#" class="nav-logo" aria-current="page">
             <div class="nav-logo-icon"><img class="icon-img" src="img/icons/aem-mark.svg" alt="AudioEnhancerMAX mark"></div>
             <span class="nav-logo-text">AudioEnhancerMAX</span>
-            <span class="v-badge">v3.7.0</span>
+            <span class="v-badge">v3.8.0</span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation menu">Menu</button>
         <ul class="nav-links" id="primary-navigation">
-            <li><a href="#foundations">3.7 Foundations</a></li>
+            <li><a href="#foundations">Foundations</a></li>
             <li><a href="#transparency">Transparency</a></li>
+            <li><a href="status.html">Status</a></li>
             <li><a href="roadmap.html">Roadmap</a></li>
             <li><a href="#architecture">Architecture</a></li>
             <li><a href="support.html">Support</a></li>
@@ -992,12 +993,12 @@
     <div class="hero-content">
         <div class="hero-badge">
             <span class="dot"></span>
-            Current release · 3.7.0
+            Current release · 3.8.0
         </div>
-        <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span><span class="gradient">3.7</span></span>Local-first. Reviewable.</h1>
+        <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span><span class="gradient">3.8</span></span>Local-first. Reviewable.</h1>
         <p class="hero-sub">A macOS audio production workspace for processing, transcribing, editing, and exporting speech with visible decisions, reversible edits, and evidence recorded for every job.</p>
         <div class="hero-actions">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Get 3.7 from GitHub</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.0" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Get 3.8 from GitHub</a>
             <a href="#proof" class="btn btn-secondary">Inspect the evidence</a>
         </div>
         <div class="hero-stats">
@@ -1010,8 +1011,8 @@
                 <div class="label">Loopback core</div>
             </div>
             <div class="hero-stat">
-                <div class="num">Bundled</div>
-                <div class="label">Local transcription</div>
+                <div class="num">Local</div>
+                <div class="label">Optional models</div>
             </div>
             <div class="hero-stat">
                 <div class="num">5 fixed</div>
@@ -1022,9 +1023,28 @@
                 <div class="label">Processing report</div>
             </div>
             <div class="hero-stat">
-                <div class="num">26</div>
-                <div class="label">Automated tests</div>
+                <div class="num">75 + 4</div>
+                <div class="label">Python + JS tests</div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- Current status -->
+<section id="status" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <span class="section-label">Verified · October 15, 2026</span>
+        <h2 class="section-title">Every export belongs to a completed result.</h2>
+        <p class="section-desc">Version 3.8 verifies resumable DSP work, retains distinct output revisions, and measures the exact WAV, MP3 or FLAC selected for delivery. Release status and remaining limits are visible below.</p>
+        <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX current project status">
+            <div class="ledger-head" role="row"><span>Scope</span><span>Status</span><span>What that means</span></div>
+            <div class="ledger-row" role="row"><strong>Verified checkpoints</strong><span class="ledger-boundary">Local DSP</span><span class="ledger-evidence">Changed source, settings or build restarts cleanly. Compatible float snapshots preserve processing precision.</span></div>
+            <div class="ledger-row" role="row"><strong>Revision-bound delivery</strong><span class="ledger-boundary">WAV / MP3 / FLAC</span><span class="ledger-evidence">Playback, conversions, reports and capsules identify the completed result. Guidance records the exact export hash.</span></div>
+            <div class="ledger-row" role="row"><strong>3.8 source + Mac preview</strong><span class="ledger-boundary">75 Python + 4 JS tests</span><span class="ledger-evidence">New Mac preview is Developer ID signed; Apple notarization awaits the developer team's agreement. Stable notarized Mac download remains 3.7.0.</span></div>
+            <div class="ledger-row" role="row"><strong>REA research workflow</strong><span class="ledger-boundary">Developer tooling</span><span class="ledger-evidence">Source-backed static observations and reproducible receipts. No commercial DSP clone or audio-quality ranking is claimed.</span></div>
+        </div>
+        <div class="hero-actions" style="margin-top:28px;">
+            <a href="status.html" class="btn btn-secondary">Read the full project status</a>
         </div>
     </div>
 </section>
@@ -1032,19 +1052,19 @@
 <!-- Release evidence -->
 <section id="proof">
     <div class="container">
-        <span class="section-label">3.7 proof ledger</span>
+        <span class="section-label">Release proof ledger</span>
         <h2 class="section-title">Capability, boundary, evidence.</h2>
-        <p class="section-desc">The launch claims below map to shipped behavior and repeatable validation&mdash;not estimates, rankings, or invented performance numbers.</p>
-        <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX 3.7 capability evidence">
+        <p class="section-desc">The capabilities below describe the implemented workflow. Runtime availability and validation limits are documented in the release notes.</p>
+        <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX 3.8 capability evidence">
             <div class="ledger-head" role="row"><span>Capability</span><span>Runs where</span><span>Validation evidence</span></div>
             <div class="ledger-row" role="row"><strong>Native macOS workspace</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Standalone AppKit/WebKit window with AudioEnhancerMAX application identity.</span></div>
             <div class="ledger-row" role="row"><strong>Core application server</strong><span class="ledger-boundary">Loopback only</span><span class="ledger-evidence">Bound to 127.0.0.1 and released when the native application quits.</span></div>
-            <div class="ledger-row" role="row"><strong>Speech transcription</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Bundled local Faster-Whisper model exercised in the packaged application.</span></div>
+            <div class="ledger-row" role="row"><strong>Speech transcription</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Local Faster-Whisper; direct builds manage models at runtime. App Store packaging is a separate bundled-model path.</span></div>
             <div class="ledger-row" role="row"><strong>Delivery profiles</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Five fixed targets: podcast, video, audiobook, lossless archive, and source-quality master.</span></div>
             <div class="ledger-row" role="row"><strong>Processing report</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Readable report and canonical JSON capture options, engines, warnings, privacy state, and output facts per job.</span></div>
             <div class="ledger-row" role="row"><strong>Delivery Compliance Lab</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Measured loudness, estimated true peak, clipping, and sample-rate checks with rule-level results; workflow guidance, not certification.</span></div>
             <div class="ledger-row" role="row"><strong>Project Capsule</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Portable ZIP with a SHA-256 manifest, processed output, and available report, compliance, transcript, EDL, and listening-review evidence.</span></div>
-            <div class="ledger-row" role="row"><strong>Release checks</strong><span class="ledger-boundary">Automated + packaged</span><span class="ledger-evidence">26 automated tests plus signed-payload launch, transcription, export, report, and shutdown checks.</span></div>
+            <div class="ledger-row" role="row"><strong>Release checks</strong><span class="ledger-boundary">Automated + packaged</span><span class="ledger-evidence">75 Python tests and 4 JavaScript state tests passed for 3.8. Scope and limitations are recorded on the status page.</span></div>
         </div>
     </div>
 </section>
@@ -1068,6 +1088,12 @@
                 <h3>Local helper process</h3>
                 <p>Optional Ollama/Gemma editorial assistance runs through a local process. It may draft text suggestions, but it never chooses DSP parameters.</p>
                 <span class="tech-tag ai">User controlled</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <h3>Personal voice runtime</h3>
+                <p>The source supports named, consent-based profiles through the separately evolving MakeMyVoice project. Voice samples and generated audio stay local.</p>
+                <span class="tech-tag metal">Development head · local Metal</span>
             </div>
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/edge-device.svg" alt="" aria-hidden="true"></div>
@@ -1155,8 +1181,8 @@
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/noise.svg" alt="" aria-hidden="true"></div>
                 <h3>Noise Removal</h3>
-                <p>DeepFilterNet v3 when available, plus spectral gating and wet/dry mixing. Designed to reduce artifacts while preserving voice texture.</p>
-                <span class="tech-tag dsp">DeepFilterNet</span>
+                <p>DeepFilterNet v3 when installed, with spectral-gating fallback and wet/dry mixing. The active engine is reported by the runtime capability registry.</p>
+                <span class="tech-tag dsp">Conditional engine</span>
             </div>
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/filler.svg" alt="" aria-hidden="true"></div>
@@ -1173,8 +1199,8 @@
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/metal-chip.svg" alt="" aria-hidden="true"></div>
                 <h3>Metal GPU Acceleration</h3>
-                <p>Demucs music separation runs on Apple Metal GPU via PyTorch MPS. ARM NEON optimized CTranslate2 for Whisper inference.</p>
-                <span class="tech-tag metal">Metal MPS</span>
+                <p>Compatible model paths can use Apple Metal through PyTorch MPS. Whisper uses ARM-optimized CTranslate2; accelerator use depends on the active operation.</p>
+                <span class="tech-tag metal">Operation dependent</span>
             </div>
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
@@ -1185,26 +1211,32 @@
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/edge-device.svg" alt="" aria-hidden="true"></div>
                 <h3>Edge Cluster Computing</h3>
-                <p>Turn trusted Android devices into LAN workers for selected DSP tasks. Discovery and manual registration stay under user control.</p>
-                <span class="tech-tag edge">UDP Discovery</span>
+                <p>Experimental Android workers can run selected DSP tasks on a user-enabled trusted LAN. Pairing, authentication, and workload limits are next-release hardening gates.</p>
+                <span class="tech-tag edge">Experimental boundary</span>
             </div>
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/music.svg" alt="" aria-hidden="true"></div>
                 <h3>Music Preservation</h3>
-                <p>Meta's Demucs separates vocals from music. Process speech only, remix with original background music intact.</p>
-                <span class="tech-tag metal">Demucs + Metal</span>
+                <p>When Demucs and its assets are installed, vocals can be separated, processed, and remixed with background music. This engine is not universal across distributions.</p>
+                <span class="tech-tag metal">Demucs · conditional</span>
             </div>
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/monitor.svg" alt="" aria-hidden="true"></div>
                 <h3>Real-time Monitoring</h3>
-                <p>Per-core CPU heatmap, GPU usage, power watts, ANE status. Processing dashboard with live pipeline visualization.</p>
-                <span class="tech-tag dsp">psutil + macmon</span>
+                <p>The monitor separates system CPU from app-process CPU and labels GPU, ANE, power, and temperature values as measured, estimated, or unavailable.</p>
+                <span class="tech-tag dsp">Truthful telemetry · dev head</span>
             </div>
             <div class="feature-card reveal">
                 <div class="feature-icon"><img class="icon-img" src="img/icons/file-report.svg" alt="" aria-hidden="true"></div>
                 <h3>AI Transcription</h3>
-                <p>Word-level timestamps with export to SRT, VTT, and JSON. Speaker diarization uses pyannote.audio when available, with fallback behavior.</p>
-                <span class="tech-tag ai">Whisper + pyannote</span>
+                <p>Word-level timestamps export to SRT, VTT, and JSON. Speaker diarization uses pyannote when available; the heuristic fallback is not presented as production-grade diarization.</p>
+                <span class="tech-tag ai">Whisper · conditional diarization</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <h3>Personal Voice Studio</h3>
+                <p>Create or link a named voice profile, save synthesis defaults, re-enrol it, and use a validated MakeMyVoice engine. Advanced training and model promotion remain in MakeMyVoice.</p>
+                <span class="tech-tag metal">Development head</span>
             </div>
         </div>
     </div>
@@ -1226,6 +1258,7 @@
                         <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/smart-ai.svg" alt="" aria-hidden="true">Whisper Medium <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
                         <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/music.svg" alt="" aria-hidden="true">Demucs (Metal GPU) <span class="badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">GPU</span></div>
                         <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/smart-ai.svg" alt="" aria-hidden="true">Ollama/Gemma <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/studio-mic.svg" alt="" aria-hidden="true">MakeMyVoice adapter <span class="badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">Dev</span></div>
                         <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/monitor.svg" alt="" aria-hidden="true">System Monitor <span class="badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;">Core</span></div>
                         <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/cluster.svg" alt="" aria-hidden="true">Cluster Manager <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">Edge</span></div>
                     </div>
@@ -1258,12 +1291,13 @@
         <div class="evidence-callout reveal">
             <div>
                 <span class="section-label">Release evidence</span>
-                <h3 id="release-evidence-title">Read the facts behind the 3.7 launch.</h3>
+                <h3 id="release-evidence-title">Read the facts behind the 3.8 release.</h3>
                 <p>Release notes describe shipped behavior. The claims matrix connects each public statement to code, tests, or packaged-app validation.</p>
             </div>
             <div class="evidence-links">
-                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.7.0.md" target="_blank" rel="noopener noreferrer">Release notes</a>
-                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/marketing/CLAIMS_EVIDENCE_MATRIX_v3.7.0.md" target="_blank" rel="noopener noreferrer">Claims matrix</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.8.0.md" target="_blank" rel="noopener noreferrer">Release notes</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/marketing/CLAIMS_EVIDENCE_MATRIX_v3.8.0.md" target="_blank" rel="noopener noreferrer">Claims matrix</a>
+                <a href="status.html">Current audit status</a>
                 <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source repository</a>
             </div>
         </div>
@@ -1272,8 +1306,8 @@
 
 <section id="download" class="cta-section">
     <div class="cta-card reveal">
-        <h2>Explore the 3.7<br>release.</h2>
-        <p>Get the open-source release, inspect the changelog, or follow the project on SourceForge. Mac App Store availability is not claimed while review is pending.</p>
+        <h2>Explore the 3.8<br>release.</h2>
+        <p>Get the 3.8 source release or signed Mac preview. The new preview awaits Apple notarization; the stable notarized Mac download remains 3.7.0. Mac App Store publication is a separate stage.</p>
         <code class="cta-code">
             <span class="comment"># Clone &amp; install</span><br>
             git clone https://github.com/sev7enITA/AudioEnhancerMAX.git<br>
@@ -1282,8 +1316,9 @@
             python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
         </code>
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">GitHub releases</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.0" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">GitHub releases</a>
             <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">SourceForge</a>
+            <a href="status.html" class="btn btn-secondary">Project status</a>
             <a href="roadmap.html" class="btn btn-secondary">Roadmap</a>
         </div>
     </div>
@@ -1310,11 +1345,12 @@
 <footer>
     <div class="footer-inner">
         <div class="footer-left">
-            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX 3.7.0 · local-first · MIT License · © 2026 Fd</span>
+            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX 3.8.0 · local-first · MIT License · © 2026 Fd</span>
         </div>
         <ul class="footer-links">
             <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             <li><a href="roadmap.html">Roadmap</a></li>
+            <li><a href="status.html">Status</a></li>
             <li><a href="support.html">Support</a></li>
             <li><a href="privacy.html">Privacy</a></li>
             <li><a href="accessibility.html">Accessibility</a></li>

@@ -36,13 +36,11 @@ CORE_MODULES = (
     "av",
     "fastapi",
     "faster_whisper",
-    "librosa",
     "noisereduce",
     "numpy",
     "pedalboard",
     "scipy",
     "soundfile",
-    "torch",
     "uvicorn",
 )
 OPTIONAL_ENGINES = {
@@ -330,6 +328,14 @@ def _mps_check() -> dict[str, Any]:
 
         available = bool(torch.backends.mps.is_available())
     except Exception:
+        if APP_STORE_MODE:
+            return _check(
+                "metal_acceleration",
+                "Apple silicon acceleration",
+                "pass",
+                False,
+                "Apple Accelerate and optimized arm64 DSP are available; optional PyTorch MPS engines are not part of this Store build.",
+            )
         available = False
     if available:
         return _check(

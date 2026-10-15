@@ -41,8 +41,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-sha256", required=True)
     parser.add_argument("--pkg-size", required=True)
     parser.add_argument("--signed-at", required=True)
-    parser.add_argument("--marketing-version", default="3.7.0")
-    parser.add_argument("--build-number", default="3.7.4")
+    parser.add_argument("--marketing-version", default="3.8.0")
+    parser.add_argument("--build-number", default="3.8.0")
     parser.add_argument(
         "--review-date",
         default=date.today().strftime("%d %B %Y").lstrip("0"),
@@ -173,7 +173,7 @@ def main() -> None:
         ])),
         Spacer(1, 8 * mm),
         status_table([
-            ("PASS", "Build, application signature, installer signature, trusted timestamp, checksum, sandbox entitlements, native-window startup, native file panels, DSP, delivery checks, Project Capsule, WAV/MP3/FLAC export, bundled model, packaged codecs, and local-only transcription were validated."),
+            ("PASS", "Build, application signature, installer signature, trusted timestamp, checksum, sandbox entitlements, architecture, deployment target, native-window startup, DSP filter-chain stability, packaged codecs, and bundled models were validated. The focused automated suite contains 51 passing tests."),
             ("ACTION", "Before resubmission, attach Apple's requested continuous physical-device screen recording made on the latest public macOS release available on the recording date."),
         ], styles),
         p("This dossier documents technical validation. It does not replace App Store Connect processing or Apple's own review.", styles, "Tiny"),
@@ -186,7 +186,8 @@ def main() -> None:
         ("PASS", "The com.apple.security.network.server entitlement is retained and documented. The native WKWebView connects inbound to the embedded FastAPI/Uvicorn service bound only to 127.0.0.1. The service terminates when the app quits or its main window closes."),
         ("PASS", "Optional LAN Edge Cluster discovery is disabled at launch and begins only after an explicit user action. Core processing does not expose a LAN or public server."),
         ("PASS", "The previous external FFmpeg/FFprobe dependency was removed. Media decoding and encoding use PyAV with embedded FFmpeg libraries."),
-        ("PASS", "Faster-Whisper Medium, tokenizer files, vocabulary, and silero_vad_v6.onnx are bundled. Runtime model download is disabled for the App Store build."),
+        ("PASS", "Faster-Whisper Medium, tokenizer files, vocabulary, and compatible Silero VAD assets are bundled. Runtime model download is disabled for the App Store build."),
+        ("PASS", "The filter crash was traced to librosa importing Numba/llvmlite JIT code inside the hardened package. The shipping runtime now uses NumPy/SciPy DSP helpers and excludes librosa, Numba, llvmlite, TTS, Demucs, DeepFilterNet, and pyannote; no JIT or unsigned-executable-memory entitlement was added."),
         ("PASS", "Features not included in this distribution are removed or disabled in the UI and API, including Demucs music separation and Kokoro voice cloning."),
         ("PASS", "Sandbox data, logs, locks, uploads, outputs, and settings are stored under the app container."),
     ], styles))
@@ -221,12 +222,12 @@ def main() -> None:
 
     story += [p("3. Functional validation", styles, "Section")]
     story.append(status_table([
-        ("PASS", "Sandboxed arm64 application launched in its native AppKit/WKWebView window without opening an external browser; /api/health, readiness, capability, root HTML, and static JavaScript endpoints returned successfully."),
+        ("PASS", "A hardened-runtime re-sign of the candidate payload launched in its native AppKit/WKWebView window without opening an external browser; /api/health and the application endpoints returned successfully. The production App Store signature was separately verified and requires TestFlight/App Store installation for execution."),
         ("PASS", "The standard macOS Open panel selected and uploaded the review WAV under App Sandbox, and the standard Save panel opened for the processed WAV export."),
         ("PASS", "Closing the native main window stopped the application process, stopped the embedded service, and released the loopback port."),
         ("PASS", "Readiness reported ready, zero blockers, packaged PyAV codecs, and the bundled Faster-Whisper Medium model."),
         ("PASS", "Review WAV uploaded and decoded as 16 kHz mono PCM."),
-        ("PASS", "Auto EQ and normalization completed and produced processed audio."),
+        ("PASS", "A continuous 12-step chain completed without a crash: noise, wind, buzz, static, reverb, mouth-sound, breath, and silence cleanup; Auto EQ; Studio Sound; frequency restoration; and normalization. Output duration matched the 8.41975-second input exactly."),
         ("PASS", "Processed output downloaded and decoded as WAV, MP3, and FLAC with explicit sandbox-safe MIME handling."),
         ("PASS", "Local-only transcription returned real English text from the bundled model and VAD asset; runtime model fetching is disabled for this build."),
         ("PASS", "Delivery Compliance Lab measured loudness, estimated true peak, clipping, and sample rate against a transparent target and returned rule-level evidence. Results are workflow guidance, not certification."),
@@ -234,6 +235,7 @@ def main() -> None:
         ("PASS", "Project Capsule exported a SHA-256 manifest, processed output, and available evidence. The original audio remained excluded by default."),
         ("PASS", "Processing report schema 2 recorded build number, source/output SHA-256 provenance, and delivery-compliance evidence."),
         ("PASS", "Edge Cluster status remained disabled until explicit enablement."),
+        ("PASS", "The focused regression, packaging, edge-distribution, metadata, health, and JIT-free signal-processing suite completed with 51 passing tests."),
     ], styles))
 
     story += [p("4. Reviewer setup and app purpose", styles, "Section")]
@@ -269,7 +271,7 @@ def main() -> None:
     story.append(status_table([
         ("ACTION", "Record an unedited three-to-five-minute workflow on a physical Apple silicon Mac running the latest public macOS release. Show About This Mac without the serial number, native-window launch, upload, DSP, A/B comparison, WAV/MP3/FLAC export, offline transcription, and quit."),
         ("ACTION", "Attach the recording, AudioEnhancerMAX-review-sample.wav, and this dossier under App Review Information. Paste the prepared Review Notes and include the exact public macOS build number used for the recording."),
-        ("ACTION", f"Confirm build {args.build_number} has completed App Store Connect processing, validate it through TestFlight, select it in the version record, then reply in Resolution Center referencing Guidelines 2.1 and 2.4.5."),
+        ("ACTION", f"Transporter delivered build {args.build_number} without warning and reports it ready for internal testing. Install and validate it through TestFlight, select it in the version record, then reply in Resolution Center referencing Guidelines 2.1 and 2.4.5."),
     ], styles))
 
     story += [p("9. Apple and component references", styles, "Section")]

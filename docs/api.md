@@ -6,7 +6,7 @@ The backend is defined in `app/main.py` and serves the browser UI plus JSON, fil
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/api/health` | App version, compute backend, Ollama/Gemma status, monitor summary |
+| GET | `/api/health` | App version, compute backend, Ollama/Gemma status, and whole-system/SoC/app-process monitor summary |
 | GET | `/api/acceleration` | Apple Silicon and ML acceleration details |
 | GET | `/api/benchmark` | Master and worker benchmark summary |
 | GET | `/api/system/stats` | Current CPU/GPU/ANE/RAM metrics |
@@ -66,8 +66,13 @@ Project Capsule JSON accepts `include_source` (default `false`) and `target_id`.
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/api/tts/voices` | List available voices |
+| GET | `/api/voice-profiles` | List named personal voices and the live MakeMyVoice adapter capability |
+| POST | `/api/voice-profiles/enroll` | Create a named voice or improve an existing profile from an uploaded sample; explicit owner consent is required |
+| PATCH | `/api/voice-profiles/{profile_id}` | Save the profile name and its language/style/speed/pitch/warmth defaults |
 | POST | `/api/tts/synthesize` | Generate speech |
 | POST | `/api/tts/rewrite` | Preview expressive rewrite |
+
+Personal synthesis sets `engine` to `voice-clone` and supplies `voice_profile_id`. A raw `clone_voice_file_id` without a saved profile is rejected so the sample can never be silently ignored while a stock voice is used. `POST /api/voice-profiles/enroll` references a normal uploaded `file_id`, accepts an optional exact `transcript`, and requires `consent_confirmed: true`.
 
 ## Presets and Batch
 
@@ -81,3 +86,7 @@ Project Capsule JSON accepts `include_source` (default `false`) and `target_id`.
 | GET | `/api/batch/{job_id}` | Inspect batch state |
 
 Preset IDs are slugged and restricted to local JSON files in `presets/`.
+
+## Version 3.8 revision contract
+
+Downloads, compliance, reports, A/B decisions and capsules can be bound to the completed output revision. See [revision delivery](revision-delivery.md) for parameters, response hashes and 404/409 behavior.

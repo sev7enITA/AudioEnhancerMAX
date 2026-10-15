@@ -17,6 +17,15 @@ import soundfile as sf
 
 from app.config import SMART_PRESETS
 from app.models.schemas import ContentType, ProcessingOptions
+from app.utils.signal_processing import (
+    db_to_amplitude,
+    estimate_tempo,
+    onset_strength,
+    rms_frames,
+    spectral_features,
+    stft,
+    zero_crossing_rate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -124,23 +133,22 @@ def _detect_with_gemma(audio: np.ndarray, sr: int) -> Optional[dict]:
     if not _check_ollama_available():
         return None
 
-    import librosa
-
     # Extract audio features for local model analysis
     duration = len(audio) / sr
     preview = audio[:int(min(30, duration) * sr)]
 
-    spectral_centroid = float(np.mean(librosa.feature.spectral_centroid(y=preview, sr=sr)))
-    spectral_bandwidth = float(np.mean(librosa.feature.spectral_bandwidth(y=preview, sr=sr)))
-    rms = librosa.feature.rms(y=preview)[0]
+    centroids, bandwidths = spectral_features(preview, sr)
+    spectral_centroid = float(np.mean(centroids))
+    spectral_bandwidth = float(np.mean(bandwidths))
+    rms = rms_frames(preview)
     rms_mean = float(np.mean(rms))
     rms_dynamic_range = float(np.std(rms) / (rms_mean + 1e-10))
 
-    onset_env = librosa.onset.onset_strength(y=preview, sr=sr)
-    tempo = float(librosa.feature.tempo(onset_envelope=onset_env, sr=sr)[0])
+    onset_env = onset_strength(preview, sr)
+    tempo = estimate_tempo(onset_env, sr)
 
-    zcr = float(np.mean(librosa.feature.zero_crossing_rate(preview)))
-    silence_threshold = librosa.db_to_amplitude(-40)
+    zcr = float(np.mean(zero_crossing_rate(preview)))
+    silence_threshold = db_to_amplitude(-40)
     silence_ratio = float(np.sum(rms < silence_threshold) / len(rms))
 
     # Build descriptive prompt with extracted features
@@ -213,21 +221,20 @@ Respond ONLY with a valid JSON object:
 
 def _detect_with_heuristics(audio: np.ndarray, sr: int) -> dict:
     """Fallback spectral analysis for content classification."""
-    import librosa
-
     duration = len(audio) / sr
 
-    spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=audio, sr=sr))
-    spectral_bandwidth = np.mean(librosa.feature.spectral_bandwidth(y=audio, sr=sr))
-    rms = librosa.feature.rms(y=audio)[0]
+    centroids, bandwidths = spectral_features(audio, sr)
+    spectral_centroid = np.mean(centroids)
+    spectral_bandwidth = np.mean(bandwidths)
+    rms = rms_frames(audio)
     rms_mean = np.mean(rms)
     rms_std = np.std(rms)
     rms_dynamic_range = rms_std / (rms_mean + 1e-10)
 
-    onset_env = librosa.onset.onset_strength(y=audio, sr=sr)
-    tempo = librosa.feature.tempo(onset_envelope=onset_env, sr=sr)[0]
+    onset_env = onset_strength(audio, sr)
+    tempo = estimate_tempo(onset_env, sr)
 
-    silence_threshold = librosa.db_to_amplitude(-40)
+    silence_threshold = db_to_amplitude(-40)
     silence_ratio = np.sum(rms < silence_threshold) / len(rms)
 
     scores = {ct: 0.0 for ct in ContentType if ct != ContentType.CUSTOM}
@@ -254,7 +261,7 @@ def _detect_with_heuristics(audio: np.ndarray, sr: int) -> dict:
     if rms_dynamic_range > 0.6:
         scores[ContentType.OUTDOOR] += 2
 
-    S = np.abs(librosa.stft(audio, n_fft=2048))
+    S = np.abs(stft(audio, n_fft=2048))
     low_energy = np.mean(S[:10, :])
     high_energy = np.mean(S[100:, :])
     if low_energy > high_energy * 3:

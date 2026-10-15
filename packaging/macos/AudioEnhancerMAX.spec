@@ -7,8 +7,8 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 ROOT = Path(SPEC).resolve().parents[2]
-VERSION = os.getenv("AEMAX_MARKETING_VERSION", "3.7.0")
-BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", "3.7.4")
+VERSION = os.getenv("AEMAX_MARKETING_VERSION", "3.8.0")
+BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", "3.8.0")
 DISTRIBUTION = os.getenv("AEMAX_DISTRIBUTION", "direct")
 ICON = ROOT / "packaging" / "macos" / "AudioEnhancerMAX.icns"
 WHISPER_MODEL_DIR = Path(os.getenv("AEMAX_WHISPER_MODEL_DIR", ""))
@@ -49,6 +49,12 @@ for package in ("uvicorn", "backports", "app", "desktop"):
     hiddenimports.extend(collect_submodules(package))
 hiddenimports.extend(["AppKit", "Cocoa", "Foundation", "WebKit", "objc"])
 
+excluded_packages = ["tkinter", "pytest", "librosa", "numba", "llvmlite", "TTS"]
+if DISTRIBUTION == "app-store":
+    excluded_packages.extend([
+        "audiosr", "demucs", "df", "kokoro", "pyannote", "torch", "torchaudio"
+    ])
+
 a = Analysis(
     [str(ROOT / "desktop" / "launcher.py")],
     pathex=[str(ROOT)],
@@ -58,7 +64,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["tkinter", "pytest"],
+    excludes=excluded_packages,
     noarchive=False,
     optimize=1,
 )

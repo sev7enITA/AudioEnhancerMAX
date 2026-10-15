@@ -1,0 +1,22 @@
+# Exact direct runtime inputs for the Mac App Store build.
+# Optional model engines and all JIT-capable packages are intentionally absent.
+fastapi==0.143.2
+starlette==1.8.0
+uvicorn[standard]==0.34.0
+python-multipart==0.0.32
+websockets==14.2
+pydub==0.25.1
+soundfile==0.13.1
+numpy==1.26.4
+scipy==1.13.1
+av==14.1.0
+noisereduce==3.0.3
+pedalboard==0.9.16
+pyloudnorm==0.1.1
+faster-whisper==1.1.0
+onnxruntime==1.19.2
+edge-tts==7.2.8
+aiofiles==24.1.0
+pydantic==2.10.4
+psutil==6.1.1
+httpx==0.28.1

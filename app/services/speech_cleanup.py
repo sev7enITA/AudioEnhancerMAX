@@ -7,6 +7,8 @@ from typing import List, Tuple, Optional
 import logging
 import re
 
+from app.utils.signal_processing import rms_frames, spectral_features, stft, zero_crossing_rate
+
 logger = logging.getLogger(__name__)
 
 # Lazy-loaded Whisper model
@@ -171,19 +173,17 @@ def detect_breaths(
     - Frequency content in 100-2000 Hz range
     - Short duration (typically 200-800ms)
     """
-    import librosa
-
     frame_length = int(sr * 0.025)
     hop_length = int(sr * 0.010)
 
     # Compute spectral features
-    rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
-    spectral_centroid = librosa.feature.spectral_centroid(
-        y=audio, sr=sr, n_fft=frame_length, hop_length=hop_length
-    )[0]
-    zcr = librosa.feature.zero_crossing_rate(
-        y=audio, frame_length=frame_length, hop_length=hop_length
-    )[0]
+    rms = rms_frames(audio, frame_length=frame_length, hop_length=hop_length)
+    spectral_centroid, _ = spectral_features(
+        audio, sr, n_fft=frame_length, hop_length=hop_length
+    )
+    zcr = zero_crossing_rate(
+        audio, frame_length=frame_length, hop_length=hop_length
+    )
 
     # Breath characteristics:
     # - Medium-low RMS (not silent, not loud speech)
@@ -271,11 +271,9 @@ def detect_mouth_sounds(
     sensitivity: float = 0.5,
 ) -> List[Tuple[int, int]]:
     """Return candidate short high-frequency transients as sample ranges."""
-    import librosa
-
     frame_length = max(32, int(sr * 0.005))
     hop_length = max(16, int(sr * 0.002))
-    spectrum = np.abs(librosa.stft(audio, n_fft=frame_length, hop_length=hop_length))
+    spectrum = np.abs(stft(audio, n_fft=frame_length, hop_length=hop_length))
     spectral_flux = np.sum(np.diff(spectrum, axis=1) ** 2, axis=0)
     if not len(spectral_flux):
         return []

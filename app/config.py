@@ -49,12 +49,23 @@ TIMING_HISTORY_FILE = APP_DIR / "timing_history.json"
 ROADMAP_VOTES_FILE = APP_DIR / "roadmap_votes.json"
 PREFLIGHT_STATE_FILE = APP_DIR / "preflight_state.json"
 RUNTIME_SETTINGS_FILE = APP_DIR / "runtime_settings.json"
+VOICE_PROFILES_DIR = APP_DIR / "voice_profiles"
+
+# MakeMyVoice is an optional, separately versioned local runtime.  The
+# adapter discovers it through this explicit override first and through the
+# sibling development checkout second; packaged builds never assume that it
+# is installed.
+_default_makemyvoice_root = SOURCE_BASE_DIR.parent.parent / "MakeMyVoice"
+MAKEMYVOICE_ROOT = Path(
+    os.getenv("AEMAX_MAKEMYVOICE_ROOT", str(_default_makemyvoice_root))
+).expanduser()
 
 # Ensure directories exist
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 PRESETS_DIR.mkdir(parents=True, exist_ok=True)
+VOICE_PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 
 # Audio settings
 MAX_FILE_SIZE_MB = 500

@@ -2,18 +2,28 @@
 set -euo pipefail
 
 ROOT="${0:A:h:h}"
-VERSION="3.7.0"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.7.2}"
+VERSION="3.8.0"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.0}"
 BUILD_DIR="${ROOT}/build/macos"
 DIST_DIR="${ROOT}/dist/macos"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
 ICONSET="${BUILD_DIR}/AudioEnhancerMAX.iconset"
 ICON="${ROOT}/packaging/macos/AudioEnhancerMAX.icns"
 PYTHON="${AEMAX_PYTHON:-${ROOT}/venv/bin/python}"
+PYTHON_FRAMEWORK="${AEMAX_PYTHON_FRAMEWORK:-}"
 DISTRIBUTION="${AEMAX_DISTRIBUTION:-direct}"
 APP_IDENTITY="${AEMAX_APP_IDENTITY:-Developer ID Application: Fabrizio Degni (BR9VY292BU)}"
 SKIP_BUILD="${AEMAX_SKIP_BUILD:-0}"
 NOTARY_PROFILE="${AEMAX_NOTARY_PROFILE:-}"
+
+if [[ -n "${PYTHON_FRAMEWORK}" ]]; then
+    [[ -d "${PYTHON_FRAMEWORK}/Versions/3.11" ]] || {
+        print -u2 "Python framework not found: ${PYTHON_FRAMEWORK}"
+        exit 1
+    }
+    export DYLD_FRAMEWORK_PATH="${PYTHON_FRAMEWORK:h}"
+    export DYLD_LIBRARY_PATH="${PYTHON_FRAMEWORK}/Versions/3.11/lib"
+fi
 
 if [[ "${DISTRIBUTION}" != "direct" ]]; then
     print -u2 "This script builds the direct-download DMG only. The App Store package requires its dedicated signed workflow."
@@ -58,7 +68,23 @@ if [[ "${SKIP_BUILD}" == "1" ]]; then
     [[ -d "${APP_PATH}" ]] || { print -u2 "Existing app bundle not found: ${APP_PATH}"; exit 1; }
     print "Reusing existing app bundle: ${APP_PATH}"
 else
-    "${PYTHON}" -m pip install -r "${ROOT}/packaging/macos/requirements-build.txt"
+    "${PYTHON}" -m pip install --upgrade \
+        -r "${ROOT}/packaging/macos/requirements-runtime-direct.txt" \
+        -r "${ROOT}/packaging/macos/requirements-build.txt" \
+        -c "${ROOT}/packaging/macos/requirements-app-store-lock.txt"
+
+    "${PYTHON}" - <<'PY'
+import importlib.util
+import sysconfig
+
+target = str(sysconfig.get_config_var("MACOSX_DEPLOYMENT_TARGET") or "0")
+if int(target.split(".")[0]) > 13:
+    raise SystemExit(f"Python deployment target {target} exceeds supported macOS 13")
+for forbidden in ("librosa", "numba", "llvmlite", "TTS"):
+    if importlib.util.find_spec(forbidden) is not None:
+        raise SystemExit(f"Forbidden JIT/runtime dependency present: {forbidden}")
+PY
+    "${PYTHON}" -m pip check
 
     rm -rf "${BUILD_DIR}" "${DIST_DIR}" "${ICONSET}"
     mkdir -p "${BUILD_DIR}" "${DIST_DIR}" "${ICONSET}"

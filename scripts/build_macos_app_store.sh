@@ -2,21 +2,23 @@
 set -euo pipefail
 
 ROOT="${0:A:h:h}"
-VERSION="${AEMAX_MARKETING_VERSION:-3.7.0}"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.7.4}"
+VERSION="${AEMAX_MARKETING_VERSION:-3.8.0}"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.0}"
 BUILD_DIR="${ROOT}/build/macos-app-store"
 DIST_DIR="${ROOT}/dist/macos-app-store"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
 ICONSET="${BUILD_DIR}/AudioEnhancerMAX.iconset"
 ICON="${ROOT}/packaging/macos/AudioEnhancerMAX.icns"
 PYTHON="${AEMAX_PYTHON:-${ROOT}/venv/bin/python}"
+PYTHON_FRAMEWORK="${AEMAX_PYTHON_FRAMEWORK:-}"
 APP_IDENTITY="${AEMAX_APP_IDENTITY:-3rd Party Mac Developer Application: Fabrizio Degni (BR9VY292BU)}"
 INSTALLER_IDENTITY="${AEMAX_INSTALLER_IDENTITY:-3rd Party Mac Developer Installer: Fabrizio Degni (BR9VY292BU)}"
 APP_ENTITLEMENTS="${ROOT}/packaging/macos/app-store-entitlements.plist"
 CHILD_ENTITLEMENTS="${ROOT}/packaging/macos/app-store-child-entitlements.plist"
 PRIVACY_MANIFEST="${ROOT}/packaging/macos/PrivacyInfo.xcprivacy"
 THIRD_PARTY_NOTICES="${ROOT}/packaging/macos/THIRD_PARTY_NOTICES.md"
-PROVISIONING_PROFILE="${AEMAX_PROVISIONING_PROFILE:-}"
+DEFAULT_PROVISIONING_PROFILE="${HOME}/Documents/AudioEnhancerMAX_Mac_App_Store_37.provisionprofile"
+PROVISIONING_PROFILE="${AEMAX_PROVISIONING_PROFILE:-${DEFAULT_PROVISIONING_PROFILE}}"
 MODEL_CACHE_ROOT="${XDG_CACHE_HOME:-${HOME}/.cache}/huggingface/hub/models--Systran--faster-whisper-medium/snapshots"
 WHISPER_MODEL_DIR="${AEMAX_WHISPER_MODEL_DIR:-}"
 LICENSE_DIR="${BUILD_DIR}/licenses"
@@ -27,6 +29,17 @@ SIGNED_APP="${SIGNING_ROOT}/AudioEnhancerMAX.app"
 PKG_TEMP="${SIGNING_ROOT}/AudioEnhancerMAX-v${VERSION}-build-${BUILD_NUMBER}-MacAppStore.pkg"
 SKIP_BUILD="${AEMAX_SKIP_BUILD:-0}"
 SKIP_NESTED_SIGN="${AEMAX_SKIP_NESTED_SIGN:-0}"
+
+# A relocatable Python.org framework needs these paths exported after zsh
+# starts; macOS strips DYLD_* variables while launching protected shells.
+if [[ -n "${PYTHON_FRAMEWORK}" ]]; then
+    [[ -d "${PYTHON_FRAMEWORK}/Versions/3.11" ]] || {
+        print -u2 "Python framework not found: ${PYTHON_FRAMEWORK}"
+        exit 1
+    }
+    export DYLD_FRAMEWORK_PATH="${PYTHON_FRAMEWORK:h}"
+    export DYLD_LIBRARY_PATH="${PYTHON_FRAMEWORK}/Versions/3.11/lib"
+fi
 
 trap 'rm -rf "${SIGNING_ROOT}"' EXIT
 
@@ -111,17 +124,35 @@ require_identity "${INSTALLER_IDENTITY}"
 plutil -lint "${APP_ENTITLEMENTS}" "${CHILD_ENTITLEMENTS}" >/dev/null
 plutil -lint "${PRIVACY_MANIFEST}" >/dev/null
 
-if [[ -n "${PROVISIONING_PROFILE}" ]]; then
-    [[ -f "${PROVISIONING_PROFILE}" ]] || { print -u2 "Provisioning profile not found: ${PROVISIONING_PROFILE}"; exit 1; }
-    validate_profile "${PROVISIONING_PROFILE}"
-fi
+[[ -f "${PROVISIONING_PROFILE}" ]] || {
+    print -u2 "Mac App Store provisioning profile not found: ${PROVISIONING_PROFILE}"
+    print -u2 "Set AEMAX_PROVISIONING_PROFILE to the AudioEnhancerMAX distribution profile."
+    exit 1
+}
+validate_profile "${PROVISIONING_PROFILE}"
 
 if [[ "${SKIP_BUILD}" == "1" ]]; then
     [[ -d "${REUSABLE_APP}" ]] || { print -u2 "Existing app bundle not found: ${REUSABLE_APP}"; exit 1; }
     print "Reusing existing app bundle: ${REUSABLE_APP}"
     ditto --norsrc --noextattr --noqtn --noacl "${REUSABLE_APP}" "${SIGNED_APP}"
 else
-    "${PYTHON}" -m pip install -r "${ROOT}/packaging/macos/requirements-build.txt"
+    "${PYTHON}" -m pip install --upgrade \
+        -r "${ROOT}/packaging/macos/requirements-runtime-app-store.txt" \
+        -r "${ROOT}/packaging/macos/requirements-build.txt" \
+        -c "${ROOT}/packaging/macos/requirements-app-store-lock.txt"
+
+    "${PYTHON}" - <<'PY'
+import importlib.util
+import sysconfig
+
+target = str(sysconfig.get_config_var("MACOSX_DEPLOYMENT_TARGET") or "0")
+if int(target.split(".")[0]) > 13:
+    raise SystemExit(f"Python deployment target {target} exceeds supported macOS 13")
+for forbidden in ("librosa", "numba", "llvmlite", "TTS"):
+    if importlib.util.find_spec(forbidden) is not None:
+        raise SystemExit(f"Forbidden JIT/runtime dependency present: {forbidden}")
+PY
+    "${PYTHON}" -m pip check
 
     # Keep previously signed PKGs available as an audit trail while rebuilding
     # the disposable staging tree for the new build number.
@@ -132,7 +163,7 @@ else
 from importlib.metadata import distribution
 dist = distribution("av")
 for item in dist.files or ():
-    if str(item).endswith("dist-info/licenses/LICENSE.txt"):
+    if str(item).endswith(("dist-info/licenses/LICENSE.txt", "dist-info/LICENSE.txt")):
         print(dist.locate_file(item))
         break
 PY
@@ -187,11 +218,7 @@ fi
 # CFBundleVersion, and embed the distribution profile in both build paths.
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "${SIGNED_APP}/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" "${SIGNED_APP}/Contents/Info.plist"
-if [[ -n "${PROVISIONING_PROFILE}" ]]; then
-    cp "${PROVISIONING_PROFILE}" "${SIGNED_APP}/Contents/embedded.provisionprofile"
-else
-    rm -f "${SIGNED_APP}/Contents/embedded.provisionprofile"
-fi
+cp "${PROVISIONING_PROFILE}" "${SIGNED_APP}/Contents/embedded.provisionprofile"
 
 cp "${PRIVACY_MANIFEST}" "${SIGNED_APP}/Contents/Resources/PrivacyInfo.xcprivacy"
 
@@ -235,10 +262,12 @@ codesign -d --entitlements :- "${SIGNED_APP}" > "${SIGNED_ENTITLEMENTS}" 2>/dev/
     print -u2 "Signed app is missing the bundled transcription model"
     exit 1
 }
-[[ -f "${SIGNED_APP}/Contents/Frameworks/faster_whisper/assets/silero_vad_v6.onnx" ]] || {
-    print -u2 "Signed app is missing the bundled Whisper VAD asset"
+VAD_ASSET_DIR="${SIGNED_APP}/Contents/Frameworks/faster_whisper/assets"
+if [[ ! -f "${VAD_ASSET_DIR}/silero_vad_v6.onnx" ]] && \
+   [[ ! -f "${VAD_ASSET_DIR}/silero_encoder_v5.onnx" || ! -f "${VAD_ASSET_DIR}/silero_decoder_v5.onnx" ]]; then
+    print -u2 "Signed app is missing the bundled Whisper VAD assets"
     exit 1
-}
+fi
 rm -f "${PKG_PATH}" "${PKG_TEMP}"
 productbuild \
     --component "${SIGNED_APP}" /Applications \
@@ -254,8 +283,4 @@ print "Built ${PKG_PATH}"
 print "Version: ${VERSION} (${BUILD_NUMBER})"
 print "Application identity: ${APP_IDENTITY}"
 print "Installer identity: ${INSTALLER_IDENTITY}"
-if [[ -n "${PROVISIONING_PROFILE}" ]]; then
-    print "Provisioning profile: ${PROVISIONING_PROFILE}"
-else
-    print "Provisioning profile: not embedded (no restricted entitlements)"
-fi
+print "Provisioning profile: ${PROVISIONING_PROFILE}"

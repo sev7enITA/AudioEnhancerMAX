@@ -9,9 +9,9 @@ from typing import Tuple, Optional
 
 import numpy as np
 import soundfile as sf
-import librosa
 
 from app.config import UPLOAD_DIR, OUTPUT_DIR, ALLOWED_EXTENSIONS, HIGH_QUALITY_SAMPLE_RATE
+from app.utils.signal_processing import resample_audio
 
 
 def generate_file_id() -> str:
@@ -144,10 +144,16 @@ def load_audio(file_path: Path, sr: Optional[int] = None, mono: bool = True) -> 
     try:
         return _load_with_pyav(file_path, sr=sr, mono=mono)
     except Exception:
-        # libsndfile/librosa remains a self-contained fallback for WAV/FLAC/OGG.
+        # libsndfile remains a self-contained fallback for WAV/FLAC/OGG.
         if ext in {".wav", ".flac", ".ogg"}:
-            y, sr_loaded = librosa.load(str(file_path), sr=sr, mono=mono)
-            return y, sr_loaded
+            y, sr_loaded = sf.read(str(file_path), dtype="float32", always_2d=True)
+            y = y.T
+            if mono:
+                y = np.mean(y, axis=0)
+            if sr is not None and int(sr) != int(sr_loaded):
+                y = resample_audio(y, int(sr_loaded), int(sr))
+                sr_loaded = int(sr)
+            return np.asarray(y, dtype=np.float32), int(sr_loaded)
         raise
 
 
@@ -216,18 +222,8 @@ def get_audio_info(file_path: Path) -> dict:
             "bitrate": None,
             "format": info.format,
         }
-    except Exception:
-        # Fallback with librosa
-        y, sr = librosa.load(str(file_path), sr=None, mono=False)
-        duration = librosa.get_duration(y=y, sr=sr)
-        channels = 1 if y.ndim == 1 else y.shape[0]
-        return {
-            "duration": duration,
-            "sample_rate": sr,
-            "channels": channels,
-            "bitrate": None,
-            "format": ext.lstrip("."),
-        }
+    except Exception as exc:
+        raise ValueError(f"Unable to read audio metadata from {file_path.name}") from exc
 
 
 def generate_waveform_data(audio: np.ndarray, num_points: int = 1000) -> list:

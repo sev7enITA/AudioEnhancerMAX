@@ -23,6 +23,7 @@
             </a>
             <ul class="nav-links">
                 <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
                 <li><a href="roadmap.html">Roadmap</a></li>
                 <li><a href="privacy.html" aria-current="page">Privacy</a></li>
                 <li><a href="accessibility.html">Accessibility</a></li>
@@ -36,8 +37,8 @@
         <h1>Know where your audio goes</h1>
         <p class="hero-copy">AudioEnhancerMAX is local-first, not absolutely offline. Core processing is local, while clearly identified optional features can contact local-network devices or external services.</p>
         <div class="hero-meta">
-            <span><span class="meta-label">Effective</span> <strong>July 16, 2026</strong></span>
-            <span><span class="meta-label">Notice version</span> <strong>1.0</strong></span>
+            <span><span class="meta-label">Effective</span> <strong>August 22, 2026</strong></span>
+            <span><span class="meta-label">Notice version</span> <strong>1.1</strong></span>
             <span><span class="meta-label">Controller</span> <strong>Fabrizio Degni</strong></span>
         </div>
     </header>
@@ -108,6 +109,12 @@
                                 <td>The user selects the local engine and voice.</td>
                             </tr>
                             <tr>
+                                <td>Personal Voice Studio (development head)</td>
+                                <td>Consensual voice samples, profile name, synthesis settings, training metadata and generated speech</td>
+                                <td>Local AudioEnhancerMAX storage and the separately installed local MakeMyVoice workspace/runtime</td>
+                                <td>The user must confirm consent, names the profile, starts synthesis, and can re-enrol or remove locally stored profile data.</td>
+                            </tr>
+                            <tr>
                                 <td>Edge Neural TTS</td>
                                 <td>User-entered text, voice and synthesis settings</td>
                                 <td>Microsoft's network service</td>
@@ -134,7 +141,7 @@
             <section id="storage" class="content-section">
                 <span class="section-index">03 / Storage</span>
                 <h2>Local storage and retention</h2>
-                <p>The packaged GitHub application stores imported files, generated outputs, presets, timing history, readiness state and roadmap votes under <code>~/Library/Application Support/AudioEnhancerMAX</code>. Launcher logs are stored under <code>~/Library/Logs/AudioEnhancerMAX</code>. A sandboxed Mac App Store build stores equivalent data within its Apple-managed application container.</p>
+                <p>The packaged GitHub application stores imported files, generated outputs, presets, timing history, readiness state and roadmap votes under <code>~/Library/Application Support/AudioEnhancerMAX</code>. Development-head personal-voice profiles can also store a profile manifest, consent record, reference-audio copy or link, and synthesis defaults there. MakeMyVoice keeps its own datasets, checkpoints, comparisons and activated models in its separate local workspace. Launcher logs are stored under <code>~/Library/Logs/AudioEnhancerMAX</code>. A sandboxed Mac App Store build stores equivalent supported data within its Apple-managed application container; MakeMyVoice integration is not currently claimed for that build.</p>
                 <p>Project data is retained locally until the user removes it. Some temporary processing files are deleted when their operation finishes, but imported files, outputs and saved settings can persist between sessions. AudioEnhancerMAX does not currently promise automatic deletion after a fixed period.</p>
                 <p>Deleting local data or uninstalling the app does not delete content separately submitted to GitHub, SourceForge, Microsoft or another selected third-party service. Those services apply their own retention rules.</p>
             </section>
@@ -152,6 +159,7 @@
                 <h2>Optional services and independent providers</h2>
                 <ul>
                     <li><strong>Microsoft Edge Neural TTS:</strong> receives text and synthesis settings when that engine is selected.</li>
+                    <li><strong>MakeMyVoice:</strong> is a separate local project/runtime used by development-head personal-voice profiles. AudioEnhancerMAX does not upload those samples to a maintainer-operated service.</li>
                     <li><strong>GitHub:</strong> hosts source code, releases, issues and roadmap feedback.</li>
                     <li><strong>SourceForge:</strong> hosts releases, project activity and the Rising Star badge.</li>
                     <li><strong>Google Fonts:</strong> can serve font files on the overview and roadmap pages.</li>
@@ -172,7 +180,7 @@
                 <span class="section-index">07 / Security</span>
                 <h2>Safeguards, limitations and policy changes</h2>
                 <p>The desktop service is designed to bind to the loopback interface <code>127.0.0.1</code>. The project validates key storage identifiers and documents that the FastAPI service must not be exposed directly to the public internet without authentication, rate limits and an appropriate reverse-proxy policy.</p>
-                <p>No software or transmission method is risk-free. Users remain responsible for device access controls, backups, network trust and review of sensitive outputs. Trusted LAN processing should be enabled only on networks and devices the user controls.</p>
+                <p>No software or transmission method is risk-free. Users remain responsible for device access controls, backups, network trust, lawful consent to use a voice, and review of sensitive outputs. Trusted LAN processing should be enabled only on networks and devices the user controls. The Android worker path is currently treated as experimental while pairing, authentication, revocation, and workload limits are strengthened.</p>
                 <p>This notice will be updated when a release materially changes data flows. The effective date and notice version at the top identify the current text. Earlier behavior can also be reviewed through the open-source version history.</p>
             </section>
 
@@ -191,9 +199,10 @@
 
     <footer>
         <div class="footer-inner">
-            <div>AudioEnhancerMAX Privacy Notice 1.0 | Effective July 16, 2026</div>
+            <div>AudioEnhancerMAX Privacy Notice 1.1 | Effective August 22, 2026</div>
             <ul class="footer-links">
                 <li><a href="index.html">Overview</a></li>
+                <li><a href="status.html">Status</a></li>
                 <li><a href="support.html">Support</a></li>
                 <li><a href="accessibility.html">Accessibility</a></li>
                 <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source</a></li>

@@ -1,5 +1,11 @@
 # AudioEnhancerMAX 3.7.0 — Social and Email Copy
 
+> For publication after 28 August 2026, use the updated and status-qualified
+> copy in `COMUNICATI_STAMPA_2026-08-28_IT.md` or
+> `PRESS_RELEASES_2026-08-28_EN.md`. The Reddit section in the Italian file is
+> written as a substantive follow-up to the July r/AudioAI post rather than a
+> duplicate launch announcement.
+
 Replace `[LIVE URL]` only after the release channel is actually live.
 
 ## Copy italiana — post di lancio
@@ -58,6 +64,8 @@ Note di rilascio: [LIVE URL]
 AudioEnhancerMAX 3.7 is built around one idea: automation may propose, but you review what becomes part of the output.
 
 New: deterministic Smart Enhance, transcript-linked editing, local delivery checks, blind A/B listening, and SHA-256 Project Capsules—all inside a native Mac window.
+
+Build 3.7.5 fixes the macOS filter crash by removing the packaged librosa/Numba/llvmlite JIT path. The notarized app completed a 12-step filter chain without crashing and preserved the input duration.
 
 [LIVE URL]
 ```

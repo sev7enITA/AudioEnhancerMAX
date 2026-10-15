@@ -1,7 +1,7 @@
 # AudioEnhancerMAX 3.7.0 — App Store Metadata
 
-Prepared: 15 August 2026
-Candidate build: 3.7.4
+Updated: 28 August 2026
+Candidate build: 3.7.5
 
 All fields use factual, non-comparative wording. Recheck character/byte limits in App Store Connect before submission.
 
@@ -71,6 +71,7 @@ Requires an Apple silicon Mac with macOS 13 or later.
 AudioEnhancerMAX 3.7 introduces a reviewable workflow from diagnosis to export.
 
 • Smart Enhance 2 measures common audio risks locally and proposes deterministic Conservative, Balanced, or Maximum settings.
+• Build 3.7.5 fixes the macOS filter crash by replacing the packaged librosa/Numba/llvmlite JIT path with hardened-runtime-compatible NumPy/SciPy DSP.
 • Precision Speech Editor links transcript words to non-destructive cut/mute decisions with preview, persisted undo/redo, and JSON/CSV EDL export.
 • Five fixed delivery profiles cover podcast, video, audiobook, lossless archive, and source-quality master workflows.
 • Local processing reports record input/output indicators, selected options, actual engines, warnings, privacy state, and approved speech edits.
@@ -85,7 +86,7 @@ Results depend on the source recording. Review important audio and transcripts b
 
 ## Review Notes summary
 
-Use the dedicated `releases/app-review/APP_REVIEW_NOTES_3.7.0_BUILD_3.7.4.md` after the final package validation. It should point the reviewer to:
+Use the dedicated `releases/app-review/APP_REVIEW_NOTES_3.7.0_BUILD_3.7.5.md` after the final package validation. It should point the reviewer to:
 
 1. native launch and About;
 2. developer-owned sample upload through the Open panel;

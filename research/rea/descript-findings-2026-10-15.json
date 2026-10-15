@@ -1,0 +1,205 @@
+{
+  "checked_on": "2026-10-15",
+  "task": "Descript official fallback artifact static inventory and bounded worklet analysis",
+  "status": "partial-investigation",
+  "version": {
+    "bundle": "114.0.4-release.20250509.32955",
+    "build": "20250509.32955",
+    "bundle_id": "com.descript.beachcube",
+    "current_version_confirmed": false,
+    "note": "Old May 2025 build served by official legacy fallback; not represented as current Descript."
+  },
+  "provenance": {
+    "official_page": "https://www.descript.com/download/mac",
+    "official_installer_url": "https://web.descript.com/download?platform=mac&v2=true",
+    "fallback_discovery": "Parent statically found https://web.descript.com/download embedded in Descript Installer 2.2.0 (15), at binary offsets 0xd060d and 0x20aebd. HEAD of that exact endpoint resolved the payload below.",
+    "artifact_url": "https://electron.descript.com/Descript-114.0.4-release.20250509.32955.dmg",
+    "artifact_path": "research/rea/private/descript-full-2026-10-15/Descript-114.0.4-release.20250509.32955.dmg",
+    "bytes": 277497888,
+    "sha256": "7984bf53297200c74bbaabbdf5f90d094584022071991aeb434cbcd535ba388f",
+    "acquisition_receipt": "research/rea/private/descript-full-2026-10-15/acquisition.json",
+    "network": "Public authenticated-free GET ranges with verified Content-Range and retained headers. Interrupted ranges resumed; no account, trial, purchase or target launch."
+  },
+  "inventory": {
+    "app_regular_files_excluding_symlinks": 257,
+    "app_logical_bytes_excluding_symlinks": 617643857,
+    "asar_bytes": 180259254,
+    "asar_members": 1623,
+    "asar_sha256": "c5eef40634674518ab21013a784f21ca861b3389701d5630af7ae1a61bc05e97",
+    "asar_data_offset": 437916,
+    "selected_javascript_files": 2,
+    "selected_javascript_bytes": 97885,
+    "files": "research/rea/private/descript-full-2026-10-15/app-file-inventory.json",
+    "asar": "research/rea/private/descript-full-2026-10-15/asar-inventory.json"
+  },
+  "derivatives": [
+    {
+      "asar_member": "NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js",
+      "asar_absolute_byte_offset": 33496087,
+      "bytes": 96801,
+      "sha256": "0be6f3f54f00507502b3b93569f135b03afd21eeea0f494a7c96bd92213354d9",
+      "output": "research/rea/private/descript-full-2026-10-15/selected/NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js",
+      "role": "selected_source"
+    },
+    {
+      "asar_member": "TranscriptionAudioProcessor.worklet.54bd93cadb52c21f0212.js",
+      "asar_absolute_byte_offset": 33660592,
+      "bytes": 1084,
+      "sha256": "aeff0d8305f1375990cee4b8001524de493a8e678dd56ecee566c87fa36786b9",
+      "output": "research/rea/private/descript-full-2026-10-15/selected/TranscriptionAudioProcessor.worklet.54bd93cadb52c21f0212.js",
+      "role": "selected_source"
+    },
+    {
+      "asar_member": "package.json",
+      "asar_absolute_byte_offset": 38271592,
+      "bytes": 477,
+      "sha256": "b791a6363dde5961aed566bf3fc0bede31734f70b0b1fe879de8aef6dc0247e9",
+      "output": "research/rea/private/descript-full-2026-10-15/package.json",
+      "role": "metadata"
+    }
+  ],
+  "rea": {
+    "evidence_id": "ev_e1ee94301b07d81b2b5bd381bf8f8b0144119c9cba649a89fee720ad525bdbc0",
+    "evidence_path": "research/rea/private/descript-full-2026-10-15/runs/descript-20261015T035415Z-exybq9b9/evidence.json",
+    "receipt_path": "research/rea/private/descript-full-2026-10-15/runs/descript-20261015T035415Z-exybq9b9/receipt.json",
+    "evidence_sha256": "7802820c49cf9eb6f59f5641b3059346ad3cb21fc3446407981dbff30839c034",
+    "coverage": {
+      "graph": {
+        "status": "complete",
+        "truncated": false,
+        "omitted_count": 0,
+        "limits": []
+      },
+      "semantic_graph": {
+        "status": "partial",
+        "truncated": true,
+        "omitted_nodes": null,
+        "omitted_relations": null,
+        "limits": [
+          {
+            "name": "semantic_graph_file_node_ceiling",
+            "value": 5000,
+            "unit": "items"
+          },
+          {
+            "name": "semantic_graph_node_ceiling",
+            "value": 10000,
+            "unit": "items"
+          }
+        ]
+      }
+    },
+    "limitations": [
+      "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+      "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+      "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+      "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+      "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+    ],
+    "scope_note": "REA analyzed only the directory containing the two selected worklets; complete artifact graph refers to this subset only. Semantic graph is partial due to explicit node ceilings. Findings also use direct inert-source reading with byte ranges."
+  },
+  "findings": [
+    {
+      "id": "DS-001",
+      "type": "static_source_observation",
+      "confidence": "high-for-selected-build",
+      "title": "RMS noise gate with five states",
+      "observation": "The shipped noise-gate worklet computes RMS for an input channel, compares it with a threshold, and transitions among Closed, Opening, Open, Holding and Closing. Its gain helper applies linear ramps during opening and closing.",
+      "source_ranges": [
+        {
+          "path": "research/rea/private/descript-full-2026-10-15/selected/NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js",
+          "byte_start": 10863,
+          "byte_end_exclusive": 11498,
+          "line_start": 2,
+          "line_end": 2
+        },
+        {
+          "path": "research/rea/private/descript-full-2026-10-15/selected/NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js",
+          "byte_start": 95129,
+          "byte_end_exclusive": 96384,
+          "line_start": 2,
+          "line_end": 2
+        }
+      ],
+      "limit": "This establishes a conventional gate implementation in one packaged worklet; no measured audio quality, runtime reachability, Studio Sound algorithm, or neural denoiser is established."
+    },
+    {
+      "id": "DS-002",
+      "type": "static_source_observation",
+      "confidence": "high-for-selected-build",
+      "title": "Gate controls and timing assumption",
+      "observation": "Parameter descriptors expose threshold (default 0.1, range 0..1), attack (default 1 ms, range 0.1..10), hold (default 1 ms, range 0.1..100), release (default 100 ms, range 50..500), all k-rate. The process method converts these times using an explicit 44100 constant. A GainReduction message returns the gate state.",
+      "source_ranges": [
+        {
+          "path": "research/rea/private/descript-full-2026-10-15/selected/NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js",
+          "byte_start": 95287,
+          "byte_end_exclusive": 95595,
+          "line_start": 2,
+          "line_end": 2
+        },
+        {
+          "path": "research/rea/private/descript-full-2026-10-15/selected/NoiseGateProcessor.worklet.d1c672dbf1b48195db11.js",
+          "byte_start": 96351,
+          "byte_end_exclusive": 96713,
+          "line_start": 2,
+          "line_end": 2
+        }
+      ],
+      "limit": "The selected files do not establish how the parent graph chooses its sample rate, resamples audio, or connects this worklet. The 44100 constant alone is not evidence of a product bug."
+    },
+    {
+      "id": "DS-003",
+      "type": "static_source_observation",
+      "confidence": "high-for-selected-build",
+      "title": "Transcription capture buffers PCM16 on the first input channel",
+      "observation": "The transcription-processor uses a 131072-byte ArrayBuffer and reads the first channel of the first input. It converts float samples to signed PCM16 little-endian, transfers audio buffers with timeOffset and isDone, reports first-frame and no-data, and flushes a buffer when receiving stop. Each send advances timeOffset by 131072 / sampleRate / 2.",
+      "source_ranges": [
+        {
+          "path": "research/rea/private/descript-full-2026-10-15/selected/TranscriptionAudioProcessor.worklet.54bd93cadb52c21f0212.js",
+          "byte_start": 19,
+          "byte_end_exclusive": 994,
+          "line_start": 1,
+          "line_end": 1
+        }
+      ],
+      "limit": "This is capture and buffer transport code, not a speech recognition model, enhancement model, export pipeline, or proof of upload destination. The stop path sends the allocated buffer; downstream handling of the partially filled tail was not inspected."
+    },
+    {
+      "id": "DS-004",
+      "type": "packaged_artifact_observation",
+      "confidence": "high-for-selected-build",
+      "title": "Shipped native media dependency",
+      "observation": "package.json declares beamcoder via beamcoder-prebuild 0.7.1-rc.18. The app contains beamcoder.node (x86_64 and arm64) and FFmpeg-family shared libraries. The main app executable is x86_64. Electron Framework Info.plist reports 20.0.2.",
+      "source_files": [
+        "package.json",
+        "native-file-types.txt",
+        "electron-info.plist",
+        "app-file-inventory.json"
+      ],
+      "limit": "Package membership and manifest declarations do not prove which processing or export path uses this dependency."
+    }
+  ],
+  "unresolved": [
+    "Current Descript build and whether these worklets remain in use",
+    "Studio Sound inference architecture, model weights and processing location",
+    "Application graph wiring, scheduling and sample-rate assumptions",
+    "Transcription backend and downstream tail-buffer handling",
+    "Transcript-to-audio edit mapping, export implementation and quality measurements"
+  ],
+  "cleanup": {
+    "mounted_readonly": true,
+    "mount_record": "research/rea/private/descript-full-2026-10-15/mount.plist",
+    "detach_record": "research/rea/private/descript-full-2026-10-15/detach.json",
+    "detach_return_code": 0,
+    "detach_stdout": "\"disk4\" ejected.",
+    "mountpoint_empty_after_detach": true,
+    "target_execution": false,
+    "applications_directory_modified": false
+  },
+  "storage": {
+    "record": "research/rea/private/descript-full-2026-10-15/closure.json",
+    "private_regular_files": 102,
+    "approx_allocated_mib": 281.2,
+    "budget_bytes": 2000000000
+  }
+}

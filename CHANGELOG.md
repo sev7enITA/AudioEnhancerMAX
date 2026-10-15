@@ -2,7 +2,54 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
-## Unreleased
+## [3.8.0] - 2026-10-15
+
+### Added
+
+- Revision-bound processing and speech-edit outputs, exact-export compliance evidence, and revision-bound A/B reviews and Project Capsules.
+- Source/options/build/runtime-aware checkpoints with lossless float snapshots and explicit non-resumable paths.
+- REA 6.5.0 research wrapper, evidence receipts, private artifact exclusion and competitor study documentation.
+- Thirteen API/audio regressions and four frontend state regressions.
+
+### Fixed
+
+- Reprocessing an existing file can no longer serve an old cached WAV/MP3/FLAC conversion.
+- A missing processed result no longer falls through to the original audio.
+- Changed source bytes, effective settings, application build or corrupt checkpoint data force a clean run.
+- Dynamic tuning now always measures the original, including during resumption.
+- Delivery guidance, speech-edit review and capsule export follow the selected revision and encoded format.
+- New runs clear old results, and late frontend responses are discarded.
+- Preserved and published the previously local JIT-free macOS, personal-voice and telemetry changes.
+
+### Dependencies and validation
+
+- Updated FastAPI 0.143.2, Starlette 1.8.0, python-multipart 0.0.32 and multidict 6.9.1; source runtime requires Python 3.11+.
+- 75 Python tests and 4 JavaScript state tests passed. Installed build environment: pip check passed, pip-audit reported no known vulnerabilities on 2026-10-15.
+- Apple notarization is pending a developer-team agreement (HTTP 403). The new direct macOS build remains a preview until accepted and stapled; source publication is independent of this gate.
+
+See [release notes](releases/RELEASE_NOTES_v3.8.0.md).
+
+## Historical development and App Store candidates
+
+### Development line - 2026-08-22
+
+#### Added
+
+- Added named reusable personal-voice profiles with saved language, style, speed, pitch and warmth defaults, explicit voice-owner consent, repeated enrollment, and automatic discovery of existing MakeMyVoice voice banks.
+- Added a versioned subprocess adapter that probes MakeMyVoice's current backend/model/version at runtime, keeps the two Python environments isolated, and uses an approved profile-specific fine-tuned model when MakeMyVoice exposes one.
+- Added API-level profile enrollment, listing and settings updates, plus runtime engine/version/execution metadata on personal-voice synthesis.
+- Added AudioEnhancer backend-and-worker CPU/RAM metrics alongside whole-system and Apple SoC CPU readings.
+
+#### Fixed
+
+- Voice samples are no longer accepted by an upload control and then silently ignored in favor of the selected stock voice; synthesis now requires and uses a saved personal profile.
+- TTS operations without fractional engine progress now show elapsed time and an explicit execution-boundary explanation instead of extrapolating a false one-second ETA from a synthetic 5% milestone.
+- Apple `macmon` CPU cluster residency no longer overwrites the whole-system CPU value collected by `psutil`.
+
+#### Validation
+
+- Exercised the linked `FabFab` profile end-to-end with the current MakeMyVoice `f5_mlx` runtime and confirmed a 24 kHz cloned output conditioned by the stored voice bank.
+- Added profile persistence, consent, dynamic-adapter and TTS-routing regression tests.
 
 ### App Store candidate build 3.7.4 - 2026-08-20
 
