@@ -1,0 +1,62 @@
+{
+  "version": "3.8.2",
+  "build": "3.8.3",
+  "source": "Installed Apple TestFlight application on physical Mac",
+  "capture_date": "2026-10-16",
+  "device": "Mac15,9, Apple M3 Max",
+  "os": "macOS 27.2 (26B5112a)",
+  "transform": "Center crop 4112x2580 to 4112x2570, removing 5 pixels of window border at top and bottom; resize to 2880x1800 PNG. No compositing or UI alterations.",
+  "sample": "AudioEnhancerMAX-review-sample.wav",
+  "screenshots": [
+    {
+      "file": "01-review-deck.png",
+      "sha256": "70a10422eae65ce67b47d4cf758428e3d6b19c0412f54dc884efde84abc6a670",
+      "raw_capture": "build/recovery/store-3.8.3-review-deck-raw.jpg",
+      "raw_sha256": "157865ca2a0ea9437e7c8a44dff59342fbe6ccd185161da08f10e278304e2ce3",
+      "pixels": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "file": "02-local-diagnosis.png",
+      "sha256": "98fcb15e0554c811a150bedbcf394c44b52f412b0aa11680c7f29d53834adb2c",
+      "raw_capture": "build/recovery/store-3.8.3-diagnosis-raw.jpg",
+      "raw_sha256": "b28b4394b7d1849c368fedfb29359a94c13a0265e7c2de3458c6c8c841c9b42c",
+      "pixels": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "file": "03-precision-editor.png",
+      "sha256": "8c7c59a3fe6cb5a163c8931baa47029f52f13d8ec53336078aeded49dd13ee3c",
+      "raw_capture": "build/recovery/store-3.8.3-editor-raw.jpg",
+      "raw_sha256": "8547fdbca9d4b7f3f17ad54065ef7e537fa1d73070568d59b0654598262d7b1f",
+      "pixels": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "file": "04-local-transcription.png",
+      "sha256": "b4faf8531e005bd0ad5c04afa6ed987e35202f00de8ef5e32bfbbaab9318f40b",
+      "raw_capture": "build/recovery/store-3.8.3-transcript-raw.jpg",
+      "raw_sha256": "f1b5cfcfa0744b2ef33d5603c24a9b722071c2940e0239dabb71d0126dcbfc81",
+      "pixels": [
+        2880,
+        1800
+      ]
+    },
+    {
+      "file": "05-processing-report.png",
+      "sha256": "e3a3562cbaef61e17b2eaec6b8cb0756111e59b73b64221c35f6c790b5fe38cf",
+      "raw_capture": "build/recovery/store-3.8.3-report-raw.jpg",
+      "raw_sha256": "72b2f7521fe75a86426862c6d9ad07e3d3ab3218f4af1e48a6e3ee30d8245ee7",
+      "pixels": [
+        2880,
+        1800
+      ]
+    }
+  ]
+}
