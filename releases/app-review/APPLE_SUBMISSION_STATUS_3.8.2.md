@@ -2,7 +2,7 @@
 
 16 October 2026. Current candidate: version **3.8.2**, internal build **3.8.3**. Source correction merged through PR 8.
 
-## Confirmed Apple delivery and installed testing
+## Earlier internal candidate: build 3.8.2
 
 - Transporter delivered build 3.8.2 on 16 October 2026 at 00:10. App Store Connect processed it and made it ready for internal testing.
 - The owner-only `Release Validation` group contains build 3.8.2 and one tester. Automatic distribution remains disabled.
@@ -24,7 +24,21 @@ Both normal and streaming transcription now use explicit speech/silence threshol
 - App Sandbox, selected-file read/write, loopback server and network client entitlements are retained. No security protections were bypassed.
 - Build inputs and artifacts remain local outside Desktop/iCloud. The Store package is not a direct-download installer.
 
-The corrected package has not yet been uploaded. Its Apple-distributed runtime, continuous review recording and final App Review submission remain pending. Source/model tests do not establish TestFlight runtime success or perceptual audio quality.
+## Corrected build 3.8.3: Apple delivery and runtime verification
+
+Transporter delivered the corrected package on 16 October 2026 at 14:53 Europe/Rome. Apple processing completed successfully. Build 3.8.3 was assigned to the owner-only Release Validation group and installed through TestFlight. The installed version/build, Apple receipt and recursive strict signature checks passed.
+
+On the physical Mac described above, the Apple-distributed build passed:
+
+- Native launch, developer-sample import, Smart Enhance diagnosis and Quick Clean processing.
+- Local normalization and WAV/MP3/FLAC exports with matching artifact hashes and output revisions.
+- Full local transcription using the bundled Medium model, including native TXT export.
+- Precision Speech Editor analysis, selection, undo, redo and rendering, with the original sample preserved.
+- Native WAV and Project Capsule saves. All six capsule artifact hashes were verified; the original audio was excluded as selected.
+- Processing Report display and privacy settings with external services, Ollama assistance and trusted-LAN processing disabled.
+- Quit: the application process exited and its loopback listener released port 8000.
+
+Five current screenshots were captured from this installed build and prepared at 2880 x 1800 pixels. Their provenance and hashes are in `screenshots-3.8.2-build-3.8.3/manifest.json`. A continuous review recording and final App Review submission remain pending. These checks cover one device and OS; they do not establish perceptual audio quality or broader hardware compatibility.
 
 ## Account and listing
 
@@ -34,10 +48,9 @@ The editable Store version is 3.8.2, but the existing rejected submission is his
 
 ## Remaining steps
 
-1. Upload the signed 3.8.2 (3.8.3) package and confirm successful Apple processing.
-2. Assign it to the existing internal group, update through TestFlight, and repeat the full checklist in `RESUBMISSION_CHECKLIST_3.8.2.md`.
-3. Capture current screenshots and a continuous physical-Mac recording beginning with launch. Answer Apple's seven existing review questions using actual results and device/OS details.
-4. Replace build 3.5.2 with verified build 3.8.3, update review notes and attachments, and resubmit.
-5. Report storefront availability only after Apple approval and visible publication.
+1. Capture the continuous physical-Mac recording beginning with launch, as requested by Apple. The native recording toolbar requires a manual handoff because it could not be opened through the automation interface.
+2. Upload the five current screenshots and replace historical build 3.5.2 with verified build 3.8.3. The review notes for build 3.8.3 are already saved.
+3. Complete the response to Apple's seven review questions with the actual recording attached, then resubmit.
+4. Report storefront availability only after Apple approval and visible publication.
 
 Prepared copy: `../marketing/APP_STORE_METADATA_v3.8.2.md` and `APP_REVIEW_NOTES_3.8.2_BUILD_3.8.3.md`.

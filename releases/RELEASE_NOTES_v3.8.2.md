@@ -12,4 +12,4 @@ Source archives exclude user recordings, private voice profiles and credentials.
 
 ## Mac App Store follow-up: 16 October 2026
 
-Initial TestFlight verification identified a local transcription error. A correction has been prepared for internal build 3.8.3 under version 3.8.2. The corrected package still requires upload and TestFlight verification before App Review submission. Existing direct-download 3.8.2 artifacts are unchanged.
+Internal build 3.8.3 corrects a local transcription error under version 3.8.2. Apple delivered and processed the package on 16 October. Verification of the TestFlight-installed app passed for local processing, transcription, speech editing and exports. Updated screenshots are prepared; the requested recording and listing update remain pending before App Review resubmission. Existing direct-download 3.8.2 artifacts are unchanged.
