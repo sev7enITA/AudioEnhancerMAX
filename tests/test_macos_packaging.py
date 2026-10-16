@@ -52,7 +52,7 @@ class MacOSPackagingTests(unittest.TestCase):
 
     def test_next_app_store_build_number_is_unique(self):
         script = (ROOT / "scripts/build_macos_app_store.sh").read_text()
-        self.assertIn('AEMAX_BUILD_NUMBER:-3.8.2', script)
+        self.assertIn('AEMAX_BUILD_NUMBER:-3.8.3', script)
 
     def test_app_store_build_requires_distribution_profile(self):
         script = (ROOT / "scripts/build_macos_app_store.sh").read_text()

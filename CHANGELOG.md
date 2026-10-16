@@ -2,6 +2,14 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- Correct speech-detection parameters for the pinned Faster-Whisper runtime in standard and streaming transcription. Previously, local transcription failed before inference with an unsupported `threshold` argument.
+- Add four regressions covering both transcription paths and their no-speech fallback against the installed VAD options contract.
+- Prepare Mac App Store version 3.8.2, internal build 3.8.3. The previously published direct-download 3.8.2 artifacts are unchanged.
+
 ## [3.8.2] - 2026-10-15
 
 ### Release presentation
