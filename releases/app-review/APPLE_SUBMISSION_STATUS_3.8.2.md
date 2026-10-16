@@ -1,6 +1,6 @@
 # AudioEnhancerMAX 3.8.2: Mac App Store submission status
 
-16 October 2026. Current candidate: version **3.8.2**, internal build **3.8.3**. Source correction merged through PR 8.
+16 October 2026. Apple confirmed **Waiting for Review** for version **3.8.2**, internal build **3.8.3**, submitted at **16:52 Europe/Rome**. Source correction merged through PR 8. Approval and Store publication remain pending. The machine-readable receipt is `SUBMISSION_3.8.2_BUILD_3.8.3.json`.
 
 ## Earlier internal candidate: build 3.8.2
 
@@ -38,19 +38,18 @@ On the physical Mac described above, the Apple-distributed build passed:
 - Processing Report display and privacy settings with external services, Ollama assistance and trusted-LAN processing disabled.
 - Quit: the application process exited and its loopback listener released port 8000.
 
-Five current screenshots were captured from this installed build and prepared at 2880 x 1800 pixels. Their provenance and hashes are in `screenshots-3.8.2-build-3.8.3/manifest.json`. The continuous physical-Mac recording is published at a verified direct URL for the reviewer: see `REVIEW_RECORDING_3.8.3.md`. Apple attachment upload failed, and delivery of the reviewer response is unconfirmed. Screenshot upload, build replacement and final App Review submission remain pending. These checks cover one device and OS; they do not establish perceptual audio quality or broader hardware compatibility.
+Five current screenshots were captured from this installed build and prepared at 2880 x 1800 pixels. Their provenance and hashes are in `screenshots-3.8.2-build-3.8.3/manifest.json`. The five new filenames are registered in Apple's Asset Library, but upload and association errors prevented confirmation that they replaced the listing's screenshots. Refreshed Store screenshots are not claimed. The continuous physical-Mac recording is published at a verified direct URL for the reviewer: see `REVIEW_RECORDING_3.8.3.md`. After removing the attachment stuck in processing from the draft, the response with this link was sent at 16:44; App Review displayed two messages. These checks cover one device and OS; they do not establish perceptual audio quality or broader hardware compatibility.
 
 ## Account and listing
 
 The account holder accepted the required Apple agreement on 15 October. English and Italian metadata, reviewer notes, sample ZIP and loopback listener justification are saved. The privacy label is published as Other User Content used for App Functionality, not linked to identity or tracking. Automatic release after App Review approval is selected.
 
-The editable Store version is 3.8.2, but the existing rejected submission is historical and still has build 3.5.2 attached. Neither the renamed version nor successful TestFlight delivery constitutes a new App Review submission or approval.
+Build 3.8.3 replaced the historical build 3.5.2 in the App Review item. The version reached Ready for Review, then Resubmit to App Review succeeded. Apple displayed Waiting for Review for both the submission and version, with Date Submitted Oct 16, 2026 at 4:52 PM. Submission ID: `3b6023b7-27da-4ea8-afe5-afe6da2838f4`. The final resubmission used the saved listing; it does not establish approval or publication.
 
 ## Remaining steps
 
-1. Complete the portal operations once App Store Connect responds. Owner sign-in succeeded on 16 October, but the distribution page and review operations continued to return errors. A reply draft was preserved; attachment upload failed and sending the reply with a direct video link is unconfirmed. No incomplete version forms were saved.
-2. Upload the five current screenshots and replace historical build 3.5.2 with verified build 3.8.3. The review notes for build 3.8.3 are already saved.
-3. Confirm delivery of the response to Apple's seven review questions with the verified direct recording link, then resubmit.
-4. Report storefront availability only after Apple approval and visible publication.
+1. Await Apple's review decision. Do not report approval or storefront availability before Apple confirms them.
+2. Keep the accepted submission intact. Screenshot replacement remains a documented limitation; do not cancel the submission merely to repeat failed asset operations.
+3. Report storefront availability only after Apple approval and visible publication.
 
 Prepared copy: `../marketing/APP_STORE_METADATA_v3.8.2.md` and `APP_REVIEW_NOTES_3.8.2_BUILD_3.8.3.md`.
