@@ -14,3 +14,11 @@
 The DMG is Developer ID signed, not notarized or stapled. The account holder accepted the required Apple agreement on 15 October 2026. A separate successful notarization and stapling result is still required for this direct-download package. The existing notarized 3.7.0 remains the stable Mac download.
 
 Audio processing behavior is unchanged. These checks do not establish perceptual audio quality, optional-model quality, or production readiness of the experimental trusted-LAN worker. The GitHub workflow records remote CI results separately.
+
+## Store follow-up: 16 October 2026
+
+Build 3.8.2 was delivered, processed, and installed through TestFlight on a physical MacBook Pro (Mac15,9), Apple M3 Max, 64 GB, macOS 27.2 (26B5112a). The Apple receipt and recursive strict signature verification passed. The app-owned window and native Open panel worked; local upload, normalization, and WAV/MP3/FLAC export hashes matched their compliance records.
+
+Local transcription failed because the pinned Faster-Whisper VAD constructor does not accept `threshold`. Both normal and streaming paths now use explicit `onset` and `offset` values. The source correction passed 79 Python tests, 8 subtests, and 4 JavaScript regressions. Actual transcription of the developer sample passed in both paths with the unmodified Medium model from the installed Apple app. Requests is declared explicitly for clean runtime installations.
+
+The corrected Store candidate is version 3.8.2, internal build 3.8.3. Delivery, TestFlight validation, the requested recording, and App Review resubmission remain pending. These results do not validate the rebuilt Store package or alter the original 3.8.2 direct-download artifacts.
