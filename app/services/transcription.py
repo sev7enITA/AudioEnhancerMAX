@@ -108,7 +108,8 @@ def _transcribe_faster_whisper(
         vad_parameters=dict(
             min_silence_duration_ms=500,
             speech_pad_ms=400,
-            threshold=0.35,  # Lower = less aggressive
+            onset=0.35,  # Faster-Whisper 1.1 uses separate speech/silence thresholds.
+            offset=0.20,
         ),
         beam_size=5,
     )
@@ -208,7 +209,8 @@ def transcribe_streaming(
             vad_parameters=dict(
                 min_silence_duration_ms=500,
                 speech_pad_ms=400,
-                threshold=0.35,
+                onset=0.35,
+                offset=0.20,
             ),
             beam_size=5,
         )

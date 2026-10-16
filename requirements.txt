@@ -27,6 +27,7 @@ pyloudnorm==0.1.1
 
 # Speech-to-Text
 faster-whisper==1.1.0
+requests==2.34.2
 
 # Text-to-Speech
 edge-tts==7.2.8
