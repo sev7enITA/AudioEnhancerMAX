@@ -38,7 +38,7 @@ On the physical Mac described above, the Apple-distributed build passed:
 - Processing Report display and privacy settings with external services, Ollama assistance and trusted-LAN processing disabled.
 - Quit: the application process exited and its loopback listener released port 8000.
 
-Five current screenshots were captured from this installed build and prepared at 2880 x 1800 pixels. Their provenance and hashes are in `screenshots-3.8.2-build-3.8.3/manifest.json`. The continuous physical-Mac recording is also prepared: see `REVIEW_RECORDING_3.8.3.md`. Uploading the review materials and final App Review submission remain pending. These checks cover one device and OS; they do not establish perceptual audio quality or broader hardware compatibility.
+Five current screenshots were captured from this installed build and prepared at 2880 x 1800 pixels. Their provenance and hashes are in `screenshots-3.8.2-build-3.8.3/manifest.json`. The continuous physical-Mac recording is published at a verified direct URL for the reviewer: see `REVIEW_RECORDING_3.8.3.md`. Apple attachment upload failed, and delivery of the reviewer response is unconfirmed. Screenshot upload, build replacement and final App Review submission remain pending. These checks cover one device and OS; they do not establish perceptual audio quality or broader hardware compatibility.
 
 ## Account and listing
 
@@ -48,9 +48,9 @@ The editable Store version is 3.8.2, but the existing rejected submission is his
 
 ## Remaining steps
 
-1. Restore authenticated access to the distribution and review pages. App Store Connect repeatedly returned "Sorry, something went wrong" on 16 October; session renewal was started, and Apple requires owner sign-in. No incomplete forms were saved.
+1. Complete the portal operations once App Store Connect responds. Owner sign-in succeeded on 16 October, but the distribution page and review operations continued to return errors. A reply draft was preserved; attachment upload failed and sending the reply with a direct video link is unconfirmed. No incomplete version forms were saved.
 2. Upload the five current screenshots and replace historical build 3.5.2 with verified build 3.8.3. The review notes for build 3.8.3 are already saved.
-3. Send the prepared response to Apple's seven review questions with the completed recording attached, then resubmit.
+3. Confirm delivery of the response to Apple's seven review questions with the verified direct recording link, then resubmit.
 4. Report storefront availability only after Apple approval and visible publication.
 
 Prepared copy: `../marketing/APP_STORE_METADATA_v3.8.2.md` and `APP_REVIEW_NOTES_3.8.2_BUILD_3.8.3.md`.
