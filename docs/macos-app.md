@@ -32,7 +32,7 @@ The `.app` includes the Python runtime, backend, browser frontend, and installed
 
 Compressed formats that rely on FFmpeg require FFmpeg to be installed separately. WAV and formats handled directly by libsndfile do not require FFmpeg.
 
-Direct-download DMGs retain these documented external boundaries and must not be represented as the Mac App Store package. The App Store build sets `AEMAX_APP_STORE=1`; in that mode the readiness check requires FFmpeg and FFprobe inside the signed app bundle and rejects fallback to Homebrew or another system installation.
+Direct-download DMGs retain these documented external boundaries and must not be represented as the Mac App Store package. The App Store build sets `AEMAX_APP_STORE=1`; in that mode the readiness check requires packaged PyAV and its embedded FFmpeg libraries, plus the bundled Faster-Whisper model. The core Store workflow does not invoke an external media executable or require Homebrew.
 
 Model assets require the same treatment before App Store submission: a feature may use a bundled model or an explicitly disclosed resource download, but it must not silently obtain executable code. Ollama integration remains optional and cannot be a prerequisite for the core audio workflow.
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AudioEnhancerMAX Project Status - October 2026</title>
-    <meta name="description" content="Verified release, development, runtime, testing, security, and distribution status for AudioEnhancerMAX as of October 15, 2026.">
+    <meta name="description" content="Verified release, development, runtime, testing, security, and distribution status for AudioEnhancerMAX as of October 16, 2026.">
     <meta property="og:title" content="AudioEnhancerMAX Project Status">
     <meta property="og:description" content="A public, evidence-based view of what is released, what is in development, what is conditional, and what remains to be hardened.">
     <meta property="og:type" content="website">
@@ -36,7 +36,7 @@
         <h1>AudioEnhancerMAX 3.8: release evidence.</h1>
         <p class="hero-copy">Verified processing revisions, exact-format delivery evidence, and an explicit macOS distribution status.</p>
         <div class="hero-meta">
-            <span><span class="meta-label">Audited</span> <strong>October 15, 2026</strong></span>
+            <span><span class="meta-label">Audited</span> <strong>October 16, 2026</strong></span>
             <span><span class="meta-label">Public release</span> <strong>3.8.2 source</strong></span>
             <span><span class="meta-label">Signed package</span> <strong>3.8.2 preview</strong></span>
         </div>
@@ -46,7 +46,7 @@
         <section class="content-section" id="release">
             <span class="section-index">01 / Distribution</span><h2>Source release and macOS preview</h2>
             <p>The 3.8.2 source is published on GitHub and SourceForge. The new direct macOS DMG is Developer ID signed. The required Apple agreement was accepted on 15 October 2026. Direct-download notarization still requires a separate successful submission and stapling. The new Mac build remains a preview until notarization and stapling succeed; the existing notarized 3.7.0 stays available as the stable Mac download.</p>
-            <p>The Mac App Store 3.8.2 listing is prepared in English and Italian, with updated review materials and privacy details. Package upload is in progress. TestFlight verification and the new review submission are still pending; App Store availability is not yet claimed.</p>
+            <p>The Mac App Store 3.8.2 listing is prepared in English and Italian, with updated review materials and privacy details. Apple delivered and processed build 3.8.2, which was installed through TestFlight. Local testing found a transcription error. The correction is prepared as internal build 3.8.3 under the same public version, with upload and TestFlight verification still pending. No new App Review submission or App Store publication has been completed.</p>
         </section>
         <section class="content-section" id="workflow">
             <span class="section-index">02 / Implemented</span><h2>One completed revision through delivery</h2>
@@ -56,8 +56,9 @@
             <li>New runs clear the previous UI result; late responses cannot replace evidence for another revision.</li></ul>
         </section>
         <section class="content-section" id="quality">
-            <span class="section-index">03 / Verification</span><h2>75 Python tests and 4 JavaScript tests passed</h2>
+            <span class="section-index">03 / Verification</span><h2>79 Python tests and 4 JavaScript tests passed</h2>
             <p>Thirteen new audio/API cases cover interrupted processing, resumption, changed source/settings/build, corrupt checkpoints, three-run deterministic repeatability, cached conversions, stereo preservation, format changes, exact-export hash binding, speech-edit capsules and duplicate-job rejection. Four JavaScript cases exercise stale responses and disabled result actions.</p>
+            <p>Four additional transcription regressions cover both normal and streaming paths and their fallback behavior. The corrected source transcribes the review sample with the bundled Medium model. This source verification does not replace testing the rebuilt package distributed by Apple. Existing 3.8.2 download artifacts have not been replaced.</p>
             <p>The installed build environment passed dependency integrity checks and pip-audit reported no known vulnerabilities on 15 October 2026. These checks are scoped evidence, not a general security or audio-quality certification.</p>
         </section>
         <section class="content-section" id="limits">
@@ -70,7 +71,7 @@
 
     <footer>
         <div class="footer-inner">
-            <div>AudioEnhancerMAX Project Status | Audited October 15, 2026</div>
+            <div>AudioEnhancerMAX Project Status | Audited October 16, 2026</div>
             <ul class="footer-links">
                 <li><a href="index.html">Overview</a></li>
                 <li><a href="roadmap.html">Roadmap</a></li>

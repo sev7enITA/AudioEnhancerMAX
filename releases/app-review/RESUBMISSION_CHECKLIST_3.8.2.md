@@ -4,10 +4,10 @@ Use `APPLE_SUBMISSION_STATUS_3.8.2.md` for observed delivery and submission stat
 
 ## Delivery identity
 
-- Version/build: `3.8.2` / `3.8.2`.
+- Version/build: `3.8.2` / `3.8.3`.
 - App Store Connect ID: `6791591803`.
 - Bundle: `com.fabriziodegni.audioenhancermax`.
-- Package SHA-256: `f38e8e081f35a341da3dd3b968e9eccb575ca4cea4abe2fd9ed8ba54b46c5ecf`.
+- Package SHA-256: `33c442996fc70b56b2a1bf990990c6ce691f6c33d97f4935c5ea8eaff2a49e1a`.
 - Confirm Transporter delivery, successful Apple processing, and the installed TestFlight build independently.
 - Use the account holder's internal `Release Validation` group. Automatic distribution is disabled.
 
@@ -31,7 +31,7 @@ Use `APPLE_SUBMISSION_STATUS_3.8.2.md` for observed delivery and submission stat
 - Keep the privacy label consistent with the bundled manifest and disclosed optional text-to-speech service: Other User Content, App Functionality, not linked to identity, not used for tracking.
 - Explain the inbound loopback listener in both App Sandbox Information and the response to App Review.
 - Answer the seven points in Apple's existing correspondence: recording, tested device/OS, purpose/audience, access/workflow, external services, regional behavior, regulated services/third-party material.
-- Replace the previous build `3.5.2` with verified `3.8.2`. The existing rejected submission is historical; renaming the version does not constitute a new review outcome.
+- Replace the previous build `3.5.2` with verified `3.8.3` (version `3.8.2`). The existing rejected submission is historical; renaming the version does not constitute a new review outcome.
 - Confirm the intended automatic release after approval, submit, and save the terminal App Store Connect state.
 - App Store publication can only be reported after Apple approval and visible storefront availability.
 
