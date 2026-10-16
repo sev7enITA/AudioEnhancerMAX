@@ -1,0 +1,39 @@
+{
+  "app": "AudioEnhancerMAX",
+  "app_id": "6791591803",
+  "version": "3.8.2",
+  "build": "3.8.3",
+  "submission_id": "3b6023b7-27da-4ea8-afe5-afe6da2838f4",
+  "status": "WAITING_FOR_REVIEW",
+  "observed_label": "Waiting for Review",
+  "submitted_at_local": "2026-10-16 16:52",
+  "timezone": "Europe/Rome",
+  "timestamp_precision": "minute",
+  "observed_at": "2026-10-16T16:53:55.450095+02:00",
+  "review_reply": {
+    "status": "sent",
+    "sent_at_local": "2026-10-16 16:44",
+    "message_count": 2,
+    "video_url": "https://fabriziodegni.com/AudioEnhancerMAX/app-review/3.8.2-build-3.8.3/AudioEnhancerMAX-3.8.2-build-3.8.3-AppReview-final.mp4"
+  },
+  "screenshots": {
+    "new_asset_names_registered": 5,
+    "replacement_in_listing": "not_confirmed",
+    "limitation": "Upload and association controls returned errors. Resubmission proceeded with the saved listing; refreshed Store screenshots are not claimed."
+  },
+  "approval": "pending",
+  "publication": "pending",
+  "release_mode": "automatic_after_approval",
+  "source_tag_commit": "d46c48d97022a862d6238359de9ac67f3cc20043",
+  "store_source_fix_commit": "5cf155f41d7928901806541b9f0227f960be7bdf",
+  "local_evidence": [
+    {
+      "file": "build/recovery/apple-waiting-for-review-20261016.jpg",
+      "sha256": "9e4818cfa451a0cecdb1fe7c22021fea83702d1d874874e210b984982177aad5"
+    },
+    {
+      "file": "build/recovery/apple-review-reply-sent-20261016.jpg",
+      "sha256": "cc071b9a8eb45deb6991154930baa24046f7424de29c1d7bb41a7b5a0a311f2b"
+    }
+  ]
+}
