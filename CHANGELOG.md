@@ -4,6 +4,10 @@ All notable changes to AudioEnhancerMAX are documented here.
 
 ## [Unreleased]
 
+### Documentation
+
+- Publish English and Italian articles connecting documented AI risks to scoped product controls, with original application screenshots, source references and explicit limitations.
+
 ### Fixed
 
 - Correct speech-detection parameters for the pinned Faster-Whisper runtime in standard and streaming transcription. Previously, local transcription failed before inference with an unsupported `threshold` argument.

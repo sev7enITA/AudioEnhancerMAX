@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who decides what changes in a voice? | AudioEnhancerMAX</title>
+<meta name="description" content="Documented AI risks, reviewable decisions and the limits of AudioEnhancerMAX: examining governance through product choices.">
+<meta property="og:title" content="Who decides what changes in a voice?">
+<meta property="og:description" content="Documented AI risks, reviewable decisions and the limits of AudioEnhancerMAX: examining governance through product choices.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/governance.html">
+<meta property="og:image" content="https://fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+<meta property="og:locale" content="en_GB">
+<meta name="author" content="Fabrizio Degni">
+<link rel="canonical" href="https://fabriziodegni.com/AudioEnhancerMAX/governance.html">
+<link rel="alternate" hreflang="en" href="https://fabriziodegni.com/AudioEnhancerMAX/governance.html">
+<link rel="alternate" hreflang="it" href="https://fabriziodegni.com/AudioEnhancerMAX/governance-it.html">
+<link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/public-info.css">
+<link rel="stylesheet" href="css/governance.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<nav class="site-nav" aria-label="Primary navigation">
+<div class="nav-inner"><a class="brand" href="index.html"><img src="img/icons/aem-mark.svg" alt=""><span>AudioEnhancerMAX</span></a>
+<ul class="nav-links">
+<li><a href="status.html">Status</a></li>
+<li><a href="governance-it.html" lang="it" hreflang="it" aria-label="Read in Italian">Italiano</a></li>
+</ul>
+</div>
+</nav>
+<header class="hero governance-hero"><span class="eyebrow">Audio, AI and responsibility</span>
+<h1>Who decides what changes in a voice?</h1>
+<p class="hero-copy">A transcript can add words never spoken. An edit can remove a meaningful pause. AI governance enters the product when we decide who can change a recording, how to check the result and which records to keep.</p>
+<p class="byline">By Fabrizio Degni · October 17, 2026</p>
+<div class="hero-thesis">
+<p>AudioEnhancerMAX is an assistive audio tool. Here I explain several design choices, starting with risks that also affect the models we use. These choices make some decisions reviewable; the result still needs checking.</p>
+</div>
+</header>
+<main id="main-content" class="page-grid"><aside>
+<nav class="toc" aria-label="On this page">
+<ul>
+<li><a href="#cases">The cases</a></li>
+<li><a href="#controls">The controls</a></li>
+<li><a href="#product">In the product</a></li>
+<li><a href="#limits">The limits</a></li>
+<li><a href="#sources">The sources</a></li>
+</ul>
+</nav>
+</aside>
+<div class="article-body">
+<section class="content-section" id="cases"><span class="section-index">01 / The cases</span>
+<h2>Four cases, four different questions</h2>
+<p>A study, a corrected vulnerability, an experiment and deliberate misuse are different kinds of evidence. These cases illustrate specific risk mechanisms. They do not establish the overall balance of AI risks and benefits.</p>
+<div class="case-grid">
+<article class="case-card">
+<p class="case-type">Empirical study · 2024</p>
+<h3>Careless Whisper</h3>
+<p>Koenecke and colleagues observed invented phrases in Whisper transcripts under the conditions studied. This does not measure our build’s error rate. AudioEnhancerMAX uses Whisper-family models: even with local processing, the text needs checking against the recording.</p>
+<p class="case-question">Who checks the words attributed to a person?</p>
+<p class="case-source"><a href="#source-1">[1]</a></p>
+</article>
+<article class="case-card">
+<p class="case-type">Corrected vulnerability · 2025</p>
+<h3>EchoLeak</h3>
+<p>Microsoft describes an email-based prompt-injection chain that could, under certain conditions, exfiltrate limited data accessible to the user through Copilot. The vulnerability was corrected. This is not evidence of a customer data breach.</p>
+<p class="case-question">When does external content become an unauthorized instruction?</p>
+<p class="case-source"><a href="#source-2">[2]</a></p>
+</article>
+<article class="case-card">
+<p class="case-type">Controlled experiment · 2025</p>
+<h3>Project Vend</h3>
+<p>In the first phase of the Anthropic and Andon Labs experiment, the agent sometimes sold below cost. Phase two improved business results while retaining weaknesses under adversarial interaction. This is research into delegation limits, not an allegation of unethical conduct.</p>
+<p class="case-question">Which constraints are checked before a decision becomes an action?</p>
+<p class="case-source"><a href="#source-3">[3]</a>, <a href="#source-4">[4]</a></p>
+</article>
+<article class="case-card">
+<p class="case-type">Voice misuse · 2024</p>
+<h3>The New Hampshire calls</h3>
+<p>On September 26, 2024, the FCC announced a $6 million fine over calls using an imitation of Biden’s voice and spoofed caller ID. The reference is to that administrative action, not a criminal conviction or a collected fine.</p>
+<p class="case-question">Who authorizes the voice, and what does the listener believe?</p>
+<p class="case-source"><a href="#source-5">[5]</a></p>
+</article>
+</div>
+</section>
+<section class="content-section" id="controls"><span class="section-index">02 / The controls</span>
+<h2>From a principle to an observable choice</h2>
+<p>Connecting these cases to AudioEnhancerMAX is my design interpretation. The sources do not evaluate our product. The choices below are documented in the linked implementation and workflows.</p>
+<div class="control-grid">
+<article class="control-card"><span class="control-number">01</span>
+<h3>Preserve the source</h3>
+<p>The Precision Editor retains the imported recording and renders a new WAV. Original/proposed comparison allows the result to be reconsidered.</p>
+<p class="control-limit"><strong>Limit:</strong> Undoing a local decision does not recall copies already shared.</p>
+<a class="evidence-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/docs/precision-speech-editor.md">Code or documentation reference</a></article>
+<article class="control-card"><span class="control-number">02</span>
+<h3>Separate proposal and action</h3>
+<p>Precision Editor candidates start at Keep. Rendering uses only Apply decisions; the history supports Undo and Redo.</p>
+<p class="control-limit"><strong>Limit:</strong> This scope is the editor. Not every filter requires approval for each change.</p>
+<a class="evidence-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/app/services/speech_editor.py#L493">Code or documentation reference</a></article>
+<article class="control-card"><span class="control-number">03</span>
+<h3>Limit model delegation</h3>
+<p>Smart Enhance selects its DSP chain using local measurements and rules. Optional explanatory prose generated through Ollama is separate from parameter selection.</p>
+<p class="control-limit"><strong>Limit:</strong> A deterministic rule can still be inappropriate for the content.</p>
+<a class="evidence-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/app/services/smart_mode.py#L296">Code or documentation reference</a></article>
+<article class="control-card"><span class="control-number">04</span>
+<h3>Expose the transformations</h3>
+<p>Reports and Project Capsules record processing information and SHA-256 hashes. The Capsule excludes the source by default.</p>
+<p class="control-limit"><strong>Limit:</strong> Hashes check integrity against the manifest. They do not certify truth, identity or consent.</p>
+<a class="evidence-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/app/services/project_bundle.py#L55">Code or documentation reference</a></article>
+<article class="control-card"><span class="control-number">05</span>
+<h3>Explain the data flows</h3>
+<p>Core processing and local transcription are separate from optional external TTS services and LAN integrations.</p>
+<p class="control-limit"><strong>Limit:</strong> Processing on your computer does not remove model errors or security risks.</p>
+<a class="evidence-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/README.md#transparency-and-ai-governance">Code or documentation reference</a></article>
+<article class="control-card"><span class="control-number">06</span>
+<h3>State the limits of consent</h3>
+<p>Voice-profile enrolment requires a consent confirmation. Personal synthesis also depends on the optional MakeMyVoice runtime.</p>
+<p class="control-limit"><strong>Limit:</strong> This is a declaration, not independent verification of identity or rights, or a guarantee for every import path.</p>
+<a class="evidence-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/app/services/voice_profiles.py#L375">Code or documentation reference</a></article>
+</div>
+</section>
+<section class="content-section" id="product"><span class="section-index">03 / In the product</span>
+<h2>Two screens, including the warnings</h2>
+<p>Screenshots from the app installed through TestFlight on a physical Mac, version 3.8.2, build 3.8.3, captured on October 16, 2026. They show one test sample, not a general audio-quality evaluation.</p>
+<figure class="product-figure">
+<h3>A proposal remains a decision to make</h3>
+<a class="screenshot-link" href="img/governance/03-precision-editor.png" aria-label="Open the full-resolution screenshot: A proposal remains a decision to make"><img src="img/governance/03-precision-editor.png" alt="Precision Editor with twenty candidates, one Apply decision and the remaining candidates on Keep." width="2880" height="1800" loading="lazy" decoding="async"></a>
+<figcaption>In this session, one of twenty candidates is approved. The original, proposal and decision history are accessible in the same workflow. The presence of these controls does not by itself establish effective human review. <a href="img/governance/03-precision-editor.png">Open the full-resolution screenshot</a>.</figcaption>
+</figure>
+<figure class="product-figure">
+<h3>A useful report also shows what does not fit</h3>
+<a class="screenshot-link" href="img/governance/05-processing-report.png" aria-label="Open the full-resolution screenshot: A useful report also shows what does not fit"><img src="img/governance/05-processing-report.png" alt="Report with file hashes, one approved edit and a 16 kHz sample-rate warning against the Podcast target." width="2880" height="1800" loading="lazy" decoding="async"></a>
+<figcaption>The report retains the sample-rate warning: 16 kHz against the 44.1 kHz Podcast target. A signal score does not measure semantic fidelity, truthfulness or consent. <a href="img/governance/05-processing-report.png">Open the full-resolution screenshot</a>.</figcaption>
+</figure>
+<p class="provenance"><a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/releases/app-review/screenshots-3.8.2-build-3.8.3/manifest.json">Image provenance and hashes</a></p>
+</section>
+<section class="content-section" id="limits"><span class="section-index">04 / The limits</span>
+<h2>What still needs checking</h2>
+<p>AudioEnhancerMAX is not an autonomous agent. This page does not claim ethical, security or accuracy certification for the product. The described controls have a scope and need maintenance.</p>
+<ul>
+<li>Transcripts can contain errors. Breaths, clicks and silences are technical candidates that need listening in context.</li>
+<li>Before publishing a voice, check authorization and context. The software cannot determine the legitimacy of its use on its own.</li>
+<li>Further evaluations of silence, accents, speech conditions and preview comprehension remain to be designed. We do not present them as completed results.</li>
+</ul>
+<div class="notice">
+<p>Method: targeted code and documentation inspection at commit 9efa8d8, alongside screenshots from the stated test session. No new security tests, hallucination benchmarks or perceptual tests were run for this article.</p>
+</div>
+</section>
+<section class="content-section" id="sources"><span class="section-index">05 / The sources</span>
+<h2>Sources and scope</h2>
+<p>Sources consulted on October 17, 2026. Each case retains the date and conditions of its publication.</p>
+<ol class="source-list">
+<li id="source-1"><a href="https://arxiv.org/abs/2402.08021">Koenecke et al., Careless Whisper, ACM FAccT 2024</a></li>
+<li id="source-2"><a href="https://www.microsoft.com/en-us/security/security-insider/emerging-trends/ai-application-security-considerations-for-organizations">Microsoft, AI application security considerations, December 17, 2025, CVE-2025-32711</a></li>
+<li id="source-3"><a href="https://www.anthropic.com/research/project-vend-1">Anthropic and Andon Labs, Project Vend, June 27, 2025</a></li>
+<li id="source-4"><a href="https://www.anthropic.com/research/project-vend-2">Anthropic and Andon Labs, Project Vend: Phase two, December 18, 2025</a></li>
+<li id="source-5"><a href="https://docs.fcc.gov/public/attachments/DOC-405811A1.pdf">FCC, September 26, 2024 announcement (PDF)</a></li>
+</ol>
+</section>
+<section class="action-panel">
+<h2>Which decisions can you review?</h2>
+<p>For the next demonstration: listen to the source, examine a proposal, choose Keep or Apply, revisit the decision and read the report. Version availability and distribution channels are listed separately on the status page.</p>
+<div class="btn-row"><a class="btn primary" href="index.html">Explore AudioEnhancerMAX</a><a class="btn" href="status.html">Versions and availability</a></div>
+</section>
+</div>
+</main>
+<footer>
+<div class="footer-inner">
+<div>AudioEnhancerMAX · Governance through product choices</div>
+<ul class="footer-links">
+<li><a href="index.html">Product</a></li>
+<li><a href="privacy.html">Privacy</a></li>
+<li><a href="support.html">Support</a></li>
+<li><a href="https://github.com/sev7enITA/AudioEnhancerMAX">GitHub</a></li>
+</ul>
+</div>
+</footer>
+</body>
+</html>
