@@ -45,6 +45,8 @@ jobs:
               Path("web/support.html"),
               Path("web/privacy.html"),
               Path("web/accessibility.html"),
+              Path("web/governance.html"),
+              Path("web/governance-it.html"),
           ]
 
           for html_path in [*public_pages, Path("frontend/landing.html"), Path("frontend/roadmap.html")]:
