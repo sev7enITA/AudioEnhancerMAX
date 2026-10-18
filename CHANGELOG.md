@@ -2,7 +2,7 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
-## [Unreleased]
+## [3.8.3 / build 3.8.4] - 2026-10-18
 
 ### Fixed
 
@@ -11,7 +11,7 @@ All notable changes to AudioEnhancerMAX are documented here.
 - Calculate capsule hashes and sizes from the exact bytes written to the archive. Report unknown execution location when a usable report bound to the selected audio is unavailable.
 - Stream uploads in bounded chunks and run file import and decoding in a worker, keeping API requests responsive. Remove partial input and converted audio when import fails.
 
-These changes are source revisions awaiting a new packaged build and validation. Existing downloadable binaries and their Apple submission status are unchanged by this patch.
+The direct macOS package is Developer ID signed, Apple notarized and stapled. Version 3.8.3/build 3.8.4 passed packaged runtime verification and 101 Python tests, 8 subtests and 5 JavaScript tests. The separate 3.8.2/build 3.8.3 App Store submission continues unchanged. See [release notes](releases/RELEASE_NOTES_v3.8.3.md) and [package evidence](releases/DIRECT_BUILD_3.8.4.md).
 
 ### Documentation
 

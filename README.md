@@ -5,9 +5,9 @@
 ### The open-source AI audio media center
 
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
-**16+ processing modules · Apple Silicon acceleration · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.8.2**
+**16+ processing modules · Apple Silicon acceleration · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.8.3**
 
-Version 3.8 binds checkpoints, playback, conversions, delivery guidance and project evidence to a specific completed output. [Release notes](releases/RELEASE_NOTES_v3.8.2.md) · [Validation](docs/revision-delivery.md).
+Version 3.8 binds checkpoints, playback, conversions, delivery guidance and project evidence to a specific completed output. [Release notes](releases/RELEASE_NOTES_v3.8.3.md) · [Validation](docs/revision-delivery.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-06b6d4.svg)](https://python.org)
@@ -34,7 +34,7 @@ AudioEnhancerMAX turns raw recordings into cleaner, production-ready audio witho
 
 AudioEnhancerMAX is built for creators, podcasters, researchers, interviewers, and audio-heavy workflows where privacy, control, and auditability matter. It combines local DSP, AI-assisted decisions, real-time monitoring, transcription, text-to-speech, and optional Android edge workers in one FastAPI + vanilla JS application.
 
-The v3.8.2 source release and direct macOS preview use an app-owned AppKit/WKWebView window. Apple notarization of the new DMG remains pending; the notarized 3.7.0 remains the stable Mac download. See [macOS App](docs/macos-app.md).
+The v3.8.3 source release and direct macOS package use an app-owned AppKit/WKWebView window. The direct 3.8.3/build 3.8.4 DMG is Developer ID signed, Apple notarized and stapled; the earlier notarized 3.7.0 remains available. See [macOS App](docs/macos-app.md).
 
 The default architecture is local-first: uploads, DSP output, timing history, and local model inference stay on the host machine unless you explicitly enable an integration that sends data elsewhere. You decide when to use local AI through Ollama/Gemma, when to offload DSP chunks to trusted devices on your LAN, and which output format to export.
 
@@ -63,13 +63,13 @@ Requires Apple Silicon and macOS 13+.
 
 | Channel | Download and status |
 | --- | --- |
-| Stable, notarized | [3.7.0 notarized DMG](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg) |
-| Newer, internally validated | [3.8.2, build 3.8.3](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg): Developer ID signed, local transcription correction included, Apple notarization pending |
+| Earlier stable, notarized | [3.7.0 notarized DMG](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg) |
+| Latest stable | [3.8.3, build 3.8.4](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/AudioEnhancerMAX-v3.8.3-build-3.8.4-macOS-arm64.dmg): Developer ID signed, Apple notarized and stapled; privacy, capsule evidence and import fixes |
 | Mac App Store | Separate 3.8.2/build 3.8.3 submission; last confirmed Waiting for Review on 17 October. No public Store release is claimed. |
 
-Choose between the two direct downloads after comparing their changelogs: [3.7.0](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.7.0) and [3.8.2/build 3.8.3](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.2). [Compare versions on the website](https://fabriziodegni.com/AudioEnhancerMAX/#download).
+Choose between the two direct downloads after comparing their changelogs: [3.7.0](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.7.0) and [3.8.3/build 3.8.4](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3). [Compare versions on the website](https://fabriziodegni.com/AudioEnhancerMAX/#download).
 
-The features described below include the 3.8 preview additions. Direct transcription models may download on first use; subsequent inference runs locally. [Distribution evidence](releases/DIRECT_BUILD_3.8.3.md) · [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/files/v3.8.2/).
+The features described below include the 3.8.3 additions. Direct transcription models may download on first use; subsequent inference runs locally. [Distribution evidence](releases/DIRECT_BUILD_3.8.4.md) · [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/files/v3.8.3/).
 
 ### Run from Source
 
@@ -197,7 +197,7 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - [AI Governance Notes](docs/ai-governance.md)
 - Governance through product choices: [English](https://fabriziodegni.com/AudioEnhancerMAX/governance.html) / [Italiano](https://fabriziodegni.com/AudioEnhancerMAX/governance-it.html)
 - [macOS App and Packaging](docs/macos-app.md)
-- [v3.8.2 Release Notes](releases/RELEASE_NOTES_v3.8.2.md)
+- [v3.8.3 Release Notes](releases/RELEASE_NOTES_v3.8.3.md)
 - [3.7.4 Delivery Review Evidence](docs/delivery-review-evidence.md)
 - [v3.6-to-v3.7 Implementation Record](docs/v3.6-implementation-plan.md)
 - [Troubleshooting / FAQ](docs/faq.md)

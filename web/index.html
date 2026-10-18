@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioEnhancerMAX 3.8.2 - Local-First, Reviewable Audio Production</title>
+    <title>AudioEnhancerMAX 3.8.3 - Local-First, Reviewable Audio Production</title>
     <meta name="description" content="AudioEnhancerMAX is an open-source, local-first audio production workspace. Version 3.8 links processing, review and export to one audio revision, with verifiable checkpoints and format-specific delivery evidence.">
     <meta name="keywords" content="audio enhancer, podcast processing, AI audio, noise removal, Apple Silicon, Metal GPU, edge computing, open source">
-    <meta property="og:title" content="AudioEnhancerMAX 3.8.2 - Local-First Audio Production">
+    <meta property="og:title" content="AudioEnhancerMAX 3.8.3 - Local-First Audio Production">
     <meta property="og:description" content="Reviewable audio production with verified release evidence, explicit runtime boundaries, and a public engineering status.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fabriziodegni.com/AudioEnhancerMAX/">
@@ -1020,7 +1020,7 @@
             <a href="#download" class="btn btn-primary">Compare versions and download</a>
             <a href="governance.html" class="btn btn-secondary">Explore AI governance</a>
         </div>
-        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">Choose 3.7.0, stable and notarized, or 3.8.2 / build 3.8.3, internally validated and available as a signed preview. Compare each changelog and Apple distribution status below.</p>
+        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">Download the latest 3.8.3 / build 3.8.4, signed and Apple notarized, or choose the earlier 3.7.0 release. Compare each changelog and distribution status below.</p>
         <div class="hero-stats">
             <div class="hero-stat">
                 <div class="num">Native</div>
@@ -1060,7 +1060,7 @@
             <div class="ledger-head" role="row"><span>Scope</span><span>Status</span><span>What that means</span></div>
             <div class="ledger-row" role="row"><strong>Verified checkpoints</strong><span class="ledger-boundary">Local DSP</span><span class="ledger-evidence">Changed source, settings or build restarts cleanly. Compatible float snapshots preserve processing precision.</span></div>
             <div class="ledger-row" role="row"><strong>Revision-bound delivery</strong><span class="ledger-boundary">WAV / MP3 / FLAC</span><span class="ledger-evidence">Playback, conversions, reports and capsules identify the completed result. Guidance records the exact export hash.</span></div>
-            <div class="ledger-row" role="row"><strong>3.8 source + Mac preview</strong><span class="ledger-boundary">79 Python + 4 JS tests</span><span class="ledger-evidence">Preview 3.8.2, build 3.8.3, includes the local transcription correction. Developer ID signed; not yet notarized. Stable notarized download: 3.7.0.</span></div>
+            <div class="ledger-row" role="row"><strong>3.8.3 source + Mac release</strong><span class="ledger-boundary">101 Python + 5 JS tests</span><span class="ledger-evidence">Build 3.8.4 strengthens privacy recovery, render-bound capsule evidence and file import. Developer ID signed, Apple notarized and stapled.</span></div>
         </div>
         <div class="hero-actions" style="margin-top:28px;">
             <a href="status.html" class="btn btn-secondary">Read the full project status</a>
@@ -1073,7 +1073,7 @@
     <div class="container">
         <span class="section-label">Release proof ledger</span>
         <h2 class="section-title">Capability, boundary, evidence.</h2>
-        <p class="section-desc">The capabilities below describe the 3.8 preview workflow. The stable 3.7.0 download does not include all of these additions. Runtime availability and validation limits are documented in the release notes.</p>
+        <p class="section-desc">The capabilities below describe the 3.8.3 workflow. The stable 3.7.0 download does not include all of these additions. Runtime availability and validation limits are documented in the release notes.</p>
         <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX 3.8 capability evidence">
             <div class="ledger-head" role="row"><span>Capability</span><span>Runs where</span><span>Validation evidence</span></div>
             <div class="ledger-row" role="row"><strong>Native macOS workspace</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Standalone AppKit/WebKit window with AudioEnhancerMAX application identity.</span></div>
@@ -1314,7 +1314,7 @@
                 <p>Release notes describe shipped behavior. The claims matrix connects each public statement to code, tests, or packaged-app validation.</p>
             </div>
             <div class="evidence-links">
-                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.8.2.md" target="_blank" rel="noopener noreferrer">Release notes</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.8.3.md" target="_blank" rel="noopener noreferrer">Release notes</a>
                 <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/marketing/CLAIMS_EVIDENCE_MATRIX_v3.8.2.md" target="_blank" rel="noopener noreferrer">Claims matrix</a>
                 <a href="status.html">Current audit status</a>
                 <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source repository</a>
@@ -1347,7 +1347,7 @@
     </div>
     <div class="release-grid">
         <article class="release-choice" id="download-370" aria-labelledby="release-370-title">
-            <p class="release-label">Stable · Apple notarized</p>
+            <p class="release-label">Earlier stable · Apple notarized</p>
             <h3 id="release-370-title">AudioEnhancerMAX 3.7.0</h3>
             <p>A notarized Mac download with local audio processing, reviewable speech edits, delivery profiles and processing reports.</p>
             <p class="release-status"><strong>Apple status:</strong> Developer ID signed, notarized and stapled. This direct download is separate from the Mac App Store.</p>
@@ -1362,22 +1362,23 @@
             </details>
             <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg" class="btn btn-primary release-download">Download 3.7.0</a>
         </article>
-        <article class="release-choice" id="download-382" aria-labelledby="release-382-title">
-            <p class="release-label">Internally validated · signed preview</p>
-            <h3 id="release-382-title">AudioEnhancerMAX 3.8.2 <small>Build 3.8.3</small></h3>
-            <p>The newer workflow adds verified processing checkpoints, exports tied to a completed result, and the local transcription correction.</p>
-            <p class="release-status"><strong>Apple status:</strong> this direct DMG is Developer ID signed; notarization is pending. The separate App Store build was submitted for review, last confirmed Waiting for Review on 17 October. It is not a public Store download.</p>
-            <details class="release-changelog" id="changelog-382" open>
-                <summary>3.8.2 / build 3.8.3 changelog</summary>
+        <article class="release-choice" id="download-383" aria-labelledby="release-383-title">
+            <p class="release-label">Latest stable · Apple notarized</p>
+            <h3 id="release-383-title">AudioEnhancerMAX 3.8.3 <small>Build 3.8.4</small></h3>
+            <p>Local audio editing with AI governance built in: reviewable decisions, preserved originals and evidence tied to the audio you export.</p>
+            <p class="release-status"><strong>Apple status:</strong> this direct DMG is Developer ID signed, notarized and stapled. The separate 3.8.2/build 3.8.3 App Store submission remains in progress, last confirmed Waiting for Review on 17 October.</p>
+            <details class="release-changelog" id="changelog-383" open>
+                <summary>3.8.3 / build 3.8.4 changelog</summary>
                 <ul>
-                    <li>Verified DSP checkpoints and distinct output revisions introduced in 3.8.</li>
-                    <li>WAV/MP3/FLAC downloads, reports and capsules identify the selected result; stale conversions and late interface responses are rejected.</li>
-                    <li>Build 3.8.3 fixes the local transcription error in normal and streaming paths. Direct models may download on first use.</li>
+                    <li>Optional services stay disabled when privacy preferences cannot be read; valid saved choices are preserved.</li>
+                    <li>Project Capsules retain the decisions and transcript used by the selected render, with hashes of the actual archived bytes.</li>
+                    <li>File import uses bounded reads and keeps the interface API responsive.</li>
+                    <li>Includes 3.8 checkpoints, revision-bound exports and the local transcription correction. Models may download on first use.</li>
                 </ul>
-                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.2" target="_blank" rel="noopener noreferrer">Read the full 3.8.2 release notes</a>
-                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/DIRECT_BUILD_3.8.3.md" target="_blank" rel="noopener noreferrer">Inspect the direct-build checks</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3" target="_blank" rel="noopener noreferrer">Read the full 3.8.3 release notes</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/DIRECT_BUILD_3.8.4.md" target="_blank" rel="noopener noreferrer">Inspect the direct-build checks</a>
             </details>
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg" class="btn btn-primary release-download">Download 3.8.2 · build 3.8.3</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/AudioEnhancerMAX-v3.8.3-build-3.8.4-macOS-arm64.dmg" class="btn btn-primary release-download">Download 3.8.3 · build 3.8.4</a>
         </article>
     </div>
     <p class="download-notes">Internal validation and Apple distribution approval are different checks. Features and model setup vary by version and channel. Read the notes for the package you choose.</p>
@@ -1409,7 +1410,7 @@
 <footer>
     <div class="footer-inner">
         <div class="footer-left">
-            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX 3.8.2 · local-first · MIT License · © 2026 Fd</span>
+            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX 3.8.3 · local-first · MIT License · © 2026 Fd</span>
         </div>
         <ul class="footer-links">
             <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
