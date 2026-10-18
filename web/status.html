@@ -37,15 +37,15 @@
         <p class="hero-copy">Verified processing revisions, exact-format delivery evidence, and an explicit macOS distribution status.</p>
         <div class="hero-meta">
             <span><span class="meta-label">Audited</span> <strong>October 18, 2026</strong></span>
-            <span><span class="meta-label">Public release</span> <strong>3.8.2 source</strong></span>
-            <span><span class="meta-label">Signed package</span> <strong>3.8.2 / build 3.8.3 preview</strong></span>
+            <span><span class="meta-label">Public release</span> <strong>3.8.3 source</strong></span>
+            <span><span class="meta-label">Signed package</span> <strong>3.8.3 / build 3.8.4 notarized</strong></span>
         </div>
     </header>
 
     <main id="main-content" class="container">
         <section class="content-section" id="release">
-            <span class="section-index">01 / Distribution</span><h2>Source release and macOS preview</h2>
-            <p>Two direct downloads are available side by side: notarized stable 3.7.0 and internally validated 3.8.2/build 3.8.3. Compare their <a href="index.html#download">downloads and changelogs</a> to choose the version that fits your workflow. Preview 3.8.2, build 3.8.3, now includes the local transcription correction in the direct-download DMG. It is Developer ID signed and still requires Apple notarization and stapling. The previous direct DMG is retained as a historical artifact; use the filename containing build-3.8.3 for the corrected preview.</p>
+            <span class="section-index">01 / Distribution</span><h2>Source release and notarized macOS package</h2>
+            <p>The latest direct release is 3.8.3/build 3.8.4, Developer ID signed, Apple notarized and stapled. It includes privacy recovery, render-bound Project Capsule evidence and bounded file import. The earlier notarized 3.7.0 remains available alongside it. Compare their <a href="index.html#download">downloads and changelogs</a>. Historical 3.8.2 files remain in the release archive.</p>
             <p>The Mac App Store 3.8.2 listing is prepared in English and Italian, with updated review materials and privacy details. The corrected internal build 3.8.3 was delivered and processed on 16 October 2026. The TestFlight-installed build passed local processing, transcription, speech editing and export checks on a physical Mac. Version 3.8.2 with build 3.8.3 was submitted to App Review on 16 October 2026 at 16:52 Europe/Rome. The last App Store Connect check on 17 October confirmed Waiting for Review. The reviewer response includes the continuous recording link. This page does not claim App Store approval or publication.</p>
         </section>
         <section class="content-section" id="workflow">
@@ -56,16 +56,16 @@
             <li>New runs clear the previous UI result; late responses cannot replace evidence for another revision.</li></ul>
         </section>
         <section class="content-section" id="quality">
-            <span class="section-index">03 / Verification</span><h2>79 Python tests and 4 JavaScript tests passed</h2>
-            <p>Thirteen new audio/API cases cover interrupted processing, resumption, changed source/settings/build, corrupt checkpoints, three-run deterministic repeatability, cached conversions, stereo preservation, format changes, exact-export hash binding, speech-edit capsules and duplicate-job rejection. Four JavaScript cases exercise stale responses and disabled result actions.</p>
-            <p>Four additional transcription regressions cover normal and streaming paths and their fallback behavior. On 18 October the corrected direct DMG passed packaged runtime checks for processing, normal and streaming transcription, speech-edit apply/undo/redo/render, WAV/MP3/FLAC exports and capsule hashes. The test used the developer-owned review sample and an existing local Medium model cache with Hugging Face and Transformers offline flags. First-time model acquisition and audio quality are not established by this test. TestFlight screenshots show the separate App Store build 3.8.3, whose model packaging differs from the direct download.</p>
+            <span class="section-index">03 / Verification</span><h2>101 Python tests and 5 JavaScript tests passed</h2>
+            <p>Thirteen new audio/API cases cover interrupted processing, resumption, changed source/settings/build, corrupt checkpoints, three-run deterministic repeatability, cached conversions, stereo preservation, format changes, exact-export hash binding, speech-edit capsules and duplicate-job rejection. Five JavaScript cases cover stale responses, disabled result actions and privacy recovery messaging. Additional Python cases verify invalid preferences, capsule byte integrity, frozen render evidence and upload boundaries.</p>
+            <p>Four additional transcription regressions cover normal and streaming paths and their fallback behavior. On 18 October direct version 3.8.3/build 3.8.4 passed packaged runtime checks for processing, normal and streaming transcription, speech-edit apply/undo/redo/render, WAV/MP3/FLAC exports and capsule hashes, including evidence preservation after later edits and transcription changes. Packaged privacy recovery and strict permission validation also passed. The test used the developer-owned review sample and an existing local Medium model cache with Hugging Face and Transformers offline flags. First-time model acquisition and audio quality are not established by this test. TestFlight screenshots show the separate App Store build 3.8.3, whose model packaging differs from the direct download.</p>
             <p>The installed build environment passed dependency integrity checks and pip-audit reported no known vulnerabilities on 15 October 2026. These checks are scoped evidence, not a general security or audio-quality certification.</p>
         </section>
         <section class="content-section" id="limits">
             <span class="section-index">04 / Boundaries</span><h2>Local runtime and optional engines</h2>
             <p>Core processing runs locally. Direct macOS transcription models are runtime-managed; the App Store packaging path is separate. MakeMyVoice personal-voice synthesis needs an installed compatible runtime and explicit voice-owner consent. Optional external TTS and trusted-LAN processing remain independently controlled.</p>
             <p>Model-dependent and LAN paths do not claim resumable identity. Android debug workers remain experimental and disabled by default. Keep one backend worker per data directory. Completed revisions are retained locally, so disk usage grows until the user removes unneeded artifacts.</p>
-            <p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/DIRECT_BUILD_3.8.3.md">Direct build verification</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.2">Release notes</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/docs/revision-delivery.md">API and validation contract</a> · <a href="https://sourceforge.net/projects/audioenhancermax/files/">SourceForge downloads</a></p>
+            <p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/DIRECT_BUILD_3.8.4.md">Direct build verification</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3">Release notes</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/docs/revision-delivery.md">API and validation contract</a> · <a href="https://sourceforge.net/projects/audioenhancermax/files/">SourceForge downloads</a></p>
         </section>
     </main>
 

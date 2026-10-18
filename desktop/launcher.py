@@ -18,9 +18,9 @@ import urllib.request
 
 
 APP_NAME = "AudioEnhancerMAX"
-APP_VERSION = "3.8.2"
-APP_BUILD = "3.8.2"
-UI_REVISION = "20261015.v38editorial3"
+APP_VERSION = "3.8.3"
+APP_BUILD = "3.8.4"
+UI_REVISION = "20261018.v383governance"
 DEFAULT_PORT = 8000
 BUNDLE_IDENTIFIER = "com.fabriziodegni.audioenhancermax"
 

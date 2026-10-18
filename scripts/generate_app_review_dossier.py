@@ -41,8 +41,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-sha256", required=True)
     parser.add_argument("--pkg-size", required=True)
     parser.add_argument("--signed-at", required=True)
-    parser.add_argument("--marketing-version", default="3.8.2")
-    parser.add_argument("--build-number", default="3.8.2")
+    parser.add_argument("--marketing-version", default="3.8.3")
+    parser.add_argument("--build-number", default="3.8.4")
     parser.add_argument(
         "--review-date",
         default=date.today().strftime("%d %B %Y").lstrip("0"),

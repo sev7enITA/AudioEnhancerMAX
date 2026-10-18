@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT="${0:A:h:h}"
-VERSION="${AEMAX_MARKETING_VERSION:-3.8.2}"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.3}"
+VERSION="${AEMAX_MARKETING_VERSION:-3.8.3}"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.4}"
 BUILD_DIR="${AEMAX_BUILD_DIR:-${ROOT}/build/macos}"
 DIST_DIR="${AEMAX_DIST_DIR:-${ROOT}/dist/macos}"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"

@@ -12,7 +12,7 @@ class HealthEndpointTests(unittest.TestCase):
             payload = asyncio.run(health())
 
         self.assertEqual(payload["status"], "healthy")
-        self.assertEqual(payload["version"], "3.8.2")
+        self.assertEqual(payload["version"], "3.8.3")
         self.assertIn("build", payload)
         self.assertFalse(payload["mps_available"])
 

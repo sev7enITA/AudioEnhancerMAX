@@ -7,8 +7,8 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 ROOT = Path(SPEC).resolve().parents[2]
-VERSION = os.getenv("AEMAX_MARKETING_VERSION", "3.8.2")
-BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", "3.8.2")
+VERSION = os.getenv("AEMAX_MARKETING_VERSION", "3.8.3")
+BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", "3.8.4")
 DISTRIBUTION = os.getenv("AEMAX_DISTRIBUTION", "direct")
 ICON = ROOT / "packaging" / "macos" / "AudioEnhancerMAX.icns"
 WHISPER_MODEL_DIR = Path(os.getenv("AEMAX_WHISPER_MODEL_DIR", ""))
