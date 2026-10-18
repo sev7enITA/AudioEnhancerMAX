@@ -3388,7 +3388,7 @@ function renderProcessingReport(report) {
         <section class="report-score-grid">
             <div><span>Input score</span><strong>${escapeHtml(String(input.quality_score ?? '-'))}</strong><small>${escapeHtml(input.quality_grade || '')}</small></div>
             <div><span>Output score</span><strong>${escapeHtml(String(output.quality_score ?? '-'))}</strong><small>${escapeHtml(output.quality_grade || '')}</small></div>
-            <div><span>Processing</span><strong>${escapeHtml(privacy.processing_location || 'local')}</strong><small>${privacy.audio_transmitted ? 'Trusted-LAN transmission used' : 'No audio transmission recorded'}</small></div>
+            <div><span>Processing</span><strong>${escapeHtml(privacy.processing_location || 'unknown')}</strong><small>${privacy.audio_transmitted ? 'Trusted-LAN transmission used' : 'No audio transmission recorded'}</small></div>
             <div><span>Elapsed</span><strong>${report.elapsed_seconds == null ? '-' : `${Number(report.elapsed_seconds).toFixed(2)}s`}</strong><small>${pipeline.length} pipeline step(s)</small></div>
         </section>
         <section class="report-section">
@@ -4072,7 +4072,10 @@ async function loadRuntimePrivacySettings() {
         document.getElementById('setting-ollama-editorial').checked = state.runtimePrivacy.ollama_editorial_allowed;
         document.getElementById('setting-trusted-lan').checked = state.runtimePrivacy.trusted_lan_processing_allowed;
         applyRuntimePrivacyUi();
-        document.getElementById('privacy-settings-status').textContent = 'Current boundaries loaded from this Mac.';
+        document.getElementById('privacy-settings-status').textContent = state.runtimePrivacy.warning || 'Current boundaries loaded from this Mac.';
+        if (state.runtimePrivacy.status !== 'saved' && state.runtimePrivacy.warning) {
+            showToast('warning', state.runtimePrivacy.warning);
+        }
     } catch (error) {
         const status = document.getElementById('privacy-settings-status');
         if (status) status.textContent = error.message;

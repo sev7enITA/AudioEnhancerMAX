@@ -24,6 +24,16 @@ AudioEnhancerMAX is designed as a local-first, AI-assisted audio tool. It is not
 
 ## Explainability Boundaries
 
+### Unreleased source revision: privacy recovery and capsule evidence
+
+Valid saved privacy preferences are preserved. Missing, unreadable or malformed preferences disable all three optional permissions until the user saves their choices: external services, local Ollama assistance and trusted-LAN processing. The settings panel explains the recovery state. This does not block downloads of transcription models or constitute a system-wide network firewall.
+
+New speech renders retain the full edit list that produced their audio, including the source transcript and word timings available to the editor. A project capsule exports that snapshot, not a later draft or a newer transcription. Older renders without this evidence remain exportable with a warning; their missing history is not reconstructed from current decisions. Capsules for ordinary DSP output do not attach unrelated editorial drafts.
+
+The capsule manifest records the selected audio revision. Each included file's SHA-256 and byte count are calculated from the same stream written to its ZIP entry. Processing location is `unknown` when the report is unavailable, invalid or not bound to the selected audio revision and master hash. These checks establish internal consistency, not trusted authorship, voice-owner consent, regulatory compliance or perceptual quality.
+
+These changes apply to the source revision described under `Unreleased` in the changelog. They require a new packaged build and validation before they can be claimed for a downloadable application.
+
 The app can explain selected filters, preset options, timing estimates, and whether Smart Mode or dynamic tuning was used. It does not yet provide a full formal model card, confidence calibration report, or per-sample causal explanation for every DSP transformation.
 
 For production governance, pair AudioEnhancerMAX output with:

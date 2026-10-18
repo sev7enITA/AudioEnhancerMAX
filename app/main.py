@@ -252,8 +252,8 @@ async def get_system_capabilities():
 
 @app.get("/api/settings/privacy")
 async def get_runtime_privacy_settings():
-    from app.services.runtime_settings import load_runtime_settings
-    return load_runtime_settings()
+    from app.services.runtime_settings import runtime_settings_status
+    return runtime_settings_status()
 
 
 @app.patch("/api/settings/privacy")
@@ -458,35 +458,35 @@ async def get_estimate_history():
 # ══════════════════════════════════════════════════════════
 
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
-    if not validate_extension(file.filename):
+def upload_file(file: UploadFile = File(...)):
+    # FastAPI runs sync routes in its worker pool, including decoding and disk I/O.
+    if not file.filename or not validate_extension(file.filename):
         raise HTTPException(400, f"Unsupported format. Allowed: {', '.join(ALLOWED_EXTENSIONS)}")
 
     file_id = generate_file_id()
     ext = Path(file.filename).suffix.lower()
     upload_path = get_upload_path(file_id, ext)
-
-    content = await file.read()
-    size_mb = len(content) / (1024 * 1024)
-    if size_mb > MAX_FILE_SIZE_MB:
-        raise HTTPException(400, f"File too large. Max: {MAX_FILE_SIZE_MB}MB")
-
-    with open(upload_path, "wb") as f:
-        f.write(content)
-
+    wav_path = get_upload_path(file_id, ".wav")
+    size_bytes = 0
+    completed = False
     try:
+        with upload_path.open("wb") as destination:
+            while chunk := file.file.read(1024 * 1024):
+                size_bytes += len(chunk)
+                if size_bytes > MAX_FILE_SIZE_MB * 1024 * 1024:
+                    raise HTTPException(400, f"File too large. Max: {MAX_FILE_SIZE_MB}MB")
+                destination.write(chunk)
         info = get_audio_info(upload_path)
         audio, sr = load_audio(upload_path)
-        wav_path = get_upload_path(file_id, ".wav")
         if ext != ".wav":
             save_audio(audio, sr, wav_path)
 
         waveform = generate_waveform_data(audio, num_points=500)
-
+        completed = True
         return {
             "file_id": file_id,
             "filename": file.filename,
-            "size_bytes": len(content),
+            "size_bytes": size_bytes,
             "duration_seconds": info["duration"],
             "sample_rate": info["sample_rate"],
             "channels": info["channels"],
@@ -495,9 +495,14 @@ async def upload_file(file: UploadFile = File(...)):
             "waveform_data": waveform,
             "audio_url": f"/api/audio/{file_id}",
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        upload_path.unlink(missing_ok=True)
         raise HTTPException(500, f"Failed to process upload: {str(e)}")
+    finally:
+        if not completed:
+            upload_path.unlink(missing_ok=True)
+            wav_path.unlink(missing_ok=True)
 
 
 @app.get("/api/audio/{file_id}")
@@ -1019,8 +1024,8 @@ async def export_project(file_id: str, request: ProjectCapsuleRequest):
 
     from app.services.delivery_compliance import analyze_delivery
     from app.services.artifact_store import atomic_json
-    from app.services.project_bundle import export_project_capsule
-    from app.services.speech_editor import speech_edl_path
+    from app.services.project_bundle import export_project_capsule, revision_evidence
+    import json
     try:
         compliance = await asyncio.to_thread(analyze_delivery, output_path, request.target_id)
         compliance["revision"] = artifact["revision"]
@@ -1030,22 +1035,9 @@ async def export_project(file_id: str, request: ProjectCapsuleRequest):
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
 
-    candidates = {
-        "processing-report": master_path.with_suffix(".report.json"),
-        "delivery-compliance": compliance_file,
-        "speech-edl": speech_edl_path(file_id),
-        "transcript": OUTPUT_DIR / f"{file_id}_transcript.json",
-        "blind-ab-review": master_path.with_suffix(".review.json"),
-    }
-    optional = {role: path for role, path in candidates.items() if path.is_file()}
-    execution_boundary = "local"
-    if candidates["processing-report"].is_file():
-        try:
-            import json
-            stored_report = json.loads(candidates["processing-report"].read_text(encoding="utf-8"))
-            execution_boundary = stored_report.get("privacy", {}).get("processing_location", "local")
-        except (OSError, ValueError):
-            pass
+    inline, execution_boundary, warnings = await asyncio.to_thread(revision_evidence, master_path, artifact)
+    inline["delivery-compliance"] = (compliance_file.name, json.dumps(compliance, indent=2, ensure_ascii=False).encode("utf-8"))
+    review_path = master_path.with_suffix(".review.json")
     capsule, _ = await asyncio.to_thread(
         export_project_capsule,
         file_id=file_id,
@@ -1053,9 +1045,12 @@ async def export_project(file_id: str, request: ProjectCapsuleRequest):
         app_build=APP_BUILD,
         source_path=source_path,
         output_path=output_path,
-        optional_artifacts=optional,
+        optional_artifacts={"blind-ab-review": review_path} if review_path.is_file() else {},
+        inline_artifacts=inline,
         include_source=request.include_source,
         execution_boundary=execution_boundary,
+        evidence_warnings=warnings,
+        artifact_revision=artifact["revision"],
     )
     return FileResponse(capsule, media_type="application/zip", filename=capsule.name)
 

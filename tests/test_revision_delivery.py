@@ -13,6 +13,7 @@ from app import main
 from app.services import artifact_store, delivery_compliance, processing_report, project_bundle
 from app.services import processing_checkpoint as checkpoints
 from app.services import smart_mode, enhancement, runtime_settings
+from app.services import speech_editor
 from app.utils import audio_io
 
 
@@ -24,11 +25,12 @@ def api(tmp_path, monkeypatch):
     outputs.mkdir()
     for module in (main, audio_io):
         monkeypatch.setattr(module, 'UPLOAD_DIR', uploads)
-    for module in (main, audio_io, artifact_store, delivery_compliance, processing_report):
+    for module in (main, audio_io, artifact_store, delivery_compliance, processing_report, speech_editor):
         monkeypatch.setattr(module, 'OUTPUT_DIR', outputs)
     monkeypatch.setattr(smart_mode, 'get_dynamic_parameters', lambda *args: {})
     monkeypatch.setattr(runtime_settings, 'external_service_allowed', lambda *args: False)
     monkeypatch.setattr(project_bundle, 'PROJECTS_DIR', tmp_path / 'projects')
+    monkeypatch.setattr(runtime_settings, 'RUNTIME_SETTINGS_FILE', tmp_path / 'privacy.json')
     main._PROCESSING_FILES.clear()
     sr = 48000
     t = np.arange(sr * 2) / sr
@@ -189,3 +191,79 @@ def test_checkpoint_preserves_float_precision_and_rejects_legacy(tmp_path):
     assert restored[0].dtype == audio.dtype
     (tmp_path / 'meta.json').write_text(json.dumps({'completed_steps': ['auto_eq'], 'last_step': 'auto_eq'}))
     assert checkpoints.load_checkpoint(tmp_path, 'identity', ['auto_eq']) is None
+
+
+def test_capsule_keeps_the_rendered_edl_and_transcript_after_later_edits(api):
+    client, uploads, outputs = api
+    source = uploads / 'fixture.wav'
+    source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+    audio, sr = sf.read(source)
+    edl = speech_editor.build_speech_edl(file_id='fixture', audio=audio, sr=sr,
+        transcription={'text': 'Original text', 'language': 'en', 'segments': []})
+    edl = speech_editor.add_manual_speech_edit(edl, {'start': .2, 'end': .4,
+        'action': 'mute', 'decision': 'apply', 'text': 'manual'}, expected_revision=edl['revision'])
+    rendered = client.post('/api/speech-editor/fixture/render', json={'revision': edl['revision'], 'output_format': 'wav'})
+    assert rendered.status_code == 200, rendered.text
+    result = rendered.json()
+    candidate = next(item for item in edl['candidates'] if item['detector'] == 'manual-transcript-selection')
+    changed = client.patch('/api/speech-editor/fixture', json={'revision': edl['revision'],
+        'decisions': [{'candidate_id': candidate['id'], 'decision': 'keep'}]})
+    assert changed.status_code == 200
+    (outputs / 'fixture_transcript.json').write_text('{"text":"A later transcription"}')
+    capsule = client.post('/api/projects/fixture/export', json={'output_version': 'speech_edit',
+        'revision': result['revision'], 'format': 'flac'})
+    assert capsule.status_code == 200, capsule.text
+    with zipfile.ZipFile(io.BytesIO(capsule.content)) as archive:
+        manifest = json.loads(archive.read('manifest.json'))
+        records = {}
+        for item in manifest['artifacts']:
+            if not item['included_in_capsule']:
+                continue
+            data = archive.read('artifacts/' + item['role'] + '/' + item['name'])
+            assert hashlib.sha256(data).hexdigest() == item['sha256']
+            if item['name'].endswith('.json'):
+                records[item['role']] = json.loads(data)
+    assert records['speech-edl'] == edl
+    assert records['speech-edl']['revision'] != changed.json()['revision']
+    assert records['processing-report']['speech_edits']['edl_snapshot'] == edl
+    assert records['transcript']['text'] == 'Original text'
+    assert records['transcript']['artifact_revision'] == result['revision']
+    assert manifest['execution_boundary'] == 'local'
+    assert manifest['artifact_revision'] == result['revision']
+    assert manifest['evidence_warnings'] == []
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == source_hash
+
+
+@pytest.mark.parametrize('report_contents', [None, '{', '[]', '{"privacy":{"processing_location":"local"}}'])
+def test_missing_invalid_or_unbound_report_never_claims_local_execution(api, report_contents):
+    client, _, outputs = api
+    artifact = artifact_store.publish_audio('fixture', np.zeros(48000), 48000, 'wav', 'speech_edit')
+    master = outputs / artifact['exports']['wav']['name']
+    if report_contents is not None:
+        master.with_suffix('.report.json').write_text(report_contents)
+    speech_editor.speech_edl_path('fixture').write_text('{"revision":42}')
+    (outputs / 'fixture_transcript.json').write_text('{"text":"current draft"}')
+    response = client.post('/api/projects/fixture/export', json={'output_version': 'speech_edit'})
+    assert response.status_code == 200
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        manifest = json.loads(archive.read('manifest.json'))
+    assert manifest['execution_boundary'] == 'unknown'
+    assert manifest['evidence_warnings']
+    assert not {'speech-edl', 'transcript'} & {item['role'] for item in manifest['artifacts']}
+
+
+def test_capsule_compliance_bytes_match_saved_report_with_non_ascii_text(api, monkeypatch):
+    client, _, outputs = api
+    artifact_store.publish_audio('fixture', np.zeros(48000), 48000, 'wav')
+    analyze = delivery_compliance.analyze_delivery
+    def localized(*args, **kwargs):
+        return {**analyze(*args, **kwargs), 'interpretation': 'Verifica della qualità'}
+    monkeypatch.setattr(delivery_compliance, 'analyze_delivery', localized)
+    response = client.post('/api/projects/fixture/export', json={})
+    assert response.status_code == 200, response.text
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        manifest = json.loads(archive.read('manifest.json'))
+        entry = next(item for item in manifest['artifacts'] if item['role'] == 'delivery-compliance')
+        archived = archive.read('artifacts/delivery-compliance/' + entry['name'])
+    assert archived == (outputs / entry['name']).read_bytes()
+    assert hashlib.sha256(archived).hexdigest() == entry['sha256']
