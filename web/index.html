@@ -809,6 +809,25 @@
             }
         }
 
+        .download-heading { max-width: 850px; margin: 0 auto 32px; }
+        .download-heading .section-desc { margin-inline: auto; }
+        .release-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; max-width: 1120px; margin: 0 auto; }
+        .release-choice { display: flex; flex-direction: column; min-width: 0; padding: 30px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg-card); text-align: left; scroll-margin-top: 100px; }
+        .release-choice h3 { font-size: 1.5rem; margin: 10px 0 16px; }
+        .release-choice h3 small { display: block; margin-top: 5px; font-size: 0.9rem; color: var(--text-2); }
+        .release-choice p { color: var(--text-2); margin-bottom: 18px; }
+        .release-choice .release-label { color: var(--accent-2); font-size: 0.8rem; font-weight: 700; margin-bottom: 0; }
+        .release-status { padding: 15px; border-left: 3px solid var(--accent-2); background: rgba(6,182,212,0.05); font-size: 0.9rem; }
+        .release-changelog { margin: 4px 0 24px; }
+        .release-changelog summary { cursor: pointer; font-weight: 700; }
+        .release-changelog summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 5px; }
+        .release-changelog ul { padding-left: 20px; margin: 14px 0; color: var(--text-2); font-size: 0.9rem; }
+        .release-changelog li { margin-bottom: 10px; }
+        .release-changelog a { display: block; margin-top: 10px; color: var(--accent-2); text-decoration: underline; font-size: 0.9rem; }
+        .release-download { margin-top: auto; justify-content: center; text-align: center; white-space: normal; }
+        .download-notes { max-width: 850px; margin: 24px auto; color: var(--text-2); font-size: 0.9rem; }
+        @media (max-width: 760px) { .release-grid { grid-template-columns: 1fr; } .release-choice { padding: 24px; } }
+
         /* -- CTA -- */
         .cta-section {
             text-align: center;
@@ -972,7 +991,7 @@
         <a href="#" class="nav-logo" aria-current="page">
             <div class="nav-logo-icon"><img class="icon-img" src="img/icons/aem-mark.svg" alt="AudioEnhancerMAX mark"></div>
             <span class="nav-logo-text">AudioEnhancerMAX</span>
-            <span class="v-badge">3.8 preview</span>
+            <span class="v-badge">3.7 / 3.8</span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation menu">Menu</button>
         <ul class="nav-links" id="primary-navigation">
@@ -993,15 +1012,15 @@
     <div class="hero-content">
         <div class="hero-badge">
             <span class="dot"></span>
-            Preview · 3.8.2 / build 3.8.3
+            Two versions · compare and choose
         </div>
-        <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span><span class="gradient">3.8</span></span>Local-first. Reviewable.</h1>
-        <p class="hero-sub">A macOS audio production workspace for processing, transcribing, editing, and exporting speech with visible decisions, reversible edits, and evidence recorded for every job.</p>
+        <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span></span>Local audio editing.<br><span class="gradient">AI governance built in.</span></h1>
+        <p class="hero-sub">Clean, transcribe and edit audio on your Mac with human control over speech edits, preserved originals, reversible decisions and documented transformations.</p>
         <div class="hero-actions">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Download stable 3.7.0</a>
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg" class="btn btn-secondary">Try 3.8.2 preview · build 3.8.3</a>
+            <a href="#download" class="btn btn-primary">Compare versions and download</a>
+            <a href="governance.html" class="btn btn-secondary">Explore AI governance</a>
         </div>
-        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">The 3.8 workflow shown here is a signed preview awaiting notarization. Stable Mac download: 3.7.0. Preview transcription models may download on first use.</p>
+        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">Choose 3.7.0, stable and notarized, or 3.8.2 / build 3.8.3, internally validated and available as a signed preview. Compare each changelog and Apple distribution status below.</p>
         <div class="hero-stats">
             <div class="hero-stat">
                 <div class="num">Native</div>
@@ -1320,24 +1339,52 @@
     </div>
 </section>
 
-<section id="download" class="cta-section">
-    <div class="cta-card reveal">
-        <h2>Choose your Mac<br>download.</h2>
-        <p>The recommended Mac download is notarized 3.7.0. The 3.8 workflow shown on this page is available in preview 3.8.2, build 3.8.3, with the local transcription correction. That preview is Developer ID signed and still awaits Apple notarization. Mac App Store publication is separate.</p>
-        <code class="cta-code">
-            <span class="comment"># Clone &amp; install</span><br>
-            git clone https://github.com/sev7enITA/AudioEnhancerMAX.git<br>
-            cd AudioEnhancerMAX &amp;&amp; pip install -r requirements.txt<br><br>
-            <span class="comment"># Launch</span><br>
-            python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-        </code>
-        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Download stable 3.7.0</a>
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg" class="btn btn-secondary">3.8.2 preview · build 3.8.3</a>
-            <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">SourceForge</a>
-            <a href="status.html" class="btn btn-secondary">Project status</a>
-            <a href="roadmap.html" class="btn btn-secondary">Roadmap</a>
-        </div>
+<section id="download" class="cta-section" aria-labelledby="download-title">
+    <div class="download-heading">
+        <span class="section-label">Your workflow, your choice</span>
+        <h2 class="section-title" id="download-title">Two versions. Choose with the facts.</h2>
+        <p class="section-desc">Compare the changes and distribution status, then choose your download. Both packages target Apple Silicon and macOS 13 or later.</p>
+    </div>
+    <div class="release-grid">
+        <article class="release-choice" id="download-370" aria-labelledby="release-370-title">
+            <p class="release-label">Stable · Apple notarized</p>
+            <h3 id="release-370-title">AudioEnhancerMAX 3.7.0</h3>
+            <p>A notarized Mac download with local audio processing, reviewable speech edits, delivery profiles and processing reports.</p>
+            <p class="release-status"><strong>Apple status:</strong> Developer ID signed, notarized and stapled. This direct download is separate from the Mac App Store.</p>
+            <details class="release-changelog" id="changelog-370" open>
+                <summary>3.7.0 changelog</summary>
+                <ul>
+                    <li>Deterministic Smart Enhance and speech edits with Keep/Apply decisions, undo/redo and preservation of the original.</li>
+                    <li>Five delivery profiles, processing reports, delivery checks and Project Capsules.</li>
+                    <li>JIT-free macOS stability update and corrected local fallback for supported edge-processing failures.</li>
+                </ul>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.7.0" target="_blank" rel="noopener noreferrer">Read the full 3.7.0 release notes</a>
+            </details>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg" class="btn btn-primary release-download">Download 3.7.0</a>
+        </article>
+        <article class="release-choice" id="download-382" aria-labelledby="release-382-title">
+            <p class="release-label">Internally validated · signed preview</p>
+            <h3 id="release-382-title">AudioEnhancerMAX 3.8.2 <small>Build 3.8.3</small></h3>
+            <p>The newer workflow adds verified processing checkpoints, exports tied to a completed result, and the local transcription correction.</p>
+            <p class="release-status"><strong>Apple status:</strong> this direct DMG is Developer ID signed; notarization is pending. The separate App Store build was submitted for review, last confirmed Waiting for Review on 17 October. It is not a public Store download.</p>
+            <details class="release-changelog" id="changelog-382" open>
+                <summary>3.8.2 / build 3.8.3 changelog</summary>
+                <ul>
+                    <li>Verified DSP checkpoints and distinct output revisions introduced in 3.8.</li>
+                    <li>WAV/MP3/FLAC downloads, reports and capsules identify the selected result; stale conversions and late interface responses are rejected.</li>
+                    <li>Build 3.8.3 fixes the local transcription error in normal and streaming paths. Direct models may download on first use.</li>
+                </ul>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.2" target="_blank" rel="noopener noreferrer">Read the full 3.8.2 release notes</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/DIRECT_BUILD_3.8.3.md" target="_blank" rel="noopener noreferrer">Inspect the direct-build checks</a>
+            </details>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg" class="btn btn-primary release-download">Download 3.8.2 · build 3.8.3</a>
+        </article>
+    </div>
+    <p class="download-notes">Internal validation and Apple distribution approval are different checks. Features and model setup vary by version and channel. Read the notes for the package you choose.</p>
+    <div class="hero-actions">
+        <a href="https://github.com/sev7enITA/AudioEnhancerMAX" class="btn btn-secondary">Run from source</a>
+        <a href="https://sourceforge.net/projects/audioenhancermax/files/" class="btn btn-secondary">SourceForge downloads</a>
+        <a href="status.html" class="btn btn-secondary">Full project status</a>
     </div>
 </section>
 

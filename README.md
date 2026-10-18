@@ -63,9 +63,11 @@ Requires Apple Silicon and macOS 13+.
 
 | Channel | Download and status |
 | --- | --- |
-| Recommended stable | [3.7.0 notarized DMG](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg) |
-| Current preview | [3.8.2, build 3.8.3](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg): Developer ID signed, local transcription correction included, Apple notarization pending |
+| Stable, notarized | [3.7.0 notarized DMG](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg) |
+| Newer, internally validated | [3.8.2, build 3.8.3](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg): Developer ID signed, local transcription correction included, Apple notarization pending |
 | Mac App Store | Separate 3.8.2/build 3.8.3 submission; last confirmed Waiting for Review on 17 October. No public Store release is claimed. |
+
+Choose between the two direct downloads after comparing their changelogs: [3.7.0](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.7.0) and [3.8.2/build 3.8.3](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.2). [Compare versions on the website](https://fabriziodegni.com/AudioEnhancerMAX/#download).
 
 The features described below include the 3.8 preview additions. Direct transcription models may download on first use; subsequent inference runs locally. [Distribution evidence](releases/DIRECT_BUILD_3.8.3.md) · [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/files/v3.8.2/).
 

@@ -8,12 +8,23 @@ All notable changes to AudioEnhancerMAX are documented here.
 
 - Publish English and Italian articles connecting documented AI risks to scoped product controls, with original application screenshots, source references and explicit limitations.
 
+## [3.8.2 / build 3.8.3] - 2026-10-18
+
 ### Fixed
 
 - Correct speech-detection parameters for the pinned Faster-Whisper runtime in standard and streaming transcription. Previously, local transcription failed before inference with an unsupported `threshold` argument.
 - Add four regressions covering both transcription paths and their no-speech fallback against the installed VAD options contract.
 - Declare the HTTP library imported by Faster-Whisper explicitly so clean installations can load the transcription runtime.
-- Prepare Mac App Store version 3.8.2, internal build 3.8.3. The previously published direct-download 3.8.2 artifacts are unchanged.
+- Publish the corrected direct-download DMG as version 3.8.2/build 3.8.3 under an explicit build-number filename. Preserve the old DMG as a historical preview.
+
+### Distribution and presentation
+
+- Present stable notarized 3.7.0 and internally validated 3.8.2/build 3.8.3 side by side, with a changelog and download for each, leaving the choice to the user.
+- Bring AI governance into the website value proposition: human control over speech edits, reversible decisions, preserved originals and documented transformations.
+- The direct 3.8.2/build 3.8.3 package is signed but not notarized. The separate App Store candidate was submitted on 16 October; last portal verification on 17 October showed Waiting for Review. Internal validation does not imply Apple approval.
+- 79 Python tests and 4 JavaScript tests passed during the direct-build release. Packaged processing, normal/streaming transcription, speech edits, exports and capsule checks passed with an existing local model cache. This presentation update does not change those binaries.
+
+See [3.8.2 release notes](releases/RELEASE_NOTES_v3.8.2.md) and [exact direct-build evidence](releases/DIRECT_BUILD_3.8.3.md).
 
 ## [3.8.2] - 2026-10-15
 
