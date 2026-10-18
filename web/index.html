@@ -972,7 +972,7 @@
         <a href="#" class="nav-logo" aria-current="page">
             <div class="nav-logo-icon"><img class="icon-img" src="img/icons/aem-mark.svg" alt="AudioEnhancerMAX mark"></div>
             <span class="nav-logo-text">AudioEnhancerMAX</span>
-            <span class="v-badge">v3.8.2</span>
+            <span class="v-badge">3.8 preview</span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation menu">Menu</button>
         <ul class="nav-links" id="primary-navigation">
@@ -993,14 +993,15 @@
     <div class="hero-content">
         <div class="hero-badge">
             <span class="dot"></span>
-            Current release · 3.8.2
+            Preview · 3.8.2 / build 3.8.3
         </div>
         <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span><span class="gradient">3.8</span></span>Local-first. Reviewable.</h1>
         <p class="hero-sub">A macOS audio production workspace for processing, transcribing, editing, and exporting speech with visible decisions, reversible edits, and evidence recorded for every job.</p>
         <div class="hero-actions">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.2" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Get 3.8 from GitHub</a>
-            <a href="#proof" class="btn btn-secondary">Inspect the evidence</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Download stable 3.7.0</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg" class="btn btn-secondary">Try 3.8.2 preview · build 3.8.3</a>
         </div>
+        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">The 3.8 workflow shown here is a signed preview awaiting notarization. Stable Mac download: 3.7.0. Preview transcription models may download on first use.</p>
         <div class="hero-stats">
             <div class="hero-stat">
                 <div class="num">Native</div>
@@ -1023,7 +1024,7 @@
                 <div class="label">Processing report</div>
             </div>
             <div class="hero-stat">
-                <div class="num">75 + 4</div>
+                <div class="num">79 + 4</div>
                 <div class="label">Python + JS tests</div>
             </div>
         </div>
@@ -1033,14 +1034,14 @@
 <!-- Current status -->
 <section id="status" style="background: rgba(255,255,255,0.01);">
     <div class="container">
-        <span class="section-label">Verified · October 15, 2026</span>
+        <span class="section-label">Verified · October 18, 2026</span>
         <h2 class="section-title">Every export belongs to a completed result.</h2>
         <p class="section-desc">Version 3.8 verifies resumable DSP work, retains distinct output revisions, and measures the exact WAV, MP3 or FLAC selected for delivery. Release status and remaining limits are visible below.</p>
         <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX current project status">
             <div class="ledger-head" role="row"><span>Scope</span><span>Status</span><span>What that means</span></div>
             <div class="ledger-row" role="row"><strong>Verified checkpoints</strong><span class="ledger-boundary">Local DSP</span><span class="ledger-evidence">Changed source, settings or build restarts cleanly. Compatible float snapshots preserve processing precision.</span></div>
             <div class="ledger-row" role="row"><strong>Revision-bound delivery</strong><span class="ledger-boundary">WAV / MP3 / FLAC</span><span class="ledger-evidence">Playback, conversions, reports and capsules identify the completed result. Guidance records the exact export hash.</span></div>
-            <div class="ledger-row" role="row"><strong>3.8 source + Mac preview</strong><span class="ledger-boundary">75 Python + 4 JS tests</span><span class="ledger-evidence">New Mac preview is Developer ID signed; Apple notarization remains pending. Stable notarized Mac download remains 3.7.0.</span></div>
+            <div class="ledger-row" role="row"><strong>3.8 source + Mac preview</strong><span class="ledger-boundary">79 Python + 4 JS tests</span><span class="ledger-evidence">Preview 3.8.2, build 3.8.3, includes the local transcription correction. Developer ID signed; not yet notarized. Stable notarized download: 3.7.0.</span></div>
         </div>
         <div class="hero-actions" style="margin-top:28px;">
             <a href="status.html" class="btn btn-secondary">Read the full project status</a>
@@ -1053,7 +1054,7 @@
     <div class="container">
         <span class="section-label">Release proof ledger</span>
         <h2 class="section-title">Capability, boundary, evidence.</h2>
-        <p class="section-desc">The capabilities below describe the implemented workflow. Runtime availability and validation limits are documented in the release notes.</p>
+        <p class="section-desc">The capabilities below describe the 3.8 preview workflow. The stable 3.7.0 download does not include all of these additions. Runtime availability and validation limits are documented in the release notes.</p>
         <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX 3.8 capability evidence">
             <div class="ledger-head" role="row"><span>Capability</span><span>Runs where</span><span>Validation evidence</span></div>
             <div class="ledger-row" role="row"><strong>Native macOS workspace</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Standalone AppKit/WebKit window with AudioEnhancerMAX application identity.</span></div>
@@ -1063,7 +1064,7 @@
             <div class="ledger-row" role="row"><strong>Processing report</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Readable report and canonical JSON capture options, engines, warnings, privacy state, and output facts per job.</span></div>
             <div class="ledger-row" role="row"><strong>Delivery Compliance Lab</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Measured loudness, estimated true peak, clipping, and sample-rate checks with rule-level results; workflow guidance, not certification.</span></div>
             <div class="ledger-row" role="row"><strong>Project Capsule</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Portable ZIP with a SHA-256 manifest, processed output, and available report, compliance, transcript, EDL, and listening-review evidence.</span></div>
-            <div class="ledger-row" role="row"><strong>Release checks</strong><span class="ledger-boundary">Automated + packaged</span><span class="ledger-evidence">75 Python tests and 4 JavaScript state tests passed for 3.8. Scope and limitations are recorded on the status page.</span></div>
+            <div class="ledger-row" role="row"><strong>Release checks</strong><span class="ledger-boundary">Automated + packaged</span><span class="ledger-evidence">79 Python tests and 4 JavaScript state tests passed for 3.8. Scope and limitations are recorded on the status page.</span></div>
         </div>
     </div>
 </section>
@@ -1321,8 +1322,8 @@
 
 <section id="download" class="cta-section">
     <div class="cta-card reveal">
-        <h2>Explore the 3.8<br>release.</h2>
-        <p>Get the 3.8 source release or signed Mac preview. The new preview awaits Apple notarization; the stable notarized Mac download remains 3.7.0. Mac App Store publication is a separate stage.</p>
+        <h2>Choose your Mac<br>download.</h2>
+        <p>The recommended Mac download is notarized 3.7.0. The 3.8 workflow shown on this page is available in preview 3.8.2, build 3.8.3, with the local transcription correction. That preview is Developer ID signed and still awaits Apple notarization. Mac App Store publication is separate.</p>
         <code class="cta-code">
             <span class="comment"># Clone &amp; install</span><br>
             git clone https://github.com/sev7enITA/AudioEnhancerMAX.git<br>
@@ -1331,7 +1332,8 @@
             python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
         </code>
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.2" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">GitHub releases</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg" target="_blank" rel="noopener noreferrer" class="btn btn-primary"><img class="icon-img btn-icon-svg" src="img/icons/download.svg" alt="" aria-hidden="true">Download stable 3.7.0</a>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg" class="btn btn-secondary">3.8.2 preview · build 3.8.3</a>
             <a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">SourceForge</a>
             <a href="status.html" class="btn btn-secondary">Project status</a>
             <a href="roadmap.html" class="btn btn-secondary">Roadmap</a>

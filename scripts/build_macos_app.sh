@@ -2,10 +2,10 @@
 set -euo pipefail
 
 ROOT="${0:A:h:h}"
-VERSION="3.8.2"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.2}"
-BUILD_DIR="${ROOT}/build/macos"
-DIST_DIR="${ROOT}/dist/macos"
+VERSION="${AEMAX_MARKETING_VERSION:-3.8.2}"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.3}"
+BUILD_DIR="${AEMAX_BUILD_DIR:-${ROOT}/build/macos}"
+DIST_DIR="${AEMAX_DIST_DIR:-${ROOT}/dist/macos}"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
 ICONSET="${BUILD_DIR}/AudioEnhancerMAX.iconset"
 ICON="${ROOT}/packaging/macos/AudioEnhancerMAX.icns"
@@ -114,8 +114,26 @@ SIGNING_ROOT="$(mktemp -d /tmp/audioenhancermax-sign.XXXXXX)"
 trap 'rm -rf "${SIGNING_ROOT}"' EXIT
 SIGNED_APP="${SIGNING_ROOT}/AudioEnhancerMAX.app"
 DMG_ROOT="${SIGNING_ROOT}/dmg"
-DMG_TEMP="${SIGNING_ROOT}/AudioEnhancerMAX-v${VERSION}-macOS-arm64.dmg"
-DMG_PATH="${DIST_DIR}/AudioEnhancerMAX-v${VERSION}-macOS-arm64.dmg"
+DMG_NAME="AudioEnhancerMAX-v${VERSION}-build-${BUILD_NUMBER}-macOS-arm64.dmg"
+DMG_TEMP="${SIGNING_ROOT}/${DMG_NAME}"
+DMG_PATH="${DIST_DIR}/${DMG_NAME}"
+
+# A reused bundle must identify the requested release before it is signed.
+"${PYTHON}" - "${APP_PATH}/Contents/Info.plist" "${VERSION}" "${BUILD_NUMBER}" <<'PY'
+import plistlib
+import sys
+from pathlib import Path
+
+info = plistlib.loads(Path(sys.argv[1]).read_bytes())
+expected = {
+    "CFBundleShortVersionString": sys.argv[2],
+    "CFBundleVersion": sys.argv[3],
+    "AEMAXDistribution": "direct",
+}
+for key, value in expected.items():
+    if info.get(key) != value:
+        raise SystemExit(f"Bundle metadata mismatch for {key}: {info.get(key)!r} != {value!r}")
+PY
 
 ditto --norsrc --noqtn "${APP_PATH}" "${SIGNED_APP}"
 xattr -cr "${SIGNED_APP}"
