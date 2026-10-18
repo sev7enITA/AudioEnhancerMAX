@@ -155,9 +155,9 @@ class RevisionRequest(BaseModel):
 
 
 class RuntimePrivacySettingsRequest(BaseModel):
-    external_services_allowed: bool
-    ollama_editorial_allowed: bool
-    trusted_lan_processing_allowed: bool
+    external_services_allowed: bool = Field(strict=True)
+    ollama_editorial_allowed: bool = Field(strict=True)
+    trusted_lan_processing_allowed: bool = Field(strict=True)
 
 
 class ProjectCapsuleRequest(BaseModel):

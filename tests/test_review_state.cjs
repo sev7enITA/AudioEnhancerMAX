@@ -6,7 +6,7 @@ const source = fs.readFileSync('frontend/js/app.js', 'utf8');
 function harness() {
   const elements = new Map();
   const element = id => {
-    if (!elements.has(id)) elements.set(id, { style: {}, classList: {add(){},remove(){},toggle(){}}, lastChild: {}, innerHTML:'', textContent:'', querySelector(){return {textContent:''}}, setAttribute(){}, removeAttribute(){}, options:[] });
+    if (!elements.has(id)) elements.set(id, { style: {}, classList: {add(){},remove(){},toggle(){}}, lastChild: {}, innerHTML:'', textContent:'', querySelector(){return {textContent:''}}, querySelectorAll(){return []}, setAttribute(){}, removeAttribute(){}, options:[], selectedOptions:[] });
     return elements.get(id);
   };
   const context = vm.createContext({console, URL, URLSearchParams, setTimeout, clearTimeout, setInterval, clearInterval,
@@ -41,4 +41,24 @@ test('a completed response for a replaced file is discarded', async()=>{
   c.fetch=()=>new Promise(resolve=>{finish=resolve});const pending=c.startProcessing();c.stateRef.fileId='two';
   finish({ok:true,json:async()=>({revision:'old',format:'wav',output_url:'/old.wav'})});await pending;
   assert.equal(c.stateRef.hasProcessed,false);assert.equal(c.stateRef.processedUrl,null);
+});
+
+test('unreadable privacy preferences disable controls and explain how to recover', async()=>{
+  const c=harness();
+  const safe={external_services_allowed:false,ollama_editorial_allowed:false,trusted_lan_processing_allowed:false,
+    status:'invalid',warning:'Saved privacy preferences could not be read. Review and save your choices.'};
+  let toast;c.showToast=(level,text)=>{toast={level,text}};
+  c.fetch=async()=>({ok:true,json:async()=>safe});
+  await c.loadRuntimePrivacySettings();
+  assert.equal(c.document.getElementById('setting-external-services').checked,false);
+  assert.equal(c.document.getElementById('setting-ollama-editorial').checked,false);
+  assert.equal(c.document.getElementById('setting-offload-dsp').disabled,true);
+  assert.equal(c.document.getElementById('privacy-settings-status').textContent,safe.warning);
+  assert.deepEqual(toast,{level:'warning',text:safe.warning});
+  c.document.getElementById('setting-ollama-editorial').checked=true;
+  c.fetch=async(url,options)=>({ok:true,json:async()=>JSON.parse(options.body)});
+  await c.saveRuntimePrivacySettings();
+  assert.equal(c.stateRef.runtimePrivacy.ollama_editorial_allowed,true);
+  assert.equal(c.stateRef.runtimePrivacy.external_services_allowed,false);
+  assert.match(c.document.getElementById('privacy-settings-status').textContent,/Saved locally/);
 });

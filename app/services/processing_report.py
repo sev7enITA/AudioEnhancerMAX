@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -110,6 +111,7 @@ def create_processing_report(
             if item.get("decision") == "apply"
         ]
         report["speech_edits"] = {
+            "edl_snapshot": deepcopy(speech_edl),
             "edl_schema_version": speech_edl.get("schema_version"),
             "edl_revision": speech_edl.get("revision"),
             "source_preserved": True,

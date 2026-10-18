@@ -4,6 +4,15 @@ All notable changes to AudioEnhancerMAX are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep optional services disabled when privacy preferences are missing, unreadable or invalid. Preserve valid saved choices, reject non-boolean permissions and show an actionable recovery message.
+- Preserve the full speech edit list used by each new render. Project capsules export that render's decisions and transcript, even after later edits or retranscription. Older renders without a snapshot explicitly report missing evidence.
+- Calculate capsule hashes and sizes from the exact bytes written to the archive. Report unknown execution location when a usable report bound to the selected audio is unavailable.
+- Stream uploads in bounded chunks and run file import and decoding in a worker, keeping API requests responsive. Remove partial input and converted audio when import fails.
+
+These changes are source revisions awaiting a new packaged build and validation. Existing downloadable binaries and their Apple submission status are unchanged by this patch.
+
 ### Documentation
 
 - Publish English and Italian articles connecting documented AI risks to scoped product controls, with original application screenshots, source references and explicit limitations.
