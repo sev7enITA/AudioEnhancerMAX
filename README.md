@@ -59,7 +59,15 @@ AudioEnhancerMAX has also been recognized with the **SourceForge Rising Star Awa
 
 ### macOS App (Apple Silicon)
 
-Download the appropriate artifact from [GitHub releases](https://github.com/sev7enITA/AudioEnhancerMAX/releases) or [SourceForge](https://sourceforge.net/projects/audioenhancermax/files/). The 3.8.2 direct DMG is a signed preview pending Apple notarization; 3.7.0 remains the notarized stable Mac package. Requires Apple Silicon and macOS 13+. Mac App Store approval is a separate stage.
+Requires Apple Silicon and macOS 13+.
+
+| Channel | Download and status |
+| --- | --- |
+| Recommended stable | [3.7.0 notarized DMG](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg) |
+| Current preview | [3.8.2, build 3.8.3](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.2/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg): Developer ID signed, local transcription correction included, Apple notarization pending |
+| Mac App Store | Separate 3.8.2/build 3.8.3 submission; last confirmed Waiting for Review on 17 October. No public Store release is claimed. |
+
+The features described below include the 3.8 preview additions. Direct transcription models may download on first use; subsequent inference runs locally. [Distribution evidence](releases/DIRECT_BUILD_3.8.3.md) · [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/files/v3.8.2/).
 
 ### Run from Source
 

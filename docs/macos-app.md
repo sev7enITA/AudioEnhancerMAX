@@ -1,10 +1,10 @@
-# Current 3.8.2 direct preview
+# Current 3.8.2 direct preview, build 3.8.3
 
 The new Developer ID DMG is awaiting Apple notarization. The account holder accepted the required agreement on 15 October 2026; this does not itself notarize the direct-download package. The notarized 3.7.0 remains the stable Mac download. The 3.8 source and build scripts require Python 3.11+. Direct builds use optional/runtime-managed transcription models; App Store builds have a separate bundled-model workflow. No new App Store approval is claimed.
 
 # AudioEnhancerMAX for macOS
 
-AudioEnhancerMAX v3.7.0 provides an Apple Silicon desktop package. Current App Store candidate builds start a loopback-only FastAPI service and render the local interface in an app-owned AppKit/WKWebView window. They do not open the default browser. Closing the main window or quitting the app stops the service.
+AudioEnhancerMAX provides an Apple Silicon desktop package. Current direct preview and App Store candidate builds start a loopback-only FastAPI service and render the local interface in an app-owned AppKit/WKWebView window. They do not open the default browser. Closing the main window or quitting the app stops the service.
 
 ## First-launch readiness
 
@@ -42,10 +42,12 @@ Model assets require the same treatment before App Store submission: a feature m
 ./scripts/build_macos_app.sh
 ```
 
+Build 3.8.3 includes the local transcription correction also present in the separate TestFlight build. The direct package retains runtime-managed models; the TestFlight screenshots do not establish identical packaging. See [verification and hashes](../releases/DIRECT_BUILD_3.8.3.md).
+
 The build produces a DMG containing the signed application and keeps the unpackaged `.app` as an intermediate build artifact:
 
 - `dist/macos/AudioEnhancerMAX.app`
-- `dist/macos/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg`
+- `dist/macos/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg`
 - a SHA-256 checksum alongside the DMG
 
 The direct-distribution build requires an installed `Developer ID Application` identity with its private key. It signs every nested Mach-O component and the application with hardened runtime and a secure timestamp, then signs the DMG.

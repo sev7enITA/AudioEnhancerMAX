@@ -12,4 +12,12 @@ Source archives exclude user recordings, private voice profiles and credentials.
 
 ## Mac App Store follow-up: 16 October 2026
 
-Internal build 3.8.3 corrects a local transcription error under version 3.8.2. Apple delivered and processed the package on 16 October. Verification of the TestFlight-installed app passed for local processing, transcription, speech editing and exports. Version 3.8.2 with build 3.8.3 was submitted on 16 October 2026 at 16:52 Europe/Rome, and Apple confirmed Waiting for Review. The reviewer response with the recording link was sent. App Store approval and publication remain pending. Existing direct-download 3.8.2 artifacts are unchanged.
+Internal build 3.8.3 corrects a local transcription error under version 3.8.2. Apple delivered and processed the package on 16 October. Verification of the TestFlight-installed app passed for local processing, transcription, speech editing and exports. Version 3.8.2 with build 3.8.3 was submitted on 16 October 2026 at 16:52 Europe/Rome, and Apple confirmed Waiting for Review. The reviewer response with the recording link was sent. App Store approval and publication remain pending. The original direct-download 3.8.2 artifacts were unchanged at that submission. See the direct-build update below.
+
+## Direct download alignment: 18 October 2026
+
+The corrected preview is **version 3.8.2, build 3.8.3**, with a distinct filename: `AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg`. It includes the local transcription correction already tested in the separate TestFlight build. The old DMG remains a historical artifact and is not the corrected build.
+
+The new DMG is Developer ID signed. Apple notarization is still pending. **3.7.0 remains the recommended stable download.** The website labels preview and stable channels explicitly. Direct transcription models are runtime-managed and may download on first use; the App Store package bundles its model separately.
+
+Validation: 79 Python tests and 4 JavaScript tests passed. The mounted direct DMG passed processing, normal and streaming transcription, speech-edit apply/undo/redo/render, WAV/MP3/FLAC export hashes and Project Capsule integrity checks. The developer-owned 8-second sample used an existing Medium model cache with Hugging Face and Transformers offline flags. This does not establish first-time setup, perceptual audio quality, Apple notarization or App Store approval. [Build evidence and SHA-256](DIRECT_BUILD_3.8.3.md).
