@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'codex/music-brief-assistant-*']
   pull_request:
     branches: [main]
 
@@ -141,4 +141,4 @@ jobs:
         run: python -m pytest -q
 
       - name: Frontend result-state regressions
-        run: node --test tests/test_review_state.cjs
+        run: node --test tests/test_review_state.cjs tests/test_music_assistant_state.cjs

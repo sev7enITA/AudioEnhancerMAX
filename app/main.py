@@ -45,8 +45,9 @@ from app.utils.progress import progress_tracker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "3.8.3"
-APP_BUILD = os.getenv("AEMAX_BUILD_NUMBER", "3.8.4")
+from app.release import APP_VERSION, APP_BUILD as DEFAULT_APP_BUILD, RELEASE_CHANNEL, RELEASE_LABEL
+
+APP_BUILD = os.getenv("AEMAX_BUILD_NUMBER", DEFAULT_APP_BUILD)
 _PROCESSING_FILES: set[str] = set()
 SAFE_FILE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 STREAMABLE_AUDIO_VERSIONS = {"original", "processed"}
@@ -2015,6 +2016,8 @@ async def health():
         "app": "AudioEnhancerMAX by Fabrizio Degni",
         "version": APP_VERSION,
         "build": APP_BUILD,
+        "release_channel": RELEASE_CHANNEL,
+        "release_label": RELEASE_LABEL,
         "compute": gpu_info,
         "mps_available": mps_available,
         "gemma4_status": gemma_status,

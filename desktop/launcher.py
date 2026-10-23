@@ -17,12 +17,11 @@ import urllib.error
 import urllib.request
 
 
-APP_NAME = "AudioEnhancerMAX"
-APP_VERSION = "3.8.3"
-APP_BUILD = "3.8.4"
-UI_REVISION = "20261018.v383governance"
-DEFAULT_PORT = 8000
-BUNDLE_IDENTIFIER = "com.fabriziodegni.audioenhancermax"
+from app.release import (
+    APP_NAME, APP_VERSION, APP_BUILD, DEFAULT_PORT, BUNDLE_IDENTIFIER, RELEASE_CHANNEL,
+)
+
+UI_REVISION = "v390experimental1"
 
 
 def _bundle_metadata() -> tuple[str, str]:
@@ -93,6 +92,7 @@ def _is_audioenhancermax(port: int, timeout: float = 1.0) -> bool:
         return (
             payload.get("app") == "AudioEnhancerMAX by Fabrizio Degni"
             and payload.get("version") == APP_VERSION
+            and payload.get("release_channel") == RELEASE_CHANNEL
         )
     except (OSError, ValueError, urllib.error.URLError):
         return False

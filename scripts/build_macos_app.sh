@@ -2,8 +2,10 @@
 set -euo pipefail
 
 ROOT="${0:A:h:h}"
-VERSION="${AEMAX_MARKETING_VERSION:-3.8.3}"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.4}"
+VERSION="${AEMAX_MARKETING_VERSION:-3.9.0}"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.9.1}"
+APP_NAME="AudioEnhancerMAX Experimental"
+RELEASE_TAG="v3.9.0-experimental.1"
 BUILD_DIR="${AEMAX_BUILD_DIR:-${ROOT}/build/macos}"
 DIST_DIR="${AEMAX_DIST_DIR:-${ROOT}/dist/macos}"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
@@ -62,16 +64,18 @@ function sign_nested_code() {
     done < <(find "${app_path}/Contents" -type d -name '*.framework' | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2-)
 }
 
-APP_PATH="${DIST_DIR}/AudioEnhancerMAX.app"
+APP_PATH="${DIST_DIR}/${APP_NAME}.app"
 
 if [[ "${SKIP_BUILD}" == "1" ]]; then
     [[ -d "${APP_PATH}" ]] || { print -u2 "Existing app bundle not found: ${APP_PATH}"; exit 1; }
     print "Reusing existing app bundle: ${APP_PATH}"
 else
-    "${PYTHON}" -m pip install --upgrade \
+    if [[ "${AEMAX_SKIP_DEPENDENCY_INSTALL:-0}" != "1" ]]; then
+        "${PYTHON}" -m pip install --upgrade \
         -r "${ROOT}/packaging/macos/requirements-runtime-direct.txt" \
         -r "${ROOT}/packaging/macos/requirements-build.txt" \
-        -c "${ROOT}/packaging/macos/requirements-app-store-lock.txt"
+            -c "${ROOT}/packaging/macos/requirements-app-store-lock.txt"
+    fi
 
     "${PYTHON}" - <<'PY'
 import importlib.util
@@ -112,9 +116,9 @@ fi
 
 SIGNING_ROOT="$(mktemp -d /tmp/audioenhancermax-sign.XXXXXX)"
 trap 'rm -rf "${SIGNING_ROOT}"' EXIT
-SIGNED_APP="${SIGNING_ROOT}/AudioEnhancerMAX.app"
+SIGNED_APP="${SIGNING_ROOT}/${APP_NAME}.app"
 DMG_ROOT="${SIGNING_ROOT}/dmg"
-DMG_NAME="AudioEnhancerMAX-v${VERSION}-build-${BUILD_NUMBER}-macOS-arm64.dmg"
+DMG_NAME="AudioEnhancerMAX-${RELEASE_TAG}-build-${BUILD_NUMBER}-macOS-arm64.dmg"
 DMG_TEMP="${SIGNING_ROOT}/${DMG_NAME}"
 DMG_PATH="${DIST_DIR}/${DMG_NAME}"
 
@@ -129,6 +133,9 @@ expected = {
     "CFBundleShortVersionString": sys.argv[2],
     "CFBundleVersion": sys.argv[3],
     "AEMAXDistribution": "direct",
+    "CFBundleDisplayName": "AudioEnhancerMAX Experimental",
+    "CFBundleIdentifier": "com.fabriziodegni.audioenhancermax.experimental",
+    "AEMAXReleaseChannel": "experimental",
 }
 for key, value in expected.items():
     if info.get(key) != value:
@@ -143,10 +150,10 @@ codesign --verify --deep --strict --verbose=2 "${SIGNED_APP}"
 
 rm -rf "${DMG_ROOT}" "${DMG_PATH}" "${DMG_PATH}.sha256"
 mkdir -p "${DMG_ROOT}"
-ditto --norsrc --noqtn "${SIGNED_APP}" "${DMG_ROOT}/AudioEnhancerMAX.app"
+ditto --norsrc --noqtn "${SIGNED_APP}" "${DMG_ROOT}/${APP_NAME}.app"
 ln -s /Applications "${DMG_ROOT}/Applications"
 hdiutil create \
-    -volname "AudioEnhancerMAX ${VERSION}" \
+    -volname "AudioEnhancerMAX Experimental 1" \
     -srcfolder "${DMG_ROOT}" \
     -ov \
     -format UDZO \

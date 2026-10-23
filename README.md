@@ -1,3 +1,5 @@
+> **Experimental branch: 3.9.0 Experimental 1 (build 3.9.1).** Music brief assistant with separate app identity and data. [Experimental release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0-experimental.1) · [Stable 3.8.3](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3) · [Installation and release notes](releases/RELEASE_NOTES_v3.9.0-experimental.1.md).
+
 <div align="center">
 
 # AudioEnhancerMAX
@@ -65,6 +67,7 @@ Requires Apple Silicon and macOS 13+.
 | --- | --- |
 | Earlier stable, notarized | [3.7.0 notarized DMG](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.7.0/AudioEnhancerMAX-v3.7.0-macOS-arm64.dmg) |
 | Latest stable | [3.8.3, build 3.8.4](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/AudioEnhancerMAX-v3.8.3-build-3.8.4-macOS-arm64.dmg): Developer ID signed, Apple notarized and stapled; privacy, capsule evidence and import fixes |
+| Experimental | [3.9.0 Experimental 1, build 3.9.1](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0-experimental.1): Music brief assistant, separate installation and data; opt in for testing |
 | Mac App Store | Separate 3.8.2/build 3.8.3 submission; last confirmed Waiting for Review on 17 October. No public Store release is claimed. |
 
 Choose between the two direct downloads after comparing their changelogs: [3.7.0](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.7.0) and [3.8.3/build 3.8.4](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3). [Compare versions on the website](https://fabriziodegni.com/AudioEnhancerMAX/#download).
@@ -187,7 +190,7 @@ Do not expose the FastAPI server directly to the public internet without adding 
 
 ## Documentation
 
-- [Music brief assistant (local feature branch)](docs/music-brief-assistant.md)
+- [Music brief assistant (experimental channel)](docs/music-brief-assistant.md)
 - [Signal Console Design Contract](DESIGN.md)
 - [Visual Design Reference](docs/design-preview.html)
 - [Getting Started](docs/getting-started.md)
