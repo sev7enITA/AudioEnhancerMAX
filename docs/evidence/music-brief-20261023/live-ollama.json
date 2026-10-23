@@ -1,0 +1,13 @@
+{
+  "privacy_disabled_status": 403,
+  "build_status": 200,
+  "refine_status": 200,
+  "elapsed_seconds": 13.46,
+  "response": {
+    "suggestions": "Global Metadata\nIntroduce subtle harmonic movement and sustained textures to enhance the warm electronic atmosphere.\n\nVocal Details\nN/A (Instrumental only). Maintain a very soft dynamic range throughout.\n\nArrangement\nIntro: Piano establishes a simple, consonant chord progression. Main: Introduce slow, evolving arpeggios in the piano, layered with a very subtle, sustained analog synth pad underneath to add warmth. Outro: Gradually decrease the density of the piano and synth layers, allowing the initial motif to gently fade into silence for the spoken segment.",
+    "model": "gemma4:e2b",
+    "engine": "ollama-local",
+    "text_only": true,
+    "review_required": true
+  }
+}

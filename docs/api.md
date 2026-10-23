@@ -74,6 +74,18 @@ Project Capsule JSON accepts `include_source` (default `false`) and `target_id`.
 
 Personal synthesis sets `engine` to `voice-clone` and supplies `voice_profile_id`. A raw `clone_voice_file_id` without a saved profile is rejected so the sample can never be silently ignored while a stock voice is used. `POST /api/voice-profiles/enroll` references a normal uploaded `file_id`, accepts an optional exact `transcript`, and requires `consent_confirmed: true`.
 
+## Music briefs (local feature branch)
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/music/presets` | Six original music-planning presets |
+| POST | `/api/music/brief` | Build a structured text prompt without a model |
+| POST | `/api/music/refine` | Propose separate refinements with an authorized local Ollama model |
+
+This feature prepares text only. The refinement request contains `brief` and the
+current edited `caption`; the separate lyrics field is excluded from model input.
+See [Music brief assistant](music-brief-assistant.md) for limits, privacy and error states.
+
 ## Presets and Batch
 
 | Method | Path | Purpose |

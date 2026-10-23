@@ -33,6 +33,7 @@ from app.models.schemas import (
     SpeechEditorManualEditRequest, RevisionRequest, RuntimePrivacySettingsRequest,
     ProjectCapsuleRequest, BlindABReviewRequest,
 )
+from app.models.music import MusicBriefRequest, MusicRefineRequest
 from app.utils.audio_io import (
     generate_file_id, get_upload_path, get_output_path,
     validate_extension, load_audio, save_audio, get_audio_info,
@@ -1663,6 +1664,40 @@ async def rewrite_text(request: TTSRewriteRequest):
         raise
     except Exception as e:
         raise HTTPException(500, f"Rewrite failed: {str(e)}")
+
+
+# ══════════════════════════════════════════════════════════
+# Routes - Music briefs (text only)
+# ══════════════════════════════════════════════════════════
+
+@app.get("/api/music/presets")
+async def music_presets():
+    from app.services.music_brief import list_music_presets
+    return list_music_presets()
+
+
+@app.post("/api/music/brief")
+async def music_brief(request: MusicBriefRequest):
+    from app.services.music_brief import build_music_brief
+    try:
+        return build_music_brief(request)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/music/refine")
+async def music_refine(request: MusicRefineRequest):
+    from app.services.music_brief import refine_music_brief, MusicModelUnavailable, MusicRefinementBusy
+    try:
+        return await asyncio.to_thread(refine_music_brief, request)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except MusicRefinementBusy as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except MusicModelUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 # ══════════════════════════════════════════════════════════

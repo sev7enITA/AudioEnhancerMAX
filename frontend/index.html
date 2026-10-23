@@ -6,6 +6,7 @@
     <meta name="description" content="AudioEnhancerMAX by Fabrizio Degni - Local-first audio processing, transcription, monitoring and trusted-LAN edge workers.">
     <title>AudioEnhancerMAX by Fabrizio Degni</title>
     <link rel="stylesheet" href="/static/css/style.css?v=3.8.3-revision1">
+    <link rel="stylesheet" href="/static/css/music-assistant.css?v=1">
     <link rel="icon" href="/static/img/audioenhancermax-logo.png" type="image/png">
 </head>
 <body>
@@ -75,6 +76,9 @@
         </button>
         <button class="sidebar-nav-item" type="button" data-panel="tts-panel" onclick="switchPanel('tts-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/tts.svg" alt="" aria-hidden="true"></span> Text to Speech
+        </button>
+        <button class="sidebar-nav-item" type="button" data-panel="music-panel" onclick="switchPanel('music-panel', this)">
+            <span class="icon"><img class="icon-img" src="/static/img/icons/music.svg" alt="" aria-hidden="true"></span> Music brief
         </button>
         <button class="sidebar-nav-item" type="button" data-panel="diarize-panel" onclick="switchPanel('diarize-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/speakers.svg" alt="" aria-hidden="true"></span> Speaker Diarization
@@ -724,6 +728,118 @@
         </div>
     </div>
 
+    <!-- --- MUSIC BRIEF PANEL --- -->
+    <section class="panel" id="music-panel" aria-labelledby="music-title">
+        <header class="workspace-heading">
+            <div>
+                <span class="workspace-kicker">Local creative workspace</span>
+                <h1 id="music-title">Music brief</h1>
+                <p>Shape the sound of an intro, a music bed or a story. Leave with an editable prompt.</p>
+            </div>
+            <span class="music-text-badge">Text only</span>
+        </header>
+        <div class="music-workspace">
+            <form id="music-form" class="music-directions music-block">
+                <div class="music-block-heading">
+                    <h2><span class="music-step">01</span> Your directions</h2>
+                    <span id="music-applied-preset" class="music-caption-meta">Loading presets…</span>
+                </div>
+                <div class="music-field">
+                    <label for="music-preset">Start from a preset</label>
+                    <div class="music-preset-row">
+                        <select id="music-preset" aria-describedby="music-preset-description" disabled><option>Loading presets…</option></select>
+                        <button class="btn btn-secondary" id="music-apply-preset" type="button" disabled>Apply directions</button>
+                    </div>
+                    <p class="music-help music-preset-description" id="music-preset-description">Original starting points for common creative tasks.</p>
+                    <p class="music-help">Applying a preset changes styles, timing and arrangement. Your description, lyrics and current prompt stay intact.</p>
+                </div>
+                <div class="music-field">
+                    <label for="music-description">Describe the music you need</label>
+                    <textarea id="music-description" rows="3" required maxlength="3000" placeholder="A warm, understated intro for a podcast about people and technology. Leave room for the host’s voice."></textarea>
+                </div>
+                <div class="music-build-row">
+                    <button class="btn btn-primary" type="submit" id="music-build" disabled>Build brief</button>
+                    <p class="music-help">Builds locally without a model. Rebuilding replaces the output with a new draft.</p>
+                </div>
+                <div class="music-grid-two" style="margin-top:20px">
+                    <div class="music-field"><label for="music-style">Primary style <span>optional</span></label><input type="text" id="music-style" maxlength="120" placeholder="e.g. ambient electronica"></div>
+                    <div class="music-field"><label for="music-secondary-style">Secondary influence <span>optional</span></label><input type="text" id="music-secondary-style" maxlength="120" placeholder="e.g. acoustic folk"></div>
+                </div>
+                <div class="music-grid-timing">
+                    <div class="music-field"><label for="music-vocals">Voice</label><select id="music-vocals"><option value="instrumental">Instrumental</option><option value="vocals">With vocals</option></select></div>
+                    <div class="music-field"><label for="music-bpm">BPM <span>optional</span></label><input type="number" id="music-bpm" min="20" max="240" step="1" inputmode="numeric" placeholder="Unspecified"></div>
+                    <div class="music-field"><label for="music-duration">Target seconds</label><input type="number" id="music-duration" required min="5" max="300" step="1" inputmode="numeric" value="20" aria-describedby="music-timing-note"></div>
+                </div>
+                <p class="music-help" id="music-timing-note">Tempo and duration are creative targets. A music generator may not follow them exactly.</p>
+                <div class="music-grid-two" style="margin-top:14px">
+                    <div class="music-field"><label for="music-instruments">Instruments <span>optional</span></label><textarea id="music-instruments" rows="2" maxlength="500" placeholder="Felt piano, soft percussion"></textarea></div>
+                    <div class="music-field"><label for="music-exclusions">Avoid <span>optional</span></label><textarea id="music-exclusions" rows="2" maxlength="500" placeholder="Heavy bass, abrupt changes"></textarea></div>
+                </div>
+                <fieldset class="music-arrangement">
+                    <legend>Arrangement</legend>
+                    <p class="music-help">Give each section a role and describe how the music develops.</p>
+                    <div class="music-sections">
+                        <div class="music-section">
+                            <div class="music-field"><label for="music-section-0-name">1. Opening</label><select id="music-section-0-name"><option>Intro</option><option>Verse</option><option>Pre-Chorus</option><option>Chorus</option><option>Bridge</option><option>Instrumental</option><option>Main</option><option>Outro</option></select></div>
+                            <div class="music-field"><label for="music-section-0-direction">Direction</label><textarea id="music-section-0-direction" rows="2" maxlength="400" placeholder="Instruments, energy and transition"></textarea></div>
+                        </div>
+                        <div class="music-section">
+                            <div class="music-field"><label for="music-section-1-name">2. Development</label><select id="music-section-1-name"><option>Intro</option><option>Verse</option><option>Pre-Chorus</option><option>Chorus</option><option>Bridge</option><option>Instrumental</option><option>Main</option><option>Outro</option></select></div>
+                            <div class="music-field"><label for="music-section-1-direction">Direction</label><textarea id="music-section-1-direction" rows="2" maxlength="400" placeholder="Instruments, energy and transition"></textarea></div>
+                        </div>
+                        <div class="music-section">
+                            <div class="music-field"><label for="music-section-2-name">3. Closing</label><select id="music-section-2-name"><option>Intro</option><option>Verse</option><option>Pre-Chorus</option><option>Chorus</option><option>Bridge</option><option>Instrumental</option><option>Main</option><option>Outro</option></select></div>
+                            <div class="music-field"><label for="music-section-2-direction">Direction</label><textarea id="music-section-2-direction" rows="2" maxlength="400" placeholder="Instruments, energy and transition"></textarea></div>
+                        </div>
+                    </div>
+                </fieldset>
+                <details class="music-lyrics">
+                    <summary>Lyrics <span class="music-caption-meta">optional, kept separate</span></summary>
+                    <p class="music-help" id="music-lyrics-note">This separate field is preserved as entered in the JSON export. It is not added to the music prompt or sent to the refinement model.</p>
+                    <div class="music-field"><label for="music-lyrics">Your lyrics</label><textarea id="music-lyrics" rows="5" maxlength="8000" aria-describedby="music-lyrics-note" placeholder="Paste or write lyrics here…"></textarea></div>
+                </details>
+            </form>
+            <div class="music-result">
+                <section class="music-block" id="music-output" aria-labelledby="music-output-title" aria-busy="false">
+                    <div class="music-block-heading">
+                        <h2 id="music-output-title"><span class="music-step">02</span> Music prompt</h2>
+                        <span class="music-caption-meta" id="music-output-state">No brief yet</span>
+                    </div>
+                    <p class="music-help music-output-intro">Your editable draft. Copy it into a music tool, or export the complete brief with its original version.</p>
+                    <div class="music-field">
+                        <label for="music-caption">Prompt to review and edit</label>
+                        <textarea id="music-caption" rows="10" maxlength="16000" placeholder="Your music prompt will appear here after you build a brief.
+
+Start with a description. Refine styles, instruments and arrangement as needed."></textarea>
+                    </div>
+                    <p class="music-warnings" id="music-warnings" hidden></p>
+                    <div class="music-output-actions">
+                        <button class="btn btn-secondary" type="button" id="music-copy" disabled>Copy prompt</button>
+                        <button class="btn btn-secondary" type="button" id="music-export" disabled>Export JSON</button>
+                    </div>
+                    <p class="music-boundary"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"><span>This workspace prepares text. It does not generate audio or connect to MiniMax. Drafts stay in this tab until you copy or export them.</span></p>
+                </section>
+                <section class="music-refinement" id="music-refinement" aria-labelledby="music-refinement-title" aria-busy="false">
+                    <h2 id="music-refinement-title">A second look <span class="music-caption-meta">optional</span></h2>
+                    <p class="music-help" id="music-privacy-note">To enable suggestions, allow local Ollama editorial assistance in Settings. Building a brief works without it.</p>
+                    <div class="music-refinement-actions">
+                        <button class="btn btn-secondary" type="button" id="music-refine" aria-describedby="music-privacy-note" disabled>Suggest refinements</button>
+                        <button class="btn btn-ghost" type="button" id="music-settings">Open Settings</button>
+                    </div>
+                    <div class="music-suggestions" id="music-suggestions" hidden>
+                        <h3>Suggestions for review</h3>
+                        <p class="music-caption-meta" id="music-suggestion-model"></p>
+                        <pre id="music-suggestion-text"></pre>
+                        <p class="music-help">Check these suggestions for conflicts with your directions. Appending adds the complete suggestions to your prompt; it does not replace your text.</p>
+                        <button class="btn btn-secondary" id="music-append" type="button" disabled>Append suggestions</button>
+                    </div>
+                </section>
+                <p id="music-status" class="music-status" role="status" aria-live="polite" aria-atomic="true">Loading local music presets…</p>
+                <button class="btn btn-secondary" id="music-retry" type="button" hidden>Retry loading presets</button>
+            </div>
+        </div>
+    </section>
+
     <!-- --- TEXT-TO-SPEECH PANEL --- -->
     <div class="panel" id="tts-panel">
         <div class="card">
@@ -1085,8 +1201,8 @@
                 <label class="setting-toggle"><input type="checkbox" id="setting-external-services" aria-label="Allow optional external services"><span class="toggle-slider"></span></label>
             </div>
             <div class="setting-item">
-                <div><label>Local Ollama assistance</label><span class="setting-supporting-text">Allows editorial text suggestions via a local Ollama process; DSP choices remain deterministic.</span></div>
-                <label class="setting-toggle"><input type="checkbox" id="setting-ollama-editorial" aria-label="Allow local Ollama editorial assistance"><span class="toggle-slider"></span></label>
+                <div><label for="setting-ollama-editorial">Local Ollama assistance</label><span class="setting-supporting-text" id="setting-ollama-description">Allows editorial text suggestions via a local Ollama process; DSP choices remain deterministic.</span></div>
+                <label class="setting-toggle"><input type="checkbox" id="setting-ollama-editorial" aria-label="Allow local Ollama editorial assistance" aria-describedby="setting-ollama-description"><span class="toggle-slider"></span></label>
             </div>
             <div class="setting-item">
                 <div><label>Trusted-LAN processing</label><span class="setting-supporting-text">Allows selected DSP chunks to be sent to workers you connect on the local network.</span></div>
@@ -1382,6 +1498,7 @@
 
 <!-- --- Application Scripts --- -->
 <script src="/static/js/app.js?v=3.7.4-personal-voice1"></script>
+<script src="/static/js/music-assistant.js?v=1"></script>
 <script>
 (() => {
     const sidebar = document.getElementById('sidebar');

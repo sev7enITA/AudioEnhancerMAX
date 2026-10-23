@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadVoiceProfiles();
     initAboutPanel();
     initReviewDeck();
+    if (typeof initMusicAssistant === 'function') initMusicAssistant();
 });
 
 let systemCapabilities = null;
@@ -4108,6 +4109,7 @@ async function saveRuntimePrivacySettings() {
 }
 
 function applyRuntimePrivacyUi() {
+    if (typeof refreshMusicAssistantPrivacy === 'function') refreshMusicAssistantPrivacy();
     if (!state.runtimePrivacy) return;
     const allowExternal = state.runtimePrivacy.external_services_allowed;
     const allowOllama = state.runtimePrivacy.ollama_editorial_allowed;
@@ -4299,6 +4301,7 @@ function applyIntentProfile(profile) {
         'stt-panel': document.querySelector('[data-panel="stt-panel"]'),
         'speech-editor-panel': document.querySelector('[data-panel="speech-editor-panel"]'),
         'tts-panel': document.querySelector('[data-panel="tts-panel"]'),
+        'music-panel': document.querySelector('[data-panel="music-panel"]'),
         'diarize-panel': document.querySelector('[data-panel="diarize-panel"]'),
         'smart-panel': document.querySelector('[data-panel="smart-panel"]'),
         'watermark-panel': document.querySelector('[data-panel="watermark-panel"]'),
@@ -4418,6 +4421,7 @@ function applyIntentProfile(profile) {
         toggleNav('batch-panel', false);
         toggleNav('stt-panel', false);
         toggleNav('tts-panel', false);
+        toggleNav('music-panel', false);
         toggleNav('diarize-panel', false);
         toggleNav('smart-panel', false);
         toggleNav('cluster-panel', false);

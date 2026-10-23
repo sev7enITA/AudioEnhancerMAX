@@ -187,6 +187,7 @@ Do not expose the FastAPI server directly to the public internet without adding 
 
 ## Documentation
 
+- [Music brief assistant (local feature branch)](docs/music-brief-assistant.md)
 - [Signal Console Design Contract](DESIGN.md)
 - [Visual Design Reference](docs/design-preview.html)
 - [Getting Started](docs/getting-started.md)
