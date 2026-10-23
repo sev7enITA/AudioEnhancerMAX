@@ -5,6 +5,9 @@ Branch: `codex/music-brief-assistant-20261023`, based on `6c23240` (release 3.8.
 The older Desktop checkout was readable in part but Git operations timed out. Work
 was isolated from the clean, accessible release checkout instead of changing that tree.
 
+The later packaged release is verified separately in
+[Experimental 1 package verification](../releases/EXPERIMENTAL_1_VERIFICATION.md).
+
 ## Automated checks
 
 | Check | Result |

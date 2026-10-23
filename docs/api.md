@@ -74,7 +74,7 @@ Project Capsule JSON accepts `include_source` (default `false`) and `target_id`.
 
 Personal synthesis sets `engine` to `voice-clone` and supplies `voice_profile_id`. A raw `clone_voice_file_id` without a saved profile is rejected so the sample can never be silently ignored while a stock voice is used. `POST /api/voice-profiles/enroll` references a normal uploaded `file_id`, accepts an optional exact `transcript`, and requires `consent_confirmed: true`.
 
-## Music briefs (local feature branch)
+## Music briefs (experimental channel)
 
 | Method | Path | Purpose |
 | --- | --- | --- |

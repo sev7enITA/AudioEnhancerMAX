@@ -24,7 +24,7 @@ AudioEnhancerMAX is designed as a local-first, AI-assisted audio tool. It is not
 
 ## Explainability Boundaries
 
-### Music brief assistant (local feature branch)
+### Music brief assistant (experimental channel)
 
 Music prompts and original presets are assembled locally without a model. Optional
 Ollama suggestions require the existing editorial permission and use a fixed loopback
