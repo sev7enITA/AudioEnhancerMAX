@@ -1,0 +1,8 @@
+{
+  "base": "live HTTPS pages retrieved before editing",
+  "files": {
+    "index.html": "250e4e866b409d4992d2e44bd8cb3f74ebec918b8e890b102a32a56fb298a8ed",
+    "download.html": "84c5e063ee201d3e3a90412ba84b8d510fa8735cb35e7fb1485323d2d7033e14"
+  },
+  "scope": "Only AudioEnhancerMAX/index.html and AudioEnhancerMAX/download.html; all other remote paths preserved."
+}
