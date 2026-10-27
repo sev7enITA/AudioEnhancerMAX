@@ -2,6 +2,21 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
+## [3.9.0 / build 3.9.2] - 2026-10-27
+
+### Added
+
+- Promote the Music brief assistant from Experimental 1 to stable: six original presets, deterministic local prompt construction, editable arrangement, separate lyrics, copy and JSON export.
+- Optional local Ollama suggestions remain separate until reviewed and explicitly appended. Cloud-named and remote models are excluded; permission, timeout and stale-result checks preserve the current draft.
+
+### Distribution
+
+- Restore the stable application identity and existing stable data path. Experimental 1 remains a separate installation and does not migrate its data automatically.
+- Refresh pinned aiohttp, certifi, filelock, Pillow, yarl and setuptools versions for the release runtime and build.
+- Update installation guidance to distinguish bundled codecs and core features from optional engines. Music brief drafts are session-only; export before closing. This release does not generate music or call MiniMax.
+
+See [release notes](releases/RELEASE_NOTES_v3.9.0.md) and [package verification](releases/DIRECT_BUILD_3.9.2.md).
+
 ## [3.8.3 / build 3.8.4] - 2026-10-18
 
 ### Fixed

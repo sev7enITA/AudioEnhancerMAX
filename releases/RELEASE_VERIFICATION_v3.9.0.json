@@ -1,0 +1,28 @@
+{
+  "version": "3.9.0",
+  "build": "3.9.2",
+  "channel": "stable",
+  "application_source_commit": "8079c262fc0b163c259b265172dd95a04520ff3c",
+  "artifact": "AudioEnhancerMAX-v3.9.0-build-3.9.2-macOS-arm64.dmg",
+  "bytes": 132911847,
+  "sha256": "4b258e3c5b0ccc94788eae3d2215a86b3acbdbfc678151d16dcac2fb97b0d162",
+  "notarization": {
+    "id": "83ffdd9b-db2a-4ac3-a23d-b2d7c0a02cfd",
+    "status": "Accepted",
+    "ticket_stapled": true,
+    "stapler_validation": "passed",
+    "gatekeeper_dmg": "accepted",
+    "gatekeeper_app": "accepted",
+    "codesign_deep_strict": "passed"
+  },
+  "verification_date": "2026-10-27",
+  "automated_checks": {
+    "python_tests": 135,
+    "python_subtests": 11,
+    "javascript_tests": 19,
+    "pip_check": "passed",
+    "pip_audit_known_vulnerabilities": 0
+  },
+  "packaged_workflow": "passed",
+  "verification_details": "DIRECT_BUILD_3.9.2.md"
+}

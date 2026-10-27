@@ -1,0 +1,22 @@
+{
+  "status": "published_and_verified",
+  "release": {
+    "isDraft": false,
+    "isPrerelease": true,
+    "publishedAt": "2026-10-23T16:51:06Z",
+    "tagName": "v3.9.0-experimental.1",
+    "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0-experimental.1"
+  },
+  "source_commit": "fc22c9cf74439aaa4f83608e2f132c6f2465597a",
+  "stable_latest": "v3.8.3",
+  "stable_dmg_sha256": "316ff0f7f9ccf4f478e5762431bd7b1bd2a859c570779e81eb46a1d467e16f84",
+  "experimental_dmg_sha256": "b234ea6dc60d8b388698109e5dfce93abaa906c63608362edd2f3c611c66f068",
+  "public_download_verified": true,
+  "website_files_verified": 2,
+  "website": "https://www.fabriziodegni.com/AudioEnhancerMAX/#download",
+  "website_package": "AudioEnhancerMAX-experimental-1-website-final.zip",
+  "rollback_package": "AudioEnhancerMAX-experimental-1-rollback.zip",
+  "remote_backup_directory": "audioenhancer-experimental-1-20261023 (outside public_html)",
+  "app_store_submission_changed": false,
+  "stable_source_changed": false
+}

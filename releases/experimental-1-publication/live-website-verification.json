@@ -1,0 +1,16 @@
+[
+  {
+    "file": "index.html",
+    "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/",
+    "status": 200,
+    "sha256": "7e6c13b2b537eef3a2e296e4c715c75c3cb822f862dfa933c6704171d0d6054d",
+    "matches": true
+  },
+  {
+    "file": "download.html",
+    "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/download.html",
+    "status": 200,
+    "sha256": "84c5e063ee201d3e3a90412ba84b8d510fa8735cb35e7fb1485323d2d7033e14",
+    "matches": true
+  }
+]

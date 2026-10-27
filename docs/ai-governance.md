@@ -24,6 +24,15 @@ AudioEnhancerMAX is designed as a local-first, AI-assisted audio tool. It is not
 
 ## Explainability Boundaries
 
+### Music brief assistant (experimental channel)
+
+Music prompts and original presets are assembled locally without a model. Optional
+Ollama suggestions require the existing editorial permission and use a fixed loopback
+connection. The separate lyrics field is excluded; the editable prompt is included.
+Suggestions are kept separate until the user appends them and may conflict with creative
+constraints, so review is required. This feature generates text only and does not call
+MiniMax. See [data flow and limitations](music-brief-assistant.md).
+
 ### Version 3.8.3: privacy recovery and capsule evidence
 
 Valid saved privacy preferences are preserved. Missing, unreadable or malformed preferences disable all three optional permissions until the user saves their choices: external services, local Ollama assistance and trusted-LAN processing. The settings panel explains the recovery state. This does not block downloads of transcription models or constitute a system-wide network firewall.

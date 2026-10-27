@@ -153,6 +153,11 @@ def get_capability_registry() -> dict[str, Any]:
             version="1",
             detail="Audio measurements and deterministic policy; no external model decides DSP settings.",
         ),
+        "music_brief": _engine(
+            "music-brief-v1", "Music brief assistant", available=True,
+            mode="deterministic-local", version="1",
+            detail="Text-only prompts and original presets. Optional Ollama suggestions require permission; no music generation.",
+        ),
     }
 
     from app.services.runtime_settings import load_runtime_settings
@@ -173,6 +178,8 @@ def get_capability_registry() -> dict[str, Any]:
         "neural_diarization": engines["diarization"]["mode"] == "neural",
         "neural_super_resolution": engines["super_resolution"]["mode"] == "neural",
         "non_destructive_speech_editor": True,
+        "music_brief_assistant": True,
+        "music_audio_generation": False,
         "runtime_privacy": runtime_privacy,
     }
 

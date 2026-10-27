@@ -4,6 +4,7 @@ AudioEnhancerMAX by Fd - Configuration
 import os
 import sys
 from pathlib import Path
+from app.release import APP_NAME
 
 # Resource and user-data paths. Frozen macOS builds keep bundled assets in
 # PyInstaller's resource directory while mutable data lives outside the .app.
@@ -36,7 +37,7 @@ def whisper_model_source(requested: str = "medium") -> tuple[str, bool]:
 
 _default_data_dir = SOURCE_BASE_DIR / "app"
 if getattr(sys, "frozen", False):
-    _default_data_dir = Path.home() / "Library" / "Application Support" / "AudioEnhancerMAX"
+    _default_data_dir = Path.home() / "Library" / "Application Support" / APP_NAME
 
 DATA_DIR = Path(os.getenv("AEMAX_DATA_DIR", str(_default_data_dir))).expanduser()
 APP_DIR = DATA_DIR

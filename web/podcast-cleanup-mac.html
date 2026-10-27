@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="css/seo-guide.css">
+<!-- discovery:start -->
+<title>Clean Up Podcast Audio on Mac | AudioEnhancerMAX Guide</title>
+<meta name="description" content="Clean spoken audio locally on Mac: review noise reduction, transcript edits, loudness checks and export evidence with this practical AudioEnhancerMAX guide.">
+<link rel="canonical" href="https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html">
+<link rel="describedby" href="https://www.fabriziodegni.com/AudioEnhancerMAX/llms.txt" type="text/plain">
+<link rel="sitemap" href="https://www.fabriziodegni.com/AudioEnhancerMAX/sitemap.xml" type="application/xml">
+<link rel="alternate" hreflang="en" href="https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html">
+<link rel="alternate" hreflang="it" href="https://www.fabriziodegni.com/AudioEnhancerMAX/pulire-audio-podcast-mac.html">
+<link rel="alternate" hreflang="x-default" href="https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html">
+<meta property="og:title" content="Clean Up Podcast Audio on Mac | AudioEnhancerMAX Guide">
+<meta property="og:description" content="Clean spoken audio locally on Mac: review noise reduction, transcript edits, loudness checks and export evidence with this practical AudioEnhancerMAX guide.">
+<meta property="og:url" content="https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://www.fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+<meta property="og:image:alt" content="AudioEnhancerMAX local audio production workspace">
+<meta property="og:locale" content="en_GB">
+<meta property="og:site_name" content="AudioEnhancerMAX">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html#page",
+      "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html",
+      "name": "Clean Up Podcast Audio on Mac | AudioEnhancerMAX Guide",
+      "description": "Clean spoken audio locally on Mac: review noise reduction, transcript edits, loudness checks and export evidence with this practical AudioEnhancerMAX guide.",
+      "inLanguage": "en",
+      "about": {
+        "@id": "https://www.fabriziodegni.com/AudioEnhancerMAX/#software"
+      },
+      "headline": "How to clean up podcast audio locally on Mac",
+      "author": {
+        "@type": "Person",
+        "name": "Fabrizio Degni",
+        "url": "https://www.fabriziodegni.com/about/"
+      },
+      "image": "https://www.fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png",
+      "datePublished": "2026-10-23"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "AudioEnhancerMAX",
+          "item": "https://www.fabriziodegni.com/AudioEnhancerMAX/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guide",
+          "item": "https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html"
+        }
+      ]
+    }
+  ]
+}
+</script>
+<!-- discovery:end -->
+</head>
+<body><a class="skip" href="#main">Skip to content</a>
+<nav aria-label="Primary navigation"><a href="./">AudioEnhancerMAX</a><a href="download.html">Download</a><a href="support.html">Support</a><a href="pulire-audio-podcast-mac.html" lang="it">Italiano</a></nav>
+<main id="main"><p class="crumb"><a href="./">AudioEnhancerMAX</a> / Guide</p>
+<p class="eyebrow">Local audio · Apple Silicon · Open source</p>
+<h1>How to clean up podcast audio locally on Mac</h1><p class="intro">A practical path from the original recording to a reviewed export, with noise reduction, transcript edits and clear processing boundaries.</p><p class="byline">By <a href="https://www.fabriziodegni.com/about/">Fabrizio Degni</a> · <time datetime="2026-10-23">October 23, 2026</time></p>
+<div class="panel"><h2 style="margin-top:0">What this workflow covers</h2><p>AudioEnhancerMAX is a free, open-source audio editor for Apple Silicon Macs. It combines local speech cleanup, transcript-based editing and export checks. Use it when you want to review the changes to a recording and keep the source intact. The direct release requires macOS 13 or later; speech models may download on first use.</p><a class="button" href="download.html">Get the Mac app</a><a href="pulire-audio-podcast-mac.html" lang="it">Leggi la guida italiana</a></div>
+<h2>1. Start with a short, representative recording</h2><p>Import a copy of your source and listen before processing it. Pick a passage containing speech, a quiet pause and the noise you want to reduce. Notice whether the problem is steady background noise, uneven level, repeated filler words or an unwanted section. These call for different decisions. A clipped or badly distorted source may remain damaged after processing.</p><p>Keep the unprocessed recording. AudioEnhancerMAX preserves the uploaded source through its non-destructive edit history, but an independent backup is useful when you compare versions or move projects.</p>
+<h2>2. Reduce noise without removing the voice</h2><p>Start with the Conservative Smart Enhance option and inspect its explanation. Smart Enhance uses measured signal characteristics to recommend DSP settings. The optional local Ollama editorial assistant can suggest prose; it does not choose the DSP parameters.</p><p>Noise removal uses DeepFilterNet when installed, with a spectral-gating fallback. Check the reported active engine before comparing results. Listen for softened consonants, a metallic voice or pumping background noise. If these appear, reduce processing or adjust the wet/dry mix, then compare the same passage again. More processing is not automatically a better recording.</p>
+<h2>3. Review the transcript before cutting speech</h2><p>Generate a local Whisper transcript and compare important words with the recording. Automatic transcription and filler detection can be wrong. Select the proposed words or passage in the Precision Speech Editor, review the suggested cut or mute, then apply only the changes you accept. Undo and redo allow you to revisit an edit.</p><p>A pause or repetition may carry meaning. Keep it when removing it would change the speaker's intent. Render the accepted edit decisions before treating the output as the version you intend to deliver. A later transcript change does not prove that an earlier render used the new text.</p>
+<h2>4. Choose an export target and inspect the result</h2><p>Select the delivery profile that matches your destination: podcast, video, audiobook, lossless archive or source-quality master. Review format, sample rate and level choices before exporting. The Delivery Compliance Lab reports integrated loudness, estimated true peak, clipping and sample-rate checks. Read the individual results and warnings.</p><p>These checks are workflow guidance. They do not certify acceptance by a hosting platform or audiobook distributor. Check your destination's current requirements and listen to the exported file itself. A loudness check cannot tell you whether the pacing is natural or a word was cut incorrectly.</p>
+<h2>5. Keep the evidence with the delivered file</h2><p>Export a Project Capsule when you need to retain the processed audio and the available report, transcript, edit decisions and review evidence. Version 3.8.3 ties capsule evidence to the selected render and hashes the actual archived bytes. The original source audio is excluded by default; inspect the package before sharing it.</p><p>Hashes help check file integrity. They do not prove speaker consent, transcription accuracy or good sound. The final decision still depends on listening and on the permission you have to use the recording.</p>
+<h2>Which features need a network?</h2><div class="table-wrap"><table><thead><tr><th scope="col">Path</th><th scope="col">Boundary</th></tr></thead><tbody><tr><th scope="row">Core DSP and transcription</th><td>Run on the Mac. Models may need an initial download.</td></tr><tr><th scope="row">Ollama assistance</th><td>Optional local helper, controlled separately.</td></tr><tr><th scope="row">Microsoft Edge Neural TTS</th><td>Optional external service. Submitted text is sent to Microsoft.</td></tr><tr><th scope="row">Android workers</th><td>Optional, experimental processing on a trusted local network.</td></tr></tbody></table></div><p>Review the <a href="privacy.html">privacy boundaries</a> and your settings before using a confidential recording. “Local-first” does not mean every optional feature is offline.</p>
+<h2>When this app fits</h2><p>Consider AudioEnhancerMAX for spoken recordings where local processing, reviewed edits and an inspectable export trail matter. First check the <a href="download.html">hardware requirements and download FAQ</a>. If your workflow needs an Intel Mac package, a Windows installer or guaranteed support for a particular optional model, do not assume that the Apple Silicon DMG provides it.</p><p>Personal Voice Studio and experimental worker features have separate development boundaries. Use the <a href="status.html">project status</a> and the notes for your exact package to decide whether a feature is available.</p>
+<h2>Sources and verification scope</h2><p>This guide describes the public 3.8.3 workflow. It is not an independent listening test or a promise of perceptual improvement. Check the <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3">3.8.3 release notes</a>, <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/DIRECT_BUILD_3.8.4.md">exact packaged-build evidence</a> and <a href="governance.html">reviewable audio decisions</a>. For a reproducible problem, follow the <a href="support.html">support instructions</a>.</p></main><footer>AudioEnhancerMAX · MIT License · <a href="privacy.html">Privacy</a> · <a href="status.html">Status and evidence</a> · <a href="llms.txt">Text resource index</a></footer></body></html>

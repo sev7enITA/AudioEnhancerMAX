@@ -267,7 +267,7 @@ def _optional_engines_check() -> dict[str, Any]:
             "warning",
             False,
             "Unavailable optional engines: " + ", ".join(missing) + ".",
-            "Existing fallback paths remain available. A Store package must bundle or hide each advertised optional engine.",
+            "Core cleanup and editing remain available. These optional engines require a separate compatible installation.",
         )
     return _check(
         "optional_engines",
@@ -318,7 +318,8 @@ def _speech_model_check() -> dict[str, Any]:
         status,
         APP_STORE_MODE,
         "The local Faster-Whisper model is not bundled.",
-        "Store builds must include the model and never download it at runtime.",
+        ("Reinstall AudioEnhancerMAX: the required transcription model is missing." if APP_STORE_MODE
+         else "Transcription uses an existing local model cache or downloads the model on first use. Inference then runs on this Mac."),
     )
 
 

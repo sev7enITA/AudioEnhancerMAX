@@ -3,3 +3,4 @@ backports.tarfile==1.2.0
 pyobjc-core==12.2.1
 pyobjc-framework-Cocoa==12.2.1
 pyobjc-framework-WebKit==12.2.1
+setuptools==84.1.0

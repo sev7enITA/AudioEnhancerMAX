@@ -1,0 +1,64 @@
+{
+  "status": "passed",
+  "macos": "27.2",
+  "architecture": "arm64",
+  "source_commit": "fc22c9cf74439aaa4f83608e2f132c6f2465597a",
+  "experimental": {
+    "version": "3.9.0",
+    "build": "3.9.1",
+    "release_channel": "experimental",
+    "release_label": "Experimental 1"
+  },
+  "coexistence": {
+    "experimental_packaged_app_port": 8001,
+    "stable_source_backend_port": 8000,
+    "stable_version": "3.8.3",
+    "both_healthy": true,
+    "two_native_windows_tested": false
+  },
+  "native_window_launch": true,
+  "native_json_save": true,
+  "exact_export_caption": true,
+  "music_presets": 6,
+  "lyrics_preserved": true,
+  "ollama_permission_off_status": 403,
+  "synthetic_dsp": {
+    "normalize": true,
+    "wav_export": true,
+    "source_preserved": true,
+    "sample_rate": 48000,
+    "frames": 144000,
+    "file_id": "282e84e2-142",
+    "source_sha256": "86032a7939dfb871c0d653505204fc4ee18d004159f8ab15af5e2a7e44657fa1",
+    "output_sha256": "2bb3c6f263a7c58b9560d150a3bb3574e7b9fd7e14d2ca1fefc6c9df24971aee"
+  },
+  "limits": [
+    "Single physical Apple Silicon Mac",
+    "Stable coexistence used the stable source backend, not a second native window",
+    "No first-time model acquisition",
+    "No perceptual audio quality evaluation",
+    "Packaged Ollama inference not repeated; real-model source integration previously passed"
+  ],
+  "quit_stops_experimental_server": true,
+  "stable_backend_survives_experimental_quit": true,
+  "release_tag": "v3.9.0-experimental.1",
+  "file": "AudioEnhancerMAX-v3.9.0-experimental.1-build-3.9.1-macOS-arm64.dmg",
+  "size_bytes": 132747870,
+  "sha256": "b234ea6dc60d8b388698109e5dfce93abaa906c63608362edd2f3c611c66f068",
+  "notarization": {
+    "status": "Accepted",
+    "submission_id": "914637be-9d49-4df2-8647-4e21e0934af0",
+    "stapled": true,
+    "gatekeeper": "accepted; Notarized Developer ID"
+  },
+  "frontend_files_matched": 71,
+  "tests": {
+    "python": 135,
+    "python_subtests": 11,
+    "javascript": 19,
+    "github_ci": "https://github.com/sev7enITA/AudioEnhancerMAX/actions/runs/39988714345",
+    "github_ci_conclusion": "success"
+  },
+  "stable_release_preserved": "v3.8.3",
+  "verified_date": "2026-10-23"
+}

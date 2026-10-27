@@ -33,6 +33,7 @@ from app.models.schemas import (
     SpeechEditorManualEditRequest, RevisionRequest, RuntimePrivacySettingsRequest,
     ProjectCapsuleRequest, BlindABReviewRequest,
 )
+from app.models.music import MusicBriefRequest, MusicRefineRequest
 from app.utils.audio_io import (
     generate_file_id, get_upload_path, get_output_path,
     validate_extension, load_audio, save_audio, get_audio_info,
@@ -44,8 +45,9 @@ from app.utils.progress import progress_tracker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "3.8.3"
-APP_BUILD = os.getenv("AEMAX_BUILD_NUMBER", "3.8.4")
+from app.release import APP_VERSION, APP_BUILD as DEFAULT_APP_BUILD, RELEASE_CHANNEL, RELEASE_LABEL
+
+APP_BUILD = os.getenv("AEMAX_BUILD_NUMBER", DEFAULT_APP_BUILD)
 _PROCESSING_FILES: set[str] = set()
 SAFE_FILE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 STREAMABLE_AUDIO_VERSIONS = {"original", "processed"}
@@ -1666,6 +1668,40 @@ async def rewrite_text(request: TTSRewriteRequest):
 
 
 # ══════════════════════════════════════════════════════════
+# Routes - Music briefs (text only)
+# ══════════════════════════════════════════════════════════
+
+@app.get("/api/music/presets")
+async def music_presets():
+    from app.services.music_brief import list_music_presets
+    return list_music_presets()
+
+
+@app.post("/api/music/brief")
+async def music_brief(request: MusicBriefRequest):
+    from app.services.music_brief import build_music_brief
+    try:
+        return build_music_brief(request)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/music/refine")
+async def music_refine(request: MusicRefineRequest):
+    from app.services.music_brief import refine_music_brief, MusicModelUnavailable, MusicRefinementBusy
+    try:
+        return await asyncio.to_thread(refine_music_brief, request)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except MusicRefinementBusy as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except MusicModelUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+# ══════════════════════════════════════════════════════════
 # Routes - Speaker Diarization
 # ══════════════════════════════════════════════════════════
 
@@ -1980,6 +2016,8 @@ async def health():
         "app": "AudioEnhancerMAX by Fabrizio Degni",
         "version": APP_VERSION,
         "build": APP_BUILD,
+        "release_channel": RELEASE_CHANNEL,
+        "release_label": RELEASE_LABEL,
         "compute": gpu_info,
         "mps_available": mps_available,
         "gemma4_status": gemma_status,

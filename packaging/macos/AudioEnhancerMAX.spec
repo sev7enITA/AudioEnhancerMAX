@@ -1,15 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
+import runpy
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 ROOT = Path(SPEC).resolve().parents[2]
-VERSION = os.getenv("AEMAX_MARKETING_VERSION", "3.8.3")
-BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", "3.8.4")
+RELEASE = runpy.run_path(str(ROOT / "app" / "release.py"))
+VERSION = os.getenv("AEMAX_MARKETING_VERSION", RELEASE["APP_VERSION"])
+BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", RELEASE["APP_BUILD"])
+APP_NAME = RELEASE["APP_NAME"]
 DISTRIBUTION = os.getenv("AEMAX_DISTRIBUTION", "direct")
+if DISTRIBUTION != "direct":
+    raise SystemExit("This release supports direct distribution only. App Store distribution requires its separately validated packaging workflow.")
 ICON = ROOT / "packaging" / "macos" / "AudioEnhancerMAX.icns"
 WHISPER_MODEL_DIR = Path(os.getenv("AEMAX_WHISPER_MODEL_DIR", ""))
 LICENSE_DIR = Path(os.getenv("AEMAX_LICENSE_DIR", ""))
@@ -97,13 +102,13 @@ coll = COLLECT(
 
 app = BUNDLE(
     coll,
-    name="AudioEnhancerMAX.app",
+    name=APP_NAME + ".app",
     icon=str(ICON),
-    bundle_identifier="com.fabriziodegni.audioenhancermax",
+    bundle_identifier=RELEASE["BUNDLE_IDENTIFIER"],
     version=VERSION,
     info_plist={
-        "CFBundleDisplayName": "AudioEnhancerMAX",
-        "CFBundleName": "AudioEnhancerMAX",
+        "CFBundleDisplayName": APP_NAME,
+        "CFBundleName": APP_NAME,
         "CFBundleShortVersionString": VERSION,
         "CFBundleVersion": BUILD_NUMBER,
         "LSApplicationCategoryType": "public.app-category.music",
@@ -115,5 +120,8 @@ app = BUNDLE(
         "LSMultipleInstancesProhibited": True,
         "NSQuitAlwaysKeepsWindows": False,
         "AEMAXDistribution": DISTRIBUTION,
+        "AEMAXReleaseChannel": RELEASE["RELEASE_CHANNEL"],
+        "AEMAXReleaseLabel": RELEASE["RELEASE_LABEL"],
+        "AEMAXReleaseTag": RELEASE["RELEASE_TAG"],
     },
 )

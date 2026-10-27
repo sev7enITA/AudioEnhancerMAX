@@ -1,0 +1,390 @@
+{
+  "updated_on": "2026-10-27",
+  "resources": [
+    {
+      "id": "product-hunt",
+      "name": "Product Hunt",
+      "url": "https://www.producthunt.com/products/audioenhancermax",
+      "group": "profiles",
+      "type": {
+        "en": "Developer launch",
+        "it": "Lancio dello sviluppatore"
+      },
+      "description": {
+        "en": "Launch page, screenshots and the maker’s introduction to local audio editing and governance.",
+        "it": "Pagina di lancio, schermate e presentazione dello sviluppatore su editing audio locale e governance."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "alternativeto",
+      "name": "AlternativeTo",
+      "url": "https://alternativeto.net/software/audioenhancermax/about/",
+      "group": "profiles",
+      "type": {
+        "en": "Community directory",
+        "it": "Directory della community"
+      },
+      "description": {
+        "en": "Developer-submitted profile with features, licence details, screenshots and alternatives.",
+        "it": "Scheda inserita dallo sviluppatore con funzionalità, licenza, schermate e alternative."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "itechguides",
+      "name": "iTechGuides",
+      "url": "https://www.itechguides.com/products/audioenhancermax/",
+      "group": "profiles",
+      "type": {
+        "en": "Third-party profile",
+        "it": "Scheda di terzi"
+      },
+      "description": {
+        "en": "Researched product profile and editorial comparison. The page is not presented here as a hands-on audio test.",
+        "it": "Scheda del prodotto basata su ricerca e confronto editoriale. Qui non viene presentata come prova d’ascolto indipendente."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "eztoolset",
+      "name": "EZToolset",
+      "url": "https://eztoolset.com/tools/audioenhancermax/",
+      "group": "profiles",
+      "type": {
+        "en": "Third-party directory",
+        "it": "Directory di terzi"
+      },
+      "description": {
+        "en": "An overview of processing features, speech editing and optional integrations.",
+        "it": "Una panoramica delle funzioni di elaborazione, dell’editing del parlato e delle integrazioni opzionali."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "itechfaqs",
+      "name": "iTechFAQs",
+      "url": "https://www.itechfaqs.com/tools/audioenhancermax/",
+      "group": "profiles",
+      "type": {
+        "en": "Third-party FAQ",
+        "it": "FAQ di terzi"
+      },
+      "description": {
+        "en": "A question-and-answer product profile. Platform fields combine packaged, source-code and companion capabilities.",
+        "it": "Una scheda a domande e risposte. I campi sulle piattaforme aggregano pacchetto desktop, codice sorgente e componenti complementari."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "techyorker",
+      "name": "TechYorker",
+      "url": "https://techyorker.com/products/audioenhancermax/",
+      "group": "profiles",
+      "type": {
+        "en": "Third-party directory",
+        "it": "Directory di terzi"
+      },
+      "description": {
+        "en": "Feature and product overview. Some pricing and platform fields are incomplete; the official app is free and MIT-licensed.",
+        "it": "Panoramica del prodotto e delle funzioni. Alcuni campi su prezzi e piattaforme sono incompleti; l’app ufficiale è gratuita con licenza MIT."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "uma",
+      "name": "UMA Technology",
+      "url": "https://umatechnology.org/platforms/audioenhancermax/",
+      "group": "profiles",
+      "type": {
+        "en": "Third-party comparison",
+        "it": "Confronto di terzi"
+      },
+      "description": {
+        "en": "A sourced feature summary and comparison. Check the official download page for packaged Mac requirements.",
+        "it": "Una sintesi delle funzioni con fonti e confronti. Per i requisiti del pacchetto Mac, consulta la pagina di download ufficiale."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "position-is-everything",
+      "name": "Position Is Everything",
+      "url": "https://www.positioniseverything.net/tools/audioenhancermax/",
+      "group": "profiles",
+      "type": {
+        "en": "Third-party directory",
+        "it": "Directory di terzi"
+      },
+      "description": {
+        "en": "A directory feature profile based on maker sources, rather than a hands-on audio test.",
+        "it": "Scheda delle funzioni in una directory, basata sulle fonti dello sviluppatore e non su una prova d’ascolto."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "mobilestalk",
+      "name": "MobilesTalk",
+      "url": "https://mobilestalk.net/software/audioenhancermax/",
+      "group": "profiles",
+      "type": {
+        "en": "Third-party directory",
+        "it": "Directory di terzi"
+      },
+      "description": {
+        "en": "A maker-sourced product overview. Some pricing fields are incomplete; check the official free download.",
+        "it": "Una panoramica basata sulle fonti dello sviluppatore. Alcuni campi sui prezzi sono incompleti; consulta il download gratuito ufficiale."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "appinn",
+      "name": "Appinn",
+      "url": "https://meta.appinn.net/t/topic/94076",
+      "group": "community",
+      "type": {
+        "en": "Developer post",
+        "it": "Post dello sviluppatore"
+      },
+      "description": {
+        "en": "A bilingual introduction with screenshots and a discussion of reviewable edits in the Appinn forum.",
+        "it": "Presentazione bilingue con schermate e descrizione delle modifiche rivedibili nel forum di Appinn."
+      },
+      "language": "中文 · English",
+      "verified_on": "2026-10-25",
+      "status": "published",
+      "chinese_name": "小众软件",
+      "featured": true
+    },
+    {
+      "id": "bilibili",
+      "name": "Bilibili",
+      "url": "https://www.bilibili.com/video/BV1RpHV6nEM4/",
+      "group": "community",
+      "type": {
+        "en": "Developer video",
+        "it": "Video dello sviluppatore"
+      },
+      "description": {
+        "en": "A 48-second silent interface overview with Chinese captions. The app interface is in English; this is not an audio comparison.",
+        "it": "Una visita all’interfaccia di 48 secondi, senza audio, con didascalie in cinese. L’app è in inglese; non è un confronto sonoro."
+      },
+      "language": "中文",
+      "verified_on": "2026-10-25",
+      "status": "published",
+      "chinese_name": "哔哩哔哩",
+      "featured": true
+    },
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "url": "https://www.youtube.com/watch?v=b2WYm-Mtw-c",
+      "group": "community",
+      "type": {
+        "en": "Developer video",
+        "it": "Video dello sviluppatore"
+      },
+      "description": {
+        "en": "A 4:33 tour with English narration and EN/IT subtitles, recorded with Experimental 1. Its Music brief workflow is now in stable 3.9.0. This is an interface guide, not audio-quality validation.",
+        "it": "Tour di 4:33 con voce inglese e sottotitoli EN/IT, registrato con Experimental 1. Il flusso Music brief è ora nella stabile 3.9.0. È una guida all’interfaccia, non una validazione della qualità audio."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "kvr",
+      "name": "KVR Audio",
+      "url": "https://www.kvraudio.com/forum/viewtopic.php?t=634380",
+      "group": "community",
+      "type": {
+        "en": "Developer forum post",
+        "it": "Post dello sviluppatore"
+      },
+      "description": {
+        "en": "Release announcement and discussion with the audio software community.",
+        "it": "Annuncio della versione e discussione con la community del software audio."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "reddit-audioai",
+      "name": "Reddit · r/AudioAI",
+      "url": "https://www.reddit.com/r/AudioAI/comments/1v01vtn/audioenhancermax_an_opensource_localfirst_ai/",
+      "group": "community",
+      "type": {
+        "en": "Developer post",
+        "it": "Post dello sviluppatore"
+      },
+      "description": {
+        "en": "Project introduction, release updates and questions from the community.",
+        "it": "Presentazione del progetto, aggiornamenti delle versioni e domande della community."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "reddit-macapps",
+      "name": "Reddit · r/macapps",
+      "url": "https://www.reddit.com/r/macapps/comments/1wuoav5/comment/phg05t8/",
+      "group": "community",
+      "type": {
+        "en": "Developer comment",
+        "it": "Commento dello sviluppatore"
+      },
+      "description": {
+        "en": "Release information shared in an existing Mac apps discussion.",
+        "it": "Informazioni sulla versione condivise in una discussione sulle app per Mac."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "url": "https://www.linkedin.com/feed/update/urn:li:share:7518502357434007552/",
+      "group": "community",
+      "type": {
+        "en": "Developer update",
+        "it": "Aggiornamento dello sviluppatore"
+      },
+      "description": {
+        "en": "Fabrizio Degni’s update on local audio work, reviewed edits and governance.",
+        "it": "L’aggiornamento di Fabrizio Degni su lavoro audio locale, modifiche rivedibili e governance."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "x",
+      "name": "X",
+      "url": "https://x.com/fabrizio_degni/status/2111695542325813255",
+      "group": "community",
+      "type": {
+        "en": "Developer announcement",
+        "it": "Annuncio dello sviluppatore"
+      },
+      "description": {
+        "en": "The release announcement, with a follow-up explaining processing records and Project Capsules.",
+        "it": "L’annuncio della versione, con un approfondimento su registri di elaborazione e Project Capsule."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published",
+      "related": {
+        "url": "https://x.com/fabrizio_degni/status/2112737035995992075",
+        "label": {
+          "en": "Read the follow-up",
+          "it": "Leggi l’approfondimento"
+        }
+      }
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "url": "https://github.com/sev7enITA/AudioEnhancerMAX",
+      "group": "official",
+      "type": {
+        "en": "Official repository",
+        "it": "Repository ufficiale"
+      },
+      "description": {
+        "en": "Source code, project documentation and issue reporting under the MIT licence.",
+        "it": "Codice sorgente, documentazione del progetto e segnalazioni dei problemi, con licenza MIT."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "github-releases",
+      "name": "GitHub Releases",
+      "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases",
+      "group": "official",
+      "type": {
+        "en": "Official releases",
+        "it": "Versioni ufficiali"
+      },
+      "description": {
+        "en": "Download packages and read the changelog for each version. Stable releases and experimental prereleases are labelled separately.",
+        "it": "Scarica i pacchetti e leggi il changelog di ogni versione. Le versioni stabili e quelle sperimentali sono contrassegnate separatamente."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "sourceforge",
+      "name": "SourceForge",
+      "url": "https://sourceforge.net/projects/audioenhancermax/",
+      "group": "official",
+      "type": {
+        "en": "Official download mirror",
+        "it": "Mirror ufficiale dei download"
+      },
+      "description": {
+        "en": "Maintainer-managed downloads, project details and release files.",
+        "it": "Download gestiti dallo sviluppatore, informazioni sul progetto e file delle versioni."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "published"
+    },
+    {
+      "id": "saashub",
+      "name": "SaaSHub",
+      "url": "https://www.saashub.com/audioenhancermax",
+      "group": "previews",
+      "type": {
+        "en": "Awaiting approval",
+        "it": "In attesa di approvazione"
+      },
+      "description": {
+        "en": "A public preview with description and screenshots. The page still displays “Pending approval”.",
+        "it": "Anteprima pubblica con descrizione e schermate. La pagina mostra ancora “Pending approval”."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "preview"
+    },
+    {
+      "id": "uneed",
+      "name": "Uneed",
+      "url": "https://www.uneed.best/tool/audioenhancermax",
+      "group": "previews",
+      "type": {
+        "en": "Launch scheduled",
+        "it": "Lancio programmato"
+      },
+      "description": {
+        "en": "The public preview is available. The launch is scheduled and is not counted as a completed launch.",
+        "it": "L’anteprima pubblica è consultabile. Il lancio è programmato e non viene conteggiato come già avvenuto."
+      },
+      "language": "English",
+      "verified_on": "2026-10-25",
+      "status": "preview"
+    }
+  ]
+}

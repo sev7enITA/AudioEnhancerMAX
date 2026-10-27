@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "real_model": "gemma4:e2b",
+  "source_preserved": true,
+  "explicit_append": true,
+  "current_content_export": true,
+  "separate_lyrics_preserved": true,
+  "page_errors": [],
+  "download": "aemax-music-brief.json"
+}

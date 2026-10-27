@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="icon" href="img/icons/aem-mark.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.06);
+            --text-1: #f0f0f5;
+            --text-2: #b2b2c7;
+            --text-3: #7f7f98;
+            --accent: #7c3aed;
+            --accent-2: #06b6d4;
+            --accent-3: #10b981;
+            --accent-glow: rgba(124,58,237,0.25);
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-1);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        a:focus-visible, button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 4px; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+            .reveal { opacity: 1; transform: none; }
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 16px 0;
+            transition: backdrop-filter 0.3s, background 0.3s;
+        }
+        .nav.scrolled {
+            backdrop-filter: blur(20px) saturate(1.5);
+            -webkit-backdrop-filter: blur(20px) saturate(1.5);
+            background: rgba(10,10,15,0.85);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-1);
+        }
+        .nav-logo-icon {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-radius: 10px;
+        }
+        .icon-img {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.15em;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+        .nav-logo-icon .icon-img {
+            width: 26px;
+            height: 26px;
+        }
+        .btn-icon-svg {
+            width: 17px;
+            height: 17px;
+            margin-right: 8px;
+        }
+        .nav-logo-text {
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.5px;
+        }
+        .nav-logo .v-badge {
+            font-size: 0.55rem;
+            background: var(--accent);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: var(--text-2);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text-1); }
+        .nav-toggle {
+            display: none;
+            width: 42px;
+            height: 42px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.055);
+            color: var(--text-1);
+            font: 700 0.72rem/1 'JetBrains Mono', monospace;
+            cursor: pointer;
+        }
+        .nav-award {
+            color: #fed7aa !important;
+        }
+        .nav-cta {
+            padding: 8px 20px;
+            background: var(--accent);
+            color: white !important;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        /* -- Hero -- */
+        .hero {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(10,10,15,0.38) 0%, rgba(10,10,15,0.72) 52%, var(--bg) 100%),
+                radial-gradient(ellipse at 50% 20%, rgba(124,58,237,.20), transparent 65%);
+            z-index: -2;
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto 0 0;
+            height: 180px;
+            background: linear-gradient(180deg, rgba(10,10,15,0) 0%, var(--bg) 100%);
+            z-index: -1;
+        }
+        .hero-content {
+            max-width: 1120px;
+            text-shadow: 0 2px 28px rgba(0,0,0,0.55);
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(124,58,237,0.1);
+            border: 1px solid rgba(124,58,237,0.2);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 28px;
+            animation: fadeUp 0.8s ease;
+        }
+        .hero-badge .dot {
+            width: 6px; height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            letter-spacing: 0;
+            line-height: 1.05;
+            margin-bottom: 20px;
+            animation: fadeUp 0.8s ease 0.1s both;
+        }
+        .brand-line { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.22em; }
+        .product-name { white-space: nowrap; }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, #a78bfa, #06b6d4, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-sub {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-2);
+            max-width: 760px;
+            margin: 0 auto 36px;
+            animation: fadeUp 0.8s ease 0.2s both;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp 0.8s ease 0.3s both;
+        }
+        .hero-recognition {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 22px;
+            padding: 8px 14px;
+            color: #fed7aa;
+            background: rgba(249,115,22,0.08);
+            border: 1px solid rgba(249,115,22,0.22);
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-decoration: none;
+            animation: fadeUp 0.8s ease 0.35s both;
+        }
+        .hero-recognition:hover {
+            border-color: rgba(249,115,22,0.38);
+            background: rgba(249,115,22,0.12);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.25s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #9333ea);
+            color: white;
+            box-shadow: 0 4px 30px var(--accent-glow);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px var(--accent-glow);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-1);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 60px;
+            animation: fadeUp 0.8s ease 0.4s both;
+        }
+        .hero-stat {
+            text-align: center;
+            padding: 16px 10px;
+            border-top: 1px solid rgba(16,185,129,0.38);
+            background: rgba(5,10,14,0.52);
+        }
+        .hero-stat .num {
+            font-size: 1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-stat .label {
+            font-size: 0.72rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* -- Proof ledger -- */
+        .proof-ledger {
+            border: 1px solid rgba(6,182,212,0.22);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(6,182,212,0.055), rgba(124,58,237,0.035));
+            box-shadow: 0 24px 70px rgba(0,0,0,0.22);
+        }
+        .ledger-head, .ledger-row {
+            display: grid;
+            grid-template-columns: minmax(170px, 0.8fr) minmax(150px, 0.65fr) minmax(260px, 1.55fr);
+            gap: 20px;
+            align-items: center;
+            padding: 17px 22px;
+        }
+        .ledger-head {
+            color: var(--text-3);
+            background: rgba(255,255,255,0.035);
+            font: 700 0.66rem/1.3 'JetBrains Mono', monospace;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+        }
+        .ledger-row { border-top: 1px solid var(--border); }
+        .ledger-row strong { font-size: 0.9rem; }
+        .ledger-boundary {
+            color: #67e8f9;
+            font: 600 0.7rem/1.4 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+        .ledger-evidence { color: var(--text-2); font-size: 0.82rem; }
+        .evidence-callout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+            gap: 28px;
+            align-items: center;
+            padding: 30px;
+            border: 1px solid rgba(16,185,129,0.25);
+            border-left: 3px solid var(--accent-3);
+            background: rgba(16,185,129,0.045);
+        }
+        .evidence-callout h3 { margin-bottom: 8px; }
+        .evidence-callout p { color: var(--text-2); font-size: 0.86rem; }
+        .evidence-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+        .evidence-links a {
+            color: #a7f3d0;
+            border-bottom: 1px solid rgba(16,185,129,0.45);
+            text-decoration: none;
+            font: 600 0.72rem/1.5 'JetBrains Mono', monospace;
+        }
+        .evidence-links a:focus-visible, .evidence-links a:hover { color: #fff; border-color: #fff; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* -- Section base -- */
+        section {
+            position: relative;
+            z-index: 1;
+            padding: 100px 24px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-label {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 14px;
+        }
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text-2);
+            max-width: 560px;
+            margin-bottom: 50px;
+        }
+
+        /* -- Features Grid -- */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .features-grid { grid-template-columns: 1fr; } }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .feature-card:hover {
+            border-color: rgba(124,58,237,0.2);
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.04);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon {
+            width: 46px;
+            height: 46px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .feature-icon .icon-img {
+            width: 32px;
+            height: 32px;
+        }
+        .feature-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--text-2);
+            line-height: 1.68;
+        }
+        .feature-card .tech-tag {
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .tech-tag.metal { background: rgba(16,185,129,0.12); color: #6ee7b7; }
+        .tech-tag.ai { background: rgba(245,158,11,0.12); color: #fbbf24; }
+        .tech-tag.edge { background: rgba(6,182,212,0.12); color: #67e8f9; }
+        .tech-tag.dsp { background: rgba(124,58,237,0.12); color: #a78bfa; }
+
+        /* -- Recognition -- */
+        .recognition-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 280px;
+            gap: 36px;
+            align-items: center;
+        }
+        .recognition-copy .section-desc {
+            margin-bottom: 24px;
+        }
+        .recognition-proof {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            padding: 28px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(249,115,22,0.2);
+            border-radius: var(--radius);
+            box-shadow: 0 16px 60px rgba(249,115,22,0.08);
+        }
+        .sourceforge-badge-stack {
+            width: 144px;
+            min-height: 128px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sourceforge-badge-stack .sf-root {
+            width: 125px;
+        }
+        .sourceforge-badge-stack.use-fallback .sf-root {
+            display: none;
+        }
+        .sourceforge-badge-stack:not(.use-fallback) .sourceforge-fallback {
+            display: none;
+        }
+        .sourceforge-fallback {
+            width: 125px;
+            min-height: 125px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 10px;
+            color: var(--text-1);
+            text-align: center;
+            text-decoration: none;
+            border: 1px solid rgba(249,115,22,0.42);
+            border-radius: 12px;
+            background:
+                radial-gradient(circle at 50% 22%, rgba(245,158,11,0.28), transparent 38%),
+                rgba(15,18,25,0.92);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 14px 42px rgba(249,115,22,0.16);
+        }
+        .sourceforge-fallback img {
+            width: 46px;
+            height: 46px;
+        }
+        .sourceforge-fallback span {
+            font-size: 0.72rem;
+            line-height: 1.2;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+        .sourceforge-fallback strong {
+            display: block;
+            color: #fbbf24;
+            font-size: 0.92rem;
+        }
+        .recognition-proof-text {
+            text-align: center;
+            color: var(--text-2);
+            font-size: 0.82rem;
+        }
+        .recognition-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .recognition-note {
+            color: var(--text-2);
+            font-size: 0.84rem;
+            max-width: 680px;
+        }
+        .recognition-compact { padding: 42px 24px; background: rgba(249,115,22,0.018); }
+        .recognition-compact .recognition-layout { grid-template-columns: minmax(0, 1fr) 190px; }
+        .recognition-compact .section-title { font-size: 1.35rem; margin-bottom: 8px; }
+        .recognition-compact .section-desc { font-size: 0.9rem; margin-bottom: 12px; max-width: 740px; }
+        .recognition-compact .recognition-proof { padding: 14px; box-shadow: none; }
+        .recognition-compact .sourceforge-badge-stack { min-height: 92px; }
+        @media (max-width: 820px) {
+            .recognition-layout { grid-template-columns: 1fr; }
+            .recognition-proof { align-items: flex-start; }
+            .sourceforge-badge-stack { justify-content: flex-start; }
+            .recognition-proof-text { text-align: left; }
+        }
+
+        /* -- Architecture -- */
+        .arch-visual {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .arch-visual::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(124,58,237,0.06), transparent 60%);
+            pointer-events: none;
+        }
+        .arch-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+        @media (max-width: 800px) {
+            .arch-grid { grid-template-columns: 1fr; }
+            .arch-connector { display: none; }
+        }
+        .arch-node {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .arch-node-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .arch-node-title .dot {
+            width: 8px; height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+        }
+        .arch-services {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .arch-svc {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            color: var(--text-2);
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+        }
+        .arch-svc .badge {
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+        .arch-connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-3);
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+        .arch-connector .line {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            border-radius: 1px;
+        }
+
+        /* -- Comparison Table -- */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 14px 18px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .comparison-table th {
+            background: rgba(255,255,255,0.04);
+            font-weight: 700;
+            color: var(--text-1);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .comparison-table th:first-child,
+        .comparison-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+        }
+        .comparison-table td { color: var(--text-2); }
+        .comparison-table tr:last-child td { border-bottom: none; }
+        .highlight-col {
+            background: rgba(124,58,237,0.06) !important;
+            color: var(--text-1) !important;
+            font-weight: 600;
+        }
+        .state-icon {
+            width: 18px;
+            height: 18px;
+            vertical-align: -0.25em;
+            margin-right: 6px;
+        }
+        .state-icon.only {
+            margin-right: 0;
+        }
+        .inline-icon {
+            width: 18px;
+            height: 18px;
+            vertical-align: -0.25em;
+            margin-right: 8px;
+        }
+        .arch-node-title .inline-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .footer-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .footer-brand .icon-img {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Benchmark */
+        .bench-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 800px) { .bench-cards { grid-template-columns: repeat(2, 1fr); } }
+        .bench-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+        .bench-card .score {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-3), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bench-card .name {
+            font-size: 0.75rem;
+            color: var(--text-2);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .bench-card .detail {
+            font-size: 0.65rem;
+            color: var(--text-3);
+            margin-top: 2px;
+        }
+
+        @media (max-width: 700px) {
+            .comparison-table,
+            .comparison-table thead,
+            .comparison-table tbody,
+            .comparison-table tr,
+            .comparison-table th,
+            .comparison-table td {
+                display: block;
+                width: 100%;
+            }
+            .comparison-table thead {
+                display: none;
+            }
+            .comparison-table tr {
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
+                margin-bottom: 14px;
+                background: rgba(255,255,255,0.025);
+            }
+            .comparison-table td {
+                display: grid;
+                grid-template-columns: minmax(116px, 0.9fr) minmax(0, 1fr);
+                gap: 12px;
+                align-items: center;
+                text-align: left;
+                border-bottom: 1px solid var(--border);
+            }
+            .comparison-table td::before {
+                content: attr(data-label);
+                color: var(--text-3);
+                font-size: 0.68rem;
+                font-weight: 800;
+                text-transform: uppercase;
+            }
+            .comparison-table td:first-child {
+                grid-template-columns: 1fr;
+                background: rgba(124,58,237,0.08);
+                color: var(--text-1);
+            }
+            .comparison-table td:first-child::before {
+                content: "";
+                display: none;
+            }
+        }
+
+        .download-heading { max-width: 850px; margin: 0 auto 32px; }
+        .download-heading .section-desc { margin-inline: auto; }
+        .release-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; max-width: 1120px; margin: 0 auto; }
+        .release-choice { display: flex; flex-direction: column; min-width: 0; padding: 30px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg-card); text-align: left; scroll-margin-top: 100px; }
+        .release-choice h3 { font-size: 1.5rem; margin: 10px 0 16px; }
+        .release-choice h3 small { display: block; margin-top: 5px; font-size: 0.9rem; color: var(--text-2); }
+        .release-choice p { color: var(--text-2); margin-bottom: 18px; }
+        .release-choice .release-label { color: var(--accent-2); font-size: 0.8rem; font-weight: 700; margin-bottom: 0; }
+        .release-status { padding: 15px; border-left: 3px solid var(--accent-2); background: rgba(6,182,212,0.05); font-size: 0.9rem; }
+        .release-changelog { margin: 4px 0 24px; }
+        .release-changelog summary { cursor: pointer; font-weight: 700; }
+        .release-changelog summary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 5px; }
+        .release-changelog ul { padding-left: 20px; margin: 14px 0; color: var(--text-2); font-size: 0.9rem; }
+        .release-changelog li { margin-bottom: 10px; }
+        .release-changelog a { display: block; margin-top: 10px; color: var(--accent-2); text-decoration: underline; font-size: 0.9rem; }
+        .release-download { margin-top: auto; justify-content: center; text-align: center; white-space: normal; }
+        .download-notes { max-width: 850px; margin: 24px auto; color: var(--text-2); font-size: 0.9rem; }
+        @media (max-width: 760px) { .release-grid { grid-template-columns: 1fr; } .release-choice { padding: 24px; } }
+
+        /* -- CTA -- */
+        .cta-section {
+            text-align: center;
+            padding: 120px 24px;
+        }
+        .cta-card {
+            max-width: 680px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(6,182,212,0.06));
+            border: 1px solid rgba(124,58,237,0.15);
+            border-radius: 24px;
+            padding: 60px 40px;
+        }
+        .cta-card h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 14px;
+        }
+        .cta-card p {
+            color: var(--text-2);
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        .cta-code {
+            display: block;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--accent-2);
+            margin-bottom: 28px;
+            text-align: left;
+            overflow-x: auto;
+        }
+        .cta-code .comment { color: var(--text-3); }
+
+        /* -- Footer -- */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 40px 24px;
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .footer-left {
+            font-size: 0.78rem;
+            color: var(--text-3);
+        }
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+        .footer-links a {
+            color: var(--text-3);
+            text-decoration: none;
+            font-size: 0.78rem;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--text-1); }
+
+        /* -- Mobile nav -- */
+        @media (max-width: 768px) {
+            .nav-toggle { display: inline-flex; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: calc(100% + 12px);
+                left: 18px;
+                right: 18px;
+                padding: 14px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                border: 1px solid rgba(124,58,237,0.3);
+                border-radius: 14px;
+                background: rgba(10,10,15,0.98);
+                box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+            }
+            .nav-links.is-open { display: flex; }
+            .nav-links a { display: block; padding: 11px 12px; border-radius: 8px; }
+            .nav-logo-text { font-size: 0.92rem; }
+            .nav-logo .v-badge { display: none; }
+            .hero {
+                padding-inline: 18px;
+            }
+            .hero-content {
+                max-width: 100%;
+            }
+            .hero-badge {
+                max-width: 100%;
+                white-space: normal;
+                justify-content: center;
+            }
+            .hero h1 {
+                font-size: clamp(1.48rem, 7.6vw, 2.35rem);
+                line-height: 1.12;
+            }
+            .hero-actions {
+                align-items: stretch;
+            }
+            .hero-actions .btn {
+                width: min(100%, 260px);
+            }
+            .hero-stats {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 22px 14px;
+            }
+            .ledger-head { display: none; }
+            .ledger-row { grid-template-columns: 1fr; gap: 7px; padding: 18px; }
+            .evidence-callout { grid-template-columns: 1fr; }
+            .evidence-links { justify-content: flex-start; }
+            .hero-stat .num {
+                font-size: 1rem;
+            }
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 12px 16px;
+                max-width: 100%;
+            }
+        }
+        @media (max-width: 360px) {
+            .nav-inner { padding-inline: 14px; }
+            .nav-logo-icon { width: 32px; height: 32px; }
+            .hero { padding-inline: 14px; }
+            .hero h1 { font-size: 1.42rem; }
+        }
+        @media (min-width: 769px) and (max-width: 1000px) {
+            .hero-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
+        /* -- Scroll reveal -- */
+        .reveal {
+            opacity: 1;
+            transform: none;
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+<!-- discovery:start -->
+<title>AudioEnhancerMAX | Free Local Audio Editor for Mac</title>
+<meta name="description" content="Free, open-source audio editor for Apple Silicon Mac. Clean speech, review transcript edits and export audio with local processing and clear privacy controls.">
+<link rel="canonical" href="https://www.fabriziodegni.com/AudioEnhancerMAX/">
+<link rel="describedby" href="https://www.fabriziodegni.com/AudioEnhancerMAX/llms.txt" type="text/plain">
+<link rel="sitemap" href="https://www.fabriziodegni.com/AudioEnhancerMAX/sitemap.xml" type="application/xml">
+<meta property="og:title" content="AudioEnhancerMAX | Free Local Audio Editor for Mac">
+<meta property="og:description" content="Free, open-source audio editor for Apple Silicon Mac. Clean speech, review transcript edits and export audio with local processing and clear privacy controls.">
+<meta property="og:url" content="https://www.fabriziodegni.com/AudioEnhancerMAX/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://www.fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
+<meta property="og:image:alt" content="AudioEnhancerMAX local audio production workspace">
+<meta property="og:locale" content="en_GB">
+<meta property="og:site_name" content="AudioEnhancerMAX">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://www.fabriziodegni.com/AudioEnhancerMAX/#page",
+      "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/",
+      "name": "AudioEnhancerMAX | Free Local Audio Editor for Mac",
+      "description": "Free, open-source audio editor for Apple Silicon Mac. Clean speech, review transcript edits and export audio with local processing and clear privacy controls.",
+      "inLanguage": "en",
+      "about": {
+        "@id": "https://www.fabriziodegni.com/AudioEnhancerMAX/#software"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://www.fabriziodegni.com/AudioEnhancerMAX/#software",
+      "name": "AudioEnhancerMAX",
+      "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/",
+      "description": "Free, open-source audio editing for Apple Silicon Macs, with local speech processing, reviewable transcript edits and revision-bound exports.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "macOS 13 or later",
+      "processorRequirements": "Apple Silicon (arm64)",
+      "softwareVersion": "3.8.3",
+      "license": "https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/LICENSE",
+      "downloadUrl": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/AudioEnhancerMAX-v3.8.3-build-3.8.4-macOS-arm64.dmg",
+      "releaseNotes": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3",
+      "creator": {
+        "@type": "Person",
+        "name": "Fabrizio Degni",
+        "url": "https://www.fabriziodegni.com/about/"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/download.html"
+      },
+      "sameAs": [
+        "https://github.com/sev7enITA/AudioEnhancerMAX",
+        "https://sourceforge.net/projects/audioenhancermax/"
+      ],
+      "image": "https://www.fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png"
+    }
+  ]
+}
+</script>
+<!-- discovery:end -->
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav" id="nav">
+    <div class="nav-inner">
+        <a href="#" class="nav-logo" aria-current="page">
+            <div class="nav-logo-icon"><img class="icon-img" src="img/icons/aem-mark.svg" alt="AudioEnhancerMAX mark"></div>
+            <span class="nav-logo-text">AudioEnhancerMAX</span>
+            <span class="v-badge">3.8 / 3.9</span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation menu">Menu</button>
+        <ul class="nav-links" id="primary-navigation">
+            <li><a href="#foundations">Foundations</a></li>
+            <li><a href="#transparency">Transparency</a></li>
+            <li><a href="status.html">Status</a></li>
+            <li><a href="roadmap.html">Roadmap</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="support.html">Support</a></li>
+            <li><a href="#recognition" class="nav-award">Rising Star</a></li>
+            <li><a href="#download" class="nav-cta">Download</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Hero -->
+<main id="main-content">
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            Two versions · compare and choose
+        </div>
+        <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span></span>Local audio editing for Mac.<br><span class="gradient">AI governance built in.</span></h1>
+        <p class="hero-sub">Free, open-source audio editing for Apple Silicon Mac: reduce noise, transcribe speech locally and review every cut before export. Preserve your original recording and keep the processing evidence with the result.</p>
+        <div class="hero-actions">
+            <a href="#download" class="btn btn-primary">Compare versions and download</a>
+            <a href="governance.html" class="btn btn-secondary">Explore AI governance</a>
+        </div>
+        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">Choose stable 3.8.3 / build 3.8.4 for established workflows, or opt into 3.9.0 Experimental 1 to try Music brief. Both downloads are signed and Apple notarized, with separate app identities and data.</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="num">Native</div>
+                <div class="label">macOS window</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">127.0.0.1</div>
+                <div class="label">Loopback core</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">Local</div>
+                <div class="label">Optional models</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">5 fixed</div>
+                <div class="label">Delivery profiles</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">Per job</div>
+                <div class="label">Processing report</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">79 + 4</div>
+                <div class="label">Python + JS tests</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Current status -->
+<section id="status" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <span class="section-label">Verified · October 18, 2026</span>
+        <h2 class="section-title">Every export belongs to a completed result.</h2>
+        <p class="section-desc">Version 3.8 verifies resumable DSP work, retains distinct output revisions, and measures the exact WAV, MP3 or FLAC selected for delivery. Release status and remaining limits are visible below.</p>
+        <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX current project status">
+            <div class="ledger-head" role="row"><span>Scope</span><span>Status</span><span>What that means</span></div>
+            <div class="ledger-row" role="row"><strong>Verified checkpoints</strong><span class="ledger-boundary">Local DSP</span><span class="ledger-evidence">Changed source, settings or build restarts cleanly. Compatible float snapshots preserve processing precision.</span></div>
+            <div class="ledger-row" role="row"><strong>Revision-bound delivery</strong><span class="ledger-boundary">WAV / MP3 / FLAC</span><span class="ledger-evidence">Playback, conversions, reports and capsules identify the completed result. Guidance records the exact export hash.</span></div>
+            <div class="ledger-row" role="row"><strong>3.8.3 source + Mac release</strong><span class="ledger-boundary">101 Python + 5 JS tests</span><span class="ledger-evidence">Build 3.8.4 strengthens privacy recovery, render-bound capsule evidence and file import. Developer ID signed, Apple notarized and stapled.</span></div>
+        </div>
+        <div class="hero-actions" style="margin-top:28px;">
+            <a href="status.html" class="btn btn-secondary">Read the full project status</a>
+        </div>
+    </div>
+</section>
+
+<!-- Release evidence -->
+<section id="proof">
+    <div class="container">
+        <span class="section-label">Release proof ledger</span>
+        <h2 class="section-title">Capability, boundary, evidence.</h2>
+        <p class="section-desc">The capabilities below describe the 3.8.3 workflow. The earlier 3.7.0 download does not include all of these additions. Runtime availability and validation limits are documented in the release notes.</p>
+        <div class="proof-ledger reveal" role="table" aria-label="AudioEnhancerMAX 3.8 capability evidence">
+            <div class="ledger-head" role="row"><span>Capability</span><span>Runs where</span><span>Validation evidence</span></div>
+            <div class="ledger-row" role="row"><strong>Native macOS workspace</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Standalone AppKit/WebKit window with AudioEnhancerMAX application identity.</span></div>
+            <div class="ledger-row" role="row"><strong>Core application server</strong><span class="ledger-boundary">Loopback only</span><span class="ledger-evidence">Bound to 127.0.0.1 and released when the native application quits.</span></div>
+            <div class="ledger-row" role="row"><strong>Speech transcription</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Local Faster-Whisper; direct builds manage models at runtime. App Store packaging is a separate bundled-model path.</span></div>
+            <div class="ledger-row" role="row"><strong>Delivery profiles</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Five fixed targets: podcast, video, audiobook, lossless archive, and source-quality master.</span></div>
+            <div class="ledger-row" role="row"><strong>Processing report</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Readable report and canonical JSON capture options, engines, warnings, privacy state, and output facts per job.</span></div>
+            <div class="ledger-row" role="row"><strong>Delivery Compliance Lab</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Measured loudness, estimated true peak, clipping, and sample-rate checks with rule-level results; workflow guidance, not certification.</span></div>
+            <div class="ledger-row" role="row"><strong>Project Capsule</strong><span class="ledger-boundary">This Mac</span><span class="ledger-evidence">Portable ZIP with a SHA-256 manifest, processed output, and available report, compliance, transcript, EDL, and listening-review evidence.</span></div>
+            <div class="ledger-row" role="row"><strong>Release checks</strong><span class="ledger-boundary">Automated + packaged</span><span class="ledger-evidence">The 3.8.3 release reports 101 Python tests, 8 subtests and 5 JavaScript tests passed. Scope and limitations are recorded on the status page.</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- Transparency -->
+<section id="transparency" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <span class="section-label">Transparency</span>
+        <h2 class="section-title">Where each function runs.</h2>
+        <p class="section-desc">AudioEnhancerMAX separates local processing, optional local helper software, trusted-LAN workers, and external services so each boundary can be understood and controlled.</p>
+
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/local-core.svg" alt="" aria-hidden="true"></div>
+                <h3>On this Mac</h3>
+                <p>Uploads, DSP, deterministic Smart Enhance analysis, local Whisper transcription, EDL history, reports, and interface assets remain on the host Mac.</p>
+                <span class="tech-tag dsp">Default path</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
+                <h3>Local helper process</h3>
+                <p>Optional Ollama/Gemma editorial assistance runs through a local process. It may draft text suggestions, but it never chooses DSP parameters.</p>
+                <span class="tech-tag ai">User controlled</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <h3>Personal voice runtime</h3>
+                <p>The source supports named, consent-based profiles through the separately evolving MakeMyVoice project. Voice samples and generated audio stay local.</p>
+                <span class="tech-tag metal">Development head · local Metal</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/edge-device.svg" alt="" aria-hidden="true"></div>
+                <h3>Trusted local network</h3>
+                <p>Selected DSP chunks can reach Android workers only when trusted-LAN processing is enabled and a worker is connected by the user.</p>
+                <span class="tech-tag edge">Separate boundary</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/external-flow.svg" alt="" aria-hidden="true"></div>
+                <h3>Optional external service</h3>
+                <p>Edge Neural TTS sends only the submitted text to Microsoft. A persisted privacy control can disable this path independently of local features.</p>
+                <span class="tech-tag ai">Explicit setting</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 3.7 foundations -->
+<section id="foundations">
+    <div class="container">
+        <span class="section-label">Delivered in 3.7</span>
+        <h2 class="section-title">Eight foundations for<br>reviewable production.</h2>
+        <p class="section-desc">The 3.7 release connects signal-led enhancement, transcript editing, revision history, export intent, compliance guidance, evidence portability, reporting, and privacy controls into one workflow.</p>
+
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/filler.svg" alt="" aria-hidden="true"></div>
+                <h3>Smart Enhance 2</h3>
+                <p>Measured signal characteristics drive Conservative, Balanced, or Maximum DSP recommendations with readable evidence for each decision.</p>
+                <span class="tech-tag dsp">Deterministic DSP · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
+                <h3>Precision Speech Editor</h3>
+                <p>Select transcript words, review automatic suggestions, propose cuts or mutes, and export editorial decisions before rendering.</p>
+                <span class="tech-tag ai">Local model inference · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/file-report.svg" alt="" aria-hidden="true"></div>
+                <h3>Revisioned, Non-Destructive EDL</h3>
+                <p>Accepted cut and mute decisions preserve the uploaded source, with persisted revisions, undo, redo, preview, and JSON or CSV export.</p>
+                <span class="tech-tag metal">Local timeline · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/save.svg" alt="" aria-hidden="true"></div>
+                <h3>Five Fixed Delivery Profiles</h3>
+                <p>Podcast, video, audiobook, lossless archive, and source-quality master targets make output intent repeatable; overrides remain visible.</p>
+                <span class="tech-tag metal">Local export · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/lock.svg" alt="" aria-hidden="true"></div>
+                <h3>Processing &amp; Governance Report</h3>
+                <p>Each job can produce a readable report and canonical JSON covering settings, engines, privacy state, warnings, approved edits, and output facts.</p>
+                <span class="tech-tag edge">Evidence trail · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/lock.svg" alt="" aria-hidden="true"></div>
+                <h3>Enforced Privacy Controls</h3>
+                <p>Separate persisted controls gate optional local Ollama assistance, Microsoft TTS, and trusted-LAN audio workers without disabling core local DSP.</p>
+                <span class="tech-tag dsp">Server enforced · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/benchmark.svg" alt="" aria-hidden="true"></div>
+                <h3>Delivery Compliance Lab</h3>
+                <p>Inspect integrated loudness, estimated true peak, clipping, and sample rate against transparent podcast, video, audiobook, broadcast, and preservation targets.</p>
+                <span class="tech-tag dsp">Measured locally · delivered</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/package.svg" alt="" aria-hidden="true"></div>
+                <h3>Evidence Chain &amp; Project Capsule</h3>
+                <p>Export a portable ZIP with SHA-256 provenance and the available output, report, compliance, EDL, transcript, and blind-listening evidence; source audio stays excluded by default.</p>
+                <span class="tech-tag edge">Portable evidence · delivered</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Processing modules -->
+<section id="features" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <span class="section-label">Processing toolkit</span>
+        <h2 class="section-title">Audio modules<br>you can inspect.</h2>
+        <p class="section-desc">Core DSP stays deterministic. Local model inference, optional local editorial assistance, optional external TTS, and optional LAN workers are labeled as distinct execution boundaries.</p>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/noise.svg" alt="" aria-hidden="true"></div>
+                <h3>Noise Removal</h3>
+                <p>DeepFilterNet v3 when installed, with spectral-gating fallback and wet/dry mixing. The active engine is reported by the runtime capability registry.</p>
+                <span class="tech-tag dsp">Conditional engine</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/filler.svg" alt="" aria-hidden="true"></div>
+                <h3>Filler Word Removal</h3>
+                <p>Whisper-based timestamps help identify common filler patterns such as "uhm", "eh", and "basically" for reviewable cleanup.</p>
+                <span class="tech-tag ai">Whisper AI</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <h3>Studio Sound v2.0</h3>
+                <p>Voice-focused chain with warmth at 150Hz, presence around 4kHz, de-essing, gentle 2:1 compression, and limiting.</p>
+                <span class="tech-tag dsp">Pedalboard</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/metal-chip.svg" alt="" aria-hidden="true"></div>
+                <h3>Metal GPU Acceleration</h3>
+                <p>Compatible model paths can use Apple Metal through PyTorch MPS. Whisper uses ARM-optimized CTranslate2; accelerator use depends on the active operation.</p>
+                <span class="tech-tag metal">Operation dependent</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
+                <h3>Optional Editorial Assistant</h3>
+                <p>When Ollama/Gemma is enabled locally, it can provide explicitly requested editorial prose. Deterministic signal analysis remains responsible for DSP recommendations.</p>
+                <span class="tech-tag ai">Local optional helper</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/edge-device.svg" alt="" aria-hidden="true"></div>
+                <h3>Edge Cluster Computing</h3>
+                <p>Experimental Android workers can run selected DSP tasks on a user-enabled trusted LAN. Pairing, authentication, and workload limits are next-release hardening gates.</p>
+                <span class="tech-tag edge">Experimental boundary</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/music.svg" alt="" aria-hidden="true"></div>
+                <h3>Music Preservation</h3>
+                <p>When Demucs and its assets are installed, vocals can be separated, processed, and remixed with background music. This engine is not universal across distributions.</p>
+                <span class="tech-tag metal">Demucs · conditional</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/monitor.svg" alt="" aria-hidden="true"></div>
+                <h3>Real-time Monitoring</h3>
+                <p>The monitor separates system CPU from app-process CPU and labels GPU, ANE, power, and temperature values as measured, estimated, or unavailable.</p>
+                <span class="tech-tag dsp">Truthful telemetry · dev head</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/file-report.svg" alt="" aria-hidden="true"></div>
+                <h3>AI Transcription</h3>
+                <p>Word-level timestamps export to SRT, VTT, and JSON. Speaker diarization uses pyannote when available; the heuristic fallback is not presented as production-grade diarization.</p>
+                <span class="tech-tag ai">Whisper · conditional diarization</span>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon"><img class="icon-img" src="img/icons/studio-mic.svg" alt="" aria-hidden="true"></div>
+                <h3>Personal Voice Studio</h3>
+                <p>Create or link a named voice profile, save synthesis defaults, re-enrol it, and use a validated MakeMyVoice engine. Advanced training and model promotion remain in MakeMyVoice.</p>
+                <span class="tech-tag metal">Development head</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Architecture -->
+<section id="architecture" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <span class="section-label">Architecture</span>
+        <h2 class="section-title">Distributed by Design</h2>
+        <p class="section-desc">A master-worker architecture for trusted devices you choose to run as audio processing workers.</p>
+
+        <div class="arch-visual reveal">
+            <div class="arch-grid">
+                <div class="arch-node">
+                    <div class="arch-node-title"><span class="dot"></span><img class="icon-img inline-icon" src="img/icons/desktop-node.svg" alt="" aria-hidden="true">Mac - Master Node</div>
+                    <div class="arch-services">
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/api-node.svg" alt="" aria-hidden="true">FastAPI Backend <span class="badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;">Core</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/smart-ai.svg" alt="" aria-hidden="true">Whisper Medium <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/music.svg" alt="" aria-hidden="true">Demucs (Metal GPU) <span class="badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">GPU</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/smart-ai.svg" alt="" aria-hidden="true">Ollama/Gemma <span class="badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;">AI</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/studio-mic.svg" alt="" aria-hidden="true">MakeMyVoice adapter <span class="badge" style="background:rgba(16,185,129,0.15);color:#6ee7b7;">Dev</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/monitor.svg" alt="" aria-hidden="true">System Monitor <span class="badge" style="background:rgba(124,58,237,0.15);color:#a78bfa;">Core</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/cluster.svg" alt="" aria-hidden="true">Cluster Manager <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">Edge</span></div>
+                    </div>
+                </div>
+
+                <div class="arch-connector">
+                    <span>Wi-Fi LAN</span>
+                    <div class="line"></div>
+                    <span>HTTP + UDP</span>
+                </div>
+
+                <div class="arch-node">
+                    <div class="arch-node-title"><span class="dot"></span><img class="icon-img inline-icon" src="img/icons/edge-device.svg" alt="" aria-hidden="true">Edge Workers</div>
+                    <div class="arch-services">
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/noise.svg" alt="" aria-hidden="true">Noise Removal <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/studio-mic.svg" alt="" aria-hidden="true">Studio Sound <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/auto-eq.svg" alt="" aria-hidden="true">Auto EQ <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc"><img class="icon-img inline-icon" src="img/icons/volume.svg" alt="" aria-hidden="true">Volume Normalize <span class="badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">DSP</span></div>
+                        <div class="arch-svc">Samsung S24 Ultra</div>
+                        <div class="arch-svc">Xiaomi 17 Ultra</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section aria-labelledby="release-evidence-title">
+    <div class="container">
+        <div class="evidence-callout reveal">
+            <div>
+                <span class="section-label">Release evidence</span>
+                <h3 id="release-evidence-title">Read the facts behind the 3.8 release.</h3>
+                <p>Release notes describe shipped behavior. The claims matrix connects each public statement to code, tests, or packaged-app validation.</p>
+            </div>
+            <div class="evidence-links">
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/RELEASE_NOTES_v3.8.3.md" target="_blank" rel="noopener noreferrer">Release notes</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/releases/marketing/CLAIMS_EVIDENCE_MATRIX_v3.8.2.md" target="_blank" rel="noopener noreferrer">Claims matrix</a>
+                <a href="status.html">Current audit status</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">Source repository</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section aria-labelledby="governance-story-title">
+    <div class="container">
+        <div class="evidence-callout reveal">
+            <div>
+                <span class="section-label">Audio, AI and responsibility</span>
+                <h3 id="governance-story-title">Who decides what changes in a voice?</h3>
+                <p>Four documented cases, six product choices and the limits that remain. Explore AI governance through the decisions you can review in AudioEnhancerMAX.</p>
+            </div>
+            <div class="evidence-links">
+                <a href="governance.html">Read the article</a>
+                <a href="governance-it.html" lang="it" hreflang="it">Leggi in italiano</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="download" class="cta-section" aria-labelledby="download-title">
+    <div class="download-heading">
+        <span class="section-label">Your workflow, your choice</span>
+        <h2 class="section-title" id="download-title">Stable and experimental.</h2>
+        <p class="section-desc">Choose stable 3.8.3 or opt into 3.9.0 Experimental 1. Install both side by side on Apple Silicon with macOS 13 or later.</p>
+    </div>
+    <div class="release-grid">
+        <article class="release-choice" id="download-383" aria-labelledby="release-383-title">
+            <p class="release-label">Latest stable · Apple notarized</p>
+            <h3 id="release-383-title">AudioEnhancerMAX 3.8.3 <small>Build 3.8.4</small></h3>
+            <p>Local audio editing with AI governance built in: reviewable decisions, preserved originals and evidence tied to the audio you export.</p>
+            <p class="release-status"><strong>Apple status:</strong> this direct DMG is Developer ID signed, notarized and stapled. The separate 3.8.2/build 3.8.3 App Store submission was last confirmed Waiting for Review on 17 October 2026. That historical status does not confirm current store availability.</p>
+            <details class="release-changelog" id="changelog-383" open>
+                <summary>3.8.3 / build 3.8.4 changelog</summary>
+                <ul>
+                    <li>Optional services stay disabled when privacy preferences cannot be read; valid saved choices are preserved.</li>
+                    <li>Project Capsules retain the decisions and transcript used by the selected render, with hashes of the actual archived bytes.</li>
+                    <li>File import uses bounded reads and keeps the interface API responsive.</li>
+                    <li>Includes 3.8 checkpoints, revision-bound exports and the local transcription correction. Models may download on first use.</li>
+                </ul>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3" target="_blank" rel="noopener noreferrer">Read the full 3.8.3 release notes</a>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/DIRECT_BUILD_3.8.4.md" target="_blank" rel="noopener noreferrer">Inspect the direct-build checks</a>
+            </details>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.8.3/AudioEnhancerMAX-v3.8.3-build-3.8.4-macOS-arm64.dmg" class="btn btn-primary release-download">Download 3.8.3 · build 3.8.4</a>
+        </article>
+        <article class="release-choice" id="download-experimental" aria-labelledby="release-experimental-title">
+            <p class="release-label">Experimental · Opt-in testing</p>
+            <h3 id="release-experimental-title">3.9.0 Experimental 1 <small>Build 3.9.1</small></h3>
+            <p>Try Music brief: six original presets, editable musical directions, optional local Ollama suggestions and JSON export. This assistant prepares text prompts; it does not generate music.</p>
+            <p class="release-status"><strong>Separate installation:</strong> AudioEnhancerMAX Experimental has its own app identity, data and settings. It can run alongside stable 3.8.3.</p>
+            <details class="release-changelog" open>
+                <summary>What to expect</summary>
+                <ul>
+                    <li>Build prompts without a model or network connection. Add local model suggestions only after review.</li>
+                    <li>Original and edited prompts, source fields and separate lyrics are retained in JSON exports.</li>
+                    <li>Drafts remain in the tab until copied or exported. No JSON re-import or audio generation in this preview.</li>
+                    <li>Developer ID signed, Apple notarized and stapled. Experimental features may change; use stable for established workflows.</li>
+                </ul>
+                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0-experimental.1" target="_blank" rel="noopener noreferrer">Experimental notes, checksums and package checks</a>
+            </details>
+            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.9.0-experimental.1/AudioEnhancerMAX-v3.9.0-experimental.1-build-3.9.1-macOS-arm64.dmg" class="btn btn-secondary release-download">Download Experimental 1</a>
+        </article>
+    </div>
+    <p class="download-notes">Internal validation and Apple distribution approval are different checks. Features and model setup vary by version and channel. Read the notes for the package you choose.</p>
+    <div class="hero-actions">
+        <a href="https://github.com/sev7enITA/AudioEnhancerMAX" class="btn btn-secondary">Run from source</a>
+        <a href="https://sourceforge.net/projects/audioenhancermax/files/" class="btn btn-secondary">SourceForge downloads</a>
+        <a href="status.html" class="btn btn-secondary">Full project status</a>
+        <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.7.0" class="btn btn-secondary">Earlier 3.7.0 release</a>
+    </div>
+</section>
+
+<section id="recognition" class="recognition-compact" aria-labelledby="recognition-title">
+    <div class="container recognition-layout">
+        <div class="recognition-copy">
+            <span class="section-label">Project metadata</span>
+            <h2 class="section-title" id="recognition-title">SourceForge Rising Star</h2>
+            <p class="section-desc">SourceForge displays its Rising Star badge for AudioEnhancerMAX. This recognition is not presented as evidence of audio quality, performance, or market leadership.</p>
+            <p class="recognition-note">The badge links to the public SourceForge project. Its recognition is separate from the local audio-processing pipeline.</p>
+        </div>
+        <div class="recognition-proof">
+            <div class="sourceforge-badge-stack use-fallback">
+                <div class="sf-root" data-id="4084832" data-badge="oss-rising-star-white" data-metadata="achievement=oss-rising-star"><a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">AudioEnhancerMAX</a></div>
+                <a class="sourceforge-fallback" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer" aria-label="View the AudioEnhancerMAX SourceForge badge"><img src="img/icons/award-star.svg" alt="" aria-hidden="true"><span>SourceForge<strong>Rising Star</strong></span></a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<section class="section" id="guides"><div class="container">
+<div style="text-align:center"><span class="section-label">Practical guides</span><h2 class="section-title">From a recording to a reviewed export.</h2><p class="section-desc" style="margin-inline:auto">Start with a short speech sample, inspect the active processing engine and listen to the exported file. These guides explain the steps and their limits.</p></div>
+<div class="evidence-links" style="justify-content:center;flex-wrap:wrap"><a href="podcast-cleanup-mac.html">Clean up podcast audio on Mac</a><a href="pulire-audio-podcast-mac.html" lang="it" hreflang="it">Pulire audio e podcast su Mac</a><a href="download.html">Download, requirements and FAQ</a></div>
+<p style="text-align:center;margin-top:24px;color:var(--text-2)">Created by <a href="https://www.fabriziodegni.com/about/" style="color:var(--accent-2)">Fabrizio Degni</a>. Free direct download under the MIT license.</p></div></section>
+</main>
+<footer>
+    <div class="footer-inner">
+        <div class="footer-left">
+            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX · Stable 3.8.3 · Experimental 3.9.0 · MIT License · © 2026 Fd</span>
+        </div>
+        <ul class="footer-links">
+            <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="roadmap.html">Roadmap</a></li>
+            <li><a href="status.html">Status</a></li>
+            <li><a href="support.html">Support</a></li>
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="governance.html">AI governance</a></li>
+            <li><a href="accessibility.html">Accessibility</a></li>
+            <li><a href="https://sourceforge.net/projects/audioenhancermax/" target="_blank" rel="noopener noreferrer">SourceForge</a></li>
+            <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
+            <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a></li>
+        </ul>
+    </div>
+</footer>
+
+<script>
+    // Nav scroll effect
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Accessible mobile navigation
+    const navToggle = document.querySelector('.nav-toggle');
+    const navLinks = document.getElementById('primary-navigation');
+    const closeMenu = () => {
+        navLinks.classList.remove('is-open');
+        navToggle.setAttribute('aria-expanded', 'false');
+        navToggle.setAttribute('aria-label', 'Open navigation menu');
+        navToggle.textContent = 'Menu';
+    };
+    navToggle.addEventListener('click', () => {
+        const opening = navToggle.getAttribute('aria-expanded') !== 'true';
+        navLinks.classList.toggle('is-open', opening);
+        navToggle.setAttribute('aria-expanded', String(opening));
+        navToggle.setAttribute('aria-label', opening ? 'Close navigation menu' : 'Open navigation menu');
+        navToggle.textContent = opening ? 'Close' : 'Menu';
+    });
+    navLinks.addEventListener('click', (event) => { if (event.target.closest('a')) closeMenu(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeMenu(); navToggle.focus(); } });
+    document.addEventListener('click', (event) => { if (!nav.contains(event.target)) closeMenu(); });
+    window.addEventListener('resize', () => { if (window.innerWidth > 768) closeMenu(); });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', (e) => {
+            const href = a.getAttribute('href');
+            if (href === '#') return;
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+</script>
+
+<!-- SourceForge Rising Star badge -->
+
+
+</body>
+</html>
