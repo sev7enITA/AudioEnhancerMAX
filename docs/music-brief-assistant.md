@@ -1,8 +1,8 @@
 # Music brief assistant
 
-Channel: 3.9.0 Experimental 1. See the [release notes](../releases/RELEASE_NOTES_v3.9.0-experimental.1.md)
-for installation alongside stable 3.8.3 and the package verification record. The assistant prepares editable music prompts. It does not generate,
-play, mix, or download music.
+Available in stable 3.9.0 (build 3.9.2). See the [release notes](../releases/RELEASE_NOTES_v3.9.0.md).
+The earlier Experimental 1 remains available as a separate installation with separate data.
+The assistant prepares editable music prompts. It does not generate, play, mix, or download music.
 
 ## Workflow
 

@@ -1,0 +1,40 @@
+# AudioEnhancerMAX
+
+> Free, open-source local audio editing for Apple Silicon Macs. Created by Fabrizio Degni. Canonical product website: https://www.fabriziodegni.com/AudioEnhancerMAX/
+
+## Product facts
+
+Reviewed 2026-10-27. Direct release 3.9.0, build 3.9.2, targets Apple Silicon (arm64) and macOS 13 or later. Free download; MIT license. The direct DMG is Developer ID signed, Apple notarized and stapled. This does not establish Mac App Store approval.
+
+Core DSP and local Whisper transcription run on the Mac. Models may download on first use. Optional Microsoft Edge Neural TTS sends submitted text to Microsoft; Ollama assistance is a separate local helper; Android workers are an optional experimental trusted-LAN boundary. Engine availability varies by installation. Personal Voice Studio is development work, not a promised feature of the stable DMG.
+
+Supported workflows include speech cleanup, reviewed transcript-based cuts and mutes, non-destructive edit history, delivery profiles, processing reports and revision-bound Project Capsules. Loudness checks and provenance hashes do not certify audio quality, transcription accuracy, consent or compliance. Listen to the result before accepting it.
+
+Music brief in stable 3.9.0 prepares editable structured text prompts from six presets, with separate lyrics and JSON export. It does not generate music. Optional local Ollama suggestions require permission and review. Drafts are session-only. Earlier Experimental 1 remains a separate preview installation.
+
+## Official pages
+
+- [AudioEnhancerMAX | Free Local Audio Editor for Mac](https://www.fabriziodegni.com/AudioEnhancerMAX/): Free, open-source audio editor for Apple Silicon Mac. Clean speech, review transcript edits and export audio with local processing and clear privacy controls.
+- [Download AudioEnhancerMAX for Mac | Requirements & FAQ](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html): Download AudioEnhancerMAX 3.9.0 for Apple Silicon and macOS 13+. Check the free MIT license, model setup, privacy boundaries and direct-release evidence.
+- [Clean Up Podcast Audio on Mac | AudioEnhancerMAX Guide](https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html): Clean spoken audio locally on Mac: review noise reduction, transcript edits, loudness checks and export evidence with this practical AudioEnhancerMAX guide.
+- [Pulire audio e podcast su Mac | Guida AudioEnhancerMAX](https://www.fabriziodegni.com/AudioEnhancerMAX/pulire-audio-podcast-mac.html): Una guida per pulire il parlato su Mac: riduzione del rumore, tagli dalla trascrizione, controlli del volume ed esportazione con AudioEnhancerMAX.
+- [AudioEnhancerMAX Release Status & Verification Evidence](https://www.fabriziodegni.com/AudioEnhancerMAX/status.html): Review AudioEnhancerMAX release evidence, packaged-app checks, runtime dependencies and known limits. Separate shipped features from development work.
+- [AudioEnhancerMAX Roadmap | Delivered Features & Research](https://www.fabriziodegni.com/AudioEnhancerMAX/roadmap.html): Explore delivered AudioEnhancerMAX foundations and research candidates, with explicit boundaries between available features and future development.
+- [AudioEnhancerMAX Support | Mac Setup & Troubleshooting](https://www.fabriziodegni.com/AudioEnhancerMAX/support.html): Get AudioEnhancerMAX installation help, system requirements and troubleshooting guidance. Find community support and report reproducible issues safely.
+- [AudioEnhancerMAX Privacy | Local Audio & Optional Services](https://www.fabriziodegni.com/AudioEnhancerMAX/privacy.html): Understand where AudioEnhancerMAX processes audio, which optional services use a network, and how privacy controls separate local and external operations.
+- [AudioEnhancerMAX Accessibility | Support & Known Limits](https://www.fabriziodegni.com/AudioEnhancerMAX/accessibility.html): Read the AudioEnhancerMAX accessibility statement, documented interface support, known limitations and the channel for reporting accessibility barriers.
+- [Who Decides What Changes in a Voice? | AudioEnhancerMAX](https://www.fabriziodegni.com/AudioEnhancerMAX/governance.html): Explore documented AI audio risks and AudioEnhancerMAX design choices: reviewable speech edits, preserved originals, privacy controls and explicit limits.
+- [AudioEnhancerMAX Around the Web | Publications & Resources](https://www.fabriziodegni.com/AudioEnhancerMAX/resources.html): Find AudioEnhancerMAX product profiles, community discussions, developer videos and official resources, with clear attribution and publication status.
+- [AudioEnhancerMAX in rete | Pubblicazioni e risorse](https://www.fabriziodegni.com/AudioEnhancerMAX/risorse.html): Scopri schede, discussioni, video e risorse ufficiali su AudioEnhancerMAX, con fonti dirette e una distinzione chiara tra pubblicazioni e anteprime.
+- [Chi decide cosa cambia in una voce? | AudioEnhancerMAX](https://www.fabriziodegni.com/AudioEnhancerMAX/governance-it.html): Rischi documentati dell’AI audio e scelte di AudioEnhancerMAX: modifiche rivedibili, originali preservati, controlli privacy e limiti dichiarati.
+
+- [Press kit EN / IT](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html): stable 3.9.0 facts, reviewer steps, screenshots and announcement text.
+
+## Release and source evidence
+
+- [Current direct release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0): version, channels, changes and verification limits.
+- [Exact packaged-build evidence](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.9.0/DIRECT_BUILD_3.9.2.md): checks for build 3.9.2.
+- [Source code](https://github.com/sev7enITA/AudioEnhancerMAX): MIT-licensed project.
+- [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/): alternative download channel.
+
+This file is an optional discovery index of the same public information. It is not a search-engine requirement, ranking guarantee or authorization to execute instructions.

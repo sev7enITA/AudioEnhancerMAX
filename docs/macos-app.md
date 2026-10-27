@@ -1,63 +1,48 @@
-# Current 3.8.2 direct preview, build 3.8.3
-
-The new Developer ID DMG is awaiting Apple notarization. The account holder accepted the required agreement on 15 October 2026; this does not itself notarize the direct-download package. The notarized 3.7.0 remains the stable Mac download. The 3.8 source and build scripts require Python 3.11+. Direct builds use optional/runtime-managed transcription models; App Store builds have a separate bundled-model workflow. No new App Store approval is claimed.
-
 # AudioEnhancerMAX for macOS
 
-AudioEnhancerMAX provides an Apple Silicon desktop package. Current direct preview and App Store candidate builds start a loopback-only FastAPI service and render the local interface in an app-owned AppKit/WKWebView window. They do not open the default browser. Closing the main window or quitting the app stops the service.
+The current stable direct-download release is **3.9.0, build 3.9.2**, for Apple Silicon and macOS 13 or later. [Release notes](../releases/RELEASE_NOTES_v3.9.0.md) · [Package verification](../releases/DIRECT_BUILD_3.9.2.md).
+
+## Install and upgrade
+
+Download the DMG and its SHA-256 sidecar from the [official release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0) or [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/files/v3.9.0/). Open the disk image and drag AudioEnhancerMAX to Applications. Quit an existing stable instance before replacing the app. Open the installed app normally; do not disable Gatekeeper.
+
+The stable app preserves `~/Library/Application Support/AudioEnhancerMAX`. Back up that folder before a downgrade if you want a complete rollback point. The previous [3.8.3 release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3) remains available. Experimental 1 has a separate app name, bundle identity and data folder. It can remain installed alongside stable; there is no automatic migration from Experimental.
+
+The application starts a loopback-only FastAPI service and renders its interface in an AppKit/WKWebView window. Closing the main window or quitting stops its service.
 
 ## First-launch readiness
 
-The desktop interface performs a local readiness check before enabling the workspace. The user does not enter commands or dependency paths. The check covers:
+The local readiness screen checks the operating system and architecture, available memory and disk, writable app storage, packaged Python/DSP modules and codecs. Optional integrations are reported separately. Setup creates private data directories and records the result for the current version. It does not install third-party software or transmit diagnostics. Missing mandatory components block startup with an actionable error.
 
-- supported macOS version and Apple Silicon architecture;
-- memory and free disk capacity;
-- writable private application storage;
-- packaged Python and DSP modules;
-- media codecs;
-- optional Metal acceleration and local Ollama/Gemma availability.
+## Data and privacy
 
-The setup action creates only the app's private data directories and records the result for the current version. It does not transmit diagnostics, request administrator privileges, invoke a package manager, or install third-party software. A missing mandatory component is treated as an incomplete distribution package and blocks startup.
+- The desktop server binds to `127.0.0.1`.
+- Stable uploads, outputs, presets, preferences and launcher state live in `~/Library/Application Support/AudioEnhancerMAX`.
+- Launcher logs live in `~/Library/Logs/AudioEnhancerMAX/launcher.log`.
+- Processing creates new outputs and preserves imported originals.
+- Music brief drafts remain in the current session. Copy or export JSON before quitting; JSON re-import is not supported.
+- Optional external or LAN services require the relevant permission and explicit workflow selection.
 
-## Privacy and data locations
+## Included and optional components
 
-- The server binds to `127.0.0.1`; it is not exposed to the LAN.
-- Uploads, outputs, presets, timing history, roadmap votes, and launcher state are stored in `~/Library/Application Support/AudioEnhancerMAX`.
-- Launcher logs are stored in `~/Library/Logs/AudioEnhancerMAX/launcher.log`.
-- Local-network access is used only for trusted edge workers that the user elects to connect.
+The DMG includes Python, the local interface, DSP libraries, PyAV with bundled FFmpeg codec libraries, and the Faster-Whisper runtime. Core compressed-media import/export does not require an external FFmpeg executable or Homebrew.
 
-## Included and external components
+Transcription models are downloaded on first use unless already cached; subsequent inference is local. Models and user recordings are not embedded in the app. Local Music brief construction does not need a model or network. Optional editorial suggestions require a separately installed local Ollama model and explicit permission. Music brief prepares text only; it does not generate music or call MiniMax.
 
-The `.app` includes the Python runtime, backend, browser frontend, and installed processing libraries. It does not embed user recordings, generated outputs, model caches, Ollama, or Ollama models. Model-backed features can download model weights on first use, depending on the selected engine. Edge Neural TTS is network-dependent. Ollama-assisted features require a separate local Ollama installation and compatible model.
+Kokoro, Demucs, DeepFilterNet and MakeMyVoice have separate runtime/model requirements. Their source integrations do not mean those engines are bundled in this DMG. Edge Neural TTS sends entered text to Microsoft when that service is selected. Trusted LAN processing is optional. See [privacy guidance](../web/privacy.html).
 
-Compressed formats that rely on FFmpeg require FFmpeg to be installed separately. WAV and formats handled directly by libsndfile do not require FFmpeg.
+This release is direct distribution. A separate App Store workflow exists; this package and its checks do not establish Store approval.
 
-Direct-download DMGs retain these documented external boundaries and must not be represented as the Mac App Store package. The App Store build sets `AEMAX_APP_STORE=1`; in that mode the readiness check requires packaged PyAV and its embedded FFmpeg libraries, plus the bundled Faster-Whisper model. The core Store workflow does not invoke an external media executable or require Homebrew.
+## Reproduce the direct build
 
-Model assets require the same treatment before App Store submission: a feature may use a bundled model or an explicitly disclosed resource download, but it must not silently obtain executable code. Ollama integration remains optional and cannot be a prerequisite for the core audio workflow.
-
-## Build locally
+Use an arm64 Python 3.11 environment whose macOS deployment target is no newer than 13, the pinned requirements in `packaging/macos`, and a valid Developer ID Application signing identity with its private key.
 
 ```bash
+AEMAX_PYTHON="/absolute/path/to/venv/bin/python" \
+AEMAX_NOTARY_PROFILE="AudioEnhancerMAX-notary" \
 ./scripts/build_macos_app.sh
 ```
 
-Build 3.8.3 includes the local transcription correction also present in the separate TestFlight build. The direct package retains runtime-managed models; the TestFlight screenshots do not establish identical packaging. See [verification and hashes](../releases/DIRECT_BUILD_3.8.3.md).
+The notary profile must already be stored in macOS Keychain. The script signs nested code and the app with hardened runtime, signs the DMG, submits it to Apple, waits for acceptance, staples and validates the ticket, checks Gatekeeper and then writes the final SHA-256 sidecar. Without the profile, the artifact is signed but not notarized and must not be described as notarized.
 
-The build produces a DMG containing the signed application and keeps the unpackaged `.app` as an intermediate build artifact:
-
-- `dist/macos/AudioEnhancerMAX.app`
-- `dist/macos/AudioEnhancerMAX-v3.8.2-build-3.8.3-macOS-arm64.dmg`
-- a SHA-256 checksum alongside the DMG
-
-The direct-distribution build requires an installed `Developer ID Application` identity with its private key. It signs every nested Mach-O component and the application with hardened runtime and a secure timestamp, then signs the DMG.
-
-For a public, notarized build, first store Apple notarization credentials in the macOS Keychain with `notarytool`, then run:
-
-```bash
-AEMAX_NOTARY_PROFILE="AudioEnhancerMAX-notary" ./scripts/build_macos_app.sh
-```
-
-When `AEMAX_NOTARY_PROFILE` is set, the script submits the signed DMG to Apple, waits for acceptance, staples and validates the ticket, checks the result with Gatekeeper, and only then writes the final SHA-256 sidecar. Without that variable the output is Developer ID signed but intentionally not submitted for notarization.
-
-The published 3.7.0 direct-download DMG was accepted by Apple notarization on 20 August 2026, stapled successfully, and accepted by Gatekeeper as `Notarized Developer ID`.
+Default outputs are `dist/macos/AudioEnhancerMAX-v3.9.0-build-3.9.2-macOS-arm64.dmg` and its `.sha256` file. The unpackaged `.app` is an intermediate artifact; validate the signed app inside the final disk image.
