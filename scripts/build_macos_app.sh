@@ -3,9 +3,9 @@ set -euo pipefail
 
 ROOT="${0:A:h:h}"
 VERSION="${AEMAX_MARKETING_VERSION:-3.9.0}"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.9.1}"
-APP_NAME="AudioEnhancerMAX Experimental"
-RELEASE_TAG="v3.9.0-experimental.1"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.9.2}"
+APP_NAME="AudioEnhancerMAX"
+RELEASE_TAG="v3.9.0"
 BUILD_DIR="${AEMAX_BUILD_DIR:-${ROOT}/build/macos}"
 DIST_DIR="${AEMAX_DIST_DIR:-${ROOT}/dist/macos}"
 ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
@@ -133,9 +133,9 @@ expected = {
     "CFBundleShortVersionString": sys.argv[2],
     "CFBundleVersion": sys.argv[3],
     "AEMAXDistribution": "direct",
-    "CFBundleDisplayName": "AudioEnhancerMAX Experimental",
-    "CFBundleIdentifier": "com.fabriziodegni.audioenhancermax.experimental",
-    "AEMAXReleaseChannel": "experimental",
+    "CFBundleDisplayName": "AudioEnhancerMAX",
+    "CFBundleIdentifier": "com.fabriziodegni.audioenhancermax",
+    "AEMAXReleaseChannel": "stable",
 }
 for key, value in expected.items():
     if info.get(key) != value:
@@ -153,7 +153,7 @@ mkdir -p "${DMG_ROOT}"
 ditto --norsrc --noqtn "${SIGNED_APP}" "${DMG_ROOT}/${APP_NAME}.app"
 ln -s /Applications "${DMG_ROOT}/Applications"
 hdiutil create \
-    -volname "AudioEnhancerMAX Experimental 1" \
+    -volname "AudioEnhancerMAX 3.9.0" \
     -srcfolder "${DMG_ROOT}" \
     -ov \
     -format UDZO \

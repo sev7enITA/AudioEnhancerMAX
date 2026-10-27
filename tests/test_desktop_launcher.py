@@ -43,24 +43,28 @@ class DesktopLauncherTests(unittest.TestCase):
             )
             self.assertNotIn("Containers", support_dir.parts)
 
-    def test_experimental_identity_is_separate_from_stable(self):
-        self.assertNotEqual(APP_NAME, "AudioEnhancerMAX")
-        self.assertNotEqual(BUNDLE_IDENTIFIER, "com.fabriziodegni.audioenhancermax")
-        self.assertNotEqual(DEFAULT_PORT, 8000)
+    def test_stable_upgrade_preserves_existing_data_and_leaves_experimental_separate(self):
+        self.assertEqual(APP_NAME, "AudioEnhancerMAX")
+        self.assertEqual(BUNDLE_IDENTIFIER, "com.fabriziodegni.audioenhancermax")
+        self.assertEqual(DEFAULT_PORT, 8000)
         with tempfile.TemporaryDirectory() as temp_dir:
             fake_home = Path(temp_dir)
             stable = fake_home / "Library" / "Application Support" / "AudioEnhancerMAX"
             stable.mkdir(parents=True)
             sentinel = stable / "runtime_settings.json"
             sentinel.write_text('{"owner":"stable"}')
+            experimental = fake_home / "Library" / "Application Support" / "AudioEnhancerMAX Experimental"
+            experimental.mkdir(parents=True)
+            experimental_sentinel = experimental / "runtime_settings.json"
+            experimental_sentinel.write_text('{"owner":"experimental"}')
             with patch("desktop.launcher.Path.home", return_value=fake_home):
-                experimental = _support_dir("direct")
-            self.assertNotEqual(experimental, stable)
+                selected = _support_dir("direct")
+            self.assertEqual(selected, stable)
             self.assertEqual(sentinel.read_text(), '{"owner":"stable"}')
-            self.assertFalse((experimental / sentinel.name).exists())
+            self.assertEqual(experimental_sentinel.read_text(), '{"owner":"experimental"}')
 
     def test_launcher_does_not_attach_to_other_release_channel(self):
-        for channel, expected in (("stable", False), (None, False), (RELEASE_CHANNEL, True)):
+        for channel, expected in (("experimental", False), (None, False), (RELEASE_CHANNEL, True)):
             with self.subTest(channel=channel):
                 response = MagicMock()
                 response.__enter__.return_value.read.return_value = json.dumps({

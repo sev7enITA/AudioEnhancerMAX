@@ -13,8 +13,8 @@ class HealthEndpointTests(unittest.TestCase):
 
         self.assertEqual(payload["status"], "healthy")
         self.assertEqual(payload["version"], "3.9.0")
-        self.assertEqual(payload["release_channel"], "experimental")
-        self.assertEqual(payload["release_label"], "Experimental 1")
+        self.assertEqual(payload["release_channel"], "stable")
+        self.assertEqual(payload["release_label"], "Stable")
         self.assertIn("build", payload)
         self.assertFalse(payload["mps_available"])
 

@@ -21,7 +21,7 @@ from app.release import (
     APP_NAME, APP_VERSION, APP_BUILD, DEFAULT_PORT, BUNDLE_IDENTIFIER, RELEASE_CHANNEL,
 )
 
-UI_REVISION = "v390experimental1"
+UI_REVISION = "v390stable2"
 
 
 def _bundle_metadata() -> tuple[str, str]:

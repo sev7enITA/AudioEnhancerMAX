@@ -14,7 +14,7 @@ BUILD_NUMBER = os.getenv("AEMAX_BUILD_NUMBER", RELEASE["APP_BUILD"])
 APP_NAME = RELEASE["APP_NAME"]
 DISTRIBUTION = os.getenv("AEMAX_DISTRIBUTION", "direct")
 if DISTRIBUTION != "direct":
-    raise SystemExit("Experimental builds use direct distribution only; use the stable branch for App Store packaging.")
+    raise SystemExit("This release supports direct distribution only. App Store distribution requires its separately validated packaging workflow.")
 ICON = ROOT / "packaging" / "macos" / "AudioEnhancerMAX.icns"
 WHISPER_MODEL_DIR = Path(os.getenv("AEMAX_WHISPER_MODEL_DIR", ""))
 LICENSE_DIR = Path(os.getenv("AEMAX_LICENSE_DIR", ""))

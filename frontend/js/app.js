@@ -4176,7 +4176,7 @@ async function initAboutPanel() {
                 ['GPU', health.compute || 'N/A'],
                 ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
                 ['Version', health.version || '3.9.0'],
-                ['Channel', health.release_label || 'Experimental 1'],
+                ['Channel', health.release_label || 'Stable'],
                 ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
             ];
             sysEl.innerHTML = items.map(([label, value]) =>
