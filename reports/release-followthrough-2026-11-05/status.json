@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-05",
+  "website": "published and verified",
+  "sourceforge_metadata": "published and verified",
+  "feedback_collection": "guide published and existing SourceForge tester request updated",
+  "organic_campaign_click_baseline": 0,
+  "independent_reports_received": 0,
+  "new_paid_spend_eur": 0,
+  "store_version": "3.9.0",
+  "store_build": "3.9.3",
+  "app_store_connect": "Prepare for Submission; notes, description, attachment saved; manual release",
+  "package": "signed and strict-verified; 45 Python tests, 3 subtests and 14 JS tests passed",
+  "delivery": "Transporter sending analysis, receipt not confirmed",
+  "app_review_submission": "not submitted",
+  "testflight_validation": "pending successful Apple processing",
+  "website_code_commit": "1357f7e",
+  "store_code_commit": "190e238",
+  "evidence": "evidence/",
+  "campaign_links": "campaign-links.csv"
+}
