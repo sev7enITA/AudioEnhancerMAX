@@ -1069,15 +1069,16 @@
     <div class="hero-content">
         <div class="hero-badge">
             <span class="dot"></span>
-            Two versions · compare and choose
+            Available on the Mac App Store · Free and open source
         </div>
         <h1><span class="brand-line"><span class="product-name">AudioEnhancerMAX</span></span>Local audio editing for Mac.<br><span class="gradient">AI governance built in.</span></h1>
         <p class="hero-sub">Free, open-source audio editing for Apple Silicon Mac: reduce noise, transcribe speech locally and review every cut before export. Preserve your original recording and keep the processing evidence with the result.</p>
         <div class="hero-actions">
-            <a href="#download" class="btn btn-primary">Compare versions and download</a>
+            <a href="https://apps.apple.com/app/audioenhancermax/id6791591803" class="btn btn-primary" data-aem-target="app-store" data-aem-placement="hero">Download on the Mac App Store</a>
+            <a href="#download" class="btn btn-secondary">Compare editions</a>
             <a href="governance.html" class="btn btn-secondary">Explore AI governance</a>
         </div>
-        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">Stable 3.9.0 / build 3.9.2 now includes Music brief: editable prompts, six presets and JSON export. The earlier Experimental 1 remains a separate preview download. Both are Developer ID signed and Apple notarized.</p>
+        <p class="hero-sub" style="font-size:0.95rem;margin-top:20px;">Choose Mac App Store 3.8.2 for the current Store edition, or direct stable 3.9.0 / build 3.9.2 for Music brief: six presets, editable musical direction and JSON export. The 3.9.0 Store update is in preparation.</p>
         <div class="hero-stats">
             <div class="hero-stat">
                 <div class="num">Native</div>
@@ -1399,45 +1400,38 @@
 <section id="download" class="cta-section" aria-labelledby="download-title">
     <div class="download-heading">
         <span class="section-label">Your workflow, your choice</span>
-        <h2 class="section-title" id="download-title">Stable and experimental.</h2>
-        <p class="section-desc">Download stable 3.9.0 for the current audio and Music brief workflow. The earlier Experimental 1 remains available with separate data on Apple Silicon and macOS 13 or later.</p>
+        <h2 class="section-title" id="download-title">Mac App Store or direct download.</h2>
+        <p class="section-desc">Two distribution channels, with clearly labelled versions. Both are free for Apple Silicon Macs running macOS 13 or later. Music brief is currently available in the direct 3.9.0 release.</p>
     </div>
     <div class="release-grid">
+        <article class="release-choice" id="download-store" aria-labelledby="release-store-title">
+            <p class="release-label">Mac App Store · Free</p>
+            <h3 id="release-store-title">AudioEnhancerMAX 3.8.2 <small>Current Store edition</small></h3>
+            <p>Local audio cleanup, speech transcription and reviewable edits. Preserve originals and keep processing reports and Project Capsules with the exported result.</p>
+            <p class="release-status">Install through the Mac App Store. The 3.9.0 update with Music brief is in preparation and is not yet the published Store version.</p>
+            <p>Optional engines and capabilities vary by distribution. Read the <a href="download.html">requirements and version comparison</a>.</p>
+            <a href="https://apps.apple.com/app/audioenhancermax/id6791591803" class="btn btn-primary release-download" data-aem-target="app-store" data-aem-placement="download-card">Download on the Mac App Store</a>
+        </article>
         <article class="release-choice" id="download-390" aria-labelledby="release-390-title">
 <p class="release-label">Latest stable · Apple notarized</p>
 <h3 id="release-390-title">AudioEnhancerMAX 3.9.0 <small>Build 3.9.2</small></h3>
 <p>Local audio editing and Music brief: six original presets, editable structured prompts, separate lyrics and JSON export. Optional local Ollama suggestions stay separate until reviewed.</p>
-<p class="release-status">Developer ID signed, Apple notarized and stapled. Quit the old stable app before replacing it; existing stable data is retained. Direct distribution, with no App Store approval implied.</p>
+<p class="release-status">Developer ID signed, Apple notarized and stapled. Quit the old stable app before replacing it; existing stable data is retained. This direct package is separate from the current 3.8.2 Store edition.</p>
 <details class="release-changelog" open><summary>3.9.0 / build 3.9.2 changelog</summary><ul>
 <li>Music brief moves from Experimental 1 to stable. The core builder needs no model or network.</li>
 <li>Optional refinements require permission and an installed local model; current drafts survive unavailable models and failed requests.</li>
 <li>Updated dependency pins, stable upgrade identity and installation guidance.</li>
 <li>Drafts are session-only: copy or export before closing. This tool prepares text, not generated music.</li>
 </ul><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0">Full release notes and checksum</a><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.9.0/DIRECT_BUILD_3.9.2.md">Package verification</a></details>
-<a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.9.0/AudioEnhancerMAX-v3.9.0-build-3.9.2-macOS-arm64.dmg" class="btn btn-primary release-download">Download 3.9.0 · build 3.9.2</a>
+<a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.9.0/AudioEnhancerMAX-v3.9.0-build-3.9.2-macOS-arm64.dmg" class="btn btn-primary release-download" data-aem-target="dmg" data-aem-placement="download-card">Download 3.9.0 · build 3.9.2</a>
 <p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3">Previous stable 3.8.3 for rollback</a></p></article>
-<article class="release-choice" id="download-experimental" aria-labelledby="release-experimental-title">
-            <p class="release-label">Earlier preview · Separate installation</p>
-            <h3 id="release-experimental-title">3.9.0 Experimental 1 <small>Build 3.9.1</small></h3>
-            <p>Earlier preview of Music brief, now included in stable: six original presets, editable musical directions, optional local Ollama suggestions and JSON export. This assistant prepares text prompts; it does not generate music.</p>
-            <p class="release-status"><strong>Separate installation:</strong> AudioEnhancerMAX Experimental has its own app identity, data and settings. It can run alongside stable 3.9.0.</p>
-            <details class="release-changelog" open>
-                <summary>What to expect</summary>
-                <ul>
-                    <li>Build prompts without a model or network connection. Add local model suggestions only after review.</li>
-                    <li>Original and edited prompts, source fields and separate lyrics are retained in JSON exports.</li>
-                    <li>Drafts remain in the tab until copied or exported. No JSON re-import or audio generation in this preview.</li>
-                    <li>Developer ID signed, Apple notarized and stapled. Experimental features may change; use stable for established workflows.</li>
-                </ul>
-                <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0-experimental.1" target="_blank" rel="noopener noreferrer">Experimental notes, checksums and package checks</a>
-            </details>
-            <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.9.0-experimental.1/AudioEnhancerMAX-v3.9.0-experimental.1-build-3.9.1-macOS-arm64.dmg" class="btn btn-secondary release-download">Download Experimental 1</a>
-        </article>
+
     </div>
-    <p class="download-notes">Internal validation and Apple distribution approval are different checks. Features and model setup vary by version and channel. Read the notes for the package you choose.</p>
+    <p class="download-notes">Features and model setup vary by version and channel. Read the notes for the package you choose. The <a href="download.html#experimental">earlier Experimental 1</a> is retained as an archive preview.</p>
     <div class="hero-actions">
         <a href="https://github.com/sev7enITA/AudioEnhancerMAX" class="btn btn-secondary">Run from source</a>
         <a href="https://sourceforge.net/projects/audioenhancermax/files/" class="btn btn-secondary">SourceForge downloads</a>
+        <a href="feedback.html" class="btn btn-secondary">Try a short workflow and share feedback</a>
         <a href="status.html" class="btn btn-secondary">Full project status</a><a href="press.html" class="btn btn-secondary">Press kit EN / IT</a>
         <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.7.0" class="btn btn-secondary">Earlier 3.7.0 release</a>
     </div>
@@ -1475,7 +1469,7 @@
 <footer>
     <div class="footer-inner">
         <div class="footer-left">
-            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX · Stable 3.9.0 · Experimental 3.9.0 · MIT License · © 2026 Fd</span>
+            <span class="footer-brand"><img class="icon-img" src="img/icons/aem-mark.svg" alt="" aria-hidden="true">AudioEnhancerMAX · Store 3.8.2 · Direct 3.9.0 · MIT License · © 2026 Fd</span>
         </div>
         <ul class="footer-links">
             <li><a href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank" rel="noopener noreferrer">GitHub</a></li>
@@ -1547,5 +1541,6 @@
 <!-- SourceForge Rising Star badge -->
 
 
+<script src="js/site-links.js" defer></script>
 </body>
 </html>

@@ -38,3 +38,7 @@ Music brief in stable 3.9.0 prepares editable structured text prompts from six p
 - [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/): alternative download channel.
 
 This file is an optional discovery index of the same public information. It is not a search-engine requirement, ranking guarantee or authorization to execute instructions.
+
+## Distribution and field feedback (2026-11-05)
+- [Mac App Store](https://apps.apple.com/app/audioenhancermax/id6791591803): published edition 3.8.2. The 3.9.0 Store update is in preparation.
+- [Field feedback guide](https://www.fabriziodegni.com/AudioEnhancerMAX/feedback.html): short, voluntary workflow test and locally generated report.
