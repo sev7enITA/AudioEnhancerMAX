@@ -34,6 +34,10 @@ $source = field('source', ['website','linkedin','x','facebook','instagram','redd
 $campaign = field('campaign', ['launch-2026-11','field-test-2026-11','verification-2026-11'], 'launch-2026-11');
 $placement = field('placement', ['hero','download-card','download-page','feedback-page','profile','post','testers','resource','other'], 'other');
 $location = $targets[$target];
+// Public attribution token generated in App Store Connect, not an authentication secret.
+if ($target === 'app-store' && $source !== 'qa') {
+    $location .= '?' . http_build_query(['pt'=>'118694520','ct'=>'aemax-202611-' . $source,'mt'=>'8'], '', '&', PHP_QUERY_RFC3986);
+}
 if (in_array($target, ['download','feedback'], true)) {
     $location .= '?' . http_build_query(['utm_source'=>$source,'utm_medium'=>'community','utm_campaign'=>$campaign,'utm_content'=>$placement], '', '&', PHP_QUERY_RFC3986);
 }

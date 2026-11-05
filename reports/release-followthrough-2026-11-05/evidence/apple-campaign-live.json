@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-11-05T05:45:13.376740+00:00",
+  "redirects": [
+    {
+      "source": "website",
+      "status": 302,
+      "location": "https://apps.apple.com/app/audioenhancermax/id6791591803?pt=118694520&ct=aemax-202611-website&mt=8",
+      "measurement": "test"
+    },
+    {
+      "source": "linkedin",
+      "status": 302,
+      "location": "https://apps.apple.com/app/audioenhancermax/id6791591803?pt=118694520&ct=aemax-202611-linkedin&mt=8",
+      "measurement": "test"
+    },
+    {
+      "source": "sourceforge",
+      "status": 302,
+      "location": "https://apps.apple.com/app/audioenhancermax/id6791591803?pt=118694520&ct=aemax-202611-sourceforge&mt=8",
+      "measurement": "test"
+    }
+  ]
+}

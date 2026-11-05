@@ -10,11 +10,14 @@
   "store_build": "3.9.3",
   "app_store_connect": "Prepare for Submission; notes, description, attachment saved; manual release",
   "package": "signed and strict-verified; 45 Python tests, 3 subtests and 14 JS tests passed",
-  "delivery": "Transporter sending analysis, receipt not confirmed",
+  "delivery": "Transporter UPLOADING APP to App Store Connect; latest observed estimate about one hour at 329.18 KB/s; delivery receipt not yet confirmed",
   "app_review_submission": "not submitted",
   "testflight_validation": "pending successful Apple processing",
   "website_code_commit": "1357f7e",
   "store_code_commit": "190e238",
   "evidence": "evidence/",
-  "campaign_links": "campaign-links.csv"
+  "campaign_links": "campaign-links.csv",
+  "updated_at": "2026-11-05T05:45:57.017003+00:00",
+  "apple_campaign_attribution": "published; pt=118694520 and ct=aemax-202611-{source}; 3 live test-mode redirects verified",
+  "apple_campaign_links": "apple-campaign-links.csv"
 }

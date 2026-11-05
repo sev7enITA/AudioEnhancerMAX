@@ -31,3 +31,9 @@ The worksheet generates a report locally. Users choose whether to save it or ope
 Aim for 5-10 voluntary independent reports before evaluating additional paid promotion. This is a practical learning target, not a statistical proof threshold or permission to buy advertising. Capture edition/build, macOS/chip, repeatable steps, outcome, listening conditions and relevant evidence in `field-evidence.csv`. Separate developer tests from independent reports. Record negative and blocked outcomes too. Quote a person only with their permission and do not infer a testimonial from a bug report.
 
 The initial ledger is empty. Developer UI/endpoint checks establish the collection mechanism, not real-world adoption or audio quality. Review reports for reproducibility, fix recurring blockers, then reassess any proposed spend with its explicit cost and destination.
+
+## Apple campaign attribution
+
+App Store Connect generated the public provider token `118694520` with media type `8`. It is an attribution identifier, not an authentication credential. Store redirects carry `ct=aemax-202611-{source}` using the same fixed source allowlist. The QA source is excluded. This enables prospective Apple-side attribution separately from website navigation counts; no visitor-level join is made.
+
+Apple currently requires campaign first-time downloads from at least five individuals before campaign data appears; metrics also have thresholds in the selected date range. Reporting is delayed and withheld data must not be recorded as zero. See [Apple campaign-link documentation](https://developer.apple.com/help/app-store-connect-analytics/acquisition/campaign-links/). No paid campaign was created.

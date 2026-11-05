@@ -1,0 +1,50 @@
+[
+  {
+    "file": "index.html",
+    "status": 200,
+    "match": true,
+    "sha256": "b242db4dd9c4994070b8f121a6e2d8cd28c2639b36401bdb2f6da0764717c036"
+  },
+  {
+    "file": "download.html",
+    "status": 200,
+    "match": true,
+    "sha256": "94000fb5c1e9282bcb886c80333a2ec9752b3b8f313e7539142dfe64f2bae992"
+  },
+  {
+    "file": "privacy.html",
+    "status": 200,
+    "match": true,
+    "sha256": "6bfe0da25e312b1fffe86c5e5a88e9c0d054d8148d28d0da78d5da7031228dcd"
+  },
+  {
+    "file": "sitemap.xml",
+    "status": 200,
+    "match": true,
+    "sha256": "f1887118368fc70c057f0e58fbb4a74b761bba6026d0c8d052807165cb68c384"
+  },
+  {
+    "file": "llms.txt",
+    "status": 200,
+    "match": true,
+    "sha256": "3b5c0376bb4e60c024fcf406777c9c40acf81f3ba8c06c1dd3c3553bd28d84a9"
+  },
+  {
+    "file": "feedback.html",
+    "status": 200,
+    "match": true,
+    "sha256": "ad3fec66222f75a604f67e953b79105eb55b563e0a25a3c94a7f3b176bc50de5"
+  },
+  {
+    "file": "js/site-links.js",
+    "status": 200,
+    "match": true,
+    "sha256": "b871e81550602883e7e25d15925b6c43672e60943a9416c77bb928c055f68fb1"
+  },
+  {
+    "file": "js/feedback.js",
+    "status": 200,
+    "match": true,
+    "sha256": "f156ed6e9847e23409ec105d4d26f517449dd8b029f4690a9c6b34c48f1f400d"
+  }
+]

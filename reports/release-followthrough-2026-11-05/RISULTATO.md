@@ -14,6 +14,7 @@
 - Verificati reindirizzamento Store, esclusione DNT e rifiuto delle destinazioni non autorizzate. Quattro test automatici dell’endpoint passati.
 - Pagina pubblica `feedback.html`, generazione locale del rapporto verificata in Safari. Nessun rapporto di prova inviato a GitHub.
 - Richiesta tester SourceForge già esistente aggiornata, mantenendo testo e immagine precedenti. Link per il protocollo di prova attivo nel post.
+- Link campagne Apple integrati e verificati in produzione, con etichette distinte per canale. Apple applica soglie minime prima di mostrare i download attribuiti: una metrica assente non equivale a zero. Inventario aggiuntivo in `apple-campaign-links.csv`.
 - Inventario di link per 12 canali disponibile in `campaign-links.csv`; le altre destinazioni sono pronte per i prossimi contenuti, non dichiarate già pubblicate.
 - Registro delle prove indipendenti inizialmente vuoto. Nessuna testimonianza o risultato d’ascolto inventato. Nessuna spesa promozionale aumentata.
 
@@ -27,6 +28,6 @@ Guida operativa: `MEASUREMENT.md`. Esportatore: `scripts/export_campaign_counts.
 - 45 test Python e 14 test JavaScript superati; 3 subtest Python superati.
 - App Store Connect: nuova versione creata in stato Prepare for Submission, descrizione, Novità, note di review e allegato campione salvati. Rilascio manuale selezionato.
 - Il pacchetto di distribuzione non è avviabile direttamente con il profilo di produzione: la prova nativa deve utilizzare la build elaborata da Apple/TestFlight. Non è stato aggirato questo controllo.
-- Caricamento avviato con Transporter. Ricevuta finale e installazione TestFlight da verificare; nessun invio ad App Review e nessuna pubblicazione della 3.9.0 sono dichiarati qui.
+- Transporter ha superato la fase di analisi ed è in stato UPLOADING APP. Ultima stima osservata: circa un’ora, 329.18 KB/s. È una stima variabile, non una ricevuta di consegna. Ricevuta finale e installazione TestFlight da verificare; nessun invio ad App Review e nessuna pubblicazione della 3.9.0 sono dichiarati qui.
 
 Artefatti e prove Apple: `releases/app-store-3.9.0-20261105` nel worktree Store. Stato finale aggiornato nel messaggio conclusivo e in `status.json`.

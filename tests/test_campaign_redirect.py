@@ -65,7 +65,7 @@ class CampaignRedirectTests(unittest.TestCase):
             self.assertIsNone(response.headers.get('Location'))
         response = self.request('to=app-store&source[]=secret&campaign=secret&placement=secret')
         self.assertEqual(response.code, 302)
-        self.assertEqual(response.headers['Location'], 'https://apps.apple.com/app/audioenhancermax/id6791591803')
+        self.assertEqual(response.headers['Location'], 'https://apps.apple.com/app/audioenhancermax/id6791591803?pt=118694520&ct=aemax-202611-unknown&mt=8')
         data = json.loads((self.private/'counts.json').read_text())
         self.assertEqual(next(iter(next(iter(data['days'].values())))), 'unknown|launch-2026-11|app-store|other')
         self.assertNotIn('secret', json.dumps(data))
