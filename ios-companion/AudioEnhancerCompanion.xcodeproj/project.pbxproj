@@ -32,6 +32,7 @@
 		938FCFCF83675AF2A2991DAB /* PairingQrTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10B8928560FA5C1FB7C5CCD /* PairingQrTests.swift */; };
 		AAA7C2A5457D840AC41324E0 /* silent.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 3D6F16ACF295DE6B5235D7A5 /* silent.mp4 */; };
 		B82ADB41E61F6F251B265406 /* NearbyPairingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71076325A2B2D5E207AAE603 /* NearbyPairingTests.swift */; };
+		D06371A12C7B893E41656D5F /* NearbyPhoneVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842717F5B7EBECD45B66653B /* NearbyPhoneVisibility.swift */; };
 		DB3134728389EE5B5C9E941E /* phone.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 40BA850782FEB89555B6B8EB /* phone.aiff */; };
 		E31C21C67B1E020FBEE7AEEF /* phone-alac.m4a in Resources */ = {isa = PBXBuildFile; fileRef = C535FE13019E2A4D1898DE96 /* phone-alac.m4a */; };
 		E6CE1D741A73637F04FF7545 /* short.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB7D6438A2C6CCD05EA1C36D /* short.mp4 */; };
@@ -70,6 +71,7 @@
 		714BB212D5A9A7435751783C /* phone.aac */ = {isa = PBXFileReference; path = phone.aac; sourceTree = "<group>"; };
 		755EDBD1E832EBB2B41B7D9A /* pairing-fixture.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pairing-fixture.png"; sourceTree = "<group>"; };
 		7A6C9C7A5111EF8E9F60F18B /* pairing-fixture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "pairing-fixture.json"; sourceTree = "<group>"; };
+		842717F5B7EBECD45B66653B /* NearbyPhoneVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPhoneVisibility.swift; sourceTree = "<group>"; };
 		9184BFFDB98E8F38DE3BFADD /* CompanionTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CompanionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB7D6438A2C6CCD05EA1C36D /* short.mp4 */ = {isa = PBXFileReference; path = short.mp4; sourceTree = "<group>"; };
 		B10B8928560FA5C1FB7C5CCD /* PairingQrTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingQrTests.swift; sourceTree = "<group>"; };
@@ -146,6 +148,7 @@
 				56374D9A7461186EE115A23E /* MediaImport.swift */,
 				601844D39F0AE79C411DE495 /* NearbyMacSheet.swift */,
 				5448DF93409101681875DCB1 /* NearbyPairing.swift */,
+				842717F5B7EBECD45B66653B /* NearbyPhoneVisibility.swift */,
 				C639109FD085185274D79441 /* PairingScanner.swift */,
 			);
 			path = Sources;
@@ -292,6 +295,7 @@
 				89E31FD9381BD3DAC6792879 /* MediaImport.swift in Sources */,
 				FF3128FF2A23DE8E25F0A1A3 /* NearbyMacSheet.swift in Sources */,
 				332D332D9B93C951B423D9A6 /* NearbyPairing.swift in Sources */,
+				D06371A12C7B893E41656D5F /* NearbyPhoneVisibility.swift in Sources */,
 				1B675D774289A1904B857F34 /* PairingScanner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -388,7 +392,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -402,7 +406,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan the private pairing QR code displayed by AudioEnhancerMAX on your Mac. Images stay on this device and are not saved.";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Find your Mac, transfer audio, retrieve results, or contribute processing while this app is open.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Pair with your Mac, transfer audio, retrieve results, or contribute processing while this app is open.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -470,7 +474,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -490,7 +494,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Scan the private pairing QR code displayed by AudioEnhancerMAX on your Mac. Images stay on this device and are not saved.";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Find your Mac, transfer audio, retrieve results, or contribute processing while this app is open.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Pair with your Mac, transfer audio, retrieve results, or contribute processing while this app is open.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;

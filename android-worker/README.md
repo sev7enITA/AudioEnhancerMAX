@@ -1,4 +1,4 @@
-# AudioEnhancerMAX Android Companion 4.0.0 (12)
+# AudioEnhancerMAX Android Companion 4.0.0 (13)
 
 Native Compose companion, Android 8/API 26 or later, target API 35. This is a local debug preview, not a Google Play release. Package ID remains `com.audioenhancermax.worker`; install updates with the same debug signing key.
 
@@ -9,6 +9,7 @@ Native Compose companion, Android 8/API 26 or later, target API 35. This is a lo
 - Trim, gain, fixed Voice EQ, peak normalization to −1 dBFS and WAV sharing. The Studio puts the waveform and Listen controls before cleanup. A/B keeps the source playhead on the same passage after a trim. Optional listening level matching only attenuates the louder side during playback. The export keeps the applied gain. The original document and last workspace are preserved. Waveform peaks are cached during import and cover the final frame, including very short clips.
 - Eligible H.264/AAC video can retain a private copy. Improve the full duration, then prepare and export an MP4 copy. Audio is re-encoded as AAC; video and rotation pass through. Exactly matched frame count, rate and channels are required. Auxiliary tracks are not exported. Unsuitable video timelines still permit audio-only editing. New imports/results invalidate prepared video exports.
 - In **Connection → Find nearby Macs**, select the Mac and compare the eight-digit number displayed on both screens. Confirm on the phone and then approve on the Mac. Pairing pins the Mac TLS certificate. QR and manual private pairing remain available. On Mac open **Edge Cluster → Mobile devices & connections**. Use the same Wi-Fi or a hotspot that allows devices to communicate. A single pairing covers Mac audio transfer and optional foreground Voice EQ contribution.
+- **Make this phone discoverable** lets the Mac find the phone and invite it. Choose the invitation to compare the same eight-digit number. Opening this mode publishes a temporary phone name and request ID on the local network. It ends when you leave Connection, tap Stop, accept an invitation, or wait 90 seconds.
 - Before sending, the app shows the destination and source or result fingerprint. Mac transfer is limited to 20 MiB decoded WAV. The app shows upload, processing, verification and completion. Completed audio and report are associated using SHA-256. Device information, Voice EQ benchmark and round-trip latency are available.
 - The worker only accepts `auto_eq`, at most 2 MiB per chunk. It stops on backgrounding, heat, local editing, upload or explicit stop; the Mac can fall back locally. No phone HTTP server, continuous background processing or second pairing is required.
 - Music brief builds persistent editable text/JSON with separate lyrics. It does not generate music.

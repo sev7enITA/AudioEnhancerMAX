@@ -1,16 +1,27 @@
 import SwiftUI
 
 struct NearbyMacSheet: View {
+    enum Mode: String, Identifiable {
+        case findMac, discoverable
+
+        var id: Self { self }
+        var title: String { self == .findMac ? "Find your Mac" : "Discoverable device" }
+        var retryTitle: String { self == .findMac ? "Search again" : "Make this device visible again" }
+    }
+
+    let mode: Mode
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var model: CompanionModel
     @StateObject private var discovery = NearbyMacBrowser()
+    @StateObject private var visibility = NearbyPhoneVisibility()
     @State private var stage = Stage.searching
     @State private var attempt: NearbyPairingClient?
     @State private var operation: Task<Void, Never>?
 
     private enum Stage {
         case searching
+        case discoverable
         case requesting(NearbyMac)
         case comparing(NearbyMac, NearbyChallenge)
         case waiting
@@ -31,18 +42,25 @@ struct NearbyMacSheet: View {
                             Text(discovery.message).foregroundStyle(.secondary)
                         }
                         ForEach(discovery.matches) { mac in
-                            Button { begin(mac) } label: {
-                                Label {
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text(mac.name)
-                                        if let host = mac.endpoint.host {
-                                            Text(host).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                                        }
-                                    }
-                                } icon: { Image(systemName: "desktopcomputer") }
-                            }
+                            invitationButton(mac)
                         }
                         Button("Refresh search") { discovery.start() }
+                    }
+                case .discoverable:
+                    Section {
+                        Text("On the Mac, open Mobile devices and transfers, then search for nearby phones. Both devices need the same Wi-Fi or hotspot.")
+                            .foregroundStyle(.secondary)
+                        Text(visibility.message).accessibilityIdentifier("phone-discovery-status")
+                        if !visibility.active {
+                            Button(mode.retryTitle) { reset() }
+                        }
+                    }
+                    if !visibility.invitations.isEmpty {
+                        Section("Pairing invitations") {
+                            ForEach(visibility.invitations) { mac in
+                                invitationButton(mac)
+                            }
+                        }
                     }
                 case .requesting(let mac):
                     ProgressView("Requesting a confirmation code from \(mac.name)…")
@@ -58,14 +76,17 @@ struct NearbyMacSheet: View {
                         Button("Codes match") { finish(challenge) }
                             .buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("nearby-confirm-codes")
-                        Button("Codes do not match", role: .destructive) { search() }
+                        Button("Codes do not match", role: .destructive) {
+                            cancel()
+                            stage = .failed("Pairing cancelled. Decline this request on your Mac before trying again.")
+                        }
                     }
                 case .waiting:
                     ProgressView("Waiting for confirmation on the Mac…")
                 case .failed(let message):
                     Section {
                         Text(message).foregroundStyle(.secondary)
-                        Button("Search again") { search() }
+                        Button(mode.retryTitle) { reset() }
                     }
                 }
                 Section {
@@ -73,7 +94,7 @@ struct NearbyMacSheet: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Find your Mac")
+            .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -84,24 +105,43 @@ struct NearbyMacSheet: View {
                 }
             }
         }
-        .onAppear { search() }
+        .onAppear { reset() }
         .onDisappear { cancel() }
         .onChange(of: scenePhase) { _, next in
             if next == .background {
                 cancel()
-                stage = .failed("Search paused while the app was in the background. Start a fresh pairing request.")
+                stage = .failed("Nearby pairing paused while the app was in the background. Start a fresh pairing request.")
             }
         }
     }
 
-    private func search() {
+    private func invitationButton(_ mac: NearbyMac) -> some View {
+        Button { begin(mac) } label: {
+            Label {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(mode == .discoverable ? "Accept invitation from \(mac.name)" : mac.name)
+                    if let host = mac.endpoint.host {
+                        Text(host).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    }
+                }
+            } icon: { Image(systemName: "desktopcomputer") }
+        }
+    }
+
+    private func reset() {
         cancel()
-        stage = .searching
-        discovery.start()
+        if mode == .findMac {
+            stage = .searching
+            discovery.start()
+        } else {
+            stage = .discoverable
+            visibility.start()
+        }
     }
 
     private func cancel() {
         discovery.stop()
+        visibility.stop()
         operation?.cancel()
         operation = nil
         attempt?.cancel()
@@ -109,7 +149,14 @@ struct NearbyMacSheet: View {
     }
 
     private func begin(_ mac: NearbyMac) {
-        guard case .searching = stage else { return }
+        switch stage {
+        case .searching where discovery.matches.contains(mac):
+            break
+        case .discoverable where visibility.active && visibility.invitations.contains(mac):
+            break
+        default:
+            return
+        }
         cancel()
         let client = NearbyPairingClient(mac: mac, device: model.device)
         attempt = client

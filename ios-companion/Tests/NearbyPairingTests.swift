@@ -1,3 +1,4 @@
+import Network
 import XCTest
 @testable import AudioEnhancerCompanion
 
@@ -54,6 +55,44 @@ final class NearbyPairingTests: XCTestCase {
                                                     fingerprint: pin, token: "")))
     }
 
+    func testPhoneInvitationRequiresItsOwnIDAndDatagramSource() throws {
+        let id = String(repeating: "af", count: 16)
+        let sender = try XCTUnwrap(IPv4Address("192.168.2.5"))
+        let payload: [String: Any] = ["v": 1, "id": id, "host": "192.168.2.5",
+                                      "port": 4321, "fp": pin, "name": "QA Mac"]
+        func parse(_ overrides: [String: Any] = [:], from address: IPv4Address? = nil) throws -> NearbyMac? {
+            let data = try JSONSerialization.data(withJSONObject: payload.merging(overrides) { _, other in other })
+            return NearbyPhoneInvitation.parse(data, from: address ?? sender, expectedID: id)
+        }
+        XCTAssertEqual(try parse()?.endpoint.absoluteString, "https://192.168.2.5:4321")
+        XCTAssertNil(try parse(["id": String(repeating: "f", count: 32)]))
+        XCTAssertNil(try parse(["v": true]))
+        XCTAssertNil(try parse(["port": "4321"]))
+        XCTAssertNil(try parse(["port": 0]))
+        XCTAssertNil(try parse(["fp": pin.uppercased()]))
+        XCTAssertNil(try parse(["name": String(repeating: "A", count: 1024)]))
+        XCTAssertNil(try parse(from: XCTUnwrap(IPv4Address("192.168.2.6"))))
+        XCTAssertNil(try parse(["host": "127.0.0.1"], from: .loopback))
+    }
+
+    @MainActor
+    func testPhoneVisibilityExpiresAndClearsTheInvitationIdentity() async throws {
+        let visibility = NearbyPhoneVisibility(duration: .milliseconds(100))
+        visibility.start()
+        defer { visibility.stop() }
+        XCTAssertTrue(visibility.active)
+        let id = try XCTUnwrap(visibility.invitationID)
+        XCTAssertTrue(NearbyMac.isHex(id, length: 32))
+        for _ in 0..<40 {
+            if !visibility.active { break }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        XCTAssertFalse(visibility.active)
+        XCTAssertNil(visibility.invitationID)
+        XCTAssertTrue(visibility.invitations.isEmpty)
+        XCTAssertTrue(visibility.message.contains("expired"))
+    }
+
     @MainActor
     func testLiveBonjourReadsTheMacAdvertisement() async throws {
         let fixture = try liveFixture()
@@ -82,6 +121,54 @@ final class NearbyPairingTests: XCTestCase {
         } catch is URLError {
             // The transport must reject the certificate before posting a pairing request.
         }
+        try await approveAndCheck(mac, fixture: fixture, device: device)
+    }
+
+    @MainActor
+    func testLiveMacFindsPhoneAndSendsInvitationBeforePairing() async throws {
+        let fixture = try liveFixture()
+        let expected = try XCTUnwrap(NearbyMac(name: "QA Mac", text: fixture.text))
+        let visibility = NearbyPhoneVisibility()
+        visibility.start()
+        defer { visibility.stop() }
+        let id = try XCTUnwrap(visibility.invitationID)
+        let owner = fixture.owner.appendingPathComponent("api").appendingPathComponent("companion")
+        func phones(_ action: String, body: [String: String] = [:]) async throws {
+            var request = URLRequest(url: owner.appendingPathComponent("phones").appendingPathComponent(action))
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONEncoder().encode(body)
+            let (_, response) = try await URLSession.shared.data(for: request)
+            XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        }
+        try await phones("search")
+        var found = false
+        for _ in 0..<40 {
+            let (data, _) = try await URLSession.shared.data(from: owner.appendingPathComponent("session"))
+            let state = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            let devices = try XCTUnwrap(state["phones"] as? [[String: String]])
+            if devices.contains(where: { $0["id"] == id }) {
+                found = true
+                break
+            }
+            try await Task.sleep(for: .milliseconds(200))
+        }
+        XCTAssertTrue(found, "The Mac did not discover the simulator's phone advertisement")
+        if found {
+            try await phones("invite", body: ["id": id])
+            for _ in 0..<25 {
+                if !visibility.invitations.isEmpty { break }
+                try await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        try await phones("stop")
+        let invitation = try XCTUnwrap(visibility.invitations.first)
+        XCTAssertEqual(invitation.id, expected.id)
+        visibility.stop()
+        try await approveAndCheck(invitation, fixture: fixture, device: UUID().uuidString)
+    }
+
+    private func approveAndCheck(_ mac: NearbyMac, fixture: LiveFixture, device: String) async throws {
         let client = NearbyPairingClient(mac: mac, device: device)
         defer { client.cancel() }
         let challenge = try await client.begin()

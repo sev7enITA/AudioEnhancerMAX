@@ -280,6 +280,8 @@ class Gateway:
         self.pairing = None
         self.nearby = None
         self.advertisement = None
+        self.phone_browser = None
+        self.shared_network = None
         self.closed = False
 
     def advertise(self, interface, host):
@@ -287,6 +289,7 @@ class Gateway:
 
         with self.lock:
             if not self.closed and self.pairing and self.server:
+                self.shared_network = (interface, host)
                 self.advertisement = NearbyAdvertisement(
                     interface,
                     host,
@@ -301,7 +304,34 @@ class Gateway:
                 if self.advertisement
                 else "unavailable",
                 "requests": self.nearby.pending() if self.nearby else [],
+                "phone_search": self.phone_browser.state
+                if self.phone_browser
+                else "off",
+                "phones": self.phone_browser.phones() if self.phone_browser else [],
             }
+
+    def search_phones(self):
+        from .phone_discovery import NearbyPhones
+
+        with self.lock:
+            if self.closed or not self.shared_network:
+                raise PairingError(
+                    409, "Select the Wi-Fi network shared by your phone."
+                )
+            if not self.phone_browser or self.phone_browser.state != "searching":
+                self.phone_browser = NearbyPhones(*self.shared_network)
+
+    def stop_phone_search(self):
+        with self.lock:
+            browser, self.phone_browser = self.phone_browser, None
+        if browser:
+            browser.close()
+
+    def invite_phone(self, identity):
+        with self.lock:
+            if not self.phone_browser or not self.pairing:
+                raise PairingError(410, "Start a phone search first.")
+            self.phone_browser.invite(identity, self.pairing)
 
     def decide_pairing(self, request_id, approved):
         with self.lock:
@@ -868,12 +898,15 @@ class Gateway:
             self.pairing = None
             self.nearby = None
             advertisement, self.advertisement = self.advertisement, None
+            phone_browser, self.phone_browser = self.phone_browser, None
             self.files.clear()
             self.jobs.clear()
             self.peers.clear()
             self.uploading = None
         if advertisement:
             advertisement.close()
+        if phone_browser:
+            phone_browser.close()
         self.worker.close()
         if self.server:
             self.server.shutdown()

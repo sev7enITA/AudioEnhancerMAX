@@ -5,7 +5,7 @@
 
     root.innerHTML = `
         <h3>Mobile devices and transfers</h3>
-        <p>Find this Mac from your phone and compare a short code on both screens.</p>
+        <p>Find a nearby phone, or let the phone find this Mac. Then compare the code on both screens.</p>
         <div data-connected-devices></div>
         <details class="companion-networks">
             <summary>Shared network</summary>
@@ -14,9 +14,16 @@
             <button type="button" class="btn btn-secondary" data-action="refresh">Refresh networks</button>
         </details>
         <div class="flex gap-12">
-            <button type="button" class="btn btn-primary" data-action="start" disabled>Start nearby pairing</button>
+            <button type="button" class="btn btn-primary" data-action="find-phones" disabled>Find nearby phones</button>
+            <button type="button" class="btn btn-secondary" data-action="start" disabled>Start nearby pairing</button>
             <button type="button" class="btn btn-secondary" data-action="show" hidden>Use QR instead</button>
             <button type="button" class="btn btn-secondary" data-action="stop" disabled>Stop and revoke</button>
+        </div>
+        <div data-phone-search hidden>
+            <h4>Nearby phones</h4>
+            <p data-phone-search-status role="status"></p>
+            <div data-phone-results></div>
+            <button type="button" class="btn btn-secondary" data-action="stop-search">Stop search</button>
         </div>
         <div data-nearby-section hidden>
             <h4>Devices asking to connect</h4>
@@ -41,6 +48,9 @@
     `;
 
     const status = root.querySelector('[data-connection-status]');
+    const phoneSearch = root.querySelector('[data-phone-search]');
+    const phoneStatus = root.querySelector('[data-phone-search-status]');
+    const phoneResults = root.querySelector('[data-phone-results]');
     const nearbySection = root.querySelector('[data-nearby-section]');
     const nearbyRequests = root.querySelector('[data-nearby-requests]');
     const devices = root.querySelector('[data-connected-devices]');
@@ -59,6 +69,9 @@
     let deviceSnapshot = '';
     let transferSnapshot = '';
     let nearbySnapshot = null;
+    let phoneSnapshot = null;
+    let phoneSearchState = 'off';
+    let invitedPhone = '';
     let refreshInFlight = false;
     let sessionVersion = 0;
 
@@ -87,6 +100,9 @@
         action('show').hidden = !active || !view.hidden;
         action('show').disabled = busy;
         action('stop').disabled = !active || busy;
+        action('find-phones').disabled = busy || (!active && !host.value) || phoneSearchState === 'searching';
+        action('stop-search').hidden = phoneSearchState !== 'searching';
+        action('stop-search').disabled = busy;
     }
 
     function clearCode() {
@@ -204,6 +220,39 @@
         nearbyRequests.replaceChildren(...rows);
     }
 
+    function renderPhoneSearch(state, items) {
+        phoneSearchState = state;
+        phoneSearch.hidden = state === 'off';
+        if (state !== 'searching') invitedPhone = '';
+        const message = state === 'expired' ? 'Search ended. Select Find nearby phones to try again.'
+            : state === 'unavailable' ? 'Phone discovery is unavailable. Check local network access and the shared Wi-Fi.'
+            : invitedPhone ? `Invitation sent to ${invitedPhone}. Check the phone for its confirmation.`
+            : items.length ? 'Invite the phone you want to pair.'
+            : 'On the phone, open Connection and make it discoverable.';
+        if (phoneStatus.textContent !== message) phoneStatus.textContent = message;
+        const snapshot = JSON.stringify(items);
+        if (phoneSnapshot === snapshot) return;
+        phoneSnapshot = snapshot;
+        phoneResults.replaceChildren(...items.map(phone => {
+            const row = document.createElement('div');
+            row.className = 'companion-pair-request';
+            const name = document.createElement('h5');
+            name.textContent = phone.name;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-secondary';
+            button.textContent = 'Invite';
+            button.setAttribute('aria-label', `Invite ${phone.name}`);
+            button.addEventListener('click', () => run(async () => {
+                await read('phones/invite', {id: phone.id});
+                invitedPhone = phone.name;
+                phoneStatus.textContent = `Invitation sent to ${phone.name}. Check the phone for its confirmation.`;
+            }));
+            row.append(name, button);
+            return row;
+        }));
+    }
+
     const transferStates = {
         importing: 'Receiving audio',
         imported: 'Source ready',
@@ -265,6 +314,7 @@
         if (!data.active) clearCode();
         const connected = (data.devices || []).filter(item => item.online).length;
         renderNearby(data.requests || []);
+        renderPhoneSearch(data.phone_search || 'off', data.phones || []);
         renderDevices(data.devices || []);
         renderTransfers(data.transfers || []);
         active = data.active;
@@ -316,6 +366,22 @@
     action('start').addEventListener('click', () => run(async () => {
         if (!host.value) return;
         await read('start', {host: host.value});
+        renderSession(await read('session'));
+    }));
+    action('find-phones').addEventListener('click', () => run(async () => {
+        if (!active) {
+            const session = await read('start', {host: host.value});
+            active = session.active;
+        }
+        invitedPhone = '';
+        try {
+            await read('phones/search', {});
+        } finally {
+            renderSession(await read('session'));
+        }
+    }));
+    action('stop-search').addEventListener('click', () => run(async () => {
+        await read('phones/stop', {});
         renderSession(await read('session'));
     }));
     action('show').addEventListener('click', () => run(() => showCode()));

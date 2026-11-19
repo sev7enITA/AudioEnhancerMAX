@@ -8,7 +8,7 @@ import socket
 import psutil
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from .gateway import Gateway, APIError
 from .pairing import PairingError, is_local_candidate
 
@@ -30,6 +30,10 @@ class StartRequest(BaseModel):
 
 class ConfirmRequest(BaseModel):
     approved: bool
+
+
+class InviteRequest(BaseModel):
+    id: str = Field(pattern=r"^[0-9a-f]{32}$")
 
 
 def owner_only(request):
@@ -70,7 +74,14 @@ def session(request: Request):
     owner_only(request)
     gateway = current()
     nearby = (
-        gateway.nearby_status() if gateway else {"discovery": "off", "requests": []}
+        gateway.nearby_status()
+        if gateway
+        else {
+            "discovery": "off",
+            "requests": [],
+            "phone_search": "off",
+            "phones": [],
+        }
     )
     return {
         "active": gateway is not None,
@@ -93,6 +104,41 @@ def confirm_pairing(request_id: str, payload: ConfirmRequest, request: Request):
     except PairingError as exc:
         raise HTTPException(exc.status, str(exc)) from exc
     return {"status": "approved" if payload.approved else "rejected"}
+
+
+@router.post("/phones/search")
+def search_phones(request: Request):
+    owner_only(request)
+    gateway = current()
+    if gateway is None:
+        raise HTTPException(409, "Start a companion session first")
+    try:
+        gateway.search_phones()
+    except PairingError as exc:
+        raise HTTPException(exc.status, str(exc)) from exc
+    return gateway.nearby_status()
+
+
+@router.post("/phones/invite")
+def invite_phone(payload: InviteRequest, request: Request):
+    owner_only(request)
+    gateway = current()
+    if gateway is None:
+        raise HTTPException(410, "The companion session has ended")
+    try:
+        gateway.invite_phone(payload.id)
+    except PairingError as exc:
+        raise HTTPException(exc.status, str(exc)) from exc
+    return {"status": "sent"}
+
+
+@router.post("/phones/stop")
+def stop_phone_search(request: Request):
+    owner_only(request)
+    gateway = current()
+    if gateway:
+        gateway.stop_phone_search()
+    return {"phone_search": "off", "phones": []}
 
 
 @router.get("/pairing")

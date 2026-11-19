@@ -7,11 +7,11 @@ settings:
   base:
     SWIFT_VERSION: '5.0'
     MARKETING_VERSION: '4.0.0'
-    CURRENT_PROJECT_VERSION: '8'
+    CURRENT_PROJECT_VERSION: '9'
     TARGETED_DEVICE_FAMILY: '1,2'
     GENERATE_INFOPLIST_FILE: YES
     INFOPLIST_KEY_NSCameraUsageDescription: 'Scan the private pairing QR code displayed by AudioEnhancerMAX on your Mac. Images stay on this device and are not saved.'
-    INFOPLIST_KEY_NSLocalNetworkUsageDescription: 'Find your Mac, transfer audio, retrieve results, or contribute processing while this app is open.'
+    INFOPLIST_KEY_NSLocalNetworkUsageDescription: 'Pair with your Mac, transfer audio, retrieve results, or contribute processing while this app is open.'
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
     INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
     CODE_SIGNING_ALLOWED: YES
@@ -26,7 +26,7 @@ targets:
       properties:
         CFBundleShortVersionString: '$(MARKETING_VERSION)'
         CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
-        NSBonjourServices: ['_aemax-pair._tcp']
+        NSBonjourServices: ['_aemax-pair._tcp', '_aemax-phone._udp']
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fabriziodegni.audioenhancermax.companion

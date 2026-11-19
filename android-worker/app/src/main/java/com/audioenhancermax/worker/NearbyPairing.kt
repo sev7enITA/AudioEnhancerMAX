@@ -20,15 +20,21 @@ internal data class NearbyMac(val name: String, val host: String, val port: Int,
         fun fromRecord(name: String, servicePort: Int, attributes: Map<String, ByteArray>): NearbyMac? {
             fun field(key: String) = attributes[key]?.toString(Charsets.UTF_8)
             if (field("v") != "1") return null
-            val host = field("host")?.takeIf(address::matches) ?: return null
+            val host = field("host") ?: return null
+            val port = field("port")?.takeIf(portNumber::matches)?.toIntOrNull() ?: return null
+            if (port != servicePort) return null
+            val fingerprint = field("fp") ?: return null
+            return fromEndpoint(name, host, port, fingerprint)
+        }
+
+        fun fromEndpoint(name: String, host: String, port: Int, fingerprint: String): NearbyMac? {
+            if (!address.matches(host) || port !in 1..65535 ||
+                !NearbyPairingProtocol.hex64.matches(fingerprint)) return null
             val octets = host.split('.').map { it.toInt() }
             if (octets.any { it > 255 } || octets.joinToString(".") != host) return null
             val first = octets[0]
             val second = octets[1]
             if (first != 10 && !(first == 172 && second in 16..31) && !(first == 192 && second == 168)) return null
-            val port = field("port")?.takeIf(portNumber::matches)?.toIntOrNull() ?: return null
-            if (port !in 1..65535 || port != servicePort) return null
-            val fingerprint = field("fp")?.takeIf(NearbyPairingProtocol.hex64::matches) ?: return null
             val safeName = name.filter { !it.isISOControl() && Character.getType(it) != Character.FORMAT.toInt() }
                 .trim().take(80).ifEmpty { "AudioEnhancerMAX Mac" }
             return NearbyMac(safeName, host, port, fingerprint)

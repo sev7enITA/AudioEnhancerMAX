@@ -21,6 +21,7 @@
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_aemax-pair._tcp</string>
+		<string>_aemax-phone._udp</string>
 	</array>
 </dict>
 </plist>

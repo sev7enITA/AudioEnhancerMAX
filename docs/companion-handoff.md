@@ -1,8 +1,13 @@
 # Audio handoff between the phone and Mac
 
-Connect the phone and Mac to the same Wi-Fi network or personal hotspot. On the direct Mac build, open **Mobile devices and transfers** and select **Start nearby pairing**. On the phone, open **Connection → Find nearby Macs**, choose the Mac, then compare the eight digits on both screens. Select **Codes match** on both devices. A request expires after 90 seconds. The phone receives a device-specific credential after Mac approval.
+Connect the phone and Mac to the same Wi-Fi network or personal hotspot. Choose either direction:
 
-Discovery uses Bonjour on the selected network. The advertisement gives the phone the Mac's local listener and certificate fingerprint. The matching code is derived independently on each device from the TLS identity and the current exchange. Discovery begins only when the Mac owner opens a session. If several interfaces are active, the Mac selects its preferred IPv4 route. Use **Shared network** to choose another interface.
+- On the phone, open **Connection** and select **Make this phone discoverable**. On the Mac, open **Mobile devices and transfers → Find nearby phones** and invite the phone. Accept the invitation on the phone.
+- On the Mac, select **Start nearby pairing**. On the phone, open **Connection → Find nearby Macs** and choose the Mac.
+
+Compare the eight digits on both screens and select **Codes match** on both devices. A request expires after 90 seconds. The phone receives a device-specific credential after Mac approval.
+
+Discovery uses Bonjour on the selected network. The Mac can resolve an explicitly discoverable phone's service and send it a local unicast invitation. The invitation contains the Mac's local listener and certificate fingerprint. The matching code is derived independently on each device from the TLS identity and the current exchange. If several interfaces are active, the Mac selects its preferred IPv4 route. Use **Shared network** to choose another interface.
 
 **Use QR instead** opens the existing alternative. The QR and manual code grant access to the current session and should be kept private. All transfers require the pinned TLS connection. **Stop and revoke** closes the listener and withdraws the announcement and credentials. A change to the Mac's network address also ends the session.
 

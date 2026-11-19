@@ -135,6 +135,18 @@ struct NearbyChallenge: Equatable, Sendable {
         ["request_id": requestID, "client_nonce": clientNonce]
     }
 
+    static func randomHex(byteCount: Int) throws -> String {
+        var bytes = [UInt8](repeating: 0, count: byteCount)
+        let status = bytes.withUnsafeMutableBytes { buffer in
+            guard let address = buffer.baseAddress else { return errSecParam }
+            return SecRandomCopyBytes(kSecRandomDefault, buffer.count, address)
+        }
+        guard status == errSecSuccess else {
+            throw CompanionError.message("Could not create a secure pairing request.")
+        }
+        return bytes.map { String(format: "%02x", $0) }.joined()
+    }
+
     static func commitment(_ clientNonce: String) -> String {
         SHA256.hash(data: Data(clientNonce.utf8)).map { String(format: "%02x", $0) }.joined()
     }
@@ -192,15 +204,7 @@ final class NearbyPairingClient: @unchecked Sendable {
     }
 
     func begin() async throws -> NearbyChallenge {
-        var nonceBytes = [UInt8](repeating: 0, count: 32)
-        let randomStatus = nonceBytes.withUnsafeMutableBytes { bytes in
-            guard let address = bytes.baseAddress else { return errSecParam }
-            return SecRandomCopyBytes(kSecRandomDefault, bytes.count, address)
-        }
-        guard randomStatus == errSecSuccess else {
-            throw CompanionError.message("Could not create a secure pairing request.")
-        }
-        let clientNonce = nonceBytes.map { String(format: "%02x", $0) }.joined()
+        let clientNonce = try NearbyChallenge.randomHex(byteCount: 32)
         let start: ChallengeResponse = try await post("start", ["commitment": NearbyChallenge.commitment(clientNonce)])
         guard NearbyMac.isHex(start.requestID, length: 32), NearbyMac.isHex(start.serverNonce, length: 64) else {
             throw CompanionError.message("This Mac returned an invalid pairing request.")

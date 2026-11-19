@@ -62,9 +62,12 @@ class MainActivity:ComponentActivity() {
         startActivity(Intent.createChooser(intent,"Export from AudioEnhancerMAX"))
     }
     override fun onStart(){super.onStart();if(::model.isInitialized)model.startPresence()}
+    override fun onPause(){
+        if(::model.isInitialized)model.cancelNearbyPairing()
+        super.onPause()
+    }
     override fun onStop(){
         if(::model.isInitialized){
-            model.cancelNearbyPairing()
             model.stopPresence()
             model.stopWorker()
             model.stopPlayback()
@@ -254,11 +257,38 @@ private val Amber=Color(0xFFFFBC65)
         }
         return
     }
+    if (vm.phoneDiscoverable) {
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                Text(if (vm.phoneAdvertised) "This phone is discoverable" else "Starting phone discovery…",
+                    style=MaterialTheme.typography.titleMedium)
+                if (!vm.phoneAdvertised) LinearProgressIndicator(Modifier.fillMaxWidth())
+                else Text("On the Mac, look for nearby phones and send this phone an invitation.")
+                vm.phoneInvitations.forEach { mac ->
+                    OutlinedButton(onClick={vm.beginNearbyPairing(mac)},enabled=!vm.busy,
+                        modifier=Modifier.fillMaxWidth()) {
+                        Column(Modifier.fillMaxWidth()) {
+                            Text("Compare code with ${mac.name}",style=MaterialTheme.typography.titleSmall)
+                            Text(mac.host,style=MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                TextButton(onClick=vm::cancelNearbyPairing) { Text("Stop phone discovery") }
+            }
+        }
+        return
+    }
     Button(onClick=vm::findNearbyMacs,enabled=!vm.busy && !vm.nearbySearching,
         modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) {
         Icon(Icons.Default.Computer,contentDescription=null)
         Spacer(Modifier.width(10.dp))
         Text("Find nearby Macs")
+    }
+    OutlinedButton(onClick=vm::makePhoneDiscoverable,enabled=!vm.busy,
+        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
+        Icon(Icons.Default.PhoneAndroid,contentDescription=null)
+        Spacer(Modifier.width(10.dp))
+        Text("Make this phone discoverable")
     }
     if (vm.nearbySearching) {
         LinearProgressIndicator(Modifier.fillMaxWidth())

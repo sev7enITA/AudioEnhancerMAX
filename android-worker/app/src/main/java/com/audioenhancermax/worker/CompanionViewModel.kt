@@ -62,8 +62,13 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
     internal var nearbySearching by mutableStateOf(false);private set
     internal var nearbyMessage by mutableStateOf<String?>(null);private set
     internal var nearbyComparison by mutableStateOf<NearbyComparison?>(null);private set
+    internal var phoneDiscoverable by mutableStateOf(false);private set
+    internal var phoneAdvertised by mutableStateOf(false);private set
+    internal var phoneInvitations by mutableStateOf<List<NearbyMac>>(emptyList());private set
     private val discovery by lazy { NearbyMacDiscovery(app) }
     private var searchTimer: Job? = null
+    private var phoneAdvertisement: PhonePairingAdvertisement? = null
+    private var phoneWindow: Job? = null
     private var nearbyOperation: Job? = null
     private var nearbyEpoch = 0
     private var nearbyExpiry: Job? = null
@@ -267,6 +272,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
     }
     internal fun findNearbyMacs() {
         if (busy || paired || nearbyComparison != null) return
+        stopPhoneDiscovery()
         stopNearbyDiscovery()
         nearbySearching = true
         nearbyMacs = emptyList()
@@ -291,9 +297,59 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         nearbySearching = false
     }
 
-    internal fun beginNearbyPairing(mac: NearbyMac) {
-        if (busy || paired || mac !in nearbyMacs) return
+    internal fun makePhoneDiscoverable() {
+        if (busy || paired || nearbyComparison != null || phoneDiscoverable) return
         stopNearbyDiscovery()
+        nearbyMacs = emptyList()
+        nearbyMessage = null
+        phoneDiscoverable = true
+        val announcement = PhonePairingAdvertisement(getApplication<Application>())
+        phoneAdvertisement = announcement
+        phoneWindow = viewModelScope.launch {
+            try {
+                withTimeout(90_000) {
+                    announcement.listen(ready = { phoneAdvertised = true }) { mac ->
+                        if (phoneAdvertisement === announcement && phoneInvitations.size < 8 &&
+                            phoneInvitations.none { it.endpoint == mac.endpoint }) {
+                            phoneInvitations = phoneInvitations + mac
+                        }
+                    }
+                }
+            } catch (_: TimeoutCancellationException) {
+                if (phoneAdvertisement === announcement)
+                    nearbyMessage = "Phone discovery ended. Make this phone discoverable again to retry."
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                if (phoneAdvertisement === announcement)
+                    nearbyMessage = "The phone could not advertise on this network. Check Wi-Fi or try Find nearby Macs."
+            } finally {
+                announcement.close()
+                if (phoneAdvertisement === announcement) {
+                    phoneAdvertisement = null
+                    phoneWindow = null
+                    phoneDiscoverable = false
+                    phoneAdvertised = false
+                    phoneInvitations = emptyList()
+                }
+            }
+        }
+    }
+
+    private fun stopPhoneDiscovery() {
+        val announcement = phoneAdvertisement
+        phoneAdvertisement = null
+        phoneWindow?.cancel()
+        phoneWindow = null
+        announcement?.close()
+        phoneDiscoverable = false
+        phoneAdvertised = false
+        phoneInvitations = emptyList()
+    }
+
+    internal fun beginNearbyPairing(mac: NearbyMac) {
+        if (busy || paired || (mac !in nearbyMacs && mac !in phoneInvitations)) return
+        stopNearbyDiscovery()
+        stopPhoneDiscovery()
         nearbyMacs = emptyList()
         nearbyMessage = "Connecting to ${mac.name}…"
         runNearby {
@@ -358,6 +414,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
 
     internal fun cancelNearbyPairing() {
         stopNearbyDiscovery()
+        stopPhoneDiscovery()
         nearbyEpoch++
         if (nearbyOperation?.isActive == true) busy = false
         nearbyOperation?.cancel()
