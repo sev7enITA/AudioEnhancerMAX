@@ -504,3 +504,20 @@ body:has(#upload-panel.active) .main-content {
 @media (prefers-reduced-motion: reduce) {
     .studio-welcome, .studio-session, .studio-session * { animation: none !important; transition: none !important; }
 }
+.companion-networks {
+    margin: 12px 0;
+}
+
+.companion-pair-request {
+    padding: 16px;
+    margin: 12px 0;
+    border: 1px solid var(--border, #2a3641);
+    border-radius: 10px;
+}
+
+.companion-code {
+    display: block;
+    margin: 8px 0 14px;
+    font: 650 1.55rem/1.2 ui-monospace, monospace;
+    letter-spacing: .12em;
+}

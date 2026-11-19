@@ -119,6 +119,7 @@ app = BUNDLE(
         "LSMinimumSystemVersion": "13.0",
         "NSHighResolutionCapable": True,
         "NSLocalNetworkUsageDescription": "AudioEnhancerMAX uses the local network for the companion devices and trusted audio workers you choose to connect.",
+        "NSBonjourServices": ["_aemax-pair._tcp"],
         "NSHumanReadableCopyright": "Copyright (c) 2026 Fabrizio Degni",
         "ITSAppUsesNonExemptEncryption": False,
         "LSMultipleInstancesProhibited": True,

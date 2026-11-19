@@ -8,6 +8,7 @@ import struct
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from desktop.companion.gateway import (
     Gateway,
     WorkerBroker,
@@ -170,6 +171,66 @@ class GatewayTests(unittest.TestCase):
             )[0],
             400,
         )
+
+    def test_nearby_code_requires_owner_approval_and_binds_token_to_device(self):
+        from desktop.companion.pairing import comparison_code
+
+        nonce = "12" * 32
+        commitment = hashlib.sha256(nonce.encode()).hexdigest()
+
+        def submit(action, payload, device="phone-1"):
+            status, data = self.call(
+                f"/v1/pairing/{action}",
+                "POST",
+                json.dumps(payload).encode(),
+                auth=False,
+                headers={"X-Device-ID": device},
+            )
+            return status, json.loads(data)
+
+        status, challenge = submit("start", {"commitment": commitment})
+        self.assertEqual(status, 200)
+        self.assertEqual(submit("start", {"commitment": commitment})[1], challenge)
+        payload = {"request_id": challenge["request_id"], "client_nonce": nonce}
+        self.assertEqual(self.g.nearby_status()["requests"], [])
+        self.assertEqual(submit("finish", payload)[0], 409)
+        self.assertEqual(
+            submit("reveal", {**payload, "client_nonce": "23" * 32})[0], 400
+        )
+        self.assertEqual(submit("reveal", payload)[1], {"status": "pending"})
+        self.assertEqual(
+            self.g.nearby_status()["requests"][0]["code"],
+            comparison_code(self.pair["fingerprint"], nonce, challenge["server_nonce"]),
+        )
+        self.assertEqual(submit("finish", payload, device="different-phone")[0], 410)
+        self.assertEqual(submit("finish", payload)[1], {"status": "pending"})
+        self.assertEqual(self.call("/v1/status", auth=False)[0], 401)
+
+        self.g.decide_pairing(challenge["request_id"], True)
+        status, confirmed = submit("finish", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(confirmed["status"], "approved")
+        self.assertEqual(confirmed["pairing"]["fingerprint"], self.pair["fingerprint"])
+        self.assertNotEqual(confirmed["pairing"]["token"], self.pair["token"])
+        self.assertEqual(submit("finish", payload)[1], confirmed)
+        header = {"Authorization": "Bearer " + confirmed["pairing"]["token"]}
+        self.assertEqual(self.call("/v1/status", auth=False, headers=header)[0], 200)
+        self.assertEqual(
+            self.call(
+                "/v1/status",
+                auth=False,
+                headers={**header, "X-Device-ID": "different-phone"},
+            )[0],
+            401,
+        )
+        with patch(
+            "desktop.companion.pairing.time.monotonic",
+            return_value=time.monotonic() + 91,
+        ):
+            self.assertEqual(submit("finish", payload)[0], 410)
+            self.assertEqual(
+                self.call("/v1/status", auth=False, headers=header)[0], 200
+            )
 
     def test_ownership_and_no_generic_proxy(self):
         self.assertEqual(

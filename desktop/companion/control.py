@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 from .gateway import Gateway, APIError
+from .pairing import PairingError, is_local_candidate
 
 
 def no_cache(response: Response):
@@ -25,6 +26,10 @@ _guard = threading.RLock()
 
 class StartRequest(BaseModel):
     host: str
+
+
+class ConfirmRequest(BaseModel):
+    approved: bool
 
 
 def owner_only(request):
@@ -64,13 +69,30 @@ def suspend_workers():
 def session(request: Request):
     owner_only(request)
     gateway = current()
+    nearby = (
+        gateway.nearby_status() if gateway else {"discovery": "off", "requests": []}
+    )
     return {
         "active": gateway is not None,
         "workers": len(gateway.worker.active()) if gateway else 0,
         "reason": _revocation_reason,
         "devices": gateway.connected_devices() if gateway else [],
         "transfers": gateway.transfers() if gateway else [],
+        **nearby,
     }
+
+
+@router.post("/pairing/requests/{request_id}")
+def confirm_pairing(request_id: str, payload: ConfirmRequest, request: Request):
+    owner_only(request)
+    gateway = current()
+    if gateway is None:
+        raise HTTPException(410, "Pairing session has ended")
+    try:
+        gateway.decide_pairing(request_id, payload.approved)
+    except PairingError as exc:
+        raise HTTPException(exc.status, str(exc)) from exc
+    return {"status": "approved" if payload.approved else "rejected"}
 
 
 @router.get("/pairing")
@@ -135,6 +157,14 @@ def addresses(request: Request):
 def network_addresses():
     stats = psutil.net_if_stats()
     choices = []
+    preferred = None
+    # Resolve the system's preferred IPv4 route without sending a packet.
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(("192.0.2.1", 9))
+            preferred = probe.getsockname()[0]
+    except OSError:
+        pass
     for interface, entries in psutil.net_if_addrs().items():
         # Never advertise loopback aliases or point-to-point VPN tunnels.
         if interface.startswith(("lo", "utun", "tun", "tap", "awdl", "llw")):
@@ -155,6 +185,7 @@ def network_addresses():
                 choices.append({"interface": interface, "address": str(ip)})
     choices.sort(
         key=lambda item: (
+            item["address"] != preferred,
             not item["interface"].startswith("en"),
             item["interface"],
             item["address"],
@@ -235,9 +266,12 @@ def qr_image(request: Request):
 def start(payload: StartRequest, request: Request):
     global _gateway, _starting, _revocation_reason
     owner_only(request)
-    if not host_available(payload.host):
+    selected = next(
+        (item for item in network_addresses() if item["address"] == payload.host), None
+    )
+    if selected is None and payload.host != "127.0.0.1":
         raise HTTPException(
-            400, "Network address changed. Refresh networks and show a new QR code."
+            400, "Network address changed. Refresh networks and start pairing again."
         )
     reservation = object()
     with _guard:
@@ -254,6 +288,8 @@ def start(payload: StartRequest, request: Request):
         # Startup calls back into the desktop HTTP server. Do not hold the
         # lock here: cluster polling on that event loop also calls current().
         pairing = gateway.start(payload.host)
+        if selected and is_local_candidate(payload.host):
+            gateway.advertise(selected["interface"], payload.host)
     except Exception as e:
         with _guard:
             if _starting is reservation:

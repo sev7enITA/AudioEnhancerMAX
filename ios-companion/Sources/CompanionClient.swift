@@ -9,31 +9,44 @@ struct Pairing: Codable, Equatable {
     let token:String
     static func parse(_ text:String) throws -> Pairing {
         guard text.utf8.count<4096,let data=text.data(using:.utf8) else {throw CompanionError.message("Invalid pairing code.")}
-        let p=try JSONDecoder().decode(Pairing.self,from:data)
-        guard p.protocol==1, let url=URLComponents(string:p.endpoint), url.scheme=="https",url.host != nil,
+        return try JSONDecoder().decode(Pairing.self,from:data).validated()
+    }
+
+    func validated() throws -> Pairing {
+        guard self.protocol==1, let url=URLComponents(string:endpoint), url.scheme=="https",url.host != nil,
               url.user==nil,url.password==nil,url.query==nil,url.fragment==nil,["","/"].contains(url.path),
-              p.fingerprint.count==64,p.fingerprint.allSatisfy({"0123456789abcdef".contains($0)}),
-              (32...128).contains(p.token.count),p.token.allSatisfy({$0.isASCII && ($0.isLetter || $0.isNumber || $0=="_" || $0=="-")}) else {
+              fingerprint.count==64,fingerprint.allSatisfy({"0123456789abcdef".contains($0)}),
+              (32...128).contains(token.count),token.allSatisfy({$0.isASCII && ($0.isLetter || $0.isNumber || $0=="_" || $0=="-")}) else {
             throw CompanionError.message("Use the complete pairing code from this Mac’s Settings.")
         }
-        return p
+        return self
     }
 }
 
 final class PinnedSession: NSObject, URLSessionDelegate, URLSessionTaskDelegate, @unchecked Sendable {
-    let pairing:Pairing
-    init(_ pairing:Pairing) {self.pairing=pairing}
+    private let host: String?
+    private let fingerprint: String
+
+    init(endpoint: URL?, fingerprint: String) {
+        self.host = endpoint?.host
+        self.fingerprint = fingerprint
+    }
     func urlSession(_ session:URLSession,didReceive challenge:URLAuthenticationChallenge,completionHandler:@escaping(URLSession.AuthChallengeDisposition,URLCredential?)->Void) {
         guard challenge.protectionSpace.authenticationMethod==NSURLAuthenticationMethodServerTrust,
-              challenge.protectionSpace.host==URL(string:pairing.endpoint)?.host,
+              challenge.protectionSpace.host==host,
               let trust=challenge.protectionSpace.serverTrust,
               let chain=SecTrustCopyCertificateChain(trust) as? [SecCertificate],let certificate=chain.first else {
             completionHandler(.cancelAuthenticationChallenge,nil);return
         }
         let digest=SHA256.hash(data:SecCertificateCopyData(certificate) as Data).map{String(format:"%02x",$0)}.joined()
-        if digest==pairing.fingerprint {completionHandler(.useCredential,URLCredential(trust:trust))}
+        if digest==fingerprint {completionHandler(.useCredential,URLCredential(trust:trust))}
         else {completionHandler(.cancelAuthenticationChallenge,nil)}
     }
+    func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge,
+                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        urlSession(session, didReceive: challenge, completionHandler: completionHandler)
+    }
+
     func urlSession(_ session:URLSession,task:URLSessionTask,willPerformHTTPRedirection response:HTTPURLResponse,newRequest request:URLRequest,completionHandler:@escaping(URLRequest?)->Void) {completionHandler(nil)}
 }
 
@@ -43,7 +56,7 @@ final class CompanionClient: @unchecked Sendable {
     private let delegate:PinnedSession
     private let session:URLSession
     init(_ pairing:Pairing,device:String) {
-        self.pairing=pairing;self.device=device;delegate=PinnedSession(pairing)
+        self.pairing=pairing;self.device=device;delegate=PinnedSession(endpoint:URL(string:pairing.endpoint),fingerprint:pairing.fingerprint)
         let config=URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest=30;config.timeoutIntervalForResource=180
         config.httpShouldSetCookies=false;config.urlCache=nil

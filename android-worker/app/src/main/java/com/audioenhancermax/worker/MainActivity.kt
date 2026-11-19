@@ -62,7 +62,16 @@ class MainActivity:ComponentActivity() {
         startActivity(Intent.createChooser(intent,"Export from AudioEnhancerMAX"))
     }
     override fun onStart(){super.onStart();if(::model.isInitialized)model.startPresence()}
-    override fun onStop(){if(::model.isInitialized)model.stopPresence();if(::model.isInitialized){model.stopWorker();model.stopPlayback()};window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);super.onStop()}
+    override fun onStop(){
+        if(::model.isInitialized){
+            model.cancelNearbyPairing()
+            model.stopPresence()
+            model.stopWorker()
+            model.stopPlayback()
+        }
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        super.onStop()
+    }
 }
 private val CanvasColor=Color(0xFF080A0C)
 private val Violet=Color(0xFFA791FF)
@@ -72,6 +81,9 @@ private val Amber=Color(0xFFFFBC65)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun CompanionScreen(vm:CompanionViewModel,importAudio:(AudioImportPolicy.Filter)->Unit,importBrief:()->Unit,share:(File)->Unit) {
     var tab by rememberSaveable{mutableIntStateOf(0)}
+    if (tab == 1) DisposableEffect(vm) {
+        onDispose { vm.cancelNearbyPairing() }
+    }
     var code by remember{mutableStateOf("")}
     var manualPairing by remember{mutableStateOf(false)}
     var scanError by remember{mutableStateOf<String?>(null)}
@@ -142,7 +154,7 @@ private val Amber=Color(0xFFFFBC65)
                         } ?: Text("Edit locally. Files are filtered by the chosen format. Some providers show disabled files.",color=MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     1->{
-                        Heading("ENCRYPTED CONNECTION","Your Mac connection",if(vm.paired)"Your connection and processing mode at a glance." else "On the Mac, open Edge Cluster → Mobile devices & connections. Show the pairing QR code, then scan it here. Keep both devices on the same Wi-Fi or hotspot.")
+                        Heading("ENCRYPTED CONNECTION","Your Mac connection",if(vm.paired)"Your connection and processing mode at a glance." else "Open Edge Cluster → Mobile devices & connections on the Mac. Keep both devices on the same Wi-Fi or hotspot.")
                         if(vm.paired) {
                             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                                 Text(if(vm.connected)"CONNECTED · ENCRYPTED" else "SAVED MAC · CHECKING / OFFLINE",color=if(vm.connected)Cyan else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -154,18 +166,25 @@ private val Amber=Color(0xFFFFBC65)
                             } }
                         }
                         if(!vm.paired) {
-                        Button(onClick={scanError=null;scanner.launch(ScanOptions().setCaptureActivity(PairingCaptureActivity::class.java).setDesiredBarcodeFormats(ScanOptions.QR_CODE).setPrompt("Scan the QR in your Mac's AudioEnhancerMAX Edge Cluster").setBeepEnabled(false).setBarcodeImageEnabled(false))},enabled=!vm.busy,modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) {
-                            Icon(Icons.Default.QrCodeScanner,contentDescription=null);Spacer(Modifier.width(10.dp));Text("Scan QR code")
+                            NearbyPairingControls(vm)
+                            if (vm.nearbyComparison == null) {
+                                OutlinedButton(onClick={
+                                    vm.cancelNearbyPairing();scanError=null
+                                    scanner.launch(ScanOptions().setCaptureActivity(PairingCaptureActivity::class.java).setDesiredBarcodeFormats(ScanOptions.QR_CODE).setPrompt("Scan the QR in your Mac's AudioEnhancerMAX Edge Cluster").setBeepEnabled(false).setBarcodeImageEnabled(false))
+                                },enabled=!vm.busy,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
+                                    Icon(Icons.Default.QrCodeScanner,contentDescription=null)
+                                    Spacer(Modifier.width(10.dp))
+                                    Text("Scan QR instead")
+                                }
+                                scanError?.let{Text(it,color=MaterialTheme.colorScheme.error)}
+                                TextButton(onClick={manualPairing=!manualPairing},enabled=!vm.busy){Text(if(manualPairing)"Hide manual pairing" else "Enter private pairing code")}
+                                if(manualPairing){
+                                    OutlinedTextField(value=code,onValueChange={code=it.take(4096)},label={Text("Private pairing code")},visualTransformation=PasswordVisualTransformation(),modifier=Modifier.fillMaxWidth(),enabled=!vm.busy)
+                                    Button(onClick={vm.cancelNearbyPairing();vm.connect(code);code=""},enabled=code.isNotBlank() && !vm.busy){Text("Connect")}
+                                }
+                            }
                         }
-                        Text("The camera reads the code locally. No photo is saved or uploaded.",style=MaterialTheme.typography.bodySmall)
-                        scanError?.let{Text(it,color=MaterialTheme.colorScheme.error)}
-                        TextButton(onClick={manualPairing=!manualPairing}){Text(if(manualPairing)"Hide manual pairing" else "Manual pairing alternative")}
-                        if(manualPairing){
-                            OutlinedTextField(value=code,onValueChange={code=it.take(4096)},label={Text("Private pairing code")},visualTransformation=PasswordVisualTransformation(),modifier=Modifier.fillMaxWidth(),enabled=!vm.busy)
-                            Button(onClick={vm.connect(code);code=""},enabled=code.isNotBlank() && !vm.busy){Text("Connect")}
-                        }
-                        }
-                        if(vm.busy)Text(vm.macState,color=Cyan)
+                        if(vm.busy && vm.nearbyComparison==null && vm.nearbyMessage==null)Text(vm.macState,color=Cyan)
                         if(vm.paired){Row{TextButton(onClick={vm.reconnect()},enabled=!vm.busy){Text("Reconnect")};TextButton(onClick={vm.disconnect()},enabled=!vm.busy){Text("Disconnect / change Mac")}}}
                         Card(Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
                             Text("Device assessment",style=MaterialTheme.typography.titleLarge)
@@ -214,6 +233,51 @@ private val Amber=Color(0xFFFFBC65)
         vm.error?.let{message->AlertDialog(onDismissRequest={vm.error=null},title={Text("AudioEnhancerMAX")},text={Text(message)},confirmButton={TextButton(onClick={vm.error=null}){Text("OK")}})}
     }
 }
+@Composable private fun NearbyPairingControls(vm: CompanionViewModel) {
+    val comparison = vm.nearbyComparison
+    if (comparison != null) {
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                Text(comparison.name,style=MaterialTheme.typography.titleMedium)
+                Text(comparison.code.chunked(4).joinToString(" "),style=MaterialTheme.typography.displaySmall,color=Cyan)
+                if (comparison.awaitingMac) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    Text("Waiting for approval on the Mac.")
+                } else {
+                    Text("Compare this code with the one displayed on your Mac.")
+                    Button(onClick=vm::confirmNearbyCode,enabled=!vm.busy,modifier=Modifier.fillMaxWidth()) {
+                        Text("Codes match")
+                    }
+                }
+                TextButton(onClick=vm::cancelNearbyPairing) { Text("Cancel") }
+            }
+        }
+        return
+    }
+    Button(onClick=vm::findNearbyMacs,enabled=!vm.busy && !vm.nearbySearching,
+        modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) {
+        Icon(Icons.Default.Computer,contentDescription=null)
+        Spacer(Modifier.width(10.dp))
+        Text("Find nearby Macs")
+    }
+    if (vm.nearbySearching) {
+        LinearProgressIndicator(Modifier.fillMaxWidth())
+        Text("Looking for Macs on this network.")
+    }
+    vm.nearbyMacs.forEach { mac ->
+        OutlinedButton(onClick={vm.beginNearbyPairing(mac)},enabled=!vm.busy,modifier=Modifier.fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth()) {
+                Text(mac.name,style=MaterialTheme.typography.titleSmall)
+                Text(mac.host,style=MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+    vm.nearbyMessage?.let { Text(it,style=MaterialTheme.typography.bodySmall) }
+    if (vm.nearbySearching || vm.busy && vm.nearbyMessage!=null) {
+        TextButton(onClick=vm::cancelNearbyPairing) { Text("Cancel") }
+    }
+}
+
 @Composable private fun Heading(eyebrow:String,title:String,description:String){Text(eyebrow,color=Cyan,style=MaterialTheme.typography.labelMedium);Text(title,fontSize=32.sp,fontWeight=FontWeight.Bold,lineHeight=38.sp);Text(description,color=MaterialTheme.colorScheme.onSurfaceVariant)}
 @Composable private fun Field(label:String,value:String,change:(String)->Unit,enabled:Boolean=true){OutlinedTextField(value=value,onValueChange={change(it.take(12000))},label={Text(label)},modifier=Modifier.fillMaxWidth(),enabled=enabled)}
 @Composable private fun ToggleRow(label:String,value:Boolean,change:(Boolean)->Unit,enabled:Boolean=true){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text(label,modifier=Modifier.weight(1f).padding(top=12.dp));Switch(checked=value,onCheckedChange=change,enabled=enabled)}}

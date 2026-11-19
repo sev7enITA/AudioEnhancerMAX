@@ -2,7 +2,7 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
-## [4.0.0 BETA / build 4.0.2] - Unreleased
+## [4.0.0 BETA / build 4.0.3] - Unreleased
 
 ### Mac workspace
 
@@ -20,6 +20,7 @@ All notable changes to AudioEnhancerMAX are documented here.
 
 ### Companion
 
+- Find nearby Macs on Wi-Fi using Bonjour and compare a one-time code on both screens. A Mac owner approves the request before the phone receives a device-specific credential. QR pairing remains available from the Mac.
 - Apply the selected format at import and validate the decoded media before replacing the current file.
 - Cache waveform peaks and align A/B seek positions after a trim. Match levels in playback while preserving export levels.
 - Send a source or reviewed result to an opted-in paired Mac. Show the target and transfer state, and connect the handoff to the exact audio revision.

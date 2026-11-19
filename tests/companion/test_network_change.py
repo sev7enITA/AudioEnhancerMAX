@@ -53,7 +53,7 @@ def test_old_monitor_cannot_revoke_new_session():
 
 def test_start_rejects_address_no_longer_assigned():
     with (
-        patch.object(control, "host_available", return_value=False),
+        patch.object(control, "network_addresses", return_value=[]),
         pytest.raises(HTTPException) as exc,
     ):
         control.start(control.StartRequest(host="10.34.4.52"), request())

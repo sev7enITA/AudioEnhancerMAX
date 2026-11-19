@@ -30,6 +30,7 @@ from pathlib import Path
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
+from .pairing import PAIRING_PATHS, PairingError, PairingRequests
 
 MAX_AUDIO = 20 * 1024 * 1024
 MAX_CHUNK = 2 * 1024 * 1024
@@ -277,7 +278,59 @@ class Gateway:
         self.server = None
         self.temp = None
         self.pairing = None
+        self.nearby = None
+        self.advertisement = None
         self.closed = False
+
+    def advertise(self, interface, host):
+        from .discovery import NearbyAdvertisement
+
+        with self.lock:
+            if not self.closed and self.pairing and self.server:
+                self.advertisement = NearbyAdvertisement(
+                    interface,
+                    host,
+                    self.server.server_port,
+                    self.pairing["fingerprint"],
+                )
+
+    def nearby_status(self):
+        with self.lock:
+            return {
+                "discovery": self.advertisement.state
+                if self.advertisement
+                else "unavailable",
+                "requests": self.nearby.pending() if self.nearby else [],
+            }
+
+    def decide_pairing(self, request_id, approved):
+        with self.lock:
+            if self.nearby is None:
+                raise PairingError(410, "Pairing session has ended")
+            self.nearby.decide(request_id, approved)
+
+    def pairing_request(self, path, body, headers):
+        device = headers.get("X-Device-ID", "")
+        if not DEVICE_ID.fullmatch(device):
+            raise PairingError(400, "Invalid device identity")
+        value = json.loads(body)
+        if not isinstance(value, dict):
+            raise PairingError(400, "Invalid pairing request")
+        with self.lock:
+            if self.nearby is None:
+                raise PairingError(410, "Pairing session has ended")
+            if path == "/v1/pairing/start":
+                return self.nearby.start(
+                    device,
+                    device_name(headers) or "Mobile companion",
+                    value.get("commitment"),
+                )
+            return self.nearby.exchange(
+                device,
+                value.get("request_id"),
+                value.get("client_nonce"),
+                reveal=path == "/v1/pairing/reveal",
+            )
 
     def observe_peer(self, headers, address):
         device = headers.get("X-Device-ID", "")
@@ -687,13 +740,20 @@ class Gateway:
             def handle_api(self):
                 try:
                     self.connection.settimeout(15)
-                    with owner.lock:
-                        authorized = not owner.closed and hmac.compare_digest(
-                            self.headers.get("Authorization", "").encode("latin-1"),
-                            f"Bearer {owner.token}".encode("ascii"),
-                        )
-                    if not authorized:
-                        raise APIError(401, "Pair this device from the Mac")
+                    nearby = self.command == "POST" and self.path in PAIRING_PATHS
+                    if not nearby:
+                        header = self.headers.get("Authorization", "").encode("latin-1")
+                        device = self.headers.get("X-Device-ID", "")
+                        with owner.lock:
+                            authorized = not owner.closed and (
+                                hmac.compare_digest(
+                                    header, f"Bearer {owner.token}".encode("ascii")
+                                )
+                                or owner.nearby
+                                and owner.nearby.authorized(device, header)
+                            )
+                        if not authorized:
+                            raise APIError(401, "Pair this device from the Mac")
                     if self.headers.get("Transfer-Encoding"):
                         raise APIError(400, "Chunked uploads are not supported")
                     if len(self.headers.get_all("Content-Length", [])) > 1:
@@ -703,7 +763,9 @@ class Gateway:
                     except ValueError:
                         raise APIError(400, "Invalid content length")
                     limit = (
-                        MAX_AUDIO
+                        1024
+                        if nearby
+                        else MAX_AUDIO
                         if self.path == "/v1/files"
                         else MAX_CHUNK
                         if self.path.startswith("/v1/worker/result/")
@@ -714,8 +776,13 @@ class Gateway:
                     body = self.rfile.read(length)
                     if len(body) != length:
                         raise APIError(400, "Incomplete upload")
-                    result = owner.route(self.command, self.path, body, self.headers)
-                    owner.observe_peer(self.headers, self.client_address[0])
+                    if nearby:
+                        result = owner.pairing_request(self.path, body, self.headers)
+                    else:
+                        result = owner.route(
+                            self.command, self.path, body, self.headers
+                        )
+                        owner.observe_peer(self.headers, self.client_address[0])
                     extra = {}
                     if isinstance(result, tuple):
                         result, extra = result
@@ -730,15 +797,15 @@ class Gateway:
                 except Exception as e:
                     status = (
                         e.status
-                        if isinstance(e, APIError)
+                        if isinstance(e, (APIError, PairingError))
                         else 400
                         if isinstance(e, (ValueError, TypeError))
                         else 500
                     )
                     payload = json.dumps(
                         {
-                            "error": e.message
-                            if isinstance(e, APIError)
+                            "error": str(e)
+                            if isinstance(e, (APIError, PairingError))
                             else "Invalid request"
                             if status == 400
                             else "Gateway error"
@@ -788,6 +855,7 @@ class Gateway:
             "fingerprint": fingerprint,
             "token": self.token,
         }
+        self.nearby = PairingRequests(self.pairing["endpoint"], fingerprint)
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         return self.pairing
 
@@ -798,10 +866,14 @@ class Gateway:
             self.closed = True
             self.token = ""
             self.pairing = None
+            self.nearby = None
+            advertisement, self.advertisement = self.advertisement, None
             self.files.clear()
             self.jobs.clear()
             self.peers.clear()
             self.uploading = None
+        if advertisement:
+            advertisement.close()
         self.worker.close()
         if self.server:
             self.server.shutdown()

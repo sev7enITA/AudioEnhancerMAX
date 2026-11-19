@@ -5,15 +5,22 @@
 
     root.innerHTML = `
         <h3>Mobile devices and transfers</h3>
-        <p>Pair your phone to send audio over the local network.</p>
+        <p>Find this Mac from your phone and compare a short code on both screens.</p>
         <div data-connected-devices></div>
-        <label for="companion-host">Shared Wi-Fi or hotspot address</label>
-        <select id="companion-host" class="setting-select"></select>
-        <div class="flex gap-12">
+        <details class="companion-networks">
+            <summary>Shared network</summary>
+            <label for="companion-host">Wi-Fi or hotspot address</label>
+            <select id="companion-host" class="setting-select"></select>
             <button type="button" class="btn btn-secondary" data-action="refresh">Refresh networks</button>
-            <button type="button" class="btn btn-primary" data-action="start" disabled>Start pairing</button>
-            <button type="button" class="btn btn-secondary" data-action="show" hidden>Show pairing code</button>
+        </details>
+        <div class="flex gap-12">
+            <button type="button" class="btn btn-primary" data-action="start" disabled>Start nearby pairing</button>
+            <button type="button" class="btn btn-secondary" data-action="show" hidden>Use QR instead</button>
             <button type="button" class="btn btn-secondary" data-action="stop" disabled>Stop and revoke</button>
+        </div>
+        <div data-nearby-section hidden>
+            <h4>Devices asking to connect</h4>
+            <div data-nearby-requests></div>
         </div>
         <div data-pairing-view hidden>
             <p>Open <strong>Connection → Scan QR code</strong> on your phone. The code grants access to this session. Share it only with your devices.</p>
@@ -34,6 +41,8 @@
     `;
 
     const status = root.querySelector('[data-connection-status]');
+    const nearbySection = root.querySelector('[data-nearby-section]');
+    const nearbyRequests = root.querySelector('[data-nearby-requests]');
     const devices = root.querySelector('[data-connected-devices]');
     const transfers = root.querySelector('[data-transfers]');
     const transferSection = root.querySelector('[data-transfer-section]');
@@ -49,6 +58,7 @@
     let imageURL = null;
     let deviceSnapshot = '';
     let transferSnapshot = '';
+    let nearbySnapshot = null;
     let refreshInFlight = false;
     let sessionVersion = 0;
 
@@ -159,6 +169,41 @@
         devices.replaceChildren(...(displayed.length ? [list] : []));
     }
 
+    function renderNearby(items) {
+        const snapshot = JSON.stringify(items);
+        if (nearbySnapshot === snapshot) return;
+        nearbySnapshot = snapshot;
+        nearbySection.hidden = items.length === 0;
+        const rows = items.map(item => {
+            const row = document.createElement('section');
+            row.className = 'companion-pair-request';
+            const title = document.createElement('h5');
+            title.textContent = item.name;
+            const instructions = document.createElement('p');
+            instructions.textContent = 'Compare with the code shown on your phone.';
+            const value = document.createElement('strong');
+            value.className = 'companion-code';
+            value.textContent = `${item.code.slice(0, 4)} ${item.code.slice(4)}`;
+            const buttons = document.createElement('div');
+            buttons.className = 'flex gap-12';
+            for (const approved of [true, false]) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `btn ${approved ? 'btn-primary' : 'btn-secondary'}`;
+                button.textContent = approved ? 'Codes match' : 'Reject';
+                button.addEventListener('click', () => run(async () => {
+                    await read(`pairing/requests/${encodeURIComponent(item.id)}`, {approved});
+                    renderSession(await read('session'));
+                    describe(approved ? 'Confirmed on Mac. Finish pairing on the phone.' : 'Pairing request rejected.');
+                }));
+                buttons.append(button);
+            }
+            row.append(title, instructions, value, buttons);
+            return row;
+        });
+        nearbyRequests.replaceChildren(...rows);
+    }
+
     const transferStates = {
         importing: 'Receiving audio',
         imported: 'Source ready',
@@ -219,11 +264,17 @@
     function renderSession(data) {
         if (!data.active) clearCode();
         const connected = (data.devices || []).filter(item => item.online).length;
+        renderNearby(data.requests || []);
         renderDevices(data.devices || []);
         renderTransfers(data.transfers || []);
         active = data.active;
         if (active && view.hidden) {
-            describe(connected ? `${connected} device${connected === 1 ? '' : 's'} connected.` : 'Pairing session is open. Connect from your phone.');
+            const message = data.discovery === 'ready'
+                ? 'On your phone, open Connection and choose Find nearby Macs.'
+                : data.discovery === 'starting'
+                    ? 'Starting nearby discovery…'
+                    : 'Nearby discovery is unavailable. Check local network access, or use QR on the same Wi-Fi.';
+            describe(connected ? `${connected} device${connected === 1 ? '' : 's'} connected. ${message}` : message);
         } else if (!active && data.reason === 'network_changed') {
             describe('The shared network changed. Refresh networks, then start a new pairing session.');
         } else if (!active && !host.value) {
@@ -264,9 +315,8 @@
     }));
     action('start').addEventListener('click', () => run(async () => {
         if (!host.value) return;
-        const data = await read('start', {host: host.value});
-        active = data.active;
-        await showCode(data.pairing);
+        await read('start', {host: host.value});
+        renderSession(await read('session'));
     }));
     action('show').addEventListener('click', () => run(() => showCode()));
     action('hide').addEventListener('click', () => {

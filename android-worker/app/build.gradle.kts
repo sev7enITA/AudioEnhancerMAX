@@ -13,7 +13,7 @@ android {
         minSdk = 26
         testInstrumentationRunner = "com.audioenhancermax.worker.MediaInstrumentation"
         targetSdk = 35
-        versionCode = 11
+        versionCode = 12
         versionName = "4.0.0"
     }
 

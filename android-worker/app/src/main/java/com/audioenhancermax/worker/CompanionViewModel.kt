@@ -9,10 +9,13 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.*
 import java.io.File
+import java.io.IOException
 import java.util.UUID
+import javax.net.ssl.SSLException
 import kotlin.math.roundToInt
 
 private data class ResultReceipt(
@@ -20,6 +23,15 @@ private data class ResultReceipt(
     val resultSha: String,
     val comparison: AudioComparison?,
     val reportSha: String? = null
+)
+
+internal data class NearbyComparison(val name: String, val code: String, val awaitingMac: Boolean = false)
+
+private data class NearbyAttempt(
+    val mac: NearbyMac,
+    val client: NearbyPairingClient,
+    val reveal: Map<String, String>,
+    val expiresAt: Long
 )
 
 class CompanionViewModel(app:Application):AndroidViewModel(app) {
@@ -46,16 +58,32 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
     var macName by mutableStateOf("Saved Mac");private set
     var macEndpoint by mutableStateOf("");private set
     var latencyMs by mutableStateOf<Long?>(null);private set
+    internal var nearbyMacs by mutableStateOf<List<NearbyMac>>(emptyList());private set
+    internal var nearbySearching by mutableStateOf(false);private set
+    internal var nearbyMessage by mutableStateOf<String?>(null);private set
+    internal var nearbyComparison by mutableStateOf<NearbyComparison?>(null);private set
+    private val discovery by lazy { NearbyMacDiscovery(app) }
+    private var searchTimer: Job? = null
+    private var nearbyOperation: Job? = null
+    private var nearbyEpoch = 0
+    private var nearbyExpiry: Job? = null
+    private var nearbyAttempt: NearbyAttempt? = null
     private var presence:Job?=null
-    private suspend fun checkConnection(api:CompanionClient,acceptNew:Boolean=false) {
+    private suspend fun readConnection(api: CompanionClient): Pair<JsonObject,Long> {
         val began=android.os.SystemClock.elapsedRealtime()
         val state=api.request("/v1/status").json()
-        if(!acceptNew && client !== api)return
-        latencyMs=android.os.SystemClock.elapsedRealtime()-began
-        DeviceAssessment.roundTripMs=latencyMs
+        return state to (android.os.SystemClock.elapsedRealtime()-began)
+    }
+    private fun updateConnection(api: CompanionClient, state: JsonObject, latency: Long) {
+        latencyMs=latency
+        DeviceAssessment.roundTripMs=latency
         assessmentText=DeviceAssessment.summary(getApplication<Application>())
         macName=state.get("mac_name")?.asString ?: "AudioEnhancerMAX Mac"
         macEndpoint=api.pairing.endpoint;connected=true
+    }
+    private suspend fun checkConnection(api:CompanionClient) {
+        val (state,latency)=readConnection(api)
+        if(client === api) updateConnection(api,state,latency)
     }
     fun startPresence() {
         if(presence?.isActive==true)return
@@ -237,12 +265,162 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         withContext(Dispatchers.IO){VideoExport.replace(video,Wave.decode(audio.readBytes()),source,output)}
         invalidateVideoExport();videoResult=output
     }
+    internal fun findNearbyMacs() {
+        if (busy || paired || nearbyComparison != null) return
+        stopNearbyDiscovery()
+        nearbySearching = true
+        nearbyMacs = emptyList()
+        nearbyMessage = null
+        discovery.start(update = { nearbyMacs = it }, failure = {
+            stopNearbyDiscovery()
+            nearbyMessage = "Nearby discovery is unavailable. Check Wi-Fi or use the QR code."
+        })
+        if (nearbySearching) searchTimer = viewModelScope.launch {
+            delay(12_000)
+            stopNearbyDiscovery()
+            if (nearbyMacs.isEmpty()) {
+                nearbyMessage = "No Macs found. Open nearby pairing on the Mac. Use the same Wi-Fi or a hotspot that lets devices see each other."
+            }
+        }
+    }
+
+    private fun stopNearbyDiscovery() {
+        searchTimer?.cancel()
+        searchTimer = null
+        if (nearbySearching) discovery.stop()
+        nearbySearching = false
+    }
+
+    internal fun beginNearbyPairing(mac: NearbyMac) {
+        if (busy || paired || mac !in nearbyMacs) return
+        stopNearbyDiscovery()
+        nearbyMacs = emptyList()
+        nearbyMessage = "Connecting to ${mac.name}…"
+        runNearby {
+            stopWorker()
+            val client = NearbyPairingClient(mac, device)
+            val nonce = NearbyPairingProtocol.nonce()
+            val expiresAt = android.os.SystemClock.elapsedRealtime() + 90_000
+            val start = client.post(PairingStep.START, mapOf("commitment" to NearbyPairingProtocol.commitment(nonce)))
+            val (requestID, serverNonce) = NearbyPairingProtocol.readStart(start)
+            val reveal = mapOf("request_id" to requestID, "client_nonce" to nonce)
+            val response = client.post(PairingStep.REVEAL, reveal)
+            check(NearbyPairingProtocol.status(response) == "pending")
+            nearbyAttempt = NearbyAttempt(mac, client, reveal, expiresAt)
+            nearbyMessage = null
+            nearbyComparison = NearbyComparison(mac.name, NearbyPairingProtocol.comparisonCode(mac.fingerprint, nonce, serverNonce))
+            nearbyExpiry = viewModelScope.launch {
+                delay((expiresAt - android.os.SystemClock.elapsedRealtime()).coerceAtLeast(0))
+                cancelNearbyPairing()
+                nearbyMessage = "The comparison code expired. Find your Mac again."
+            }
+        }
+    }
+
+    internal fun confirmNearbyCode() {
+        val attempt = nearbyAttempt ?: return
+        val comparison = nearbyComparison ?: return
+        if (busy || comparison.awaitingMac) return
+        nearbyExpiry?.cancel()
+        nearbyExpiry = null
+        nearbyComparison = comparison.copy(awaitingMac = true)
+        runNearby {
+            while (android.os.SystemClock.elapsedRealtime() < attempt.expiresAt) {
+                val response = try {
+                    attempt.client.post(PairingStep.FINISH, attempt.reveal)
+                } catch (e: IOException) {
+                    if (e is SSLException) throw e
+                    delay(1500)
+                    continue
+                }
+                if (android.os.SystemClock.elapsedRealtime() >= attempt.expiresAt) throw PairingExpired()
+                when (NearbyPairingProtocol.status(response)) {
+                    "pending" -> delay(1300)
+                    "approved" -> {
+                        val pairing = NearbyPairingProtocol.approvedPairing(attempt.mac, response)
+                        completePairing(pairing)
+                        nearbyAttempt = null
+                        nearbyComparison = null
+                        return@runNearby
+                    }
+                    "rejected" -> {
+                        nearbyAttempt = null
+                        nearbyComparison = null
+                        nearbyMessage = "The Mac declined pairing. Open nearby pairing again to retry."
+                        return@runNearby
+                    }
+                    else -> throw IllegalStateException("Invalid Mac approval response")
+                }
+            }
+            throw PairingExpired()
+        }
+    }
+
+    internal fun cancelNearbyPairing() {
+        stopNearbyDiscovery()
+        nearbyEpoch++
+        if (nearbyOperation?.isActive == true) busy = false
+        nearbyOperation?.cancel()
+        nearbyOperation = null
+        nearbyExpiry?.cancel()
+        nearbyExpiry = null
+        nearbyAttempt = null
+        nearbyComparison = null
+        nearbyMacs = emptyList()
+        nearbyMessage = null
+    }
+
+    private fun runNearby(block: suspend () -> Unit) {
+        val epoch = ++nearbyEpoch
+        busy = true
+        nearbyOperation = viewModelScope.launch {
+            try {
+                block()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                if (nearbyEpoch == epoch) {
+                    nearbyAttempt = null
+                    nearbyComparison = null
+                    nearbyMessage = when (e) {
+                        is PairingExpired -> "The comparison code expired. Find your Mac again."
+                        is SSLException -> "The Mac identity could not be verified. Reopen pairing on the Mac and try again."
+                        is IOException -> "The Mac did not respond. Use the same Wi-Fi or hotspot, or try the QR code."
+                        else -> "Pairing could not complete. Reopen nearby pairing on the Mac and try again."
+                    }
+                }
+            } finally {
+                if (nearbyEpoch == epoch) {
+                    busy = false
+                    nearbyOperation = null
+                }
+            }
+        }
+    }
+
+    private suspend fun completePairing(pairing: Pairing) {
+        val next = CompanionClient(pairing,device){DeviceAssessment.header(getApplication<Application>())}
+        val (state,latency)=readConnection(next)
+        currentCoroutineContext().ensureActive()
+        secure.save(pairing)
+        clearPendingJob()
+        client=next;paired=true;macState="Connected · encrypted"
+        updateConnection(next,state,latency)
+    }
+
     fun connect(code:String) = action {
         stopWorker();macState="Connecting…"
         try {
-            val pairing=Pairing.parse(code);val next=CompanionClient(pairing,device){DeviceAssessment.header(getApplication<Application>())}
-            checkConnection(next,true);secure.save(pairing);clearPendingJob();client=next;paired=true;macState="Connected · encrypted"
-        }catch(e:Exception){connected=false;macState="Connection failed";throw e}
+            completePairing(Pairing.parse(code))
+        } catch(e:Exception) {
+            if (e is CancellationException) throw e
+            connected=false
+            macState="Connection failed"
+            error=when (e) {
+                is SSLException -> "The Mac identity could not be verified. Show a fresh QR code on the Mac."
+                is IOException -> "The Mac did not respond. Check that both devices use the same Wi-Fi or hotspot, then try Find nearby Macs."
+                else -> e.message ?: "Connection failed"
+            }
+        }
     }
     fun reconnect() = action {
         macState="Connecting…"
@@ -434,7 +612,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         listOf("description","style","instruments","exclusions","vocals","duration","bpm","lyrics","arrangement","prompt","builtSource").forEach { key -> require(obj.has(key) && obj[key].isJsonPrimitive && obj[key].asJsonPrimitive.isString){"Invalid brief JSON"} }
         return gson.fromJson(obj,MusicDraft::class.java)
     }
-    override fun onCleared(){stopWorker();stopPlayback();super.onCleared()}
+    override fun onCleared(){cancelNearbyPairing();stopWorker();stopPlayback();super.onCleared()}
 }
 fun java.io.InputStream.readBytesBounded(limit:Int):ByteArray {
     val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192)

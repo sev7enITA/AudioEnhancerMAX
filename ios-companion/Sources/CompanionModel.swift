@@ -306,15 +306,39 @@ private struct ResultReceipt: Codable {
         playbackState="Stopped"
     }
     func connect(_ code:String) async {
-        guard !busy else{return};stopWorker();busy=true;defer{busy=false};macState="Connecting…"
+        guard !busy else { return }
+        do { await connect(try Pairing.parse(code)) }
+        catch { self.error = error.localizedDescription; macState = "Connection failed" }
+    }
+
+    @discardableResult
+    func connect(_ pairing: Pairing) async -> Bool {
+        guard !busy else { return false }
+        stopWorker()
+        busy = true
+        defer { busy = false }
+        macState = "Connecting…"
         do {
-            let pairing=try Pairing.parse(code)
-            let next=CompanionClient(pairing,device:device)
-            do {try await checkConnection(next,acceptNew:true);try PairingStore.save(pairing)}
-            catch{next.invalidate();throw error}
+            let approved = try pairing.validated()
+            let next = CompanionClient(approved, device: device)
+            do {
+                try await checkConnection(next, acceptNew: true)
+                try PairingStore.save(approved)
+            } catch {
+                next.invalidate()
+                throw error
+            }
             clearPendingJob()
-            client?.invalidate();client=next;macState="Connected · encrypted"
-        }catch{connected=false;macState="Connection failed";self.error=error.localizedDescription}
+            client?.invalidate()
+            client = next
+            macState = "Connected · encrypted"
+            return true
+        } catch {
+            connected = false
+            macState = "Connection failed"
+            if !Task.isCancelled { self.error = error.localizedDescription }
+            return false
+        }
     }
     func reconnect() async {
         guard let client,!busy else{return};busy=true;defer{busy=false};macState="Connecting…"

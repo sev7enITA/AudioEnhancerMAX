@@ -1,8 +1,12 @@
 # Audio handoff between the phone and Mac
 
-Connect the phone and Mac to the same Wi-Fi network or hotspot. On the direct Mac build, open **Mobile devices and transfers**, choose the shared address and select **Start pairing**. On the phone, open **Connection** and scan the QR code or paste the manual code. Pairing is off when the Mac app starts.
+Connect the phone and Mac to the same Wi-Fi network or personal hotspot. On the direct Mac build, open **Mobile devices and transfers** and select **Start nearby pairing**. On the phone, open **Connection → Find nearby Macs**, choose the Mac, then compare the eight digits on both screens. Select **Codes match** on both devices. A request expires after 90 seconds. The phone receives a device-specific credential after Mac approval.
 
-The pairing code contains the address, the TLS certificate fingerprint and the session credential. Keep the code private. The companion checks the fingerprint before sending credentials or audio. **Stop and revoke** closes the listener and invalidates the code. A change to the Mac's network address also ends the session.
+Discovery uses Bonjour on the selected network. The advertisement gives the phone the Mac's local listener and certificate fingerprint. The matching code is derived independently on each device from the TLS identity and the current exchange. Discovery begins only when the Mac owner opens a session. If several interfaces are active, the Mac selects its preferred IPv4 route. Use **Shared network** to choose another interface.
+
+**Use QR instead** opens the existing alternative. The QR and manual code grant access to the current session and should be kept private. All transfers require the pinned TLS connection. **Stop and revoke** closes the listener and withdraws the announcement and credentials. A change to the Mac's network address also ends the session.
+
+If neither method connects, check local-network permission, ensure the phone is using Wi-Fi and try a personal hotspot. Guest and enterprise networks can prevent devices from communicating even when both show the same network name.
 
 ## Receive a source or process it on the Mac
 

@@ -24,6 +24,7 @@ struct CompanionView:View {
     @State private var importBrief=false
     @State private var pairing=""
     @State private var scanning=false
+    @State private var findingNearbyMac=false
     @State private var briefURL:URL?
     @State private var scrubTime=0.0
     @State private var scrubbing=false
@@ -58,6 +59,7 @@ struct CompanionView:View {
                 Task { await model.connect(raw) }
             }
         }
+        .sheet(isPresented:$findingNearbyMac) { NearbyMacSheet() }
         .alert("AudioEnhancer",isPresented:Binding(get:{model.error != nil},set:{if !$0{model.error=nil}})) {Button("OK"){model.error=nil}} message:{Text(model.error ?? "")}
         .onChange(of:model.music){_,_ in briefURL=nil}
     }
@@ -157,7 +159,7 @@ struct CompanionView:View {
     }
     private var mac:some View {
         Form {
-            Section{title("Encrypted connection","Your Mac connection",model.paired ? "Your connection and processing mode at a glance." : "Open Edge Cluster → Mobile devices & connections on the Mac. Show the pairing QR code, then scan it here. Keep both devices on the same Wi-Fi or hotspot.")}
+            Section{title("Encrypted connection","Your Mac connection",model.paired ? "Your connection and processing mode at a glance." : "Open Mobile devices and transfers on your Mac. Find it nearby or scan its pairing QR code. Keep both devices on the same Wi-Fi or hotspot.")}
             if model.paired {
                 Section(model.connected ? "Connected · encrypted" : "Saved Mac · checking / offline") {
                     Text(model.macName).font(.title2.bold())
@@ -168,9 +170,12 @@ struct CompanionView:View {
             }
             Section("Connection") {
                 if !model.paired {
+                Button { findingNearbyMac=true } label: {
+                    Label("Find your Mac",systemImage:"wifi").frame(maxWidth:.infinity,minHeight:36)
+                }.buttonStyle(.borderedProminent).disabled(model.busy).accessibilityIdentifier("find-nearby-mac")
                 Button { scanning=true } label: {
                     Label("Scan QR code",systemImage:"qrcode.viewfinder").frame(maxWidth:.infinity,minHeight:36)
-                }.buttonStyle(.borderedProminent).disabled(model.busy).accessibilityIdentifier("scan-pairing-qr")
+                }.buttonStyle(.bordered).disabled(model.busy).accessibilityIdentifier("scan-pairing-qr")
                 DisclosureGroup("Manual pairing alternative") {
                     SecureField("Private pairing code",text:$pairing).textInputAutocapitalization(.never).autocorrectionDisabled()
                     Button("Connect"){Task{await model.connect(pairing);if model.macState.hasPrefix("Connected"){pairing=""}}}.disabled(pairing.isEmpty || model.busy)
