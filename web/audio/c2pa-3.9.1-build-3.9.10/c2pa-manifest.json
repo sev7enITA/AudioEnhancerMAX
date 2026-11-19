@@ -1,0 +1,160 @@
+{
+  "active_manifest": "urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6",
+  "manifests": {
+    "urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6": {
+      "assertions": [
+        {
+          "created": true,
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.opened",
+                "parameters": {
+                  "ingredients": [
+                    {
+                      "hash": "b64'pOxEQp7STot3B32CvwvPHkF5Nzu1LDBhJf0vaymrdp0='",
+                      "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "label": "c2pa.actions.v2"
+        },
+        {
+          "data": {
+            "artifact_revision": "8ced97dd8fcb477eaa9e01c3930e5b6c",
+            "operation": "processed",
+            "processing_report_sha256": "529ce779c624db2a20c197b7364c568fd2b70c0d31029e55ca5201a83d95f40d",
+            "schema_version": 1,
+            "unsigned_export_sha256": "b158999a6606be3b89df7c5ee5958e55e60487955b3fe62757dc70c66aeec1f4"
+          },
+          "label": "com.fabriziodegni.audioenhancermax.processing"
+        },
+        {
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.modified"
+              }
+            ]
+          },
+          "instance": 1,
+          "label": "c2pa.actions.v2"
+        }
+      ],
+      "claim_generator_info": [
+        {
+          "name": "AudioEnhancerMAX",
+          "org.contentauth.c2pa_rs": "0.92.0",
+          "version": "3.9.1"
+        }
+      ],
+      "claim_version": 2,
+      "ingredients": [
+        {
+          "format": "audio/wav",
+          "instance_id": "xmp.iid:1b3e3bf2-086c-47a9-adce-dca9c837b92c",
+          "label": "c2pa.ingredient.v3",
+          "relationship": "parentOf",
+          "title": "Source media"
+        }
+      ],
+      "instance_id": "xmp.iid:bd162430-b3e7-43e6-99ca-27cc47d5ea53",
+      "label": "urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6",
+      "signature_info": {
+        "alg": "Es256",
+        "cert_serial_number": "506569777971675793077257308460324563732489810519",
+        "common_name": "AudioEnhancerMAX test signer",
+        "issuer": "AudioEnhancerMAX test only"
+      },
+      "title": "AudioEnhancerMAX export"
+    }
+  },
+  "validation_results": {
+    "activeManifest": {
+      "failure": [
+        {
+          "code": "signingCredential.untrusted",
+          "explanation": "signing certificate untrusted",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.signature"
+        }
+      ],
+      "informational": [
+        {
+          "code": "signingCredential.ocsp.skipped",
+          "explanation": "OCSP fetching skipped",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.signature"
+        }
+      ],
+      "success": [
+        {
+          "code": "claimSignature.insideValidity",
+          "explanation": "claim signature valid",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.signature"
+        },
+        {
+          "code": "claimSignature.validated",
+          "explanation": "claim signature valid",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.signature"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/c2pa.ingredient.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.fabriziodegni.audioenhancermax.processing",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/com.fabriziodegni.audioenhancermax.processing"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2__1",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/c2pa.actions.v2__1"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "explanation": "data hash valid",
+          "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/c2pa.hash.data"
+        }
+      ]
+    },
+    "ingredientDeltas": [
+      {
+        "ingredientAssertionURI": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/c2pa.ingredient.v3",
+        "validationDeltas": {
+          "failure": [],
+          "informational": [
+            {
+              "code": "ingredient.unknownProvenance",
+              "explanation": "Source media: ingredient does not have provenance",
+              "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.assertions/c2pa.ingredient.v3"
+            }
+          ],
+          "success": []
+        }
+      }
+    ],
+    "specVersion": "2.4.0"
+  },
+  "validation_state": "Valid",
+  "validation_status": [
+    {
+      "code": "signingCredential.untrusted",
+      "explanation": "signing certificate untrusted",
+      "url": "self#jumbf=/c2pa/urn:c2pa:46911d88-aa60-416f-975e-a334105e59f6/c2pa.signature"
+    }
+  ]
+}
