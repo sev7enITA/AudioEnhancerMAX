@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import Optional, List
 
 import numpy as np
-from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, Query, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, Query, Form, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
 
 from app.config import (
     APP_STORE_MODE, UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
@@ -149,6 +150,12 @@ app.mount("/outputs", StaticFiles(directory=str(OUTPUT_DIR)), name="outputs")
 
 
 # ── Schemas for new endpoints ──
+
+class CredentialsExportRequest(BaseModel):
+    format: str
+    version: str
+    revision: str
+
 
 class PresetSaveRequest(BaseModel):
     name: str
@@ -484,6 +491,16 @@ def upload_file(file: UploadFile = File(...)):
             save_audio(audio, sr, wav_path)
 
         waveform = generate_waveform_data(audio, num_points=500)
+        # Preserve the original container as a possible C2PA parent even when DSP
+        # works from the normalized WAV derivative.
+        from app.services.content_credentials import MEDIA_TYPES
+        if ext != ".wav" and ext in MEDIA_TYPES:
+            from app.services.artifact_store import atomic_json, sha256_file
+            atomic_json(get_upload_path(file_id, ".source.json"), {
+                "original_suffix": ext,
+                "original_sha256": sha256_file(upload_path),
+                "decoded_sha256": sha256_file(wav_path),
+            })
         completed = True
         return {
             "file_id": file_id,
@@ -1903,6 +1920,113 @@ async def _resolve_export(file_id: str, format: str | None = None,
         raise HTTPException(409, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+
+
+def _require_local_credentials_request(request: Request) -> None:
+    """Signing authority and media inspection are limited to this local UI."""
+    if request.url.hostname not in {"localhost", "127.0.0.1", "::1"}:
+        raise HTTPException(403, "Open AudioEnhancerMAX on this device to use Content Credentials")
+    if request.client is None or request.client.host not in {"127.0.0.1", "::1"}:
+        raise HTTPException(403, "Content Credentials are available on this device only")
+    origin = request.headers.get("origin")
+    if origin and origin != f"{request.url.scheme}://{request.url.netloc}":
+        raise HTTPException(403, "Content Credentials require a same-origin request")
+
+
+@app.get("/api/content-credentials")
+def content_credentials_status(request: Request):
+    _require_local_credentials_request(request)
+    from app.services.content_credentials import capabilities
+    return JSONResponse(capabilities(), headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/content-credentials/inspect")
+def inspect_content_credentials(request: Request, file: UploadFile = File(...)):
+    _require_local_credentials_request(request)
+    from app.services.content_credentials import (
+        CredentialsError, CredentialsUnavailable, inspect_stream,
+    )
+    if file.size is None or not 0 < file.size <= MAX_FILE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(413, f"Select a file up to {MAX_FILE_SIZE_MB} MB")
+    try:
+        result = inspect_stream(file.file, Path(file.filename or "").suffix.lower())
+    except CredentialsUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except CredentialsError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/content-credentials/export/{file_id}")
+def export_content_credentials(file_id: str, options: CredentialsExportRequest, request: Request):
+    import hashlib
+    import json
+    import tempfile
+
+    from app.services.artifact_store import StaleRevision, resolve_export
+    from app.services.content_credentials import (
+        CredentialsError, CredentialsUnavailable, select_parent, sign_export,
+    )
+
+    _require_local_credentials_request(request)
+    file_id = _require_file_id(file_id)
+    fmt = _require_choice(options.format, DOWNLOAD_AUDIO_FORMATS, "format")
+    version = _require_choice(options.version, {"processed", "speech_edit"}, "version")
+    if not re.fullmatch(r"[0-9a-f]{32}", options.revision):
+        raise HTTPException(400, "A current audio revision is required")
+
+    temporary = None
+    try:
+        export, artifact = resolve_export(file_id, fmt, version, options.revision)
+        master = artifact["exports"][artifact["master_format"]]
+        report_path = (OUTPUT_DIR / master["name"]).with_suffix(".report.json")
+        if not report_path.is_file():
+            raise CredentialsError("No processing report for this result. Process it again.")
+        report_bytes = report_path.read_bytes()
+        report = json.loads(report_bytes)
+        if (report.get("artifact_revision") != options.revision or
+                report.get("provenance", {}).get("processed_output", {}).get("sha256") != master["sha256"]):
+            raise CredentialsError("The processing report does not match this result. Process it again.")
+        source = _find_source(file_id)
+        if source is None:
+            raise CredentialsError("The source for this result is unavailable.")
+        parent = select_parent(source, report, get_upload_path(file_id, ".source.json"))
+
+        temporary = tempfile.TemporaryDirectory(prefix="aemax-c2pa-")
+        filename = f"AudioEnhancerMAX-{options.revision[:8]}-credentials.{fmt}"
+        signed = Path(temporary.name) / filename
+        verification = sign_export(
+            export, parent, signed,
+            revision=options.revision,
+            operation=version,
+            app_version=APP_VERSION,
+            report_sha256=hashlib.sha256(report_bytes).hexdigest(),
+        )
+        response = FileResponse(
+            signed, media_type=AUDIO_MEDIA_TYPES[export.suffix], filename=filename,
+            headers={
+                "Cache-Control": "no-store",
+                "X-Audio-Revision": options.revision,
+                "X-Content-Credentials": verification["status"],
+            },
+            background=BackgroundTask(temporary.cleanup),
+        )
+        temporary = None  # The response owns cleanup once delivery starts.
+        return response
+    except StaleRevision as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(404, "No completed output for this operation") from exc
+    except CredentialsUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except CredentialsError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except (ValueError, OSError) as exc:
+        logger.warning("Unable to resolve source evidence for signed export (%s)", type(exc).__name__)
+        raise HTTPException(409, "The source or export evidence could not be read. Process it again.") from exc
+    finally:
+        if temporary is not None:
+            temporary.cleanup()
 
 
 @app.get("/api/download/{file_id}")

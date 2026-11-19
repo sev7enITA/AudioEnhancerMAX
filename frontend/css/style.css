@@ -5536,6 +5536,14 @@ body.navigation-open {
 .capsule-status.is-success { color: #48ce9e; }
 .capsule-status.is-error { color: #f17878; }
 
+.credentials-export {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid #252c32;
+}
+#credentials-inspector summary, .credentials-export summary { cursor: pointer; }
+#credentials-inspector [role="status"], .credentials-export [role="status"] { overflow-wrap: anywhere; }
+
 .direct-downloads {
     display: grid;
     gap: 6px;

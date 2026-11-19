@@ -4,7 +4,7 @@ import os
 import runpy
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules
 
 
 ROOT = Path(SPEC).resolve().parents[2]
@@ -22,8 +22,10 @@ LICENSE_DIR = Path(os.getenv("AEMAX_LICENSE_DIR", ""))
 datas = [
     (str(ROOT / "frontend"), "frontend"),
     (str(ROOT / "presets"), "presets"),
+    (str(ROOT / "app" / "resources" / "c2pa"), "app/resources/c2pa"),
     (str(ROOT / "packaging" / "macos" / "PrivacyInfo.xcprivacy"), "."),
     (str(ROOT / "packaging" / "macos" / "THIRD_PARTY_NOTICES.md"), "."),
+    (str(ROOT / "packaging" / "macos" / "licenses" / "c2pa"), "licenses/c2pa"),
 ]
 datas.extend(collect_data_files("faster_whisper", includes=["assets/*.onnx"]))
 
@@ -63,7 +65,7 @@ if DISTRIBUTION == "app-store":
 a = Analysis(
     [str(ROOT / "desktop" / "launcher.py")],
     pathex=[str(ROOT)],
-    binaries=[],
+    binaries=collect_dynamic_libs("c2pa"),
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],

@@ -1397,6 +1397,24 @@
     </div>
 </section>
 
+<section id="content-credentials" aria-labelledby="content-credentials-title">
+    <div class="container">
+        <span class="section-label">Mac 3.9.1 preview</span>
+        <h2 class="section-title" id="content-credentials-title">Signed provenance for Mac audio exports</h2>
+        <p class="section-desc">AudioEnhancerMAX supports C2PA Content Credentials for WAV, MP3 and FLAC. With a signing certificate configured, you can attach a signed record of the source and edit revision. Verify the exported file’s integrity on your Mac.</p>
+        <div class="evidence-links">
+            <a href="audio/c2pa-3.9.1/signed-demo.wav" download>Download the signed WAV</a>
+            <a href="audio/c2pa-3.9.1/altered-demo.wav" download>Download the altered comparison</a>
+        </div>
+        <p>Open both files in <strong>Verify Content Credentials</strong> or <a href="https://inspect.cr/">open them with Content Credentials Inspect</a>. The synthetic sample uses a test certificate. The first file validates with an unrecognized signer. The second fails after a change to one audio sample.</p>
+        <details lang="it">
+            <summary>Provenienza firmata per gli export audio su Mac</summary>
+            <p>AudioEnhancerMAX supporta le Content Credentials C2PA per WAV, MP3 e FLAC. Con un certificato di firma configurato, puoi allegare all’audio un riferimento firmato alla sorgente e alla revisione e verificarne l’integrità sul Mac.</p>
+            <p><a href="audio/c2pa-3.9.1/signed-demo.wav" download>Scarica il WAV firmato di prova</a>. La demo usa un certificato di prova. Il file risulta integro e il firmatario non è riconosciuto dalla lista di fiducia. La copia alterata fallisce il controllo di integrità.</p>
+        </details>
+    </div>
+</section>
+
 <section id="download" class="cta-section" aria-labelledby="download-title">
     <div class="download-heading">
         <span class="section-label">Your workflow, your choice</span>
