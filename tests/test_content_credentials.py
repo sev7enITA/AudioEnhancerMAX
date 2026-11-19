@@ -121,7 +121,10 @@ def test_real_signed_export_round_trip(api, fmt):
         assertion = next(item["data"] for item in manifest["assertions"]
                          if item["label"] == content_credentials.ASSERTION_LABEL)
         report = outputs / f"{file_id}_processed_{revision}.report.json"
-        assert assertion["processing_report_sha256"] == hashlib.sha256(report.read_bytes()).hexdigest()
+        downloaded_report = client.get(f"/api/reports/{file_id}", params={"revision": revision})
+        assert downloaded_report.status_code == 200
+        assert downloaded_report.content == report.read_bytes()
+        assert assertion["processing_report_sha256"] == hashlib.sha256(downloaded_report.content).hexdigest()
         assert assertion["unsigned_export_sha256"] == hashlib.sha256(unsigned.content).hexdigest()
         assert assertion["artifact_revision"] == revision
     original_samples, original_rate = sf.read(io.BytesIO(unsigned.content))

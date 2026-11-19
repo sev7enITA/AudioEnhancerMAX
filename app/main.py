@@ -958,17 +958,27 @@ async def smart_mode_analyze(
 @app.get("/api/reports/{file_id}")
 async def get_processing_report(file_id: str, version: str = "processed", revision: str | None = None):
     """Return evidence for the requested current result, not another operation."""
-    import json
+    from app.services.processing_report import load_processing_report, read_revision_report
+
     file_id = _require_file_id(file_id)
     version = _require_choice(version, {"processed", "speech_edit"}, "version")
     output, artifact = await _resolve_export(file_id, version=version, revision=revision)
-    path = output.with_suffix(".report.json")
-    if path.is_file():
-        return json.loads(path.read_text())
-    from app.services.processing_report import load_processing_report
-    report = load_processing_report(file_id)
-    if report and report.get("provenance", {}).get("processed_output", {}).get("sha256") == artifact["exports"][artifact["master_format"]]["sha256"]:
-        return report
+    try:
+        raw, _ = await asyncio.to_thread(read_revision_report, output, artifact)
+        return Response(raw, media_type="application/json", headers={"Cache-Control": "no-store"})
+    except FileNotFoundError:
+        if revision is None and artifact.get("legacy_adoption"):
+            report = await asyncio.to_thread(load_processing_report, file_id)
+            master = artifact["exports"][artifact["master_format"]]
+            try:
+                evidence = report["provenance"]["processed_output"]
+                if (evidence["sha256"] == master["sha256"]
+                        and evidence["name"] == f"{file_id}_{version}{output.suffix}"):
+                    return report
+            except (KeyError, TypeError):
+                pass
+    except (OSError, ValueError):
+        pass
     raise HTTPException(404, "Report for this output revision is unavailable")
 
 
@@ -1960,13 +1970,13 @@ def inspect_content_credentials(request: Request, file: UploadFile = File(...)):
 @app.post("/api/content-credentials/export/{file_id}")
 def export_content_credentials(file_id: str, options: CredentialsExportRequest, request: Request):
     import hashlib
-    import json
     import tempfile
 
     from app.services.artifact_store import StaleRevision, resolve_export
     from app.services.content_credentials import (
         CredentialsError, CredentialsUnavailable, select_parent, sign_export,
     )
+    from app.services.processing_report import read_revision_report
 
     _require_local_credentials_request(request)
     file_id = _require_file_id(file_id)
@@ -1979,14 +1989,12 @@ def export_content_credentials(file_id: str, options: CredentialsExportRequest, 
     try:
         export, artifact = resolve_export(file_id, fmt, version, options.revision)
         master = artifact["exports"][artifact["master_format"]]
-        report_path = (OUTPUT_DIR / master["name"]).with_suffix(".report.json")
-        if not report_path.is_file():
-            raise CredentialsError("No processing report for this result. Process it again.")
-        report_bytes = report_path.read_bytes()
-        report = json.loads(report_bytes)
-        if (report.get("artifact_revision") != options.revision or
-                report.get("provenance", {}).get("processed_output", {}).get("sha256") != master["sha256"]):
-            raise CredentialsError("The processing report does not match this result. Process it again.")
+        try:
+            report_bytes, report = read_revision_report(OUTPUT_DIR / master["name"], artifact)
+        except FileNotFoundError as exc:
+            raise CredentialsError("No processing report for this result. Process it again.") from exc
+        except ValueError as exc:
+            raise CredentialsError("The processing report does not match this result. Process it again.") from exc
         source = _find_source(file_id)
         if source is None:
             raise CredentialsError("The source for this result is unavailable.")

@@ -74,6 +74,44 @@ def test_changed_primary_format_never_selects_old_wav(api):
     assert streamed.headers['x-audio-revision'] == current['revision']
 
 
+def test_report_rejects_other_revision_with_same_audio(api):
+    client, _, outputs = api
+    first = process(client, normalize=True)
+    fallback = processing_report.report_path('fixture')
+    earlier_report = fallback.read_bytes()
+    earlier_sidecar = (outputs / f"fixture_processed_{first['revision']}.report.json").read_bytes()
+    second = process(client, normalize=True)
+    assert first['revision'] != second['revision']
+    assert (json.loads(earlier_report)['provenance']['processed_output']['sha256']
+            == json.loads(fallback.read_bytes())['provenance']['processed_output']['sha256'])
+
+    sidecar = outputs / f"fixture_processed_{second['revision']}.report.json"
+    sidecar.unlink()
+    fallback.write_bytes(earlier_report)
+    url = f"/api/reports/fixture?revision={second['revision']}"
+    assert client.get(url).status_code == 404
+    assert client.get('/api/reports/fixture').status_code == 404
+
+    sidecar.write_bytes(earlier_sidecar)
+    assert client.get(url).status_code == 404
+
+
+def test_unqualified_report_for_adopted_legacy_output(api):
+    client, uploads, outputs = api
+    legacy = outputs / 'fixture_processed.wav'
+    legacy.write_bytes((uploads / 'fixture.wav').read_bytes())
+    report = {'provenance': {'processed_output': {
+        'name': legacy.name, 'sha256': hashlib.sha256(legacy.read_bytes()).hexdigest(),
+    }}}
+    processing_report.report_path('fixture').write_text(json.dumps(report), encoding='utf-8')
+
+    response = client.get('/api/reports/fixture')
+    assert response.status_code == 200
+    assert response.json() == report
+    revision = artifact_store.current_artifact('fixture')['revision']
+    assert client.get('/api/reports/fixture', params={'revision': revision}).status_code == 404
+
+
 def test_missing_processed_output_does_not_return_original(api):
     client, _, _ = api
     assert client.get('/api/audio/fixture?version=processed').status_code == 404
