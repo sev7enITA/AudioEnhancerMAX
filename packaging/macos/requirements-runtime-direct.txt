@@ -7,3 +7,4 @@ cryptography==50.0.2
 asn1crypto==1.5.1
 pyobjc-framework-Security==12.2.1
 toml==0.10.2
+qrcode==8.2

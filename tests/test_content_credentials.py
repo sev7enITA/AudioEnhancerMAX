@@ -187,6 +187,67 @@ def test_keychain_export_rejects_signed_copy_without_required_timestamp(api, tmp
     assert "trusted RFC 3161 timestamp" in response.text
 
 
+def test_expired_trust_list_disables_timestamped_signing_but_preserves_ordinary_export(
+    api, tmp_path, monkeypatch,
+):
+    client, _, _ = api
+    file_id, revision = process(client, wav_bytes(), "source.wav")
+    signed = signed_request(client, file_id, revision, "wav")
+    assert signed.status_code == 200
+    (tmp_path / "c2pa" / "signing.json").write_text(json.dumps({
+        "keychain_tag": "pilot", "tsa_url": "https://tsa.example.com/token",
+    }))
+    monkeypatch.setattr(content_credentials, "_trust_snapshot_expired", lambda: True)
+
+    capability = client.get("/api/content-credentials").json()
+    assert capability["inspect"] is True
+    assert capability["sign"] is False
+    assert "trust lists have expired" in capability["sign_error"]
+    rejected = signed_request(client, file_id, revision, "wav")
+    assert rejected.status_code == 503
+    assert rejected.json()["detail"] == capability["sign_error"]
+    assert client.get(f"/api/download/{file_id}", params={"revision": revision}).status_code == 200
+
+    inspected = client.post(
+        "/api/content-credentials/inspect", files={"file": ("signed.wav", signed.content)},
+    ).json()
+    assert inspected["status"] == "valid"
+    assert inspected["trust_snapshot_expired"] is True
+
+
+@pytest.mark.parametrize("fmt", ("wav", "flac"))
+def test_revision_watermark_survives_lossless_export_and_signing(api, fmt):
+    from app.services.watermarking import detect_watermark
+
+    client, _, _ = api
+    upload = client.post("/api/upload", files={"file": ("source.wav", wav_bytes())})
+    assert upload.status_code == 200
+    file_id = upload.json()["file_id"]
+    request = {"file_id": file_id, "options": {"watermark_identifier": "episode-04"}}
+    request["options"]["output_format"] = "mp3"
+    assert client.post("/api/process", json=request).status_code == 400
+
+    request["options"]["output_format"] = fmt
+    processed = client.post("/api/process", json=request)
+    assert processed.status_code == 200, processed.text
+    revision = processed.json()["revision"]
+    signed = signed_request(client, file_id, revision, fmt)
+    assert signed.status_code == 200, signed.text
+    samples, sample_rate = sf.read(io.BytesIO(signed.content), dtype="float32")
+    assert detect_watermark(samples, sample_rate) == {
+        "detected": True, "payload": "episode-04", "method": "pcm24-revision",
+    }
+    assert signed_request(client, file_id, revision, "mp3").status_code == 409
+
+    report = client.get(f"/api/reports/{file_id}", params={"revision": revision})
+    assert report.status_code == 200
+    assert report.json()["pipeline"][0]["step"] == "audio_watermark"
+    with c2pa.Reader(fmt, io.BytesIO(signed.content)) as reader:
+        assertion = next(item["data"] for item in reader.get_active_manifest()["assertions"]
+                         if item["label"] == content_credentials.ASSERTION_LABEL)
+    assert assertion["processing_report_sha256"] == hashlib.sha256(report.content).hexdigest()
+
+
 def test_unsigned_tampered_stale_and_cross_origin(api):
     client, uploads, _ = api
     source = wav_bytes()

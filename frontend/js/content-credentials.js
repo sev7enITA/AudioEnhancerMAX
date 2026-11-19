@@ -8,6 +8,9 @@
     const watermarkShortcut = document.getElementById('watermark-credentials-shortcut');
     const aboutCredentials = document.getElementById('about-content-credentials');
     const trustedTimestamp = 'Trusted RFC 3161 timestamp verified.';
+    let canSign = false;
+    let signing = false;
+    let availabilityRequest = 0;
 
     const messages = {
         trusted: 'File binding and signature verified. The local validator trusts the signing certificate.',
@@ -18,16 +21,25 @@
     };
 
     async function refreshAvailability() {
+        const requestId = ++availabilityRequest;
         const response = await fetch('/api/content-credentials', {cache: 'no-store'});
         if (!response.ok) return;
         const availability = await response.json();
+        if (requestId !== availabilityRequest) return;
+        const wasAvailable = canSign;
+        canSign = availability.sign;
         inspector.hidden = !availability.inspect;
         exportPanel.hidden = !availability.inspect;
         watermarkShortcut.hidden = !availability.inspect;
         aboutCredentials.hidden = !availability.inspect;
-        exportButton.disabled = !availability.sign;
-        exportStatus.textContent = availability.sign ? '' :
-            'Configure a C2PA signing certificate and its Keychain profile or local test key.';
+        if (signing) return;
+        exportButton.disabled = !canSign;
+        if (!canSign) {
+            exportStatus.textContent = availability.sign_error ||
+                'Configure a C2PA signing certificate and its Keychain profile or local test key.';
+        } else if (!wasAvailable) {
+            exportStatus.textContent = '';
+        }
     }
 
     exportPanel.addEventListener('toggle', () => {
@@ -54,6 +66,7 @@
             const detail = [
                 messages[result.status] || 'Verification did not complete.',
                 result.timestamp_trusted && trustedTimestamp,
+                result.trust_snapshot_expired && 'The built-in trust lists have expired. Update AudioEnhancerMAX to verify the signer and timestamp trust.',
                 result.signer && `Issuer: ${result.signer}.`,
                 result.actions?.length && `Actions: ${result.actions.join(', ')}.`,
                 result.failure_codes?.length && `Checks: ${result.failure_codes.join(', ')}.`,
@@ -68,11 +81,15 @@
     });
 
     exportButton.addEventListener('click', async () => {
-        if (!state.fileId || !state.hasProcessed || state.isProcessing || !state.processedRevision) return;
+        if (signing || !canSign || !state.fileId || !state.hasProcessed || state.isProcessing || !state.processedRevision) return;
         const fileId = state.fileId;
         const revision = state.processedRevision;
-        const format = document.getElementById('compliance-format').value;
+        const formatPicker = document.getElementById('compliance-format');
+        const format = formatPicker.value;
         const version = state.processedVersion;
+        const isCurrent = () => fileId === state.fileId && revision === state.processedRevision &&
+            version === state.processedVersion && format === formatPicker.value;
+        signing = true;
         exportButton.disabled = true;
         exportStatus.textContent = 'Signing and verifying a copy…';
         try {
@@ -83,8 +100,8 @@
             });
             if (!response.ok) throw new Error(await readApiError(response, 'Signed export failed.'));
             const blob = await response.blob();
-            if (fileId !== state.fileId || revision !== state.processedRevision) {
-                exportStatus.textContent = 'The current result changed. Export its revision to continue.';
+            if (!isCurrent()) {
+                exportStatus.textContent = 'The result or format changed. Export the current selection to continue.';
                 return;
             }
             const url = URL.createObjectURL(blob);
@@ -100,9 +117,10 @@
                 response.headers.get('X-C2PA-Timestamp') === 'trusted' && trustedTimestamp,
             ].filter(Boolean).join(' ');
         } catch (error) {
-            exportStatus.textContent = error.message;
+            exportStatus.textContent = isCurrent() ? error.message : '';
         } finally {
-            exportButton.disabled = false;
+            signing = false;
+            exportButton.disabled = !canSign;
         }
     });
 

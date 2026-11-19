@@ -41,7 +41,7 @@ fi
 VERSION="${AEMAX_MARKETING_VERSION:-$("${PYTHON}" -c 'import runpy, sys; print(runpy.run_path(sys.argv[1])["APP_VERSION"])' "${ROOT}/app/release.py")}"
 BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-$("${PYTHON}" -c 'import runpy, sys; print(runpy.run_path(sys.argv[1])["APP_BUILD"])' "${ROOT}/app/release.py")}"
 APP_NAME="AudioEnhancerMAX"
-RELEASE_TAG="v${VERSION}"
+RELEASE_TAG="$("${PYTHON}" -c 'import runpy, sys; print(runpy.run_path(sys.argv[1])["RELEASE_TAG"])' "${ROOT}/app/release.py")"
 
 if ! security find-identity -v -p codesigning | grep -Fq "\"${APP_IDENTITY}\""; then
     print -u2 "Developer ID signing identity not available with its private key: ${APP_IDENTITY}"
@@ -124,19 +124,23 @@ DMG_TEMP="${SIGNING_ROOT}/${DMG_NAME}"
 DMG_PATH="${DIST_DIR}/${DMG_NAME}"
 
 # A reused bundle must identify the requested release before it is signed.
-"${PYTHON}" - "${APP_PATH}/Contents/Info.plist" "${VERSION}" "${BUILD_NUMBER}" <<'PY'
+"${PYTHON}" - "${APP_PATH}/Contents/Info.plist" "${VERSION}" "${BUILD_NUMBER}" "${ROOT}/app/release.py" <<'PY'
 import plistlib
+import runpy
 import sys
 from pathlib import Path
 
 info = plistlib.loads(Path(sys.argv[1]).read_bytes())
+release = runpy.run_path(sys.argv[4])
 expected = {
     "CFBundleShortVersionString": sys.argv[2],
     "CFBundleVersion": sys.argv[3],
     "AEMAXDistribution": "direct",
-    "CFBundleDisplayName": "AudioEnhancerMAX",
-    "CFBundleIdentifier": "com.fabriziodegni.audioenhancermax",
-    "AEMAXReleaseChannel": "stable",
+    "CFBundleDisplayName": release["APP_NAME"],
+    "CFBundleIdentifier": release["BUNDLE_IDENTIFIER"],
+    "AEMAXReleaseChannel": release["RELEASE_CHANNEL"],
+    "AEMAXReleaseLabel": release["RELEASE_LABEL"],
+    "AEMAXReleaseTag": release["RELEASE_TAG"],
 }
 for key, value in expected.items():
     if info.get(key) != value:

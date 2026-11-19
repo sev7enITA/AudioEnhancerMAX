@@ -1,100 +1,28 @@
-# 📱 AudioEnhancerMAX: Android Edge Worker
+# AudioEnhancerMAX Android Companion 4.0.0 (11)
 
-**App nativa Android per il calcolo distribuito con AudioEnhancerMAX.**
+Native Compose companion, Android 8/API 26 or later, target API 35. This is a local debug preview, not a Google Play release. Package ID remains `com.audioenhancermax.worker`; install updates with the same debug signing key.
 
-Questa app trasforma il tuo smartphone Android in un **nodo di calcolo** per la pipeline di elaborazione audio di AudioEnhancerMAX. Installa l'APK, premi START e il tuo telefono inizierà a processare chunk audio inviati dal Mac master.
+## Current features
 
-## ✨ Features
+- Studio imports WAV PCM16/24/32 or float32, MP3, M4A/AAC, FLAC, Ogg/Opus, AMR and MP4/MOV/3GP using codecs installed on the device. Exact codec support varies by device. One audio track, mono/stereo, 8–96 kHz; 100 MiB source and 64 MiB decoded PCM limits.
+- Choose **Format** before Import. The selection persists and launches only that format's MIME hints. Content signatures and actual video-track presence enforce the selection if a provider ignores those hints. M4A/AAC is audio-only; Video requires a video track. Other files may remain visible but disabled in a document provider. All supported is available for providers with inaccurate MIME metadata; decoder validation still applies.
+- Trim, gain, fixed Voice EQ, peak normalization to −1 dBFS and WAV sharing. The Studio puts the waveform and Listen controls before cleanup. A/B keeps the source playhead on the same passage after a trim. Optional listening level matching only attenuates the louder side during playback. The export keeps the applied gain. The original document and last workspace are preserved. Waveform peaks are cached during import and cover the final frame, including very short clips.
+- Eligible H.264/AAC video can retain a private copy. Improve the full duration, then prepare and export an MP4 copy. Audio is re-encoded as AAC; video and rotation pass through. Exactly matched frame count, rate and channels are required. Auxiliary tracks are not exported. Unsuitable video timelines still permit audio-only editing. New imports/results invalidate prepared video exports.
+- Connection uses one private QR/manual pairing with pinned TLS for Mac audio transfer and optional foreground Voice EQ contribution. On Mac open Edge Cluster → Mobile devices & connections. Both devices must be on the same Wi-Fi/hotspot. Before sending the app shows the destination and source or result fingerprint. Mac transfer is limited to 20 MiB decoded WAV. The app shows upload, processing, verification and completion; completed audio and report are associated using SHA-256. Device information, Voice EQ benchmark and round-trip latency are available.
+- The worker only accepts `auto_eq`, at most 2 MiB per chunk. It stops on backgrounding, heat, local editing, upload or explicit stop; the Mac can fall back locally. No phone HTTP server, continuous background processing or second pairing is required.
+- Music brief builds persistent editable text/JSON with separate lyrics. It does not generate music.
 
-- 🎵 **12 filtri DSP**: Noise reduction, studio sound, EQ, compressor, normalizer, e altro
-- 🌐 **Auto-discovery**: Il Mac master trova automaticamente il telefono sulla rete LAN
-- 📡 **HTTP Server integrato**: API REST compatibile al 100% con il cluster manager
-- 🔋 **Foreground Service**: Continua a funzionare in background con notifica persistente
-- 🎨 **Material 3 Dark UI**: Interfaccia moderna con status in tempo reale
+Credentials use Android Keystore AES-GCM, backups are disabled, redirects/cleartext are disabled. Stopping/restarting the Mac session requires a new pairing. No audio is sent until explicitly requested.
 
-## 📦 Installazione
+## Build and verify
 
-### Da APK Pre-compilato (Consigliato)
+Use JDK 17 or 21 with the installed Android SDK (JDK 25 is incompatible with this Gradle/Kotlin combination).
 
-1. Scarica `app-debug.apk` dalla sezione [Releases](../../releases)
-2. Trasferisci l'APK sul tuo dispositivo Android
-3. Abilita "Installa da sorgenti sconosciute" nelle impostazioni
-4. Apri il file APK per installarlo
-
-### Da Sorgente
-
-Requisiti:
-- JDK 17 oppure JDK 21. Evita JDK 25: la toolchain Kotlin/Gradle corrente non lo interpreta correttamente.
-- Android SDK (API 35)
-- Android Build Tools 36.1.0
-
-```bash
-cd android-worker
-export JAVA_HOME="/path/to/jdk17-or-jdk21"
-export ANDROID_HOME="/path/to/android-sdk"
-./gradlew assembleDebug
+```sh
+./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug :app:assembleDebugAndroidTest
+./gradlew connectedDebugAndroidTest
 ```
 
-L'APK si troverà in `app/build/outputs/apk/debug/app-debug.apk`.
+The custom native instrumentation runner checks codecs, MIME intent extras, selected-format rejection, video replacement and preservation of original fixtures. JVM tests cover content signatures, PCM limits, stereo DSP, waveform tail coverage, pairing and text briefs. The optional Mac integration test skips without an isolated QA pairing fixture. Never commit session credentials.
 
-## 🚀 Utilizzo
-
-1. **Avvia l'app** sul tuo smartphone Android
-2. **Premi START WORKER**: il server HTTP si avvia sulla porta 8877
-3. **Connetti alla stessa rete Wi-Fi** del Mac con AudioEnhancerMAX
-4. Il worker verrà **scoperto automaticamente** tramite UDP broadcast
-5. Oppure aggiungilo manualmente dalla dashboard inserendo l'IP del telefono
-
-## 🏗️ Architettura
-
-```
-┌─────────────────────────────────┐
-│     Android Edge Worker APK     │
-├─────────────────────────────────┤
-│  UI: Jetpack Compose Material 3 │
-│  HTTP: NanoHTTPD (porta 8877)   │
-│  DSP: Kotlin puro (FFT, IIR)   │
-│  Discovery: UDP broadcast:9999  │
-│  Service: Foreground + WakeLock │
-└─────────────────────────────────┘
-         ↕  Wi-Fi LAN  ↕
-┌─────────────────────────────────┐
-│   Mac Master (AudioEnhancerMAX) │
-│   cluster_manager.py            │
-└─────────────────────────────────┘
-```
-
-## 📡 API (Compatibile con cluster_manager.py)
-
-| Endpoint | Metodo | Descrizione |
-|----------|--------|-------------|
-| `/worker/health` | GET | Health check + capabilities |
-| `/worker/status` | GET | Stato corrente (CPU, RAM) |
-| `/worker/process` | POST | Processa chunk audio (multipart WAV) |
-
-## 🎛️ Filtri DSP Disponibili
-
-| Filtro | Descrizione |
-|--------|-------------|
-| `remove_noise` | Spectral gating con soglia adattiva |
-| `studio_sound` | Chain broadcast: HPF → Warm → Presence → De-esser → Compressor → Limiter |
-| `auto_eq` | Profilo broadcast per voce |
-| `normalize` | Peak normalization |
-| `wind_noise_remover` | Butterworth HPF + spectral gating |
-| `buzzing_noise_remover` | Notch filter 50/60Hz + armoniche |
-| `static_noise_remover` | Spectral gating stazionario |
-| `reverb_echo_remover` | Sottrazione spettrale |
-| `remove_breaths` | Riduzione respiri (max 80%) |
-| `remove_long_silences` | Rimozione silenzi > 1s |
-| `remove_mouth_sounds` | Riduzione click labiali |
-| `frequency_restoration` | Restauro frequenze |
-
-## 📱 Requisiti
-
-- Android 8.0 (API 26) o superiore
-- Connessione Wi-Fi sulla stessa rete del Mac
-- ~14 MB di spazio
-
-## 📄 License
-
-MIT: Parte del progetto [AudioEnhancerMAX](../)
+The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Before distributing an artifact, verify its compiled manifest, signing identity and SHA-256. Validate file providers, hotspot pairing and playback on physical devices before promoting the preview.

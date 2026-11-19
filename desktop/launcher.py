@@ -15,14 +15,12 @@ import sys
 import threading
 import urllib.error
 import urllib.request
+from urllib.parse import urlencode
 
 
 from app.release import (
     APP_NAME, APP_VERSION, APP_BUILD, DEFAULT_PORT, BUNDLE_IDENTIFIER, RELEASE_CHANNEL,
 )
-
-UI_REVISION = "v390stable2"
-
 
 def _bundle_metadata() -> tuple[str, str]:
     """Return the version/build advertised by the installed app bundle."""
@@ -56,11 +54,15 @@ def _distribution_channel() -> str:
     return "direct"
 
 
-def _support_dir(_distribution: str) -> Path:
+def _support_dir(distribution: str) -> Path:
     # App Sandbox transparently redirects the normal user Library into this
     # app's container. Adding Library/Containers manually would therefore
     # create a duplicated container path inside the real container.
-    path = Path.home() / "Library" / "Application Support" / APP_NAME
+    configured = os.getenv("AEMAX_DATA_DIR") if distribution == "direct" else None
+    path = (
+        Path(configured).expanduser() if configured
+        else Path.home() / "Library" / "Application Support" / APP_NAME
+    )
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -82,16 +84,20 @@ def _health_url(port: int) -> str:
 
 
 def _frontend_url(port: int) -> str:
-    return f"http://127.0.0.1:{port}/?version={APP_VERSION}&ui={UI_REVISION}"
+    version, build = _bundle_metadata()
+    query = urlencode({"version": version, "build": build, "channel": RELEASE_CHANNEL})
+    return f"http://127.0.0.1:{port}/?{query}"
 
 
 def _is_audioenhancermax(port: int, timeout: float = 1.0) -> bool:
     try:
         with urllib.request.urlopen(_health_url(port), timeout=timeout) as response:
             payload = json.loads(response.read().decode("utf-8"))
+        version, build = _bundle_metadata()
         return (
             payload.get("app") == "AudioEnhancerMAX by Fabrizio Degni"
-            and payload.get("version") == APP_VERSION
+            and payload.get("version") == version
+            and payload.get("build") == build
             and payload.get("release_channel") == RELEASE_CHANNEL
         )
     except (OSError, ValueError, urllib.error.URLError):
@@ -129,11 +135,14 @@ def _read_running_port(state_path: Path) -> int | None:
 
 
 def _write_state(state_path: Path, port: int) -> None:
+    version, build = _bundle_metadata()
     state_path.write_text(
         json.dumps(
             {
                 "app": APP_NAME,
-                "version": APP_VERSION,
+                "version": version,
+                "build": build,
+                "release_channel": RELEASE_CHANNEL,
                 "pid": os.getpid(),
                 "port": port,
                 "url": _frontend_url(port),

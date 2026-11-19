@@ -205,6 +205,13 @@ def engine_for_step(step: str) -> dict[str, Any]:
             detail="Only user-approved cut and mute decisions are rendered; the source is preserved.",
         )
 
+    if step == "audio_watermark":
+        return _engine(
+            "pcm24-revision-watermark", "PCM revision watermark", available=True,
+            mode="deterministic-local", version="1",
+            detail="An audio identifier embedded in the lossless review and export.",
+        )
+
     heuristic_steps = {
         "remove_mouth_sounds",
         "remove_filler_words",

@@ -29,6 +29,7 @@ datas = [
 ]
 datas.extend(collect_data_files("faster_whisper", includes=["assets/*.onnx"]))
 datas.extend(copy_metadata("asn1crypto"))
+datas.extend(copy_metadata("qrcode"))
 
 if DISTRIBUTION == "app-store":
     required_model_files = {"config.json", "model.bin", "tokenizer.json", "vocabulary.txt"}
@@ -117,7 +118,7 @@ app = BUNDLE(
         "LSApplicationCategoryType": "public.app-category.music",
         "LSMinimumSystemVersion": "13.0",
         "NSHighResolutionCapable": True,
-        "NSLocalNetworkUsageDescription": "AudioEnhancerMAX uses the local network only when connecting to trusted edge workers selected by the user.",
+        "NSLocalNetworkUsageDescription": "AudioEnhancerMAX uses the local network for the companion devices and trusted audio workers you choose to connect.",
         "NSHumanReadableCopyright": "Copyright (c) 2026 Fabrizio Degni",
         "ITSAppUsesNonExemptEncryption": False,
         "LSMultipleInstancesProhibited": True,

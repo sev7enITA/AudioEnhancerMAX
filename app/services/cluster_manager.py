@@ -56,6 +56,7 @@ class WorkerInfo:
         self.tasks_completed = 0
         self.total_processing_seconds = 0.0
         self.current_task = None
+        self.mobile_id: str | None = None
 
     @property
     def url(self) -> str:
@@ -63,6 +64,7 @@ class WorkerInfo:
 
     def to_dict(self) -> dict:
         return {
+            "mobile_id": self.mobile_id,
             "ip": self.ip,
             "port": self.port,
             "name": self.name,
@@ -93,15 +95,47 @@ class ClusterManager:
 
     @property
     def worker_count(self) -> int:
-        return len(self._workers)
+        return len(self._workers) + len(self._mobile_workers(time.time()))
 
     @property
     def online_workers(self) -> List[WorkerInfo]:
         now = time.time()
-        return [
+        legacy = [
             w for w in self._workers.values()
             if w.status in ("online", "busy") and (now - w.last_seen) < 30
         ]
+        return legacy + self._mobile_workers(now)
+
+    def _mobile_workers(self, now: float) -> List[WorkerInfo]:
+        from app.config import APP_STORE_MODE
+        from app.services.runtime_settings import external_service_allowed
+        if APP_STORE_MODE or not external_service_allowed("trusted-lan"):
+            return []
+
+        from desktop.companion.control import current
+        gateway = current()
+        if gateway is None:
+            return []
+        peers = {peer["id"]: peer for peer in gateway.connected_devices()}
+        workers = []
+        for device in gateway.worker.active():
+            peer = peers.get(device, {})
+            assessment = peer.get("assessment", {})
+            worker = WorkerInfo("127.0.0.1", 0)
+            worker.mobile_id = device
+            worker.name = peer.get("name", "Mobile companion")
+            worker.device_model = assessment.get("model", worker.name)
+            worker.cpu_cores = peer.get("cores", 0)
+            worker.ram_gb = (assessment.get("ram_bytes") or 0) / (1024 ** 3)
+            worker.platform = "mobile"
+            worker.available_filters = ["auto_eq"]
+            stats = gateway.worker.describe(device)
+            worker.status = stats["status"]
+            worker.tasks_completed = stats["tasks_completed"]
+            worker.current_task = "Voice EQ" if worker.status == "busy" else None
+            worker.last_seen = now
+            workers.append(worker)
+        return workers
 
     def start(self):
         """Start discovery listener and server announcer."""
@@ -301,14 +335,16 @@ class ClusterManager:
         """Get cluster status."""
         workers = [w.to_dict() for w in self._workers.values()]
         online = sum(1 for w in self._workers.values() if w.status in ("online", "busy"))
+        mobile_workers = self._mobile_workers(time.time())
+        workers.extend(worker.to_dict() for worker in mobile_workers)
 
         # Get local machine IP for worker setup
         local_ip = self._get_local_ip() if self._running else "disabled"
 
         return {
             "enabled": self._running,
-            "total_workers": len(self._workers),
-            "online_workers": online,
+            "total_workers": len(workers),
+            "online_workers": online + len(mobile_workers),
             "workers": workers,
             "orchestrator_ip": local_ip,
             "discovery_port": DISCOVERY_PORT,
@@ -357,7 +393,16 @@ class ClusterManager:
 
     def distributable_filters(self, options_dict: dict) -> set[str]:
         """Return requested filters implemented by every active worker."""
+        return self._shared_filters(self._processing_workers(), options_dict)
+
+    def _processing_workers(self) -> List[WorkerInfo]:
         workers = self.online_workers
+        # Legacy workers and native phones use different Voice EQ kernels.
+        # Use one group for an entire job. Preserve wider legacy coverage.
+        return [worker for worker in workers if not worker.mobile_id] or workers
+
+    @staticmethod
+    def _shared_filters(workers: List[WorkerInfo], options_dict: dict) -> set[str]:
         if not workers:
             return set()
         common = set(OFFLOADABLE_FILTERS)
@@ -378,16 +423,16 @@ class ClusterManager:
         """
         import httpx
 
-        workers = self.online_workers
+        workers = self._processing_workers()
         if not workers:
-            return audio
+            raise RuntimeError("Edge workers went offline before dispatch")
 
         # Only offload offloadable filters
-        supported = self.distributable_filters(filters)
+        supported = self._shared_filters(workers, filters)
         offload_filters = {key: True for key in supported}
 
         if not offload_filters:
-            return audio
+            raise RuntimeError("Edge workers no longer support the requested filters")
 
         # Split audio into N+1 overlapping chunks (N workers + self).
         n_nodes = len(workers) + 1  # +1 for local processing
@@ -420,6 +465,11 @@ class ClusterManager:
 
         # Process last chunk locally with the same lightweight implementation.
         from app.services.edge_worker import process_chunk
+        if workers[0].mobile_id:
+            from desktop.companion.dsp import voice_eq
+
+            def process_chunk(chunk, sample_rate, _filters):
+                return np.asarray(voice_eq(chunk, sample_rate), dtype=np.float32)
         local_task = asyncio.to_thread(process_chunk, chunks[-1], sr, offload_filters)
 
         # Gather remote results
@@ -484,6 +534,17 @@ class ClusterManager:
         wav_bytes = buf.getvalue()
 
         start_time = time.time()
+
+        if worker.mobile_id:
+            from desktop.companion.control import current
+            gateway = current()
+            if gateway is None or not gateway.worker_allowed() or set(filters) != {"auto_eq"}:
+                raise RuntimeError("Mobile Voice EQ worker is unavailable")
+            data = await asyncio.to_thread(gateway.worker.dispatch, worker.mobile_id, wav_bytes)
+            result, actual_sr = sf.read(io.BytesIO(data), dtype="float32")
+            if actual_sr != sr or result.shape != chunk.shape or not np.all(np.isfinite(result)):
+                raise RuntimeError("Mobile result does not match the source layout")
+            return result
 
         try:
             async with httpx.AsyncClient(timeout=120) as client:

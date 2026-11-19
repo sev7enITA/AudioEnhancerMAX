@@ -7,6 +7,7 @@ from typing import Optional
 import logging
 import hashlib
 import struct
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,42 @@ logger = logging.getLogger(__name__)
 WATERMARK_PREFIX = "AEMAX-Fd"
 WATERMARK_FREQ_BAND = (18000, 19500)  # Near-ultrasonic, inaudible for most
 WATERMARK_BIT_DURATION = 0.02  # 20ms per bit
+REVISION_MARK_PREFIX = b"AEMAX4|"
+REVISION_MARK_ID = re.compile(rb"[A-Za-z0-9_-]{1,32}")
+PCM24_SCALE = 1 << 23
+
+
+def _revision_mark_payload(identifier: bytes) -> bytes:
+    checksum = hashlib.sha256(identifier).hexdigest()[:8].encode("ascii")
+    return REVISION_MARK_PREFIX + identifier + b"|" + checksum + b"\0"
+
+
+def embed_revision_watermark(audio: np.ndarray, identifier: str) -> np.ndarray:
+    """Embed a marker in 24-bit PCM without changing duration or sample rate."""
+    key = identifier.encode("ascii")
+    if not REVISION_MARK_ID.fullmatch(key):
+        raise ValueError("Enter 1–32 letters, digits, hyphens or underscores for the watermark.")
+    bits = np.unpackbits(np.frombuffer(_revision_mark_payload(key), dtype=np.uint8))
+    if len(audio) < len(bits):
+        raise ValueError("The edited audio is too short to embed this watermark.")
+    result = np.asarray(audio, dtype=np.float32).copy()
+    head = np.rint(result[:len(bits)] * PCM24_SCALE)
+    samples = np.clip(head, -PCM24_SCALE, PCM24_SCALE - 1).astype(np.int32)
+    result[:len(bits)] = ((samples & ~1) | bits).astype(np.float32) / PCM24_SCALE
+    return result
+
+
+def _detect_revision_watermark(audio: np.ndarray) -> Optional[dict]:
+    max_bytes = len(REVISION_MARK_PREFIX) + 32 + 1 + 8 + 1
+    head = np.rint(audio[:max_bytes * 8] * PCM24_SCALE).astype(np.int32)
+    payload = np.packbits((head & 1).astype(np.uint8)).tobytes()
+    if not payload.startswith(REVISION_MARK_PREFIX) or b"\0" not in payload:
+        return None
+    payload = payload.split(b"\0", 1)[0] + b"\0"
+    identifier = payload[len(REVISION_MARK_PREFIX):].split(b"|", 1)[0]
+    if not REVISION_MARK_ID.fullmatch(identifier) or payload != _revision_mark_payload(identifier):
+        return None
+    return {"detected": True, "payload": identifier.decode("ascii"), "method": "pcm24-revision"}
 
 
 def embed_watermark(
@@ -97,6 +134,9 @@ def detect_watermark(
     Detect and extract watermark from audio.
     Returns watermark info if found, None otherwise.
     """
+    revision_mark = _detect_revision_watermark(audio)
+    if revision_mark:
+        return revision_mark
     if sr >= 40000:
         result = _detect_ultrasonic(audio, sr)
         if result:

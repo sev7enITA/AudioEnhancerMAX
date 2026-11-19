@@ -87,12 +87,14 @@ class ProcessingOptions(BaseModel):
     output_format: OutputFormat = OutputFormat.WAV
     output_profile: Optional[str] = Field(default=None, max_length=64)
     output_profile_overrides: Dict[str, Any] = Field(default_factory=dict)
+    watermark_identifier: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,32}$")
 
 
 class ProcessingRequest(BaseModel):
     """Request to process an uploaded audio file."""
     file_id: str
     options: ProcessingOptions
+    preserve_channels: bool = False
 
 
 # ── Transcription ──────────────────────────────────

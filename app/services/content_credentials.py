@@ -22,7 +22,7 @@ MEDIA_TYPES = {
 }
 ASSERTION_LABEL = "com.fabriziodegni.audioenhancermax.processing"
 TRUST_DIRECTORY = RESOURCE_DIR / "app" / "resources" / "c2pa"
-TRUST_SNAPSHOT_NEXT_UPDATE = datetime(2027, 2, 2, 17, 2, 28, tzinfo=timezone.utc)
+TRUST_SNAPSHOT_NEXT_UPDATE = datetime(2027, 2, 2, 17, 24, 49, tzinfo=timezone.utc)
 OFFLINE_SETTINGS = {
     "core": {"allowed_network_hosts": [], "decode_identity_assertions": False},
     "verify": {
@@ -34,9 +34,13 @@ OFFLINE_SETTINGS = {
 }
 
 
+def _trust_snapshot_expired() -> bool:
+    return datetime.now(timezone.utc) >= TRUST_SNAPSHOT_NEXT_UPDATE
+
+
 def _trust_anchors() -> list[dict]:
     """Use the shipped public lists until the publisher's next-update date."""
-    if datetime.now(timezone.utc) >= TRUST_SNAPSHOT_NEXT_UPDATE:
+    if _trust_snapshot_expired():
         return []
     return [
         {
@@ -63,6 +67,16 @@ def _validation_context(c2pa, *, timestamp_host: str | None = None):
 
 class CredentialsUnavailable(RuntimeError):
     """The local SDK or signing identity is unavailable."""
+
+
+class TimestampTrustExpired(CredentialsUnavailable):
+    """The packaged timestamp trust list requires an app update."""
+
+
+EXPIRED_TRUST_MESSAGE = (
+    "The built-in C2PA trust lists have expired. Update AudioEnhancerMAX "
+    "to sign with a trusted timestamp. An ordinary export is still available."
+)
 
 
 class CredentialsError(ValueError):
@@ -116,6 +130,8 @@ def _signer(c2pa):
         if not isinstance(public_key, ec.EllipticCurvePublicKey) or not isinstance(public_key.curve, ec.SECP256R1):
             raise ValueError("The signing certificate must use P-256.")
         if profile is not None:
+            if _trust_snapshot_expired():
+                raise TimestampTrustExpired(EXPIRED_TRUST_MESSAGE)
             from app.services.c2pa_keychain import signing_key
 
             label, url, host = profile
@@ -154,6 +170,8 @@ def capabilities() -> dict:
         signer, _ = _signer(c2pa)
         with signer:
             return {"inspect": True, "sign": True}
+    except TimestampTrustExpired as exc:
+        return {"inspect": True, "sign": False, "sign_error": str(exc)}
     except CredentialsUnavailable:
         return {"inspect": True, "sign": False}
 
@@ -190,6 +208,7 @@ def inspect_stream(stream: BinaryIO, suffix: str) -> dict:
                     "ingredient_count": len(manifest.get("ingredients", [])),
                     "failure_codes": [item["code"] for item in failures if "code" in item],
                     "timestamp_trusted": {"timeStamp.trusted", "timeStamp.validated"} <= successes,
+                    "trust_snapshot_expired": _trust_snapshot_expired(),
                 }
     except c2pa.C2paError.RemoteManifest:
         return {"status": "remote", "embedded": False}

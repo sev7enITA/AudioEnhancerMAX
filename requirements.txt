@@ -42,6 +42,7 @@ aiofiles==24.1.0
 pydantic==2.10.4
 psutil==7.2.2
 httpx==0.28.1
+qrcode==8.2
 
 c2pa-python==0.39.0
 cryptography==50.0.2

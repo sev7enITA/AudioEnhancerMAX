@@ -63,7 +63,8 @@ class MacOSPackagingTests(unittest.TestCase):
         script = (ROOT / "scripts/build_macos_app.sh").read_text()
         self.assertIn('runpy.run_path(sys.argv[1])["APP_BUILD"]', script)
         self.assertIn('runpy.run_path(sys.argv[1])["APP_VERSION"]', script)
-        self.assertIn('RELEASE_TAG="v${VERSION}"', script)
+        self.assertIn('runpy.run_path(sys.argv[1])["RELEASE_TAG"]', script)
+        self.assertIn('"AEMAXReleaseChannel": release["RELEASE_CHANNEL"]', script)
 
     def test_direct_build_uses_jit_free_runtime(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text()

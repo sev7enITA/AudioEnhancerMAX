@@ -6,6 +6,8 @@ The signature binds the exported file to a manifest naming AudioEnhancerMAX and 
 
 The AudioEnhancerMAX assertion records the output revision, SHA-256 of the exact processing report, and SHA-256 of the unsigned export. Use the **Processing Report** JSON download to compare the report fingerprint. The app adds no transcript, original filename, full processing report or processing settings to its own assertion. The metadata identifies the signing certificate. The credential records what the issuer asserts about provenance and lets recipients check the file binding and signature. Ownership, recording consent and accuracy of the underlying content require separate evidence.
 
+For a watermarked signed copy, enter an optional audio watermark identifier under Enhance → Advanced, process to WAV or FLAC, review that revision and export the signed copy. The 24-bit PCM watermark is part of the audio samples and processing report. Choose a non-sensitive identifier. Lossy transcodes can remove it, so a signed export of the watermarked revision requires WAV or FLAC.
+
 ## Configure a signing identity
 
 The verifier works without a signing identity. The public Mac 3.9.1 BETA build 3.9.10 uses the local test configuration below. The newer direct Mac source adds Keychain signing and timestamp verification.
@@ -43,7 +45,9 @@ For offline testing, leave `signing.json` absent and place these PEM files in th
 
 On macOS direct builds the usual path is `~/Library/Application Support/AudioEnhancerMAX/c2pa`. Source installations use `AEMAX_DATA_DIR` if supplied, otherwise the repository’s `app` data directory. Store the signing configuration outside the code repository and reopen the Content Credentials panel after configuring it. Local test signing runs offline without a timestamp service. A private test CA produces a valid signature that public validators can report as unrecognized. [Signing certificates](https://opensource.contentauthenticity.org/docs/signing/get-cert/) · [C2PA Conformance Program](https://c2pa.org/conformance/)
 
-Verification uses packaged signer and TSA trust-list snapshots dated 4 November 2026. At their earliest published next-update (2 February 2027, 17:02 UTC), refresh both official trust-list snapshots in a new build to keep timestamped exports available. The inspector continues to check integrity offline, with remote manifest and live OCSP fetches disabled. The SDK uses the public PEM trust anchors. The official JSON lists contain additional historical status information.
+Verification uses packaged signer and TSA trust-list snapshots dated 4 November 2026. At their earliest published next-update (2 February 2027, 17:24 UTC), the app identifies the expired lists in the verification result and disables timestamped Keychain exports with an update message. Ordinary export and offline integrity checks remain available. The inspector disables remote manifest and live OCSP fetches.
+
+To refresh the lists, obtain both official PEM and JSON pairs from the same upstream revision. Record the upstream revision and both PEM hashes in `app/resources/c2pa/PROVENANCE.txt`, and set the code deadline to the earliest of the two published `NextUpdate` values. Verify signer and TSA behavior on the newly signed Mac build. [C2PA Conformance](https://c2pa.org/conformance/)
 
 ## Verify a file
 

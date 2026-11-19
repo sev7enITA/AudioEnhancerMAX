@@ -2,6 +2,28 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
+## [4.0.0 BETA / build 4.0.2] - Unreleased
+
+### Mac workspace
+
+- Organize the main workflow around import and cleanup, listening and editing, and export.
+- Keep the audio timeline and transport accessible during review. Restore access to advanced tools through the workspace and command search.
+- Identify the version, build and BETA channel consistently in the app and package.
+
+### Provenance and export
+
+- Sign WAV, MP3 and FLAC exports with a configured C2PA identity. Link the signed copy to the exact processing report and its audio revision.
+- Add direct Mac signing through a non-exportable Keychain key and verify the RFC 3161 timestamp before delivering a timestamped copy.
+- Preserve offline integrity verification and ordinary export when the bundled trust lists expire. Explain how to restore timestamped signing.
+- Let users review a lossless WAV or FLAC revision with an embedded audio identifier before signing a copy.
+- Discard late report responses after the current result changes and prevent duplicate signing requests when the export panel is reopened.
+
+### Companion
+
+- Apply the selected format at import and validate the decoded media before replacing the current file.
+- Cache waveform peaks and align A/B seek positions after a trim. Match levels in playback while preserving export levels.
+- Send a source or reviewed result to an opted-in paired Mac. Show the target and transfer state, and connect the handoff to the exact audio revision.
+
 ## [3.9.0 / build 3.9.2] - 2026-10-27
 
 ### Added

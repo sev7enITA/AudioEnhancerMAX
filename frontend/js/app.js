@@ -243,14 +243,19 @@ async function configurePreflight() {
 async function checkSystemHealth() {
     try {
         const res = await fetch('/api/health');
+        if (!res.ok) throw new Error('Health check unavailable');
         const data = await res.json();
 
         if (data.version && data.build) {
             const version = `v${data.version}`;
-            document.querySelector('[data-app-version]').textContent = version;
+            const label = data.release_label || data.release_channel;
+            const sidebarRelease = document.querySelector('[data-app-version]');
+            if (sidebarRelease) sidebarRelease.textContent = [version, label].filter(Boolean).join(' · ');
             const aboutRelease = document.getElementById('about-release-identity');
-            aboutRelease.textContent = `${version} · build ${data.build}`;
-            aboutRelease.hidden = false;
+            if (aboutRelease) {
+                aboutRelease.textContent = [version, `build ${data.build}`, label].filter(Boolean).join(' · ');
+                aboutRelease.hidden = false;
+            }
         }
 
         // Update compute label
@@ -285,11 +290,23 @@ async function checkSystemHealth() {
 // ==========================================================
 
 function switchPanel(panelId, navItem) {
+    const nextPanel = panelId === 'speech-editor-panel' ? 'upload-panel' : panelId;
+    const target = document.getElementById(nextPanel);
+    if (!target) return;
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
-
-    document.getElementById(panelId).classList.add('active');
-    if (navItem) navItem.classList.add('active');
+    document.querySelectorAll('.sidebar-nav-item').forEach(n => {
+        n.classList.remove('active');
+        n.removeAttribute('aria-current');
+    });
+    target.classList.add('active');
+    navItem = navItem || document.querySelector(`[data-panel="${nextPanel}"]`);
+    if (navItem) {
+        navItem.classList.add('active');
+        navItem.setAttribute('aria-current', 'page');
+        const tools = navItem.closest('details');
+        if (tools) tools.open = true;
+    }
+    if (panelId === 'speech-editor-panel') window.aemWorkspace?.selectStage('review');
 }
 
 function switchTab(tabId, tabBtn) {
@@ -307,10 +324,11 @@ function switchTab(tabId, tabBtn) {
 // ==========================================================
 
 function initUploadZone() {
-    const zone = document.getElementById('upload-zone');
+    const zone = document.getElementById('studio-welcome');
     const input = document.getElementById('file-input');
 
-    zone.addEventListener('click', () => input.click());
+    document.getElementById('upload-zone').addEventListener('click', () => input.click());
+    document.getElementById('open-another-source').addEventListener('click', () => input.click());
 
     zone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -330,9 +348,9 @@ function initUploadZone() {
     });
 
     input.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            uploadFile(e.target.files[0]);
-        }
+        const [file] = e.target.files;
+        e.target.value = '';
+        if (file) uploadFile(file);
     });
 }
 
@@ -355,37 +373,7 @@ async function uploadFile(file) {
 
         const data = await res.json();
         if (uploadRequestId !== state.resultRequestId) return;
-        state.fileId = data.file_id;
-        state.fileName = data.filename;
-        state.duration = data.duration_seconds;
-        state.sampleRate = data.sample_rate;
-
-        // Update UI
-        document.getElementById('file-info-bar').classList.add('visible');
-        document.getElementById('file-name').textContent = data.filename;
-        document.getElementById('file-duration').textContent = formatDuration(data.duration_seconds);
-        document.getElementById('file-samplerate').textContent = data.sample_rate + ' Hz';
-        document.getElementById('file-format').textContent = data.format.toUpperCase();
-        document.getElementById('file-size').textContent = formatFileSize(data.size_bytes);
-
-        // Show waveform
-        initWaveform(data.audio_url);
-
-        // Enable buttons
-        document.getElementById('btn-process').disabled = false;
-        document.getElementById('btn-transcribe').disabled = false;
-        document.getElementById('btn-speech-editor-analyze').disabled = false;
-        document.getElementById('btn-diarize').disabled = false;
-        document.getElementById('btn-smart-analyze').disabled = false;
-        document.getElementById('btn-watermark').disabled = false;
-        document.getElementById('btn-detect-watermark').disabled = false;
-
-        // Hide "upload first" notices
-        document.querySelectorAll('.requires-file-notice').forEach(el => el.style.display = 'none');
-
-        // Hide upload zone
-        document.getElementById('upload-zone').style.display = 'none';
-        setReviewWorkflowStage('process');
+        showImportedAudio(data);
 
         hideLoading();
         showToast('success', `"${data.filename}" uploaded successfully`);
@@ -396,7 +384,45 @@ async function uploadFile(file) {
     }
 }
 
+function showImportedAudio(data) {
+    state.fileId = data.file_id;
+    state.fileName = data.filename;
+    state.duration = data.duration_seconds;
+    state.sampleRate = data.sample_rate;
+    document.getElementById('file-info-bar').classList.add('visible');
+    document.getElementById('file-name').textContent = data.filename;
+    document.getElementById('file-duration').textContent = formatDuration(data.duration_seconds);
+    document.getElementById('file-samplerate').textContent = data.sample_rate + ' Hz';
+    document.getElementById('file-format').textContent = data.format.toUpperCase();
+    document.getElementById('file-size').textContent = formatFileSize(data.size_bytes);
+    initWaveform(data.audio_url);
+
+    for (const id of [
+        'btn-process', 'btn-transcribe', 'btn-speech-editor-analyze',
+        'btn-diarize', 'btn-smart-analyze', 'btn-watermark', 'btn-detect-watermark',
+    ]) {
+        document.getElementById(id).disabled = false;
+    }
+    document.querySelectorAll('.requires-file-notice').forEach(element => element.style.display = 'none');
+    document.getElementById('upload-zone').style.display = 'none';
+    setReviewWorkflowStage('process');
+    window.aemWorkspace?.sourceOpened(data);
+}
+
+function openCompanionImport(data) {
+    if (state.isProcessing) {
+        showToast('warning', 'Wait for the current operation before opening the mobile source');
+        return false;
+    }
+    invalidateProcessedResult();
+    state.speechEdl = null;
+    showImportedAudio(data);
+    switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+    return true;
+}
+
 function removeFile() {
+    if (state.isProcessing) return;
     invalidateProcessedResult();
     state.fileId = null;
     state.fileName = null;
@@ -439,6 +465,7 @@ function removeFile() {
 
     // Show "upload first" notices again
     document.querySelectorAll('.requires-file-notice').forEach(el => el.style.display = '');
+    window.aemWorkspace?.sourceClosed();
 }
 
 // ==========================================================
@@ -449,61 +476,52 @@ async function initWaveform(audioUrl) {
     const container = document.getElementById('waveform-container');
     container.classList.add('visible');
 
+    const fileId = state.fileId;
     const WaveSurfer = (await import('/static/vendor/wavesurfer/wavesurfer.esm.js')).default;
+    if (fileId !== state.fileId) return;
 
     // Destroy existing
     if (state.wavesurferOriginal) state.wavesurferOriginal.destroy();
 
     state.wavesurferOriginal = WaveSurfer.create({
         container: '#waveform-original',
-        waveColor: 'rgba(124, 58, 237, 0.4)',
-        progressColor: '#7c3aed',
-        cursorColor: '#a855f7',
-        barWidth: 2,
+        waveColor: '#81969f',
+        progressColor: '#ccdee3',
+        cursorColor: '#efc98a',
+        barWidth: 1,
         barGap: 1,
         barRadius: 2,
-        height: 100,
+        height: 180,
         normalize: true,
         url: audioUrl,
         backend: 'WebAudio',
     });
 
-    state.wavesurferOriginal.on('timeupdate', (time) => {
-        document.getElementById('time-current').textContent = formatDuration(time);
-    });
-
-    state.wavesurferOriginal.on('ready', () => {
-        const dur = state.wavesurferOriginal.getDuration();
-        document.getElementById('time-total').textContent = formatDuration(dur);
-    });
-
-    state.wavesurferOriginal.on('play', () => {
-        document.getElementById('btn-play').textContent = 'Pause';
-    });
-
-    state.wavesurferOriginal.on('pause', () => {
-        document.getElementById('btn-play').textContent = 'Play';
-    });
+    showWaveform('original');
+    window.aemWorkspace?.attachWaveform('original', state.wavesurferOriginal);
 }
 
 async function initProcessedWaveform(audioUrl) {
+    const revision = state.processedRevision;
     const WaveSurfer = (await import('/static/vendor/wavesurfer/wavesurfer.esm.js')).default;
+    if (revision !== state.processedRevision) return;
 
     if (state.wavesurferProcessed) state.wavesurferProcessed.destroy();
 
     state.wavesurferProcessed = WaveSurfer.create({
         container: '#waveform-processed',
-        waveColor: 'rgba(6, 182, 212, 0.4)',
-        progressColor: '#06b6d4',
-        cursorColor: '#22d3ee',
-        barWidth: 2,
+        waveColor: '#4aa6b3',
+        progressColor: '#78e6eb',
+        cursorColor: '#efc98a',
+        barWidth: 1,
         barGap: 1,
         barRadius: 2,
-        height: 100,
+        height: 180,
         normalize: true,
         url: audioUrl,
         backend: 'WebAudio',
     });
+    window.aemWorkspace?.attachWaveform('processed', state.wavesurferProcessed);
 }
 
 function showWaveform(which) {
@@ -525,12 +543,15 @@ function showWaveform(which) {
         btnProc.classList.add('active');
         state.currentWaveform = 'processed';
     }
+    btnOrig.setAttribute('aria-pressed', String(which === 'original'));
+    btnProc.setAttribute('aria-pressed', String(which === 'processed'));
+    window.aemWorkspace?.refreshTransport();
 }
 
 function togglePlayback() {
     const ws = state.currentWaveform === 'processed' && state.wavesurferProcessed
         ? state.wavesurferProcessed : state.wavesurferOriginal;
-    if (ws) ws.playPause();
+    if (ws) ws.playPause()?.catch(() => showToast('warning', 'Unable to play this audio'));
 }
 
 function stopPlayback() {
@@ -605,7 +626,8 @@ function updateOptions() {
 
 function updateProcessButton() {
     const hasFile = !!state.fileId;
-    const hasOptions = !!options.output_profile || Object.keys(options).some(k => {
+    const watermark = document.getElementById('opt-watermark-identifier')?.value?.trim();
+    const hasOptions = !!options.output_profile || !!watermark || Object.keys(options).some(k => {
         if (typeof options[k] === 'boolean') return options[k];
         return false;
     });
@@ -617,12 +639,12 @@ function updateProcessButton() {
         const audioDur = getAudioDuration();
         const estimate = estimateFilterSetETA(options, audioDur);
         if (estimate.totalSeconds > 0) {
-            btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio <span class="btn-eta-badge">${formatETA(estimate.totalSeconds)}</span>`;
+            btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio <span class="btn-eta-badge">${formatETA(estimate.totalSeconds)}</span>`;
         } else {
-            btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
+            btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio`;
         }
     } else {
-        btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
+        btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio`;
     }
 }
 
@@ -1272,13 +1294,19 @@ function formatElapsed(seconds) {
 
 async function startProcessing() {
     if (!state.fileId || state.isProcessing) return;
+    const watermarkIdentifier = document.getElementById('opt-watermark-identifier')?.value?.trim() || null;
+    if (watermarkIdentifier && !/^[A-Za-z0-9_-]{1,32}$/.test(watermarkIdentifier)) {
+        showToast('error', 'Use 1–32 letters, digits, hyphens or underscores for the watermark.');
+        return;
+    }
     state.isProcessing = true;
     const fileId = state.fileId;
     const requestId = invalidateProcessedResult();
     setReviewWorkflowStage('process');
 
     // Count processing steps
-    const stepCount = Object.keys(options).filter(k => typeof options[k] === 'boolean' && options[k]).length;
+    const stepCount = Object.keys(options).filter(k => typeof options[k] === 'boolean' && options[k]).length +
+        Number(Boolean(watermarkIdentifier));
 
     startActivity('Audio Processing', stepCount);
 
@@ -1305,7 +1333,7 @@ async function startProcessing() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 file_id: state.fileId,
-                options: options,
+                options: {...options, watermark_identifier: watermarkIdentifier},
             }),
         });
 
@@ -1322,6 +1350,7 @@ async function startProcessing() {
         state.processedUrl = result.output_url;
         state.processedVersion = 'processed';
         state.processingReportUrl = result.report_url || null;
+        window.aemWorkspace?.resultOpened(result);
 
         // Show processed waveform
         await initProcessedWaveform(result.output_url);
@@ -1330,7 +1359,7 @@ async function startProcessing() {
         // Show download bar
         const dlBar = document.getElementById('download-bar');
         dlBar.classList.add('visible');
-        let downloadSummary = `Completed revision ${result.revision.slice(0, 8)} - ${formatDuration(result.duration_seconds)} - ${result.sample_rate}Hz - ${result.format.toUpperCase()}`;
+        let downloadSummary = `Revision ${result.revision.slice(0, 8)} · ${formatDuration(result.duration_seconds)} · Master ${result.format.toUpperCase()} at ${result.sample_rate} Hz`;
         if (result.report_summary) {
             downloadSummary += ` - Quality ${result.report_summary.input_quality_score} → ${result.report_summary.output_quality_score}`;
         }
@@ -1350,8 +1379,8 @@ async function startProcessing() {
         showToast('error', e.message);
     } finally {
         state.isProcessing = false;
-        document.getElementById('btn-process').disabled = false;
-        document.getElementById('btn-process').innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
+        updateProcessButton();
+        window.aemWorkspace?.refreshSession();
     }
 }
 
@@ -1431,22 +1460,30 @@ function connectProgressWS(fileId) {
 // Smart Enhance 2.0 (deterministic local analysis)
 // ==========================================================
 
-async function runSmartMode(profile = null) {
+async function runSmartMode(profile = null, {quiet = false} = {}) {
     if (!state.fileId) return;
 
+    const fileId = state.fileId;
     const profileSelect = document.getElementById('smart-profile');
     state.smartProfile = profile || (profileSelect ? profileSelect.value : state.smartProfile) || 'balanced';
     if (profileSelect) profileSelect.value = state.smartProfile;
 
-    startActivity('Smart Enhance 2.0 - Local Analysis');
-    updateActivity('Measuring level, noise, clipping, silence and spectrum...', 0.1);
+    if (!quiet) {
+        startActivity('Smart Enhance 2.0 - Local Analysis');
+        updateActivity('Measuring level, noise, clipping, silence and spectrum...', 0.1);
+    }
 
     try {
-        const res = await fetch(`/api/smart-mode/${state.fileId}?profile=${encodeURIComponent(state.smartProfile)}`, { method: 'POST' });
+        const res = await fetch(`/api/smart-mode/${fileId}?profile=${encodeURIComponent(state.smartProfile)}`, { method: 'POST' });
         if (!res.ok) throw new Error('Smart mode analysis failed');
 
         const data = await res.json();
+        if (fileId !== state.fileId) {
+            if (!quiet) stopActivity(false);
+            return;
+        }
         state.smartSuggestions = data;
+        window.aemWorkspace?.showSourceAnalysis(data);
 
         // Show banner
         const banner = document.getElementById('smart-mode-banner');
@@ -1503,12 +1540,17 @@ async function runSmartMode(profile = null) {
 
         document.getElementById('smart-analysis-content').innerHTML = html;
 
-        stopActivity(true);
-        showToast('success', `Smart Enhance: ${quality.quality_score}/100, ${data.selected_profile} profile ready`);
+        if (!quiet) {
+            stopActivity(true);
+            showToast('success', `Smart Enhance: ${quality.quality_score}/100, ${data.selected_profile} profile ready`);
+        }
+        return data;
 
     } catch (e) {
-        stopActivity(false);
-        showToast('error', e.message);
+        if (!quiet) {
+            stopActivity(false);
+            showToast('error', e.message);
+        }
     }
 }
 
@@ -1516,6 +1558,7 @@ function applySmartPreset() {
     if (state.smartSuggestions && state.smartSuggestions.suggested_options) {
         setOptionsFromPreset(state.smartSuggestions.suggested_options);
         switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+        window.aemWorkspace?.selectStage('clean');
         showToast('success', `${state.smartProfile} Smart Enhance profile applied`);
     }
 }
@@ -1524,22 +1567,34 @@ function applySmartPreset() {
 // Precision Speech Editor (non-destructive EDL)
 // ==========================================================
 
+let speechAnalysisRequest = null;
+
+function clearSpeechAnalysis() {
+    speechAnalysisRequest?.controller.abort();
+    speechAnalysisRequest = null;
+    document.getElementById('speech-analysis-status').hidden = true;
+}
+
 async function runSpeechEditor() {
-    if (!state.fileId) return;
+    if (!state.fileId || speechAnalysisRequest || state.isProcessing) return;
+    const request = { fileId: state.fileId, controller: new AbortController() };
+    speechAnalysisRequest = request;
     const button = document.getElementById('btn-speech-editor-analyze');
+    const status = document.getElementById('speech-analysis-status');
     const language = document.getElementById('speech-editor-language').value || null;
     const fillers = document.getElementById('speech-editor-fillers').value
         .split(',').map(item => item.trim()).filter(Boolean);
     button.disabled = true;
-    startActivity('Precision Speech Editor');
-    updateActivity('Transcribing locally and locating review candidates...', 0.08);
+    status.textContent = 'Transcribing locally and looking for review candidates…';
+    status.hidden = false;
 
     try {
         const response = await fetch('/api/speech-editor/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: request.controller.signal,
             body: JSON.stringify({
-                file_id: state.fileId,
+                file_id: request.fileId,
                 language,
                 custom_filler_words: fillers.length ? fillers : null,
             }),
@@ -1548,16 +1603,20 @@ async function runSpeechEditor() {
             const error = await response.json();
             throw new Error(error.detail || 'Speech analysis failed');
         }
-        state.speechEdl = await response.json();
+        const edl = await response.json();
+        if (speechAnalysisRequest !== request || state.fileId !== request.fileId) return;
+        state.speechEdl = edl;
         state.transcriptSelection = [];
         renderSpeechEdl();
-        stopActivity(true);
         showToast('success', `${state.speechEdl.summary.total_candidates} review candidates found; no edit has been applied`);
     } catch (error) {
-        stopActivity(false);
+        if (speechAnalysisRequest !== request || state.fileId !== request.fileId) return;
         showToast('error', error.message);
     } finally {
-        button.disabled = false;
+        if (speechAnalysisRequest === request) {
+            clearSpeechAnalysis();
+            button.disabled = !state.fileId;
+        }
     }
 }
 
@@ -1632,12 +1691,15 @@ function renderTranscriptWords() {
     const selected = state.transcriptSelection.length === 2
         ? [Math.min(...state.transcriptSelection), Math.max(...state.transcriptSelection)]
         : state.transcriptSelection;
+    const focusedIndex = document.activeElement?.closest('#speech-transcript-words .speech-word')?.dataset.wordIndex;
+    const tabIndexWord = Number(focusedIndex ?? state.transcriptSelection.at(-1) ?? 0);
     container.innerHTML = words.slice(0, 1200).map((word, index) => {
         const isSelected = selected.length === 2
             ? index >= selected[0] && index <= selected[1]
             : selected[0] === index;
-        return `<button type="button" class="speech-word ${isSelected ? 'selected' : ''}" role="option" aria-selected="${isSelected}" onclick="selectTranscriptWord(${index})" title="${formatDuration(word.start)}">${escapeHtml(word.display_word || word.word)}</button>`;
+        return `<button type="button" class="speech-word ${isSelected ? 'selected' : ''}" role="option" aria-selected="${isSelected}" data-word-index="${index}" tabindex="${index === tabIndexWord ? '0' : '-1'}" onclick="selectTranscriptWord(${index})" title="${formatDuration(word.start)}">${escapeHtml(word.display_word || word.word)}</button>`;
     }).join('');
+    if (focusedIndex !== undefined) container.querySelector(`[data-word-index="${tabIndexWord}"]`)?.focus({preventScroll: true});
     updateTranscriptSelectionUi();
 }
 
@@ -1648,6 +1710,7 @@ function selectTranscriptWord(index) {
         state.transcriptSelection.push(index);
     }
     renderTranscriptWords();
+    window.aemWorkspace?.seekTranscriptWord(index);
 }
 
 function clearTranscriptSelection() {
@@ -1662,6 +1725,8 @@ function updateTranscriptSelectionUi() {
     const complete = state.transcriptSelection.length === 2;
     if (cutButton) cutButton.disabled = !complete;
     if (muteButton) muteButton.disabled = !complete;
+    const audition = document.getElementById('btn-audition-range');
+    if (audition) audition.disabled = !complete;
     if (!note) return;
     if (!state.transcriptSelection.length) {
         note.textContent = 'No transcript range selected.';
@@ -1677,16 +1742,17 @@ function updateTranscriptSelectionUi() {
 
 async function createTranscriptEdit(action) {
     if (!state.speechEdl || state.transcriptSelection.length !== 2) return;
+    const { fileId, speechEdl } = state;
     const [wordStart, wordEnd] = [Math.min(...state.transcriptSelection), Math.max(...state.transcriptSelection)];
     const words = state.speechEdl.source_words || [];
     if (!words[wordStart] || !words[wordEnd]) return;
     const text = words.slice(wordStart, wordEnd + 1).map(word => word.display_word || word.word).join(' ');
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}/manual-edit`, {
+        const response = await fetch(`/api/speech-editor/${fileId}/manual-edit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                revision: state.speechEdl.revision,
+                revision: speechEdl.revision,
                 start: words[wordStart].start,
                 end: words[wordEnd].end,
                 action,
@@ -1700,11 +1766,14 @@ async function createTranscriptEdit(action) {
             const error = await response.json();
             throw new Error(error.detail || 'Could not create transcript edit');
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         state.transcriptSelection = [];
         renderSpeechEdl();
         showToast('success', `${action === 'cut' ? 'Cut' : 'Mute'} proposal added for review`);
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1712,21 +1781,25 @@ async function createTranscriptEdit(action) {
 
 async function navigateSpeechHistory(direction) {
     if (!state.speechEdl) return;
+    const { fileId, speechEdl } = state;
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}/${direction}`, {
+        const response = await fetch(`/api/speech-editor/${fileId}/${direction}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ revision: state.speechEdl.revision }),
+            body: JSON.stringify({ revision: speechEdl.revision }),
         });
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || `Could not ${direction}`);
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         state.transcriptSelection = [];
         renderSpeechEdl();
         showToast('info', direction === 'undo' ? 'Last EDL change undone' : 'EDL change restored');
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1739,12 +1812,13 @@ function exportSpeechEdl(format) {
 
 async function setSpeechEditDecision(candidateId, decision) {
     if (!state.speechEdl) return;
+    const { fileId, speechEdl } = state;
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}`, {
+        const response = await fetch(`/api/speech-editor/${fileId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                revision: state.speechEdl.revision,
+                revision: speechEdl.revision,
                 decisions: [{ candidate_id: candidateId, decision }],
             }),
         });
@@ -1752,9 +1826,12 @@ async function setSpeechEditDecision(candidateId, decision) {
             const error = await response.json();
             throw new Error(error.detail || 'Could not save edit decision');
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         renderSpeechEdl();
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1762,23 +1839,27 @@ async function setSpeechEditDecision(candidateId, decision) {
 
 async function applySpeechEditBulk(mode) {
     if (!state.speechEdl) return;
+    const { fileId, speechEdl } = state;
     const decisions = state.speechEdl.candidates.map(candidate => ({
         candidate_id: candidate.id,
         decision: mode === 'high-confidence' && candidate.confidence >= 0.8 ? 'apply' : 'keep',
     }));
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}`, {
+        const response = await fetch(`/api/speech-editor/${fileId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ revision: state.speechEdl.revision, decisions }),
+            body: JSON.stringify({ revision: speechEdl.revision, decisions }),
         });
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || 'Could not update edit decisions');
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         renderSpeechEdl();
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1786,9 +1867,12 @@ async function applySpeechEditBulk(mode) {
 
 async function reloadSpeechEdl() {
     if (!state.fileId) return;
-    const response = await fetch(`/api/speech-editor/${state.fileId}`, { cache: 'no-store' });
+    const { fileId, speechEdl } = state;
+    const response = await fetch(`/api/speech-editor/${fileId}`, { cache: 'no-store' });
     if (response.ok) {
-        state.speechEdl = await response.json();
+        const updated = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = updated;
         renderSpeechEdl();
     }
 }
@@ -1826,6 +1910,7 @@ async function renderSpeechEditor() {
         state.processedUrl = result.output_url;
         state.processedVersion = 'speech_edit';
         state.processingReportUrl = result.report_url || null;
+        window.aemWorkspace?.resultOpened(result);
         await initProcessedWaveform(result.output_url);
         showWaveform('processed');
         document.getElementById('download-bar').classList.add('visible');
@@ -1845,6 +1930,7 @@ async function renderSpeechEditor() {
     } finally {
         state.isProcessing = false;
         button.disabled = false;
+        window.aemWorkspace?.refreshSession();
     }
 }
 
@@ -2651,8 +2737,8 @@ async function detectWatermark() {
         if (data.watermark && data.watermark.detected) {
             document.getElementById('watermark-result').innerHTML =
                 `<div class="card" style="border-color:var(--success)"><div class="card-title">${svgIcon('search', 'icon-img inline-icon')}Watermark Detected</div>
-                <p class="text-sm mt-12">Method: ${data.watermark.method}</p>
-                <p class="text-xs text-muted">Payload: ${data.watermark.payload}</p></div>`;
+                <p class="text-sm mt-12">Method: ${escapeHtml(String(data.watermark.method))}</p>
+                <p class="text-xs text-muted">Payload: ${escapeHtml(String(data.watermark.payload))}</p></div>`;
         } else {
             document.getElementById('watermark-result').innerHTML =
                 `<div class="card" style="border-color:var(--warning)"><div class="card-title">No Watermark Found</div></div>`;
@@ -2864,21 +2950,13 @@ function initReviewDeck() {
     document.addEventListener('keydown', handleReportModalKeydown);
 }
 
-function setReviewWorkflowStage(stage, complete = false) {
-    const workflow = document.getElementById('review-workflow');
-    if (!workflow) return;
-    const stages = ['diagnose', 'process', 'review', 'deliver'];
-    const currentIndex = Math.max(0, stages.indexOf(stage));
-    workflow.dataset.current = stages[currentIndex];
-    workflow.querySelectorAll('[data-stage]').forEach((item) => {
-        const itemIndex = stages.indexOf(item.dataset.stage);
-        item.classList.toggle('is-current', itemIndex === currentIndex && !complete);
-        item.classList.toggle('is-complete', itemIndex < currentIndex || (complete && itemIndex <= currentIndex));
-        if (itemIndex > currentIndex) item.setAttribute('aria-disabled', 'true');
-        else item.removeAttribute('aria-disabled');
-        if (itemIndex === currentIndex && !complete) item.setAttribute('aria-current', 'step');
-        else item.removeAttribute('aria-current');
-    });
+function setReviewWorkflowStage(stage) {
+    window.aemWorkspace?.selectStage({
+        diagnose: 'clean',
+        process: 'clean',
+        review: 'review',
+        deliver: 'export',
+    }[stage]);
 }
 
 async function ensureComplianceTargets(showErrors = true) {
@@ -2941,6 +3019,8 @@ function invalidateProcessedResult() {
     state.processedRevision = null;
     state.processedUrl = null;
     state.processingReportUrl = null;
+    state.currentReport = null;
+    closeProcessingReport(false);
     stopPlayback();
     if (state.wavesurferProcessed) {
         state.wavesurferProcessed.destroy();
@@ -2960,7 +3040,7 @@ function resetReviewDeck() {
     document.getElementById('download-bar')?.classList.remove('visible');
     document.getElementById('waveform-container')?.classList.remove('blind-review-active');
     const waveformLabel = document.querySelector('.waveform-label');
-    if (waveformLabel) waveformLabel.textContent = 'Waveform';
+    if (waveformLabel) waveformLabel.textContent = 'Signal';
     const target = document.getElementById('compliance-target');
     if (target && Array.from(target.options).some(option => option.value === 'podcast')) target.value = 'podcast';
     const includeSource = document.getElementById('capsule-include-source');
@@ -3164,7 +3244,7 @@ async function submitBlindDecision(slot) {
         stopPlayback();
         document.getElementById('waveform-container')?.classList.remove('blind-review-active');
         const waveformLabel = document.querySelector('.waveform-label');
-        if (waveformLabel) waveformLabel.textContent = 'Waveform';
+        if (waveformLabel) waveformLabel.textContent = 'Signal';
         showWaveform(selectedVersion === 'no_difference' ? 'processed' : selectedVersion);
 
         const selectedLabel = selectedVersion === 'no_difference'
@@ -3179,7 +3259,6 @@ async function submitBlindDecision(slot) {
         const startButton = document.getElementById('btn-start-ab');
         startButton.disabled = false;
         startButton.innerHTML = `${buttonIcon('repeat')}Start fresh round`;
-        setReviewWorkflowStage('deliver');
         showToast('success', 'Blind A/B decision saved and mapping revealed');
     } catch (error) {
         setBlindDecisionBusy(false);
@@ -3301,11 +3380,12 @@ async function downloadProcessingReport() {
     if (!state.processingReportUrl || !state.fileId) return;
     const reportUrl = state.processingReportUrl;
     const fileId = state.fileId;
+    const isCurrent = () => reportUrl === state.processingReportUrl && fileId === state.fileId;
     try {
         const response = await fetch(reportUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error('Quality report is unavailable');
         const blob = await response.blob();
-        if (reportUrl !== state.processingReportUrl || fileId !== state.fileId) return;
+        if (!isCurrent()) return;
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
@@ -3316,33 +3396,38 @@ async function downloadProcessingReport() {
         setTimeout(() => URL.revokeObjectURL(url), 30000);
         showToast('success', 'Local quality report downloaded');
     } catch (error) {
-        showToast('error', error.message);
+        if (isCurrent()) showToast('error', error.message);
     }
 }
 
 async function openProcessingReport() {
     if (!state.processingReportUrl || !state.fileId) return;
+    const reportUrl = state.processingReportUrl;
+    const fileId = state.fileId;
+    const isCurrent = () => reportUrl === state.processingReportUrl && fileId === state.fileId;
     try {
-        const response = await fetch(state.processingReportUrl, { cache: 'no-store' });
+        const response = await fetch(reportUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error('Quality report is unavailable');
-        state.currentReport = await response.json();
-        renderProcessingReport(state.currentReport);
+        const report = await response.json();
+        if (!isCurrent()) return;
+        state.currentReport = report;
+        renderProcessingReport(report);
         const modal = document.getElementById('report-modal');
-        reportReturnFocus = document.activeElement;
+        if (modal.hidden) reportReturnFocus = document.activeElement;
         modal.hidden = false;
         document.body.classList.add('report-open');
         modal.querySelector('button')?.focus();
     } catch (error) {
-        showToast('error', error.message);
+        if (isCurrent()) showToast('error', error.message);
     }
 }
 
-function closeProcessingReport() {
+function closeProcessingReport(restoreFocus = true) {
     const modal = document.getElementById('report-modal');
     if (!modal || modal.hidden) return;
     modal.hidden = true;
     document.body.classList.remove('report-open');
-    if (reportReturnFocus instanceof HTMLElement && document.contains(reportReturnFocus)) reportReturnFocus.focus();
+    if (restoreFocus && reportReturnFocus instanceof HTMLElement && document.contains(reportReturnFocus)) reportReturnFocus.focus();
     reportReturnFocus = null;
 }
 
@@ -3456,8 +3541,20 @@ function hideLoading() {
     }
 }
 
+let workspaceNoticeTimeout;
+
 function showToast(type, message) {
+    const notice = document.getElementById('studio-session-notice');
+    if (notice && state.fileId && document.getElementById('upload-panel')?.classList.contains('active')) {
+        clearTimeout(workspaceNoticeTimeout);
+        notice.textContent = String(message || '');
+        notice.dataset.notice = type;
+        notice.hidden = false;
+        workspaceNoticeTimeout = setTimeout(() => { notice.hidden = true; }, 7000);
+        return;
+    }
     const container = document.getElementById('toast-container');
+    while (container.childElementCount >= 2) container.firstElementChild.remove();
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
 
@@ -3569,7 +3666,8 @@ function updateClusterUI(data) {
     const list = document.getElementById('cluster-workers-list');
     const empty = document.getElementById('cluster-empty');
 
-    if (workers.length === 0) {
+    const legacyWorkers = workers.filter(worker => !worker.mobile_id);
+    if (legacyWorkers.length === 0) {
         if (empty) empty.style.display = '';
         // Remove any worker cards but keep empty state
         list.querySelectorAll('.cluster-node.worker-node').forEach(n => n.remove());
@@ -3582,7 +3680,7 @@ function updateClusterUI(data) {
     list.querySelectorAll('.cluster-node.worker-node').forEach(n => n.remove());
 
     // Render new worker cards
-    workers.forEach(worker => {
+    legacyWorkers.forEach(worker => {
         const card = createWorkerCard(worker);
         list.appendChild(card);
     });
@@ -3801,11 +3899,11 @@ function renderWorkerNodes() {
 
         const node = document.createElement('div');
         node.className = 'proc-node worker';
-        node.id = `proc-node-${w.ip.replace(/\./g, '-')}`;
+        node.id = `proc-node-${w.mobile_id || w.ip.replace(/\./g, '-')}`;
         node.innerHTML = `
             <div class="proc-node-head">
                 <span class="proc-node-dot ${w.status === 'busy' ? 'busy' : 'online'}"></span>
-                <span class="proc-node-label">${svgIcon('edge-device', 'icon-img inline-icon')}${w.device_model || w.name}</span>
+                <span class="proc-node-label">${svgIcon('edge-device', 'icon-img inline-icon')}${escapeHtml(w.device_model || w.name || 'Worker')}</span>
             </div>
             <div class="proc-node-chip">${w.cpu_cores} cores · ${w.ram_gb} GB RAM · ${(w.available_filters || []).length} DSP filters</div>
             <div class="proc-node-meters">

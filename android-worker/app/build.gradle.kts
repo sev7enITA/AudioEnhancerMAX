@@ -11,9 +11,10 @@ android {
     defaultConfig {
         applicationId = "com.audioenhancermax.worker"
         minSdk = 26
+        testInstrumentationRunner = "com.audioenhancermax.worker.MediaInstrumentation"
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 11
+        versionName = "4.0.0"
     }
 
     buildTypes {
@@ -62,9 +63,12 @@ dependencies {
     // Core KTX
     implementation("androidx.core:core-ktx:1.13.1")
 
-    // NanoHTTPD (embedded HTTP server)
-    implementation("org.nanohttpd:nanohttpd:2.3.1")
+    // Foreground lifecycle and regression tests
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.2")
+    testImplementation("junit:junit:4.13.2")
     
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
     // JSON
     implementation("com.google.code.gson:gson:2.11.0")
 }

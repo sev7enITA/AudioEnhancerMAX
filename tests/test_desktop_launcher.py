@@ -1,12 +1,13 @@
 import tempfile
 import json
+import os
 import unittest
 from pathlib import Path
 import plistlib
 from unittest.mock import patch, MagicMock
 
 from desktop.launcher import _bundle_metadata, _support_dir, _is_audioenhancermax
-from app.release import APP_NAME, APP_VERSION, RELEASE_CHANNEL, BUNDLE_IDENTIFIER, DEFAULT_PORT
+from app.release import APP_NAME, APP_VERSION, APP_BUILD, RELEASE_CHANNEL, BUNDLE_IDENTIFIER, DEFAULT_PORT
 
 
 class DesktopLauncherTests(unittest.TestCase):
@@ -57,19 +58,34 @@ class DesktopLauncherTests(unittest.TestCase):
             experimental.mkdir(parents=True)
             experimental_sentinel = experimental / "runtime_settings.json"
             experimental_sentinel.write_text('{"owner":"experimental"}')
-            with patch("desktop.launcher.Path.home", return_value=fake_home):
+            with patch("desktop.launcher.Path.home", return_value=fake_home), patch.dict(
+                os.environ, {"AEMAX_DATA_DIR": ""},
+            ):
                 selected = _support_dir("direct")
             self.assertEqual(selected, stable)
             self.assertEqual(sentinel.read_text(), '{"owner":"stable"}')
             self.assertEqual(experimental_sentinel.read_text(), '{"owner":"experimental"}')
 
-    def test_launcher_does_not_attach_to_other_release_channel(self):
-        for channel, expected in (("experimental", False), (None, False), (RELEASE_CHANNEL, True)):
+    def test_direct_override_isolates_launcher_state_and_audio(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            workspace = Path(temp_dir) / "release-validation"
+            with patch.dict(os.environ, {"AEMAX_DATA_DIR": str(workspace)}):
+                self.assertEqual(_support_dir("direct"), workspace)
+                self.assertTrue(workspace.is_dir())
+
+    def test_launcher_only_attaches_to_matching_build_and_channel(self):
+        cases = (
+            ("experimental", APP_BUILD, False),
+            (None, APP_BUILD, False),
+            (RELEASE_CHANNEL, "older-build", False),
+            (RELEASE_CHANNEL, APP_BUILD, True),
+        )
+        for channel, build, expected in cases:
             with self.subTest(channel=channel):
                 response = MagicMock()
                 response.__enter__.return_value.read.return_value = json.dumps({
                     "app": "AudioEnhancerMAX by Fabrizio Degni",
-                    "version": APP_VERSION, "release_channel": channel,
+                    "version": APP_VERSION, "build": build, "release_channel": channel,
                 }).encode()
                 with patch("desktop.launcher.urllib.request.urlopen", return_value=response):
                     self.assertEqual(_is_audioenhancermax(8001), expected)

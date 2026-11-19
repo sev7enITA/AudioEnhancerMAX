@@ -1,0 +1,443 @@
+package com.audioenhancermax.worker
+
+import android.app.Application
+import android.media.MediaPlayer
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import androidx.compose.runtime.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.google.gson.JsonParser
+import kotlinx.coroutines.*
+import java.io.File
+import java.util.UUID
+import kotlin.math.roundToInt
+
+private data class ResultReceipt(
+    val sourceSha: String,
+    val resultSha: String,
+    val comparison: AudioComparison?,
+    val reportSha: String? = null
+)
+
+class CompanionViewModel(app:Application):AndroidViewModel(app) {
+    private val prefs=app.getSharedPreferences("companion",0)
+    var importFilter by mutableStateOf(runCatching{AudioImportPolicy.Filter.valueOf(prefs.getString("importFilter","ALL")!!)}.getOrDefault(AudioImportPolicy.Filter.ALL))
+        private set
+    fun setImportFormat(filter:AudioImportPolicy.Filter){importFilter=filter;prefs.edit().putString("importFilter",filter.name).apply()}
+    private val secure=SecurePairing(app)
+    private val gson=Gson()
+    private val device=prefs.getString("device",null) ?: UUID.randomUUID().toString().also{prefs.edit().putString("device",it).apply()}
+    val exports=File(app.filesDir,"exports").apply{mkdirs()}
+    private val original=File(app.filesDir,"original.wav")
+    var importAnalysis by mutableStateOf(prefs.getString("importAnalysis", "" ) ?: "");private set
+    var wave by mutableStateOf<Wave?>(null);private set
+    var waveformPeaks by mutableStateOf(FloatArray(0));private set
+    var videoSource by mutableStateOf<File?>(null);private set
+    var videoResult by mutableStateOf<File?>(null);private set
+    var name by mutableStateOf(prefs.getString("name","No audio imported")!!);private set
+    var result by mutableStateOf<File?>(null);private set
+    var error by mutableStateOf<String?>(null)
+    var busy by mutableStateOf(false);private set
+    var macState by mutableStateOf("Not connected");private set
+    var connected by mutableStateOf(false);private set
+    var macName by mutableStateOf("Saved Mac");private set
+    var macEndpoint by mutableStateOf("");private set
+    var latencyMs by mutableStateOf<Long?>(null);private set
+    private var presence:Job?=null
+    private suspend fun checkConnection(api:CompanionClient,acceptNew:Boolean=false) {
+        val began=android.os.SystemClock.elapsedRealtime()
+        val state=api.request("/v1/status").json()
+        if(!acceptNew && client !== api)return
+        latencyMs=android.os.SystemClock.elapsedRealtime()-began
+        DeviceAssessment.roundTripMs=latencyMs
+        assessmentText=DeviceAssessment.summary(getApplication<Application>())
+        macName=state.get("mac_name")?.asString ?: "AudioEnhancerMAX Mac"
+        macEndpoint=api.pairing.endpoint;connected=true
+    }
+    fun startPresence() {
+        if(presence?.isActive==true)return
+        presence=viewModelScope.launch {
+            while(isActive) {
+                val api=client
+                if(api!=null && !busy) try {checkConnection(api)} catch(e:Exception) {
+                    if(e is CancellationException)throw e
+                    connected=false;latencyMs=null
+                }
+                delay(5000)
+            }
+        }
+    }
+    fun stopPresence(){presence?.cancel();presence=null;connected=false;latencyMs=null}
+    var assessmentText by mutableStateOf(DeviceAssessment.summary(app));private set
+    fun assessDevice()=action {
+        stopWorker()
+        withContext(Dispatchers.Default){DeviceAssessment.benchmark()}
+        assessmentText=DeviceAssessment.summary(getApplication<Application>())
+        client?.let{runCatching{checkConnection(it)}}
+    }
+    var paired by mutableStateOf(false);private set
+    var workerRunning by mutableStateOf(false);private set
+    var workerState by mutableStateOf("Stopped");private set
+    var completions by mutableIntStateOf(0);private set
+    var playbackState by mutableStateOf("Stopped");private set
+    var playhead by mutableFloatStateOf(0f);private set
+    var comparison by mutableStateOf<AudioComparison?>(null);private set
+    var matchListeningLevels by mutableStateOf(true);private set
+    var sourceRevision by mutableStateOf("");private set
+    var resultRevision by mutableStateOf("");private set
+    var hasPendingJob by mutableStateOf(prefs.contains("pendingJob"));private set
+    val transferSelection: String
+        get() = if (sendResult) "Current result · $resultRevision" else "Imported audio · $sourceRevision"
+    var start by mutableStateOf("0");var end by mutableStateOf("1");var gain by mutableFloatStateOf(0f)
+    var sendResult by mutableStateOf(false)
+    var normalize by mutableStateOf(true);var voice by mutableStateOf(false)
+    var music by mutableStateOf(MusicDraft());private set
+    var report by mutableStateOf<File?>(null);private set
+    private var client:CompanionClient?=null
+    private var worker:Job?=null
+    private var stopJob:Job?=null
+    private var workerEpoch=0
+    private var player:MediaPlayer?=null
+    private var playbackTracking: Job? = null
+    private var playingOriginal = true
+    private var playerReady = false
+    private var sourceSha = ""
+    init {
+        viewModelScope.launch {withContext(Dispatchers.Default){runCatching{DeviceAssessment.benchmark()}};assessmentText=DeviceAssessment.summary(app)}
+        secure.load()?.let{client=CompanionClient(it,device){DeviceAssessment.header(app)};macEndpoint=it.endpoint;paired=true;macState="Paired · reconnect to check"}
+        runCatching {
+            if(original.exists()) {
+                val bytes=original.readBytes()
+                val restored=Wave.decode(bytes)
+                sourceSha=sha256(bytes)
+                sourceRevision=sourceSha.take(8)
+                wave=restored
+                end=restored.duration.toString()
+                waveformPeaks=restored.overview()
+            }
+        }
+        val videoName=prefs.getString("videoSource",null)
+        if(videoName!=null && videoName.startsWith("media-import-") && !videoName.contains("/") && original.exists() && prefs.getString("videoWaveHash",null)==sha256(original.readBytes())) {
+            videoSource=File(app.filesDir,videoName).takeIf{it.exists()}
+        }
+        app.filesDir.listFiles()?.filter{it != videoSource && Regex("media-import-[0-9]+\\.bin").matches(it.name)}?.forEach{it.delete()}
+        exports.listFiles()?.filter{it.name.startsWith("enhanced-") && it.extension=="mp4" && runCatching{UUID.fromString(it.nameWithoutExtension.removePrefix("enhanced-"))}.isSuccess}?.forEach{it.delete()}
+        restoreResult()
+        runCatching {prefs.getString("music",null)?.let{music=parseMusic(it)}}
+    }
+    private fun action(block:suspend()->Unit) {
+        if(busy)return
+        busy=true
+        viewModelScope.launch {
+            try{block()}catch(e:Exception){if(e !is CancellationException)error=e.message ?: "Operation failed"}finally{busy=false}
+        }
+    }
+    private fun write(file:File,data:ByteArray) {val temp=File(file.parentFile,"${file.name}.tmp");temp.writeBytes(data);check(temp.renameTo(file)){"Could not save result"}}
+    private fun restoreResult() {
+        if (wave == null) return
+        runCatching {
+            val receipt = prefs.getString("resultReceipt",null)?.let { gson.fromJson(it,ResultReceipt::class.java) }
+            val audio=if (receipt==null) File(exports,"result.wav") else resultFile(receipt.resultSha)
+            if (!audio.isFile) return
+            val resultSha=sha256(audio.readBytes())
+            if (receipt != null && (receipt.sourceSha != sourceSha || receipt.resultSha != resultSha)) return
+            if (receipt == null && prefs.getBoolean("versionedWorkspace",false)) return
+            result=audio
+            resultRevision=resultSha.take(8)
+            comparison=receipt?.comparison
+            playhead=(comparison?.sourceStart ?: 0.0).toFloat()
+            val metadata=if(receipt==null) File(exports,"mac-report.json") else receipt.reportSha?.let(::reportFile)
+            if (metadata!=null && metadata.isFile && JsonParser.parseString(metadata.readText()).asJsonObject["sha256"].asString==resultSha &&
+                (receipt?.reportSha == null || sha256(metadata.readBytes()) == receipt.reportSha)) {
+                report=metadata
+            }
+        }
+    }
+    private fun resultFile(digest: String): File {
+        require(Regex("[0-9a-f]{64}").matches(digest))
+        return File(exports,"result-$digest.wav")
+    }
+    private fun reportFile(digest: String): File {
+        require(Regex("[0-9a-f]{64}").matches(digest))
+        return File(exports,"mac-report-$digest.json")
+    }
+    private fun pruneResultFiles(keep: Set<File?>) {
+        val managed=Regex("(result-[0-9a-f]{64}\\.wav|mac-report-[0-9a-f]{64}\\.json)")
+        exports.listFiles()?.filter{it !in keep && managed.matches(it.name)}?.forEach{it.delete()}
+    }
+    private fun setResult(resultSha: String, alignment: AudioComparison?, reportSha: String? = null) {
+        val file=resultFile(resultSha)
+        val metadata=reportSha?.let(::reportFile)
+        val keep=setOf(result,report,file,metadata)
+        stopPlayback()
+        prefs.edit().putString("resultReceipt",gson.toJson(ResultReceipt(sourceSha,resultSha,alignment,reportSha))).apply()
+        result=file
+        resultRevision=resultSha.take(8)
+        comparison=alignment
+        playhead=(alignment?.sourceStart ?: 0.0).toFloat()
+        report=metadata
+        sendResult=true
+        invalidateVideoExport()
+        pruneResultFiles(keep)
+    }
+    private fun clearPendingJob() {
+        hasPendingJob=false
+        prefs.edit().remove("pendingJob").remove("pendingSourceSha").remove("pendingSourceStart").remove("pendingWorkspaceSha").apply()
+    }
+    fun importAudio(uri:Uri,label:String) = action {
+        stopWorker()
+        val imported=withContext(Dispatchers.IO){AudioImporter.decode(getApplication<Application>(),uri,importFilter)}
+        val parsed=imported.wave
+        val analysis=imported.analysis
+        val digest=try {
+            withContext(Dispatchers.IO){
+                val bytes=parsed.encode()
+                write(original,bytes)
+                sha256(bytes)
+            }
+        } catch(e:Exception){imported.video?.delete();throw e}
+        val previousVideo=videoSource
+        videoSource=imported.video;invalidateVideoExport()
+        prefs.edit().putString("videoSource",imported.video?.name).putString("videoWaveHash",if(imported.video!=null)digest else null).apply()
+        previousVideo?.delete()
+        importAnalysis=analysis;prefs.edit().putString("importAnalysis",analysis).apply()
+        withContext(Dispatchers.IO){File(exports,"result.wav").delete();File(exports,"mac-report.json").delete()}
+        stopPlayback();wave=parsed;waveformPeaks=imported.overview;name=label;start="0";end=parsed.duration.toString();gain=0f;result=null;report=null;sendResult=false
+        sourceSha=digest;sourceRevision=digest.take(8);resultRevision="";comparison=null;playhead=0f
+        prefs.edit().putString("name",label).putBoolean("versionedWorkspace",true).remove("resultReceipt").apply()
+        clearPendingJob()
+        withContext(Dispatchers.IO){pruneResultFiles(emptySet())}
+    }
+    fun edit() = action {
+        stopWorker();val source=requireNotNull(wave){"Import audio first"}
+        val s=start.toDoubleOrNull() ?: throw IllegalArgumentException("Invalid start time")
+        val e=end.toDoubleOrNull() ?: throw IllegalArgumentException("Invalid end time")
+        val g=gain.toDouble();val n=normalize;val v=voice
+        val (digest,alignment)=withContext(Dispatchers.IO) {
+            val edited=source.edit(s,e,g,n,v)
+            val offset=minOf(source.frames-1,(s*source.rate).toInt()).toDouble()/source.rate
+            val bytes=edited.encode()
+            val digest=sha256(bytes)
+            write(resultFile(digest),bytes)
+            File(exports,"mac-report.json").delete()
+            digest to AudioComparison.match(source,edited,offset)
+        }
+        setResult(digest,alignment)
+    }
+    private fun invalidateVideoExport(){videoResult?.delete();videoResult=null}
+    fun exportVideo()=action {
+        val video=requireNotNull(videoSource){"Import MP4 first"}
+        val audio=requireNotNull(result){"Improve the audio first"}
+        val source=requireNotNull(wave)
+        stopWorker();stopPlayback()
+        val output=File(exports,"enhanced-${UUID.randomUUID()}.mp4")
+        withContext(Dispatchers.IO){VideoExport.replace(video,Wave.decode(audio.readBytes()),source,output)}
+        invalidateVideoExport();videoResult=output
+    }
+    fun connect(code:String) = action {
+        stopWorker();macState="Connecting…"
+        try {
+            val pairing=Pairing.parse(code);val next=CompanionClient(pairing,device){DeviceAssessment.header(getApplication<Application>())}
+            checkConnection(next,true);secure.save(pairing);clearPendingJob();client=next;paired=true;macState="Connected · encrypted"
+        }catch(e:Exception){connected=false;macState="Connection failed";throw e}
+    }
+    fun reconnect() = action {
+        macState="Connecting…"
+        try {checkConnection(requireNotNull(client));macState="Connected · encrypted"}catch(e:Exception){connected=false;macState="Mac unavailable";throw e}
+    }
+    fun disconnect(){stopWorker();connected=false;macEndpoint="";latencyMs=null;client=null;paired=false;secure.clear();macState="Not connected";clearPendingJob()}
+    fun processOnMac(profile:String) = action {
+        stopWorker();val api=requireNotNull(client){"Pair with a Mac first"};val selected=if(sendResult)requireNotNull(result){"Improve audio first"} else original;require(selected.exists()){"Import audio first"}
+        try {
+            require(selected.length()<=20*1024*1024){"This edit exceeds the Mac transfer limit of 20 MiB. Select and improve a shorter range, then send the result. Local export supports the full imported recording."}
+            macState="Sending $transferSelection to $macName…"
+            val (bytes,digest)=withContext(Dispatchers.IO){ selected.readBytes().let{it to sha256(it)} }
+            val uploaded=api.request("/v1/files","POST",bytes,"wav").json()
+            require(uploaded["sha256"]?.asString?.let {it==digest} != false) {"Mac upload integrity check failed"}
+            val file=uploaded["id"].asString
+            macState="Starting the Mac job…"
+            val id=api.request("/v1/jobs","POST",gson.toJson(mapOf("file_id" to file,"profile" to profile)).toByteArray()).json()["id"].asString
+            val offset=if (sendResult) comparison?.sourceStart else 0.0
+            prefs.edit().putString("pendingJob",id).putString("pendingSourceSha",digest)
+                .putString("pendingSourceStart",offset?.toString()).putString("pendingWorkspaceSha",sourceSha).apply()
+            hasPendingJob=true
+            retrieve(api,id)
+        }catch(e:Exception){macState=if(hasPendingJob)"Job interrupted · use Recover job" else "Send failed · retry";throw e}
+    }
+    fun recover()=action{retrieve(requireNotNull(client){"Pair with a Mac first"},prefs.getString("pendingJob",null) ?: throw IllegalStateException("No pending job"))}
+    private suspend fun retrieve(api:CompanionClient,id:String) {
+        if(prefs.getString("pendingWorkspaceSha",sourceSha)!=sourceSha) {
+            clearPendingJob()
+            throw IllegalStateException("This Mac job belongs to a different recording")
+        }
+        repeat(90) {
+            val state=api.request("/v1/jobs/$id").json()
+            when(state["status"].asString) {
+                "failed" -> {
+                    clearPendingJob()
+                    macState="Mac processing failed"
+                    throw IllegalStateException(state["message"]?.asString ?: "Mac processing failed")
+                }
+                "completed" -> {
+                    macState="Downloading and verifying the Mac result…"
+                    val bytes=api.request("/v1/jobs/$id/audio").bytes
+                    val digest=withContext(Dispatchers.Default){sha256(bytes)}
+                    require(digest==state["sha256"].asString){"Result integrity check failed"}
+                    val pendingSha=prefs.getString("pendingSourceSha",null)
+                    require(state["source_sha256"]?.asString?.let {pendingSha==null || it==pendingSha} != false) {"Mac result refers to a different source"}
+                    val json=api.request("/v1/jobs/$id/report").bytes
+                    val contents=JsonParser.parseString(String(json)).asJsonObject
+                    require(contents["sha256"].asString==digest){"Report integrity check failed"}
+                    require(contents["source_sha256"]?.asString?.let {pendingSha==null || it==pendingSha} != false) {"Mac report refers to a different source"}
+                    val offset=prefs.getString("pendingSourceStart",null)?.toDoubleOrNull()
+                    val (reportSha,alignment)=withContext(Dispatchers.IO){
+                        val output=Wave.decode(bytes)
+                        val aligned=wave?.let { source -> offset?.let {AudioComparison.match(source,output,it)} }
+                        val reportSha=sha256(json)
+                        write(resultFile(digest),bytes)
+                        write(reportFile(reportSha),json)
+                        reportSha to aligned
+                    }
+                    setResult(digest,alignment,reportSha)
+                    macState="Completed · revision $resultRevision · SHA-256 verified"
+                    clearPendingJob()
+                    return
+                }
+            }
+            macState="Processing on Mac…";delay(2000)
+        }
+        throw IllegalStateException("Still working on the Mac. Use Recover job later")
+    }
+    fun startWorker() {
+        if(busy || workerRunning)return
+        val api=client ?: run{error="Pair with your Mac first";return}
+        workerEpoch++;val epoch=workerEpoch;val previousStop=stopJob
+        workerRunning=true;workerState="Waiting for Mac"
+        worker=viewModelScope.launch {
+            var stoppedState="Stopped"
+            try {
+                previousStop?.join();ensureActive()
+                while(isActive) {
+                    if(Build.VERSION.SDK_INT>=29) {
+                        val power=getApplication<Application>().getSystemService(PowerManager::class.java)
+                        check(power.currentThermalStatus<PowerManager.THERMAL_STATUS_SEVERE){"Worker paused: device is warm"}
+                    }
+                    val response=api.request("/v1/worker/next");ensureActive()
+                    response.taskID?.let{id ->
+                        require(response.filter=="auto_eq" && response.bytes.size<=2*1024*1024){"Unsupported worker task"}
+                        workerState="Processing · Voice EQ"
+                        val bytes=withContext(Dispatchers.Default){Wave.decode(response.bytes).autoEQ().encode()}
+                        ensureActive();api.request("/v1/worker/result/$id","POST",bytes);ensureActive();completions++
+                    }
+                    workerState="Waiting for Mac";delay(2000)
+                }
+            }catch(e:Exception){if(e !is CancellationException){error=e.message;stoppedState="Error · reconnect or retry"}}finally{if(epoch==workerEpoch)stopWorker(stoppedState)}
+        }
+    }
+    fun stopWorker(state:String="Stopped"){
+        val wasRunning=workerRunning;workerEpoch++;workerRunning=false;workerState=state;worker?.cancel();worker=null
+        if(wasRunning){val api=client;stopJob=viewModelScope.launch{runCatching{api?.request("/v1/worker/stop","POST")}}}
+    }
+    private fun playingOffset(): Double = if (playingOriginal) 0.0 else comparison?.sourceStart ?: 0.0
+    private fun updatePlayhead() {
+        val current=player ?: return
+        if (playerReady) runCatching { playhead=(playingOffset()+current.currentPosition/1000.0).toFloat() }
+    }
+    private fun applyListeningLevel() {
+        val gain=if (!matchListeningLevels) 1f else if (playingOriginal) {
+            comparison?.originalGain ?: 1f
+        } else comparison?.resultGain ?: 1f
+        player?.takeIf{playerReady}?.setVolume(gain,gain)
+    }
+    fun setListeningLevelMatched(enabled: Boolean) {
+        matchListeningLevels=enabled
+        applyListeningLevel()
+    }
+    fun seekPlayback(position: Float) {
+        playhead=position
+        val current=player ?: return
+        if (!playerReady) return
+        val target=((position-playingOffset())*1000).roundToInt().coerceIn(0,maxOf(0,current.duration-1))
+        current.seekTo(target.toLong(),MediaPlayer.SEEK_CLOSEST)
+    }
+    fun play(originalAudio:Boolean){
+        val file=if(originalAudio)original.takeIf{it.isFile} else result
+        if (file == null) return
+        val differentTrack=originalAudio!=playingOriginal
+        stopPlayback()
+        val span=comparison
+        if (span != null && differentTrack && !span.contains(playhead.toDouble())) {
+            playhead=span.sourceStart.toFloat()
+        } else if (span==null && differentTrack) {
+            playhead=0f
+        }
+        playingOriginal=originalAudio
+        val next=MediaPlayer()
+        player=next
+        playbackState="Loading audio…"
+        runCatching {
+            next.setDataSource(file.path)
+            next.setOnPreparedListener { ready ->
+                if(player!==ready)return@setOnPreparedListener
+                playerReady=true
+                applyListeningLevel()
+                fun startPlayer() {
+                    if(player!==ready)return
+                    ready.start()
+                    playbackState=if(originalAudio)"A · Original" else "B · Result"
+                    playbackTracking=viewModelScope.launch {
+                        while(isActive && player===ready) {
+                            updatePlayhead()
+                            if (originalAudio && span!=null && playhead>=span.sourceStart+span.duration) {
+                                stopPlayback()
+                                playhead=span.sourceStart.toFloat()
+                                break
+                            }
+                            delay(120)
+                        }
+                    }
+                }
+                val target=((playhead-playingOffset())*1000).roundToInt().coerceIn(0,maxOf(0,ready.duration-1))
+                if (target>0) {
+                    ready.setOnSeekCompleteListener { it.setOnSeekCompleteListener(null);startPlayer() }
+                    ready.seekTo(target.toLong(),MediaPlayer.SEEK_CLOSEST)
+                } else startPlayer()
+            }
+            next.setOnErrorListener { failed, _, _ ->
+                if(player===failed){stopPlayback();playbackState="Playback error";error="This audio could not be played"}
+                true
+            }
+            next.setOnCompletionListener { completed ->
+                if(player===completed){stopPlayback();playhead=(comparison?.sourceStart ?: 0.0).toFloat()}
+            }
+            next.prepareAsync()
+        }.onFailure { stopPlayback();error=it.message;playbackState="Playback error" }
+    }
+    fun stopPlayback(){
+        updatePlayhead()
+        playbackTracking?.cancel()
+        playbackTracking=null
+        player?.release()
+        player=null
+        playerReady=false
+        playbackState="Stopped"
+    }
+    fun updateMusic(value:MusicDraft){music=value;prefs.edit().putString("music",gson.toJson(value)).apply()}
+    fun buildBrief(){runCatching{updateMusic(music.build())}.onFailure{error=it.message}}
+    fun exportBrief():File?=runCatching{require(music.canExport){"Rebuild after changing directions"};File(exports,"music-brief.json").also{val bytes=gson.toJson(music).toByteArray();require(bytes.size<=65536){"Shorten the brief before exporting"};write(it,bytes)}}.onFailure{error=it.message}.getOrNull()
+    fun importBrief(uri:Uri)=action{val text=withContext(Dispatchers.IO){getApplication<Application>().contentResolver.openInputStream(uri)!!.use{String(it.readBytesBounded(65536))}};updateMusic(parseMusic(text))}
+    private fun parseMusic(text:String):MusicDraft {
+        val obj=JsonParser.parseString(text).asJsonObject
+        listOf("description","style","instruments","exclusions","vocals","duration","bpm","lyrics","arrangement","prompt","builtSource").forEach { key -> require(obj.has(key) && obj[key].isJsonPrimitive && obj[key].asJsonPrimitive.isString){"Invalid brief JSON"} }
+        return gson.fromJson(obj,MusicDraft::class.java)
+    }
+    override fun onCleared(){stopWorker();stopPlayback();super.onCleared()}
+}
+fun java.io.InputStream.readBytesBounded(limit:Int):ByteArray {
+    val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192)
+    while(true){val count=read(buffer);if(count<0)break;require(out.size()+count<=limit){"File exceeds the size limit"};out.write(buffer,0,count)}
+    return out.toByteArray()
+}

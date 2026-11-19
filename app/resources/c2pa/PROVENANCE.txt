@@ -1,6 +1,6 @@
-Source: https://github.com/c2pa-org/conformance-public/tree/64b3f9c8ebb95d2b73557aea25172d694db67c1e/trust-list
+Source: https://github.com/c2pa-org/conformance-public/tree/a95f2c4e4be7cd015c394fc5deb188683cbbc944/trust-list
 Official public signer and TSA PEM lists issued 4 November 2026.
-Earliest publisher nextUpdate in corresponding JSON lists: 2027-02-02T17:02:28Z.
+Earliest publisher NextUpdate in corresponding JSON lists: 2027-02-02T17:24:49Z.
 C2PA-TRUST-LIST.pem SHA256 148c1c167e98dc909a0d5793d2feee1022aa60fef5c83a0d6b08f67f4446bc37
 C2PA-TSA-TRUST-LIST.pem SHA256 eca8347ee71e31d226e00c85b15aca356116fefe6c26ed8c0ee1f954115b1990
 These are public certificates only.

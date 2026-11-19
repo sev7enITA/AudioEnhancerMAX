@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from app.main import health
-from app.release import APP_VERSION
+from app.release import APP_VERSION, RELEASE_CHANNEL, RELEASE_LABEL
 
 
 class HealthEndpointTests(unittest.TestCase):
@@ -14,8 +14,8 @@ class HealthEndpointTests(unittest.TestCase):
 
         self.assertEqual(payload["status"], "healthy")
         self.assertEqual(payload["version"], APP_VERSION)
-        self.assertEqual(payload["release_channel"], "stable")
-        self.assertEqual(payload["release_label"], "Stable")
+        self.assertEqual(payload["release_channel"], RELEASE_CHANNEL)
+        self.assertEqual(payload["release_label"], RELEASE_LABEL)
         self.assertIn("build", payload)
         self.assertFalse(payload["mps_available"])
 

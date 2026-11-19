@@ -48,3 +48,10 @@ distribution metadata.
 
 - PyObjC license: https://pyobjc.readthedocs.io/en/latest/license.html
 - asn1crypto: https://github.com/wbond/asn1crypto
+
+## Companion pairing
+
+The direct Mac build generates pairing QR codes locally using the BSD-licensed
+qrcode package. The license is included in its bundled distribution metadata.
+
+- qrcode: https://github.com/lincolnloop/python-qrcode

@@ -1,0 +1,116 @@
+package com.audioenhancermax.worker
+
+import android.app.Instrumentation
+import android.os.Bundle
+import android.net.Uri
+import android.media.MediaExtractor
+import android.media.MediaFormat
+import java.io.File
+import kotlinx.coroutines.runBlocking
+import kotlin.math.abs
+import kotlin.math.sqrt
+
+/** Native codec regression runner using only Android's SDK, no network test dependency. */
+class MediaInstrumentation: Instrumentation() {
+    override fun onCreate(arguments: Bundle?) { super.onCreate(arguments); start() }
+    override fun onStart() {
+        val report = Bundle()
+        try {
+            runBlocking {
+                for(filter in AudioImportPolicy.Filter.entries) {
+                    val intent=AudioDocumentContract().createIntent(targetContext,filter.mimeTypes)
+                    check(intent.getStringArrayExtra(android.content.Intent.EXTRA_MIME_TYPES)!!.contentEquals(filter.mimeTypes)){"Picker lost format MIME hints"}
+                    check(intent.type==if(filter.mimeTypes.size==1)filter.mimeTypes[0] else "*/*")
+                }
+                val folder=File(targetContext.cacheDir,"media-regression").apply{mkdirs()}
+                fun fixture(name:String)=File(folder,name).also { f -> context.assets.open(name).use{input->f.outputStream().use{input.copyTo(it)}} }
+                for(name in listOf("phone.m4a","phone.aac","phone.flac","phone.ogg","phone24.wav")) {
+                    val file=fixture(name);val hash=sha256(file.readBytes())
+                    val decoded=AudioImporter.decode(targetContext,Uri.fromFile(file))
+                    check(abs(decoded.wave.duration-2)<0.12 && decoded.video==null){"Smartphone codec failed: $name, duration ${decoded.wave.duration}"}
+                    check(decoded.analysis.contains(hash) && decoded.analysis.contains("48000")){"Missing source analysis for $name"}
+                    check(hash==sha256(file.readBytes())){"Original changed: $name"}
+                }
+                val extendedPCM=Wave.decode(fixture("phone24.wav").readBytes())
+                check(extendedPCM.channels==1 && extendedPCM.samples.any{it<0f} && extendedPCM.samples.any{it>0f}) {
+                    "The core decoder did not preserve the signed PCM24 samples"
+                }
+                var filterRejected=false
+                try{AudioImporter.decode(targetContext,Uri.fromFile(fixture("short.mp3")),AudioImportPolicy.Filter.WAV)}catch(e:IllegalArgumentException){filterRejected=true}
+                check(filterRejected){"MP3 was accepted while WAV filter selected"}
+                val m4a=AudioImporter.decode(targetContext,Uri.fromFile(fixture("phone.m4a")),AudioImportPolicy.Filter.M4A_AAC)
+                check(m4a.wave.duration>0)
+                filterRejected=false
+                try{AudioImporter.decode(targetContext,Uri.fromFile(fixture("short.mp4")),AudioImportPolicy.Filter.M4A_AAC)}catch(e:IllegalArgumentException){filterRejected=true}
+                check(filterRejected){"Video was accepted while audio-only M4A filter selected"}
+                val long=AudioImporter.decode(targetContext,Uri.fromFile(fixture("phone90.m4a")))
+                check(abs(long.wave.duration-90)<0.1 && long.wave.samples.size*4>20*1024*1024){"90-second stereo recording must exceed the old one-minute limit"}
+                DeviceAssessment.benchmark()
+                check((DeviceAssessment.snapshot(targetContext)["voice_eq_ms"] as Double)>0)
+                check((DeviceAssessment.snapshot(targetContext)["ram_bytes"] as Long)>0)
+                val mp3=AudioImporter.decode(targetContext,Uri.fromFile(fixture("short.mp3")))
+                check(abs(mp3.wave.duration-2)<0.08 && mp3.video==null){"MP3 decode duration"}
+                val original=fixture("short.mp4");val hash=sha256(original.readBytes())
+                val imported=AudioImporter.decode(targetContext,Uri.fromFile(original))
+                check(abs(imported.wave.duration-2)<0.08 && imported.video!=null){"MP4 extraction duration=${imported.wave.duration}, remux=${imported.video!=null}"}
+                val edited=imported.wave.edit(0.0,imported.wave.duration,-12.0,false,false)
+                val output=File(targetContext.filesDir,"qa-video-export.mp4")
+                VideoExport.replace(requireNotNull(imported.video),edited,imported.wave,output)
+                val reread=AudioImporter.decode(targetContext,Uri.fromFile(output))
+                fun rms(w:Wave)=sqrt(w.samples.sumOf{(it*it).toDouble()}/w.samples.size)
+                check(abs(reread.wave.duration-imported.wave.duration)<0.08){"Export duration mismatch"}
+                check(abs(rms(reread.wave)/rms(imported.wave)-0.25118864)<0.04){"Replacement audio gain"}
+                check(sha256(original.readBytes())==hash){"Original changed"}
+                val extractor=MediaExtractor()
+                try {extractor.setDataSource(output.path);check(extractor.trackCount==2);val t=VideoExport.tracks(extractor);check(extractor.getTrackFormat(t.video).getString(MediaFormat.KEY_MIME)=="video/avc")}finally{extractor.release()}
+                var rejected=false
+                try {AudioImporter.decode(targetContext,Uri.fromFile(fixture("silent.mp4")))} catch(e:IllegalArgumentException){rejected=true}
+                check(rejected){"Video without audio accepted"}
+                val offset=AudioImporter.decode(targetContext,Uri.fromFile(fixture("offset-rotated.mp4")))
+                check(offset.video==null && offset.wave.duration>0){"Offset timeline must import audio without unsafe video replacement"}
+                val fake=File(folder,"fake.mp3").apply{writeBytes(byteArrayOf(0xff.toByte(),0xd8.toByte(),0xff.toByte(),0xe0.toByte()))}
+                rejected=false
+                try{AudioImporter.decode(targetContext,Uri.fromFile(fake))}catch(e:IllegalArgumentException){rejected=true}
+                check(rejected){"Renamed image accepted"}
+                val pairingFile=File(targetContext.filesDir,"qa-pairing.json")
+                if(pairingFile.exists()) {
+                    val code=pairingFile.readText();pairingFile.delete()
+                    val pair=Pairing.parse(code)
+                    val api=CompanionClient(pair,"qa-android-emulator"){DeviceAssessment.header(targetContext)}
+                    check(api.request("/v1/status").json()["protocol"].asInt==1)
+                    val expected=Wave(FloatArray(9600){if(it%2==0)0.2f else 0f},48000,2)
+                    val originalBytes=expected.encode()
+                    val sourceSha=sha256(originalBytes)
+                    val upload=api.request("/v1/files","POST",originalBytes,"wav").json()
+                    check(upload["sha256"].asString==sourceSha)
+                    val fileID=upload["id"].asString
+                    val request=com.google.gson.Gson().toJson(mapOf("file_id" to fileID,"profile" to "level")).toByteArray()
+                    val job=api.request("/v1/jobs","POST",request).json()["id"].asString
+                    var verified=false
+                    for(iteration in 0 until 30) {
+                        val state=api.request("/v1/jobs/$job").json()
+                        val status=state["status"].asString
+                        check(status!="failed"){"The test Mac job failed"}
+                        if(status=="completed"){
+                            val received=api.request("/v1/jobs/$job/audio").bytes
+                            val report=api.request("/v1/jobs/$job/report").json()
+                            val actual=Wave.decode(received)
+                            check(actual.rate==expected.rate && actual.frames==expected.frames && actual.channels==expected.channels)
+                            check(report["revision"].asString==state["revision"].asString)
+                            check(report["source_sha256"].asString==sourceSha && state["source_sha256"].asString==sourceSha)
+                            check(report["sha256"].asString==sha256(received) && state["sha256"].asString==sha256(received))
+                            verified=true
+                            break
+                        }
+                        kotlinx.coroutines.delay(500)
+                    }
+                    check(verified){"The native Mac handoff did not complete"}
+                    report.putString("macHandoff","PASS: pinned TLS, native upload, stereo shape, revision and report hashes")
+                }
+                imported.video?.delete();reread.video?.delete()
+                report.putString("stream","PASS: native M4A/AAC, ADTS AAC, FLAC, Ogg/Opus, PCM24, 90-second stereo import, measured device assessment, MP3/MP4, AAC replacement, timing/gain, original preservation, silent-video and renamed-image rejection.\n")
+            }
+            finish(-1,report)
+        } catch(e:Throwable) {report.putString("stream","FAIL: ${e.stackTraceToString()}\n");finish(0,report)}
+    }
+}

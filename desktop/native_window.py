@@ -7,8 +7,11 @@ import os
 import sys
 import threading
 import time
+from html import escape
 from pathlib import Path
 from urllib.parse import urlparse
+
+from app.release import RELEASE_LABEL
 
 import objc
 from AppKit import (
@@ -64,7 +67,9 @@ def _frontend_resource_dir() -> Path:
 
 
 def _about_html(*, version: str, build_number: str, distribution: str) -> str:
-    channel = "Mac App Store" if distribution == "app-store" else "Direct / development"
+    edition = "Mac App Store" if distribution == "app-store" else "Direct download"
+    version = escape(version)
+    build_number = escape(build_number)
     return f"""
     <!doctype html>
     <html lang="en">
@@ -115,16 +120,16 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
             <img class="logo" src="img/audioenhancermax-logo.png" alt="AudioEnhancerMAX logo">
             <div><span class="kicker">Local-first audio workspace</span>
               <h1>AudioEnhancerMAX</h1>
-              <p>Audio processing, transcription, monitoring and trusted-LAN edge workers in one suite.</p>
+              <p>Clean audio, compare revisions, and export with a report linked to the result.</p>
               <p class="byline">Created and maintained by <strong>Fabrizio Degni</strong></p>
             </div>
           </div>
 
           <div class="meta">
-            <div><span>Version</span><strong>{version} ({build_number})</strong></div>
-            <div><span>Distribution</span><strong>{channel}</strong></div>
+            <div><span>Version</span><strong>{version} · build {build_number}</strong></div>
+            <div><span>Channel</span><strong>{RELEASE_LABEL}</strong></div>
+            <div><span>Distribution</span><strong>{edition}</strong></div>
             <div><span>License</span><strong>MIT</strong></div>
-            <div><span>Support</span><strong>Open-source community</strong></div>
           </div>
 
           <section><h2>Purpose and core capabilities</h2>
@@ -139,7 +144,7 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
           <section><h2>Privacy and data flow</h2>
             <div class="grid">
               <div class="card"><h3>Local by default</h3><p class="muted">Core audio processing and packaged transcription run on this Mac. The private desktop service listens only on <code>127.0.0.1</code> and stops with the app.</p></div>
-              <div class="card"><h3>Network use is contextual</h3><p class="muted">Text leaves the Mac only when an online TTS option is explicitly selected. Audio crosses the LAN only when a trusted edge worker is enabled and used.</p></div>
+              <div class="card"><h3>Network features are optional</h3><p class="muted">Online speech services, companion transfers and C2PA timestamping use the network when you select those features. The timestamp authority receives a fingerprint.</p></div>
               <div class="card"><h3>No maintainer telemetry</h3><p class="muted">Recordings, outputs and diagnostics are not automatically uploaded to the maintainer.</p></div>
               <div class="card"><h3>User-controlled files</h3><p class="muted">You choose source files and export destinations with standard macOS panels.</p></div>
             </div>
