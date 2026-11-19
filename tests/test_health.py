@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from app.main import health
+from app.release import APP_VERSION
 
 
 class HealthEndpointTests(unittest.TestCase):
@@ -12,7 +13,7 @@ class HealthEndpointTests(unittest.TestCase):
             payload = asyncio.run(health())
 
         self.assertEqual(payload["status"], "healthy")
-        self.assertEqual(payload["version"], "3.9.0")
+        self.assertEqual(payload["version"], APP_VERSION)
         self.assertEqual(payload["release_channel"], "stable")
         self.assertEqual(payload["release_label"], "Stable")
         self.assertIn("build", payload)
