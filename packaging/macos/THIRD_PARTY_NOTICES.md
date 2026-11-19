@@ -41,3 +41,10 @@ texts are included in `licenses/c2pa`.
 
 - c2pa-python: https://github.com/contentauth/c2pa-python/tree/v0.39.0
 - c2pa-rs: https://github.com/contentauth/c2pa-rs/tree/c2pa-v0.92.0
+
+Keychain enrollment uses PyObjC Security bindings and asn1crypto, distributed
+under the MIT license. The asn1crypto license is included in its bundled
+distribution metadata.
+
+- PyObjC license: https://pyobjc.readthedocs.io/en/latest/license.html
+- asn1crypto: https://github.com/wbond/asn1crypto

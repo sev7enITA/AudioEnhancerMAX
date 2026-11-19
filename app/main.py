@@ -2010,13 +2010,16 @@ def export_content_credentials(file_id: str, options: CredentialsExportRequest, 
             app_version=APP_VERSION,
             report_sha256=hashlib.sha256(report_bytes).hexdigest(),
         )
+        headers = {
+            "Cache-Control": "no-store",
+            "X-Audio-Revision": options.revision,
+            "X-Content-Credentials": verification["status"],
+        }
+        if verification["timestamp_trusted"]:
+            headers["X-C2PA-Timestamp"] = "trusted"
         response = FileResponse(
             signed, media_type=AUDIO_MEDIA_TYPES[export.suffix], filename=filename,
-            headers={
-                "Cache-Control": "no-store",
-                "X-Audio-Revision": options.revision,
-                "X-Content-Credentials": verification["status"],
-            },
+            headers=headers,
             background=BackgroundTask(temporary.cleanup),
         )
         temporary = None  # The response owns cleanup once delivery starts.

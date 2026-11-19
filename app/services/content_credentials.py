@@ -7,6 +7,7 @@ import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import BinaryIO
+from urllib.parse import urlsplit
 
 from app.config import DATA_DIR, RESOURCE_DIR
 from app.services.artifact_store import sha256_file
@@ -49,9 +50,13 @@ def _trust_anchors() -> list[dict]:
     ]
 
 
-def _validation_context(c2pa):
+def _validation_context(c2pa, *, timestamp_host: str | None = None):
+    core = OFFLINE_SETTINGS["core"]
+    if timestamp_host:
+        core = {**core, "allowed_network_hosts": [timestamp_host]}
     return c2pa.Context.from_dict({
         **OFFLINE_SETTINGS,
+        "core": core,
         "trust": {"anchors": _trust_anchors()},
     })
 
@@ -77,6 +82,26 @@ def _signing_files() -> tuple[Path, Path]:
     return directory / "signing-chain.pem", directory / "signing-key.pem"
 
 
+def _keychain_profile(path: Path) -> tuple[str, str, str] | None:
+    if path.is_symlink():
+        raise ValueError("The C2PA signing config must be a local file.")
+    try:
+        settings = json.loads(path.read_bytes())
+    except FileNotFoundError:
+        return None
+    if not isinstance(settings, dict) or set(settings) != {"keychain_tag", "tsa_url"}:
+        raise ValueError("signing.json must contain keychain_tag and tsa_url.")
+    label, url = settings["keychain_tag"], settings["tsa_url"]
+    if (not isinstance(label, str) or not isinstance(url, str)
+            or any(character.isspace() for character in url)):
+        raise ValueError("The C2PA Keychain tag and timestamp URL must be text.")
+    parsed = urlsplit(url)
+    if (parsed.scheme != "https" or not parsed.hostname or parsed.username is not None
+            or parsed.fragment or parsed.port == 0):
+        raise ValueError("Configure the HTTPS endpoint of a C2PA timestamp authority.")
+    return label, url, parsed.hostname
+
+
 def _signer(c2pa):
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes, serialization
@@ -84,28 +109,39 @@ def _signer(c2pa):
 
     chain, key = _signing_files()
     try:
-        if not chain.is_file() or not key.is_file() or key.is_symlink():
+        profile = _keychain_profile(chain.with_name("signing.json"))
+        certificates = chain.read_text(encoding="ascii")
+        leaf = x509.load_pem_x509_certificates(certificates.encode("ascii"))[0]
+        public_key = leaf.public_key()
+        if not isinstance(public_key, ec.EllipticCurvePublicKey) or not isinstance(public_key.curve, ec.SECP256R1):
+            raise ValueError("The signing certificate must use P-256.")
+        if profile is not None:
+            from app.services.c2pa_keychain import signing_key
+
+            label, url, host = profile
+            mac_key = signing_key(label)
+            expected = public_key.public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)
+            if mac_key.public_key_bytes() != expected:
+                raise ValueError("The Keychain key must match the signing certificate.")
+            return c2pa.Signer.from_callback(mac_key.sign, c2pa.C2paSigningAlg.ES256, certificates, tsa_url=url), host
+        if key.is_symlink():
             raise OSError("Signing credentials unavailable")
         if os.name == "posix" and (stat.S_IMODE(key.stat().st_mode) & 0o077):
             raise OSError("Signing key permissions are too broad")
-        certificates = chain.read_bytes()
-        public_key = x509.load_pem_x509_certificates(certificates)[0].public_key()
         private_key = serialization.load_pem_private_key(key.read_bytes(), password=None)
         if (not isinstance(private_key, ec.EllipticCurvePrivateKey)
                 or not isinstance(private_key.curve, ec.SECP256R1)
-                or not isinstance(public_key, ec.EllipticCurvePublicKey)
                 or private_key.public_key().public_numbers() != public_key.public_numbers()):
             raise ValueError("The P-256 key must match the leaf certificate")
 
         def sign(message: bytes) -> bytes:
             return private_key.sign(message, ec.ECDSA(hashes.SHA256()))
 
-        # A local callback only performs the signature. No TSA or remote signer.
-        return c2pa.Signer.from_callback(sign, c2pa.C2paSigningAlg.ES256, certificates.decode("ascii"))
-    except (OSError, TypeError, ValueError, c2pa.C2paError) as exc:
+        return c2pa.Signer.from_callback(sign, c2pa.C2paSigningAlg.ES256, certificates), None
+    except (ImportError, OSError, TypeError, ValueError, c2pa.C2paError) as exc:
         raise CredentialsUnavailable(
-            "Configure a matching C2PA signing certificate and an ES256 (P-256) private key "
-            "in the app data c2pa folder. On macOS/Linux the key must be private (chmod 600)."
+            "Configure a C2PA signing certificate and its matching P-256 Keychain key or local test key. "
+            "Check the app data c2pa folder. On macOS/Linux a test key must have mode 0600."
         ) from exc
 
 
@@ -115,7 +151,8 @@ def capabilities() -> dict:
     except CredentialsUnavailable:
         return {"inspect": False, "sign": False}
     try:
-        with _signer(c2pa):
+        signer, _ = _signer(c2pa)
+        with signer:
             return {"inspect": True, "sign": True}
     except CredentialsUnavailable:
         return {"inspect": True, "sign": False}
@@ -135,8 +172,9 @@ def inspect_stream(stream: BinaryIO, suffix: str) -> dict:
                 manifest = reader.get_active_manifest() or {}
                 state = reader.get_validation_state()
                 signature = manifest.get("signature_info") or {}
-                validation = reader.get_validation_results() or {}
-                failures = (validation.get("activeManifest") or {}).get("failure", [])
+                validation = (reader.get_validation_results() or {}).get("activeManifest") or {}
+                failures = validation.get("failure", [])
+                successes = {item["code"] for item in validation.get("success", []) if "code" in item}
                 actions = [
                     action["action"]
                     for assertion in manifest.get("assertions", [])
@@ -151,6 +189,7 @@ def inspect_stream(stream: BinaryIO, suffix: str) -> dict:
                     "actions": actions,
                     "ingredient_count": len(manifest.get("ingredients", [])),
                     "failure_codes": [item["code"] for item in failures if "code" in item],
+                    "timestamp_trusted": {"timeStamp.trusted", "timeStamp.validated"} <= successes,
                 }
     except c2pa.C2paError.RemoteManifest:
         return {"status": "remote", "embedded": False}
@@ -189,9 +228,10 @@ def sign_export(
         ],
     }
     try:
+        signer, timestamp_host = _signer(c2pa)
         with (
-            _signer(c2pa) as signer,
-            _validation_context(c2pa) as context,
+            signer,
+            _validation_context(c2pa, timestamp_host=timestamp_host) as context,
             c2pa.Builder.from_json(manifest, context=context) as builder,
             parent.open("rb") as ingredient,
             export.open("rb") as source,
@@ -208,6 +248,8 @@ def sign_export(
             verification = inspect_stream(output, export.suffix)
         if verification["status"] not in {"valid", "trusted"} or not verification["embedded"]:
             raise CredentialsError("The signed copy did not pass Content Credentials verification.")
+        if timestamp_host and not verification["timestamp_trusted"]:
+            raise CredentialsError("The configured timestamp authority did not produce a trusted RFC 3161 timestamp.")
         return verification
     except (c2pa.C2paError, OSError) as exc:
         raise CredentialsError("Could not sign this audio with the configured C2PA identity.") from exc

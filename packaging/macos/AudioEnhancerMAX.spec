@@ -4,7 +4,7 @@ import os
 import runpy
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules, copy_metadata
 
 
 ROOT = Path(SPEC).resolve().parents[2]
@@ -28,6 +28,7 @@ datas = [
     (str(ROOT / "packaging" / "macos" / "licenses" / "c2pa"), "licenses/c2pa"),
 ]
 datas.extend(collect_data_files("faster_whisper", includes=["assets/*.onnx"]))
+datas.extend(copy_metadata("asn1crypto"))
 
 if DISTRIBUTION == "app-store":
     required_model_files = {"config.json", "model.bin", "tokenizer.json", "vocabulary.txt"}
@@ -54,7 +55,7 @@ if DISTRIBUTION == "app-store":
 hiddenimports = []
 for package in ("uvicorn", "backports", "app", "desktop"):
     hiddenimports.extend(collect_submodules(package))
-hiddenimports.extend(["AppKit", "Cocoa", "Foundation", "WebKit", "objc"])
+hiddenimports.extend(["AppKit", "Cocoa", "Foundation", "Security", "WebKit", "objc"])
 
 excluded_packages = ["tkinter", "pytest", "librosa", "numba", "llvmlite", "TTS"]
 if DISTRIBUTION == "app-store":

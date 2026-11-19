@@ -8,14 +8,42 @@ The AudioEnhancerMAX assertion records the output revision, SHA-256 of the exact
 
 ## Configure a signing identity
 
-The verifier works without a signing identity. To enable export, place these PEM files in the desktop app data directory under `c2pa`:
+The verifier works without a signing identity. The public Mac 3.9.1 BETA build 3.9.10 uses the local test configuration below. The newer direct Mac source adds Keychain signing and timestamp verification.
+
+### Direct Mac Keychain enrollment
+
+After agreeing on the subject and CSR requirements with the certificate authority, generate the CSR with the installed Developer ID app. Using that executable lets macOS associate Keychain access with the signing application. Replace the example subject fields with the legal values agreed for the product.
+
+```sh
+/Applications/AudioEnhancerMAX.app/Contents/MacOS/AudioEnhancerMAX --c2pa-csr \
+  --tag publication-1 --common-name 'PRODUCT CN' \
+  --organization 'REGISTERED ORGANIZATION' --country IT \
+  --output ./publication-1.csr.pem
+```
+
+The command creates a non-extractable P-256 key in the default macOS Keychain and writes its public PKCS#10 request. Reusing the tag generates a CSR for the same key. Use a new tag for rotation. For source development, run the equivalent command with `python -m desktop.launcher` in the same Python environment used for signing. Provision the real identity from the signed desktop app so access follows the installed executable.
+
+Place the issued leaf followed by its issuing chain in `signing-chain.pem` under your app data `c2pa` directory. Save `signing.json` in that directory. Use the HTTPS endpoint confirmed by your CA or timestamp authority.
+
+```json
+{
+  "keychain_tag": "publication-1",
+  "tsa_url": "https://ts-c2pa.ssl.com/rsa"
+}
+```
+
+The app matches the leaf certificate against the Keychain public key before signing. Keychain signs locally. The configured TSA receives an RFC 3161 request containing an imprint, and the app embeds the returned timestamp. A configured Keychain export requires a verified timestamp anchored in the packaged TSA trust list. If signing or timestamp validation fails, the app refuses the signed download. Inspect the signed file to see the signer trust and timestamp trust results. For the production enrollment sequence, see [the enrollment plan](c2pa-production-enrollment.md).
+
+### Local test signing
+
+For offline testing, leave `signing.json` absent and place these PEM files in the app data `c2pa` directory:
 
 - `signing-chain.pem` contains the leaf certificate first, followed by its issuing chain.
 - `signing-key.pem` contains the corresponding unencrypted ES256 / NIST P-256 private key. On macOS and Linux set its permissions to `0600`. Keep the parent directory private.
 
-On macOS direct builds the usual path is `~/Library/Application Support/AudioEnhancerMAX/c2pa`. Source installations use `AEMAX_DATA_DIR` if supplied, otherwise the repository’s `app` data directory. Keep the credential outside the code repository. Open the Content Credentials panel again after configuring it. AudioEnhancerMAX performs signing locally and omits an external timestamp service. Verification uses the packaged official signer and TSA trust-list snapshots dated 4 November 2026. When the earliest published next-update date passes (2 February 2027, 17:02 UTC), the app falls back to integrity verification until an updated build supplies new anchors. It checks embedded credentials without remote manifest or live OCSP fetches. The PEM snapshots provide anchors for the SDK and do not apply the richer historical status fields of the official JSON lists.
+On macOS direct builds the usual path is `~/Library/Application Support/AudioEnhancerMAX/c2pa`. Source installations use `AEMAX_DATA_DIR` if supplied, otherwise the repository’s `app` data directory. Store the signing configuration outside the code repository and reopen the Content Credentials panel after configuring it. Local test signing runs offline without a timestamp service. A private test CA produces a valid signature that public validators can report as unrecognized. [Signing certificates](https://opensource.contentauthenticity.org/docs/signing/get-cert/) · [C2PA Conformance Program](https://c2pa.org/conformance/)
 
-This release exposes software signing for evaluation with a locally configured identity. For a production signing profile, plan the issuer, protected key storage, certificate rotation, timestamping and trust-list recognition. A private test CA produces a valid signature that public validators can report as unrecognized. The C2PA Conformance Program has a separate evaluation and onboarding process. [Signing certificates](https://opensource.contentauthenticity.org/docs/signing/get-cert/) · [C2PA Conformance Program](https://c2pa.org/conformance/) · [Production enrollment plan](c2pa-production-enrollment.md)
+Verification uses packaged signer and TSA trust-list snapshots dated 4 November 2026. At their earliest published next-update (2 February 2027, 17:02 UTC), refresh both official trust-list snapshots in a new build to keep timestamped exports available. The inspector continues to check integrity offline, with remote manifest and live OCSP fetches disabled. The SDK uses the public PEM trust anchors. The official JSON lists contain additional historical status information.
 
 ## Verify a file
 

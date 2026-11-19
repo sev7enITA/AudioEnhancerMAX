@@ -1,7 +1,10 @@
 """Exercise actual C2PA signing, integrity and source provenance."""
 import hashlib
 import io
+import json
+import sys
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -112,6 +115,7 @@ def test_real_signed_export_round_trip(api, fmt):
     response = signed_request(client, file_id, revision, fmt)
     assert response.status_code == 200, response.text
     assert response.headers["x-content-credentials"] == "valid"
+    assert "x-c2pa-timestamp" not in response.headers
     assert response.headers["x-audio-revision"] == revision
     assert client.get(f"/api/download/{file_id}", params=params).content == unsigned.content
     with c2pa.Reader(fmt, io.BytesIO(response.content)) as reader:
@@ -134,7 +138,53 @@ def test_real_signed_export_round_trip(api, fmt):
     result = client.post("/api/content-credentials/inspect", files={"file": (f"result.{fmt}", response.content)})
     assert result.status_code == 200, result.text
     assert result.json()["status"] == "valid"
+    assert result.json()["timestamp_trusted"] is False
     assert {"c2pa.opened", "c2pa.modified"} <= set(result.json()["actions"])
+
+
+def test_keychain_profile_cannot_fall_back_to_existing_test_key(api, tmp_path, monkeypatch):
+    client, _, _ = api
+    file_id, revision = process(client, wav_bytes(), "source.wav")
+    directory = tmp_path / "c2pa"
+    assert (directory / "signing-key.pem").exists()
+    (directory / "signing.json").write_text(json.dumps({
+        "keychain_tag": "missing-key", "tsa_url": "https://tsa.example.com",
+    }))
+
+    def missing_key(_label):
+        raise OSError("Keychain key missing")
+
+    monkeypatch.setitem(sys.modules, "app.services.c2pa_keychain", SimpleNamespace(signing_key=missing_key))
+    assert client.get("/api/content-credentials").json() == {"inspect": True, "sign": False}
+    assert signed_request(client, file_id, revision, "wav").status_code == 503
+
+
+def test_keychain_export_rejects_signed_copy_without_required_timestamp(api, tmp_path, monkeypatch):
+    client, _, _ = api
+    file_id, revision = process(client, wav_bytes(), "source.wav")
+    directory = tmp_path / "c2pa"
+    test_key = serialization.load_pem_private_key((directory / "signing-key.pem").read_bytes(), password=None)
+    (directory / "signing-key.pem").unlink()
+    (directory / "signing.json").write_text(json.dumps({
+        "keychain_tag": "pilot", "tsa_url": "https://tsa.example.com/token",
+    }))
+    keychain_key = SimpleNamespace(
+        sign=lambda message: test_key.sign(message, ec.ECDSA(hashes.SHA256())),
+        public_key_bytes=lambda: test_key.public_key().public_bytes(
+            serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint,
+        ),
+    )
+    monkeypatch.setitem(sys.modules, "app.services.c2pa_keychain", SimpleNamespace(signing_key=lambda _: keychain_key))
+    real_signer = c2pa.Signer.from_callback
+
+    def signer_without_timestamp(callback, algorithm, certificates, tsa_url):
+        assert tsa_url == "https://tsa.example.com/token"
+        return real_signer(callback, algorithm, certificates)
+
+    monkeypatch.setattr(c2pa.Signer, "from_callback", staticmethod(signer_without_timestamp))
+    response = signed_request(client, file_id, revision, "wav")
+    assert response.status_code == 409, response.text
+    assert "trusted RFC 3161 timestamp" in response.text
 
 
 def test_unsigned_tampered_stale_and_cross_origin(api):

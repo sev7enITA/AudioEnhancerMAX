@@ -44,3 +44,6 @@ psutil==7.2.2
 httpx==0.28.1
 
 c2pa-python==0.39.0
+cryptography==50.0.2
+asn1crypto==1.5.1; sys_platform == "darwin"
+pyobjc-framework-Security==12.2.1; sys_platform == "darwin"

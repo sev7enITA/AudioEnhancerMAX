@@ -80,9 +80,14 @@ pip install --quiet \
 
 echo "  ✓ Web framework installed"
 
-pip install --quiet c2pa-python==0.39.0 || {
+pip install --quiet c2pa-python==0.39.0 cryptography==50.0.2 || {
     echo "  Content Credentials unavailable on this platform. Audio processing remains available."
 }
+if [ "$(uname -s)" = "Darwin" ]; then
+    pip install --quiet pyobjc-framework-Security==12.2.1 asn1crypto==1.5.1 || {
+        echo "  C2PA Keychain enrollment unavailable. Local test signing remains available."
+    }
+fi
 
 # ── Audio processing libraries ──
 echo ""

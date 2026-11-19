@@ -146,6 +146,12 @@ def _write_state(state_path: Path, port: int) -> None:
 
 def main() -> int:
     multiprocessing.freeze_support()
+    if sys.argv[1:2] == ["--c2pa-csr"]:
+        if _distribution_channel() == "app-store":
+            raise SystemExit("C2PA Keychain enrollment is available in the direct Mac build.")
+        from desktop.c2pa_enrollment import write_certificate_request
+
+        return write_certificate_request(sys.argv[2:], _support_dir("direct"))
     app_version, app_build = _bundle_metadata()
     os.environ.setdefault("AEMAX_BUILD_NUMBER", app_build)
     distribution = _distribution_channel()

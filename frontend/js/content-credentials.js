@@ -5,6 +5,7 @@
     const exportStatus = document.getElementById('credentials-export-status');
     const inspectionStatus = document.getElementById('credentials-inspection');
     const fileInput = document.getElementById('credentials-file');
+    const trustedTimestamp = 'Trusted RFC 3161 timestamp verified.';
 
     const messages = {
         trusted: 'File binding and signature verified. The local validator trusts the signing certificate.',
@@ -22,7 +23,7 @@
         exportPanel.hidden = !availability.inspect;
         exportButton.disabled = !availability.sign;
         exportStatus.textContent = availability.sign ? '' :
-            'Configure a C2PA signing certificate and private key in the app data c2pa folder.';
+            'Configure a C2PA signing certificate and its Keychain profile or local test key.';
     }
 
     exportPanel.addEventListener('toggle', () => {
@@ -42,6 +43,7 @@
             const result = await response.json();
             const detail = [
                 messages[result.status] || 'Verification did not complete.',
+                result.timestamp_trusted && trustedTimestamp,
                 result.signer && `Issuer: ${result.signer}.`,
                 result.actions?.length && `Actions: ${result.actions.join(', ')}.`,
                 result.failure_codes?.length && `Checks: ${result.failure_codes.join(', ')}.`,
@@ -83,7 +85,10 @@
             anchor.click();
             anchor.remove();
             setTimeout(() => URL.revokeObjectURL(url), 30000);
-            exportStatus.textContent = messages[response.headers.get('X-Content-Credentials')];
+            exportStatus.textContent = [
+                messages[response.headers.get('X-Content-Credentials')],
+                response.headers.get('X-C2PA-Timestamp') === 'trusted' && trustedTimestamp,
+            ].filter(Boolean).join(' ');
         } catch (error) {
             exportStatus.textContent = error.message;
         } finally {
