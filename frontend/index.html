@@ -16,7 +16,6 @@
     <div class="app-logo">
         <div class="app-logo-icon"><img src="/static/img/audioenhancermax-logo.png" alt="" aria-hidden="true"></div>
         <span class="app-logo-text">AudioEnhancerMAX</span>
-        <span class="app-logo-badge" title="Stable release 3.9.0">STABLE</span>
     </div>
     <button class="mobile-nav-toggle" id="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -92,7 +91,7 @@
     <div class="sidebar-section">
         <div class="sidebar-section-title">Audio</div>
         <button class="sidebar-nav-item" type="button" data-panel="watermark-panel" onclick="switchPanel('watermark-panel', this)">
-            <span class="icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></span> Watermarking
+            <span class="icon"><img class="icon-img" src="/static/img/icons/audio-watermark.svg" alt="" aria-hidden="true"></span> Audio watermark
         </button>
     </div>
 
@@ -115,7 +114,7 @@
     </div>
 
     <div class="sidebar-version">
-        <span>v3.9.0</span> - <span id="sidebar-chip">M3 Max</span>
+        <span data-app-version>AudioEnhancerMAX</span> · <span id="sidebar-chip"></span>
     </div>
 </nav>
 <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
@@ -161,7 +160,7 @@
         </div>
 
         <details class="card" id="credentials-inspector" hidden>
-            <summary>Verify Content Credentials</summary>
+            <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt="" aria-hidden="true"> Verify C2PA Content Credentials</summary>
             <p class="text-sm text-muted">Inspect a WAV, MP3, FLAC, M4A, MP4 or MOV file on this device.</p>
             <label for="credentials-file">Media to verify</label>
             <input type="file" id="credentials-file" accept=".wav,.mp3,.flac,.m4a,.mp4,.mov">
@@ -290,8 +289,8 @@
                         <option value="wav">WAV</option><option value="mp3">MP3</option><option value="flac">FLAC</option>
                     </select>
                     <details class="credentials-export" id="credentials-export" hidden>
-                        <summary>Content Credentials</summary>
-                        <p class="text-sm text-muted">Sign a copy in the selected delivery format. It includes the source credential when available, which may carry its own metadata.</p>
+                        <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt="" aria-hidden="true"> C2PA Content Credentials</summary>
+                        <p class="text-sm text-muted">Attach a signed record of the source and revision to a copy in the selected format. Inherited source credentials may contain their own metadata.</p>
                         <button class="btn btn-sm btn-secondary" type="button" id="credentials-export-button" disabled>Export signed copy</button>
                         <p class="text-sm" id="credentials-export-status" role="status"></p>
                     </details>
@@ -1030,19 +1029,20 @@ Start with a description. Refine styles, instruments and arrangement as needed."
     <div class="panel" id="watermark-panel">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></span> Audio Watermarking</h2>
+                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/audio-watermark.svg" alt="" aria-hidden="true"></span> Audio watermark</h2>
             </div>
             <div class="requires-file-notice" id="watermark-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
-            <p class="text-sm text-muted mb-16">Embed an invisible watermark or detect existing watermarks.</p>
+            <p class="text-sm text-muted mb-16">Embed or detect an identifier inside the audio signal. C2PA Content Credentials use a signed manifest to record the file’s provenance and verify its integrity.</p>
             <div class="tts-controls mb-16">
                 <div class="tts-control-group">
-                    <label>Identifier (optional)</label>
+                    <label for="watermark-id">Identifier (optional)</label>
                     <input type="text" class="text-input" id="watermark-id" placeholder="e.g. episode-42, my-podcast">
                 </div>
             </div>
-            <div class="flex gap-12">
-                <button class="btn btn-primary" id="btn-watermark" onclick="embedWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/lock.svg" alt="" aria-hidden="true">Embed Watermark</button>
+            <div class="flex gap-12 watermark-actions">
+                <button class="btn btn-primary" id="btn-watermark" onclick="embedWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/audio-watermark.svg" alt="" aria-hidden="true">Embed Watermark</button>
                 <button class="btn btn-secondary" id="btn-detect-watermark" onclick="detectWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Detect Watermark</button>
+                <button class="btn btn-secondary" id="watermark-credentials-shortcut" type="button" hidden><img class="icon-img btn-icon-svg" src="/static/img/icons/content-credentials.svg" alt="" aria-hidden="true">Open C2PA verifier</button>
             </div>
             <div id="watermark-result" class="mt-16" style="display:none"></div>
         </div>
@@ -1121,7 +1121,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
 <div class="panel" id="settings-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/settings.svg" alt="" aria-hidden="true">Settings</h2>
-        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.9.0</p>
+        <p class="panel-subtitle">Configure AudioEnhancerMAX</p>
     </div>
     <div class="panel-body settings-grid">
         <div class="settings-group">
@@ -1243,14 +1243,14 @@ Start with a description. Refine styles, instruments and arrangement as needed."
 <div class="panel" id="about-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/info.svg" alt="" aria-hidden="true">About AudioEnhancerMAX</h2>
-        <p class="panel-subtitle">v3.9.0 - Local-first, reviewable audio production</p>
+        <p class="panel-subtitle">Local-first, reviewable audio production</p>
     </div>
     <div class="panel-body about-content">
         <div class="about-hero">
             <div class="about-logo"><img src="/static/img/audioenhancermax-logo.png" alt="AudioEnhancerMAX logo"></div>
             <div class="about-identity">
                 <span class="about-kicker">Open source audio workspace</span>
-                <h3>AudioEnhancerMAX <span class="about-version">v3.9.0</span></h3>
+                <h3>AudioEnhancerMAX <span class="about-version" id="about-release-identity" hidden></span></h3>
                 <p>Audio processing, transcription, monitoring and trusted-LAN edge workers in one local-first suite.</p>
                 <p class="about-by">Created and maintained by <strong>Fabrizio Degni</strong></p>
             </div>
@@ -1289,31 +1289,26 @@ Start with a description. Refine styles, instruments and arrangement as needed."
         <div class="about-section">
             <div class="about-section-heading">
                 <div>
-                    <span class="about-kicker">Current release</span>
-                    <h3>What's new in v3.7</h3>
+                    <h3>Release highlights</h3>
                 </div>
-                <a class="about-text-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Full changelog</a>
+                <a class="about-text-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer">Release notes</a>
             </div>
             <div class="about-release-grid">
-                <article class="about-release-item">
-                    <span class="changelog-tag new">SMART ENHANCE 2</span>
-                    <h4>Measured, deterministic choices</h4>
-                    <p>Local diagnosis explains common recording risks and selects Conservative, Balanced or Maximum settings without handing DSP control to a language model.</p>
+                <article class="about-release-item" id="about-content-credentials" hidden>
+                    <h4>C2PA Content Credentials</h4>
+                    <p>Inspect embedded credentials locally or export signed WAV, MP3 and FLAC copies with a configured signing identity.</p>
                 </article>
                 <article class="about-release-item">
-                    <span class="changelog-tag new">PRECISION EDITOR</span>
                     <h4>Reviewable speech edits</h4>
                     <p>Transcript-linked cut and mute decisions remain reversible with preview, persisted undo/redo and EDL export while the source stays untouched.</p>
                 </article>
                 <article class="about-release-item">
-                    <span class="changelog-tag improved">DELIVERY</span>
-                    <h4>Five explicit output profiles</h4>
-                    <p>Podcast, video, audiobook, lossless archive and source-quality master profiles make format and loudness choices visible and auditable.</p>
+                    <h4>Music brief</h4>
+                    <p>Create structured music directions and export them as text or JSON.</p>
                 </article>
                 <article class="about-release-item">
-                    <span class="changelog-tag improved">PROOF LEDGER</span>
-                    <h4>Reports and privacy boundaries</h4>
-                    <p>Per-job reports disclose engines, options, warnings and privacy state; external, Ollama and trusted-LAN permissions remain independent.</p>
+                    <h4>Processing reports tied to revisions</h4>
+                    <p>Download the report for the exported revision and compare its SHA-256 with the fingerprint in the signed C2PA manifest.</p>
                 </article>
             </div>
         </div>
@@ -1322,17 +1317,17 @@ Start with a description. Refine styles, instruments and arrangement as needed."
             <div class="about-section-heading">
                 <div>
                     <span class="about-kicker">Companion apps</span>
-                    <h3>Extend processing across trusted devices</h3>
+                    <h3>Companion apps and legacy worker</h3>
                 </div>
             </div>
             <div class="about-companion-grid">
                 <article class="about-companion available">
                     <div class="about-companion-head">
                         <img src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">
-                        <div><h4>Android Worker</h4><span>v1.2.0 available</span></div>
+                        <div><h4>Android Worker</h4><span>Legacy v1.2.0</span></div>
                     </div>
                     <p>Pairs an Android 8.0 or later device on the same trusted Wi-Fi network and exposes supported DSP work to the desktop cluster.</p>
-                    <p class="about-disclosure">Current distribution: debug APK for manual installation. Review Android security prompts before installing.</p>
+                    <p class="about-disclosure">Manual installation via debug APK. See the <a class="about-text-link" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer">companion guide</a> for current Android and iOS availability.</p>
                     <div class="about-actions">
                         <a class="btn btn-sm btn-primary" href="https://raw.githubusercontent.com/sev7enITA/AudioEnhancerMAX/main/releases/AudioEnhancerMAX-Worker-v1.2.0-debug.apk" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="" aria-hidden="true">Download APK</a>
                         <a class="btn btn-sm btn-secondary" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/android-worker/README.md" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Setup guide</a>
@@ -1341,10 +1336,10 @@ Start with a description. Refine styles, instruments and arrangement as needed."
                 <article class="about-companion planned">
                     <div class="about-companion-head">
                         <img src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">
-                        <div><h4>iOS Companion</h4><span>Coming soon</span></div>
+                        <div><h4>iOS Companion</h4><span>Source available</span></div>
                     </div>
-                    <p>An iPhone and iPad companion is under consideration. No public iOS build or release date is currently available.</p>
-                    <a class="about-text-link" href="/roadmap.html" target="_blank" rel="noopener noreferrer">Follow the community roadmap</a>
+                    <p>The iPhone and iPad companion is available as source code. See current download options and Mac pairing requirements in the companion guide.</p>
+                    <a class="about-text-link" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer">Companion availability</a>
                 </article>
             </div>
         </div>

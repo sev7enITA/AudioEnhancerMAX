@@ -5,6 +5,8 @@
     const exportStatus = document.getElementById('credentials-export-status');
     const inspectionStatus = document.getElementById('credentials-inspection');
     const fileInput = document.getElementById('credentials-file');
+    const watermarkShortcut = document.getElementById('watermark-credentials-shortcut');
+    const aboutCredentials = document.getElementById('about-content-credentials');
     const trustedTimestamp = 'Trusted RFC 3161 timestamp verified.';
 
     const messages = {
@@ -21,6 +23,8 @@
         const availability = await response.json();
         inspector.hidden = !availability.inspect;
         exportPanel.hidden = !availability.inspect;
+        watermarkShortcut.hidden = !availability.inspect;
+        aboutCredentials.hidden = !availability.inspect;
         exportButton.disabled = !availability.sign;
         exportStatus.textContent = availability.sign ? '' :
             'Configure a C2PA signing certificate and its Keychain profile or local test key.';
@@ -28,6 +32,12 @@
 
     exportPanel.addEventListener('toggle', () => {
         if (exportPanel.open) refreshAvailability().catch(() => {});
+    });
+
+    watermarkShortcut.addEventListener('click', () => {
+        switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+        inspector.open = true;
+        inspector.querySelector('summary').focus();
     });
 
     fileInput.addEventListener('change', async () => {
