@@ -3291,19 +3291,21 @@ function handleComplianceFormatChange(format) {
 
 async function downloadProcessingReport() {
     if (!state.processingReportUrl || !state.fileId) return;
+    const reportUrl = state.processingReportUrl;
+    const fileId = state.fileId;
     try {
-        const response = await fetch(state.processingReportUrl, { cache: 'no-store' });
+        const response = await fetch(reportUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error('Quality report is unavailable');
-        const report = await response.json();
-        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const blob = await response.blob();
+        if (reportUrl !== state.processingReportUrl || fileId !== state.fileId) return;
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = `AudioEnhancerMAX-${state.fileId}-quality-report.json`;
+        anchor.download = `AudioEnhancerMAX-${fileId}-quality-report.json`;
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
         showToast('success', 'Local quality report downloaded');
     } catch (error) {
         showToast('error', error.message);

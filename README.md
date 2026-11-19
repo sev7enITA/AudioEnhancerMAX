@@ -200,6 +200,7 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - [Edge Computing Setup](docs/edge-computing.md)
 - [Developer Onboarding](docs/developer-onboarding.md)
 - [AI Governance Notes](docs/ai-governance.md)
+- [C2PA Content Credentials for desktop audio exports](docs/content-credentials.md)
 - Governance through product choices: [English](https://fabriziodegni.com/AudioEnhancerMAX/governance.html) / [Italiano](https://fabriziodegni.com/AudioEnhancerMAX/governance-it.html)
 - [macOS App and Packaging](docs/macos-app.md)
 - [v3.9.0 Release Notes](releases/RELEASE_NOTES_v3.9.0.md)

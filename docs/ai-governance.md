@@ -15,6 +15,7 @@ AudioEnhancerMAX is designed as a local-first, AI-assisted audio tool. It is not
 | Function | Default Processing Location | External Data Transfer |
 | --- | --- | --- |
 | Upload and enhancement | Local host | None by default |
+| Content Credentials | Local host | Embedded signing and verification run on the device |
 | Faster-Whisper transcription | Local host | None when models are local |
 | Ollama/Gemma Smart Mode | Local host | None when Ollama runs locally |
 | Kokoro TTS | Local host | None when installed locally |
@@ -52,6 +53,10 @@ For production governance, pair AudioEnhancerMAX output with:
 - transcript export, if used
 - notes on any external engine, such as Edge Neural TTS
 - human review of sensitive transcripts or speaker labels
+
+### Content Credentials
+
+Desktop exports can carry an embedded C2PA manifest signed with a configured ES256 identity. The manifest links to the source and to the exact revision and processing report. Recipients can check the file's cryptographic binding and the validator's trust decision for its signer. See the [workflow and certificate setup](content-credentials.md).
 
 ## Claims Policy
 

@@ -140,3 +140,16 @@ def load_processing_report(file_id: str) -> dict[str, Any] | None:
         return json.loads(report_path(file_id).read_text(encoding="utf-8"))
     except (OSError, ValueError, json.JSONDecodeError):
         return None
+
+
+def read_revision_report(master_path: Path, artifact: dict) -> tuple[bytes, dict]:
+    """Validate one snapshot and return the exact bytes used by C2PA."""
+    raw = master_path.with_suffix(".report.json").read_bytes()
+    report = json.loads(raw)
+    provenance = report.get("provenance") if isinstance(report, dict) else None
+    output = provenance.get("processed_output") if isinstance(provenance, dict) else None
+    master = artifact["exports"][artifact["master_format"]]
+    if (not isinstance(output, dict) or report.get("artifact_revision") != artifact["revision"]
+            or output.get("sha256") != master["sha256"]):
+        raise ValueError("The processing report does not match this result")
+    return raw, report

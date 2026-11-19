@@ -80,6 +80,10 @@ pip install --quiet \
 
 echo "  ✓ Web framework installed"
 
+pip install --quiet c2pa-python==0.39.0 || {
+    echo "  Content Credentials unavailable on this platform. Audio processing remains available."
+}
+
 # ── Audio processing libraries ──
 echo ""
 echo "🎵 Installing audio processing libraries..."

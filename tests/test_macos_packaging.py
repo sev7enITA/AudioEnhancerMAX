@@ -61,8 +61,9 @@ class MacOSPackagingTests(unittest.TestCase):
 
     def test_direct_build_uses_current_build_number(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text()
-        from app.release import APP_BUILD
-        self.assertIn(f'AEMAX_BUILD_NUMBER:-{APP_BUILD}', script)
+        self.assertIn('runpy.run_path(sys.argv[1])["APP_BUILD"]', script)
+        self.assertIn('runpy.run_path(sys.argv[1])["APP_VERSION"]', script)
+        self.assertIn('RELEASE_TAG="v${VERSION}"', script)
 
     def test_direct_build_uses_jit_free_runtime(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text()

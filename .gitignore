@@ -60,3 +60,5 @@ app/projects/
 app/runtime_settings.json
 .pytest_cache/
 .ruff_cache/
+
+/app/c2pa/
