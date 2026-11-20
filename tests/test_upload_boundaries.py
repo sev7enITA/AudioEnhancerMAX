@@ -56,6 +56,17 @@ def test_valid_upload_keeps_response_and_original_audio(uploads):
     assert result['waveform_data']
 
 
+def test_float_wav_with_invalid_samples_fails_cleanly(uploads):
+    buffer = io.BytesIO()
+    sf.write(buffer, np.array([0.25, np.nan, np.inf], dtype=np.float32), 16000, format="WAV", subtype="FLOAT")
+    response = TestClient(main.app).post(
+        "/api/upload", files={"file": ("invalid.wav", buffer.getvalue(), "audio/wav")},
+    )
+    assert response.status_code == 422
+    assert "invalid audio samples" in response.json()["detail"]
+    assert list(uploads.iterdir()) == []
+
+
 def test_cleanup_preview_reads_same_bounded_excerpt_and_leaves_source_intact(uploads, monkeypatch):
     sample_rate = 16_000
     length = 11

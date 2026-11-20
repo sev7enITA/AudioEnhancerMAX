@@ -162,6 +162,22 @@ class RuntimePrivacySettingsRequest(BaseModel):
     trusted_lan_processing_allowed: bool = Field(strict=True)
 
 
+WorkspaceTool = Literal[
+    "upload-panel", "presets-panel", "batch-panel", "stt-panel",
+    "speech-editor-panel", "tts-panel", "music-panel", "diarize-panel",
+    "smart-panel", "watermark-panel", "cluster-panel", "verify-content",
+]
+
+
+class SavedWorkspace(BaseModel):
+    name: str = Field(min_length=1, max_length=48)
+    tools: list[WorkspaceTool] = Field(min_length=1, max_length=12)
+
+
+class SavedWorkspaces(BaseModel):
+    workspaces: list[SavedWorkspace] = Field(max_length=12)
+
+
 class ProjectCapsuleRequest(BaseModel):
     output_version: Literal["processed", "speech_edit"] = "processed"
     revision: Optional[str] = Field(default=None, max_length=64)

@@ -118,6 +118,7 @@ app = BUNDLE(
         "LSApplicationCategoryType": "public.app-category.music",
         "LSMinimumSystemVersion": "13.0",
         "NSHighResolutionCapable": True,
+        "NSMicrophoneUsageDescription": "AudioEnhancerMAX records through your microphone only when you start a Studio recording.",
         "NSLocalNetworkUsageDescription": "AudioEnhancerMAX uses the local network for the companion devices and trusted audio workers you choose to connect.",
         "NSBonjourServices": ["_aemax-pair._tcp", "_aemax-phone._udp"],
         "NSHumanReadableCopyright": "Copyright (c) 2026 Fabrizio Degni",

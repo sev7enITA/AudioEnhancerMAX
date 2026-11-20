@@ -1,0 +1,354 @@
+/* Shared surface palette for the desktop workbench. Shell layout lives separately. */
+:root {
+    --bg-primary: #091823;
+    --bg-secondary: #0d202c;
+    --bg-tertiary: #193544;
+    --bg-card: #102632;
+    --bg-card-hover: #193848;
+    --bg-input: #10232e;
+    --glass-border: #3c5869;
+    --glass-border-hover: #678597;
+    --text-primary: #f0f8ff;
+    --text-secondary: #c4d7e2;
+    --text-tertiary: #a9c1cf;
+    --text-accent: #9fe8fa;
+    --accent-primary: #7ce5fb;
+    --accent-primary-light: #a7eeff;
+    --accent-primary-glow: #57ddf634;
+    --accent-secondary: #7ce5fb;
+    --accent-secondary-light: #a7eeff;
+    --accent-gradient: #7ce5fb;
+    --accent-gradient-hover: #a7eeff;
+    --desktop-accent-ink: #072430;
+    --desktop-focus: #b7f2ff;
+    --desktop-line: #3c5869;
+    --studio-surface: #102632;
+    --studio-inset: #0e202b;
+    --studio-line: #3c5869;
+    --studio-text: #f0f8ff;
+    --studio-muted: #b9d0dc;
+    --studio-cyan: #7ce5fb;
+    --workbench-backdrop: #091823;
+    --workbench-glass: #112a37ed;
+    --workbench-raised: #1b3a4a;
+    --workbench-edge: #466579;
+    --workbench-control-edge: #708b9b;
+    --workbench-highlight: #79e3fb;
+    --workbench-focus: #b7f2ff;
+}
+
+body:has(#project-studio-panel.active) {
+    --bg-primary: #091823;
+    --bg-secondary: #0d202c;
+    --bg-card: #102632;
+    --glass-border: #3c5869;
+    --desktop-focus: var(--workbench-focus);
+}
+
+body .main-content,
+body:has(#upload-panel.active) .main-content,
+body:has(#project-studio-panel.active) .main-content {
+    background: var(--workbench-backdrop) url("../img/desktop-glass-ambient.webp") center / cover no-repeat fixed;
+}
+
+/* Keep field and card treatments common across the dedicated tool screens. */
+.main-content :is(.card, .tool-surface, .settings-group, .workspace-collection,
+    .about-hero, .about-resource, .about-release-item, .about-companion,
+    .about-governance-grid article, .about-arch-item, .about-accel-item,
+    .about-sysinfo-item, .file-info-bar, .tool-heading-icon, .tool-source-notice.requires-file-notice) {
+    border-color: var(--workbench-edge);
+    background: var(--workbench-glass);
+}
+
+#tts-panel .speech-studio {
+    --speech-surface: #112a37;
+    --speech-well: #10232e;
+    --speech-border: var(--workbench-edge);
+    --speech-field-border: var(--workbench-control-edge);
+    --speech-ink: var(--text-primary);
+    --speech-muted: var(--text-secondary);
+    --speech-mint: var(--workbench-highlight);
+}
+
+.main-content :is(.btn.btn-secondary, .waveform-toggle-btn),
+#upload-panel .btn.btn-secondary,
+.main-content :is(.tool-field select, .tool-field input, .workspace-collection input, .workspace-collection select) {
+    background-color: var(--bg-input);
+    border-color: var(--workbench-control-edge);
+    color: var(--text-primary);
+}
+
+.main-content :is(.btn.btn-secondary, .waveform-toggle-btn):hover:enabled,
+#upload-panel .btn.btn-secondary:hover:enabled {
+    background-color: var(--workbench-raised);
+    border-color: var(--workbench-highlight);
+}
+
+.main-content .waveform-toggle-btn.active {
+    background: #1d4e64;
+    border-color: var(--workbench-highlight);
+    color: #f0fcff;
+}
+
+.preflight-dialog, .studio-command-dialog, .report-sheet, .context-tip {
+    background-color: #112a37;
+    border-color: var(--workbench-edge);
+    color: var(--text-primary);
+}
+
+/* The Home hero keeps its local product illustration and its existing action shortcuts. */
+.studio-welcome {
+    background: linear-gradient(108deg, #173b4c, #0e2633 63%, #102735);
+    border-color: var(--workbench-edge);
+}
+.studio-welcome-art {
+    background: radial-gradient(ellipse at center, #32607167, transparent 68%);
+}
+.home-action {
+    --action-accent: #89eafa;
+    --action-background: #234655;
+    border-color: #5d7888;
+}
+.home-action-import {
+    --action-background: #254f5e;
+    border-color: #83cdec;
+}
+.home-action-art { background: #102631c7; }
+
+/* The editor is a pair of glass panes aligned on the same horizontal axis. */
+#project-studio {
+    --studio-shell: #0e2633;
+    --studio-surface: #122b38;
+    --studio-trim: #112632;
+    --studio-line: #426375;
+    --studio-active: #204b5f;
+    --studio-ink: #f1f9fe;
+    --studio-subtle: #c3d9e6;
+    --studio-accent: var(--workbench-highlight);
+    --studio-focus: var(--workbench-focus);
+    --studio-timeline-height: clamp(255px, calc(100dvh - 266px), 780px);
+    --studio-dock-height: calc(var(--studio-timeline-height) + 55px);
+}
+
+#project-studio .project-studio-header {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    min-height: 56px;
+    padding-block-end: 7px;
+    border-bottom: 0;
+}
+#project-studio:not(:has(.studio-active-project:disabled)) .studio-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+#project-studio .studio-mode-bar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 7px 12px;
+    margin: 0;
+}
+#project-studio .studio-project-picker {
+    margin-inline-start: auto;
+}
+#project-studio .studio-context-bar {
+    justify-content: flex-start;
+    align-items: center;
+    margin-block: 1px 8px;
+}
+#project-studio .studio-context-bar .studio-footer { margin-inline-start: auto; }
+#project-studio:has(.studio-active-project:disabled) .studio-live-meter { display: none; }
+#project-studio .studio-active-name { border-color: var(--studio-line); }
+#project-studio .studio-phases {
+    padding: 3px;
+    border-color: #526c7c;
+    border-radius: 11px;
+    background: #15303d;
+}
+#project-studio .studio-phases .studio-button { min-height: 39px; border-radius: 8px; }
+#project-studio .studio-phases .studio-button[aria-pressed="true"] {
+    background: linear-gradient(155deg, #275b73, #133c4e);
+    border-color: #75def9;
+    box-shadow: inset 0 0 8px #48baed54;
+    color: #ecfbff;
+}
+#project-studio :is(.studio-button, .studio-control, input[type="number"], input[type="text"], select) {
+    border-color: var(--workbench-control-edge);
+}
+#project-studio .studio-phases .studio-button[aria-pressed="false"] { border-color: transparent; }
+#project-studio :is(.studio-button, .studio-control):hover:enabled {
+    border-color: var(--studio-accent);
+}
+#project-studio .studio-primary { background: #83dcf5; border-color: #83dcf5; color: #082630; }
+#project-studio .studio-project-actions #studio-import { background: #1b465a; border-color: #6294a9; }
+#project-studio .studio-project-actions #studio-import:hover:enabled { background: #24596d; border-color: var(--studio-accent); }
+
+#project-studio .studio-project-welcome {
+    border-color: var(--workbench-edge);
+    background-color: #132936;
+}
+#project-studio .studio-project-welcome::before {
+    background-image:
+        linear-gradient(90deg, #102b3a 8%, #102b3af7 30%, #102b3a96 52%, #102b3a05 80%),
+        url("../img/studio-welcome-microphone.webp");
+}
+
+#project-studio .studio-preview-bar {
+    background: #122b385e;
+    border-color: #4a697b;
+}
+#project-studio .studio-preview-bar:not(:has(#studio-play)) {
+    padding: 0 4px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+#project-studio:not([data-phase="record"], [data-recording="true"]) .studio-preview-bar:not(:has(#studio-play)) {
+    display: none;
+}
+#project-studio .studio-preview-panel { background: #102633dd; }
+#project-studio .studio-live-meter {
+    min-width: min(195px, 100%);
+    margin-inline-start: 0;
+    border-color: #4a697b;
+}
+#project-studio .studio-meter-track {
+    background: repeating-linear-gradient(to right, #426274 0 6px, #213e51 6px 8px);
+}
+#project-studio .studio-meter-fill {
+    background: linear-gradient(to right, #64cde8, #b0efff 72%, #f7aa94 95%);
+}
+#project-studio #studio-play { background: #204d62; color: #e6fafc; border-color: #82bfd7; }
+#project-studio #studio-play:hover:enabled,
+#project-studio[data-playing="true"] #studio-play[aria-pressed="true"] {
+    background: #7bdef8;
+    color: #092430;
+    border-color: #a4e9fa;
+}
+
+#project-studio .studio-editing-deck {
+    gap: 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+#project-studio :is(.studio-timeline-panel, .studio-dock) {
+    border: 1px solid var(--studio-line);
+    border-radius: 12px;
+    background: #102a3840;
+}
+#project-studio .studio-dock {
+    min-height: 0;
+    scrollbar-gutter: auto;
+}
+#project-studio .studio-dock .studio-tool-panel:not(.is-floating) {
+    background: #102934a8;
+    border-radius: 11px;
+}
+#project-studio .studio-surface-head {
+    min-height: 53px;
+    padding: 8px 14px;
+    background: linear-gradient(170deg, #214557b8, #15313e60);
+    border-radius: 11px 11px 0 0;
+}
+#project-studio .studio-surface-head h2 {
+    font-size: clamp(1.05rem, 1.4vw, 1.23rem);
+    font-weight: 700;
+}
+#project-studio .studio-surface-head .studio-button { min-height: 34px; font-size: .89rem; }
+#project-studio .studio-panel-body { padding: 0 14px 15px; }
+#project-studio .studio-inspector-details { padding: 9px 4px 7px; }
+#project-studio .studio-inspector-details:first-child { border-block-start: 0; }
+#project-studio .studio-timing-fields { gap: 8px 12px; padding: 0 2px 7px; }
+#project-studio .studio-timing-fields label { font-size: .87rem; }
+
+#project-studio #studio-timeline {
+    --studio-ruler-height: 39px;
+    --studio-track-height: 100px;
+    background: #10253228;
+    border-radius: 0 0 11px 11px;
+    scrollbar-color: #7295a8 #102532;
+}
+#studio-timeline .studio-timeline-stage { background-color: #102e3b14; }
+#studio-timeline .studio-ruler {
+    background: #173747;
+    border-bottom-color: #4d7187;
+    font-size: 12px;
+}
+#studio-timeline .studio-ruler::before,
+#studio-timeline .studio-track-label {
+    background: #183746;
+    border-right-color: #49677b;
+}
+#studio-timeline .studio-track-lane {
+    background-color: #112e3bb8;
+    border-bottom-color: #41657a;
+}
+#studio-timeline .studio-track-lane:nth-child(even) { background-color: #193846b0; }
+#studio-timeline .studio-track-lane.is-muted { background-color: #20333f; }
+#studio-timeline .studio-track-label { padding-inline: 8px; color: #eaf7fc; font-size: 14px; font-weight: 650; }
+#studio-timeline .studio-track-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#studio-timeline .studio-track-mute {
+    min-width: 24px;
+    min-height: 24px;
+    color: #e9f8fe;
+    background-color: #173644;
+    border-color: #738e9f;
+    border-radius: 5px;
+}
+#studio-timeline .studio-track-mute[aria-pressed="true"] { background: #4c3d26; border-color: #e7bc72; }
+#studio-timeline .studio-clip:not(.is-offline) {
+    inset-block: 9px;
+    background: linear-gradient(170deg, #2b627d, #123e54 79%);
+    border-color: #75c2e3;
+    border-radius: 9px;
+    color: #f2faff;
+    font-size: 13px;
+}
+#studio-timeline .studio-clip[aria-pressed="true"]:not(.is-offline) {
+    background: linear-gradient(170deg, #35799a, #155068 82%);
+    border-color: #a9ebff;
+    box-shadow: inset 0 0 10px #7ceafb52;
+}
+#studio-timeline .studio-clip-title { inset-inline: 8px; }
+#studio-timeline .studio-playhead,
+#studio-timeline .studio-playhead::after { background: #80f1fc; }
+#studio-timeline .studio-playhead {
+    width: 2px;
+    box-shadow: 0 0 12px #39ddff9e;
+}
+
+@media (max-width: 1080px) {
+    #project-studio #studio-timeline { --studio-track-height: 90px; }
+}
+@media (max-width: 760px) {
+    #project-studio {
+        --studio-timeline-height: clamp(240px, calc(100dvh - 268px), 540px);
+    }
+    #project-studio .studio-editing-deck { gap: 9px; }
+    #project-studio .studio-project-picker { margin-inline-start: 0; }
+    #project-studio .studio-live-meter { min-width: min(165px, 100%); }
+}
+@media (prefers-reduced-transparency: reduce) {
+    :root { --workbench-glass: #122b38; }
+    body .main-content,
+    body:has(#upload-panel.active) .main-content,
+    body:has(#project-studio-panel.active) .main-content { background-image: none; }
+    #project-studio :is(.studio-timeline-panel, .studio-dock),
+    #project-studio .studio-dock .studio-tool-panel:not(.is-floating),
+    #project-studio .studio-timeline-stage {
+        background-color: #102936;
+    }
+}
+
+body:has(#project-studio-panel.active #project-studio[data-calm="true"]) .main-content { background-image: none; }
+#project-studio[data-calm="true"] .studio-playhead { box-shadow: none; }

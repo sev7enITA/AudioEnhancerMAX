@@ -438,7 +438,22 @@ body:has(#upload-panel.active) .main-content {
     max-width: 35ch;
 }
 
-.studio-open-actions .btn { min-height: 46px; padding-inline: 13px; }
+.context-tip {
+    position: fixed;
+    z-index: 2700;
+    box-sizing: border-box;
+    max-width: min(280px, calc(100vw - 24px));
+    padding: 10px 13px;
+    border: 1px solid #627d88;
+    border-radius: 9px;
+    background: #192a33;
+    color: #f2f8fa;
+    box-shadow: 0 8px 25px #05090cb0;
+    font-size: .84rem;
+    line-height: 1.42;
+    overflow-wrap: anywhere;
+}
+.context-tip[hidden] { display: none; }
 .studio-drop-caption, .studio-import-status { color: var(--text-secondary); font-size: .88rem; }
 .studio-import-status { color: var(--studio-amber); }
 
@@ -569,6 +584,45 @@ body:has(#upload-panel.active) .main-content {
     .studio-session .file-info-meta { gap: 7px; }
     .studio-inspector { padding: 15px; }
 }
+
+.workspace-collections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+    gap: 18px;
+    align-items: start;
+}
+.workspace-collection { margin: 0; }
+.workspace-collection-header,
+.workspace-collection-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+.workspace-collection-header { justify-content: space-between; }
+.workspace-collection h2 { font-size: 1.25rem; }
+.workspace-collection h3 { font-size: 1.05rem; }
+.workspace-saved-item {
+    margin-top: 16px;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--glass-border);
+}
+.workspace-collection :is(button, input, select) { min-height: 44px; }
+.workspace-collection :is(input, select) {
+    width: 100%;
+    color: var(--text-primary);
+    background: #0f1a23;
+    border: 1px solid #627987;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+.workspace-collection :is(fieldset, ol) { min-width: 0; }
+.workspace-collection fieldset { display: grid; gap: 10px; margin-top: 12px; padding: 0; border: 0; }
+.workspace-collection ol { display: grid; gap: 8px; padding-left: 22px; margin-block: 12px; }
+.workspace-collection li > span { display: block; margin-bottom: 5px; }
+.workspace-collection li button + button { margin-inline-start: 5px; }
+.workspace-collection-actions select { flex: 1 1 180px; }
+.workspace-collection [role="status"] { color: var(--text-secondary); margin-top: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
     .desktop-skip, .app-header, .sidebar, .sidebar * { animation: none; transition: none; }

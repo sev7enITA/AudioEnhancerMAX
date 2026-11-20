@@ -91,32 +91,31 @@ def _query_gemma(prompt: str, audio_path: Optional[str] = None) -> Optional[str]
         return None
 
 
-def _check_ollama_available() -> bool:
-    """Check if Ollama is running and a Gemma model is available."""
+def local_model_status() -> tuple[str, str | None]:
+    """Distinguish a missing service from a running service without a local model."""
     global OLLAMA_MODEL
     try:
         import urllib.request
         req = urllib.request.Request(f"{OLLAMA_BASE_URL}/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=1) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            models = [m.get("name", "") for m in data.get("models", [])]
+        models = [
+            entry["name"] for entry in data.get("models", [])
+            if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+            and "gemma" in entry["name"].lower()
+            and "cloud" not in entry["name"].lower()
+            and not entry.get("remote_host") and not entry.get("remote_model")
+        ]
+    except (OSError, ValueError, AttributeError, TypeError):
+        OLLAMA_MODEL = None
+        return "not_running", None
 
-            # Try preferred models in order
-            for preferred in OLLAMA_PREFERRED_MODELS:
-                for available in models:
-                    if preferred in available or available.startswith(preferred.split(":")[0]):
-                        OLLAMA_MODEL = available
-                        return True
+    OLLAMA_MODEL = next((name for name in OLLAMA_PREFERRED_MODELS if name in models), next(iter(models), None))
+    return ("available" if OLLAMA_MODEL else "model_missing"), OLLAMA_MODEL
 
-            # Check any gemma variant
-            for m in models:
-                if "gemma" in m.lower():
-                    OLLAMA_MODEL = m
-                    return True
 
-            return False
-    except Exception:
-        return False
+def _check_ollama_available() -> bool:
+    return local_model_status()[0] == "available"
 
 
 def detect_content_type(

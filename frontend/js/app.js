@@ -247,6 +247,7 @@ function mpsAvailability(available) {
 }
 
 async function checkSystemHealth() {
+    const localModel = document.getElementById('local-model-status');
     try {
         const res = await fetch('/api/health');
         if (!res.ok) throw new Error('Health check unavailable');
@@ -255,8 +256,10 @@ async function checkSystemHealth() {
         if (data.version && data.build) {
             const version = `v${data.version}`;
             const label = data.release_label || data.release_channel;
-            const sidebarRelease = document.querySelector('[data-app-version]');
-            if (sidebarRelease) sidebarRelease.textContent = [version, label].filter(Boolean).join(' · ');
+            const headerRelease = document.querySelector('[data-app-version]');
+            if (headerRelease) {
+                headerRelease.textContent = [version, `build ${data.build}`, label].filter(Boolean).join(' · ');
+            }
             const aboutRelease = document.getElementById('about-release-identity');
             if (aboutRelease) {
                 aboutRelease.textContent = [version, `build ${data.build}`, label].filter(Boolean).join(' · ');
@@ -273,27 +276,19 @@ async function checkSystemHealth() {
         if (chip) chip.textContent = data.system?.chip || 'Chip not identified';
         if (runtime) runtime.textContent = mpsAvailability(data.mps_available);
 
-        // Update Gemma status
-        const dot = document.getElementById('gemma-dot');
-        const label = document.getElementById('gemma-label');
-
-        const ollamaStatus = data.ollama_status || data.gemma4_status;
+        const ollamaStatus = data.ollama_status;
         const ollamaModel = data.ollama_model || data.gemma_model;
-
-        if (ollamaStatus === 'available') {
-            dot.className = 'status-dot';
-            const modelName = ollamaModel || 'Ollama/Gemma';
-            label.textContent = modelName + ' ready';
-        } else if (ollamaStatus === 'not_running') {
-            dot.className = 'status-dot warning';
-            label.textContent = 'Ollama/Gemma - Start Ollama';
-        } else {
-            dot.className = 'status-dot error';
-            label.textContent = 'Ollama/Gemma - Unavailable';
+        if (localModel) {
+            const status = {
+                available: `Model installed: ${ollamaModel}. Enable local Ollama assistance in Privacy & Offline to use it.`,
+                not_running: 'Ollama is not running on this Mac.',
+                model_missing: 'Ollama is running. Download a compatible local Gemma model to use writing suggestions.',
+            };
+            const message = status[ollamaStatus] || 'Could not check the local model.';
+            if (localModel.textContent !== message) localModel.textContent = message;
         }
     } catch (e) {
-        document.getElementById('gemma-dot').className = 'status-dot error';
-        document.getElementById('gemma-label').textContent = 'Backend offline';
+        if (localModel) localModel.textContent = 'Could not check the local model.';
     }
 }
 
@@ -305,6 +300,7 @@ function switchPanel(panelId, navItem) {
     const nextPanel = panelId === 'speech-editor-panel' ? 'upload-panel' : panelId;
     const target = document.getElementById(nextPanel);
     if (!target) return;
+    const changed = !target.classList.contains('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.sidebar-nav-item').forEach(n => {
         n.classList.remove('active');
@@ -315,10 +311,9 @@ function switchPanel(panelId, navItem) {
     if (navItem) {
         navItem.classList.add('active');
         navItem.setAttribute('aria-current', 'page');
-        const tools = navItem.closest('details');
-        if (tools) tools.open = true;
     }
     if (panelId === 'speech-editor-panel') window.aemWorkspace?.selectStage('review');
+    document.dispatchEvent(new CustomEvent('aem:panel', {detail:{panel:nextPanel, navItem, changed}}));
 }
 
 function switchTab(tabId, tabBtn) {
@@ -341,6 +336,7 @@ function initUploadZone() {
 
     document.getElementById('upload-zone').addEventListener('click', () => input.click());
     document.getElementById('open-another-source').addEventListener('click', () => input.click());
+    document.getElementById('stt-open-audio').addEventListener('click', () => input.click());
 
     zone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -4372,6 +4368,7 @@ let _lastClusterData = null;
 // ==========================================================
 
 function initSettingsPanel() {
+    document.getElementById('local-model-refresh').addEventListener('click', checkSystemHealth);
     // LUFS slider live value
     const slider = document.getElementById('setting-loudness');
     const val = document.getElementById('setting-loudness-val');

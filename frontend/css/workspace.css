@@ -120,13 +120,69 @@ body:has(#upload-panel.active) .main-content {
 }
 
 .studio-open-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+    max-width: 448px;
 }
 
-.studio-open-actions .btn { min-height: 45px; padding: 0 16px; }
+.home-action {
+    --action-accent: #a8dcff;
+    --action-background: #274354;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 98px;
+    padding: 12px 14px;
+    border: 1px solid #44616b;
+    border-radius: 12px;
+    background: linear-gradient(146deg, var(--action-background), #172832 88%);
+    color: #f6fbfc;
+    font-family: inherit;
+    font-size: .92rem;
+    font-weight: 650;
+    line-height: 1.2;
+    text-align: start;
+    cursor: pointer;
+    transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.home-action[hidden] { display: none; }
+.home-action:disabled { opacity: .55; cursor: default; }
+.home-action-import { --action-background: #215047; --action-accent: #a4f1d3; border-color: #649f93; }
+.home-action-verify { --action-background: #3d3557; --action-accent: #dfcdff; }
+.home-action-workspaces { --action-background: #473d35; --action-accent: #f7d7ad; }
+
+.home-action:not(:disabled):is(:hover, :focus-visible) {
+    border-color: var(--action-accent);
+    box-shadow: 0 4px 15px #0a161e70;
+    transform: translateY(-2px);
+}
+.home-action:focus-visible { outline: 2px solid #e7faff; outline-offset: 3px; }
+.home-action:not(:disabled):active { transform: none; }
+
+.home-action-art {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #e3f4ff35;
+    border-radius: 12px;
+    background: #13232db0;
+}
+.home-action-art img { display: block; width: 32px; height: 32px; }
+
+@media (max-width: 360px) {
+    .home-action { padding-inline: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .home-action { transition: none; }
+    .home-action:not(:disabled):is(:hover, :focus-visible) { transform: none; }
+}
 
 #upload-panel .btn-primary {
     color: #0d2327;

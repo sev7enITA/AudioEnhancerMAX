@@ -9,7 +9,7 @@
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
 **Native Apple Silicon app · local DSP · reviewable speech edits · Android and iOS companions**
 
-**[Mac 4.1.2 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-beta.1)** makes import, analysis, processing and export distinct. It records an action history and reports hardware capabilities for the Mac running the app. [Mac release notes](releases/RELEASE_NOTES_v4.1.2-beta.1.md).
+**[Mac 4.1.5 BETA, build 4.1.9](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.5-beta.1)** adds a floating dock, quick tools and a non-destructive multitrack Studio. [Download and verification](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-5) · [Dock screenshots](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html#gallery-4-1-5).
 
 **[Companion 4.1.2 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-mobile-beta.1)** adds audio and video metadata inspection, embedded artwork EXIF where available, format guidance and a release welcome screen. [Mobile release notes](releases/RELEASE_NOTES_v4.1.2-mobile-beta.1.md) · [Mobile download channels](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates).
 
@@ -72,6 +72,7 @@ Requires Apple Silicon and macOS 13+.
 
 | Channel | Download and status |
 | --- | --- |
+| Mac 4.1.5 BETA | [Mac build 4.1.9](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.5-beta.1) · Developer ID signed and Apple notarized. |
 | 4.1.2 BETA | [Mac build 4.1.4](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-beta.1) · [Android build 19 and iOS build 14 developer archive](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-mobile-beta.1). |
 | Latest stable | [3.9.0, build 3.9.2](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0): Music brief assistant and updated dependency pins |
 | Previous BETA | [3.9.1, build 3.9.10](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.1): first public C2PA BETA |

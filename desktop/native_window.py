@@ -11,7 +11,7 @@ from html import escape
 from pathlib import Path
 from urllib.parse import urlparse
 
-from app.config import ALLOWED_EXTENSIONS
+from app.config import ALLOWED_EXTENSIONS, STUDIO_MEDIA_EXTENSIONS
 from app.release import RELEASE_LABEL
 
 import objc
@@ -65,7 +65,10 @@ WORKSPACE_PICKER_SCRIPT = """
     let workspaceInput = false;
     document.addEventListener("click", ({ target }) => {
         if (target instanceof HTMLInputElement && target.type === "file") {
-            workspaceInput = target.id === "file-input";
+            workspaceInput = ({
+                "file-input": "workspace", "studio-file-input": "studio",
+                "studio-relink-input": "studio", "studio-bundle-input": "bundle",
+            })[target.id] || false;
         }
     }, true);
     window.takeWorkspaceFilePickerIntent = () => {
@@ -77,10 +80,10 @@ WORKSPACE_PICKER_SCRIPT = """
 """
 
 
-def _workspace_file_url(url) -> bool:
+def _workspace_file_url(url, extensions=ALLOWED_EXTENSIONS) -> bool:
     return bool(
         url is not None and url.isFileURL() and not url.hasDirectoryPath()
-        and Path(str(url.lastPathComponent())).suffix.lower() in ALLOWED_EXTENSIONS
+        and Path(str(url.lastPathComponent())).suffix.lower() in extensions
     )
 
 
@@ -90,7 +93,9 @@ class WorkspaceFilePanelDelegate(
     def panel_shouldEnableURL_(self, _panel, url):
         # Folders must stay available for navigation. The panel separately
         # disables choosing a directory as the recording.
-        return bool(url.isFileURL() and url.hasDirectoryPath()) or _workspace_file_url(url)
+        return bool(url.isFileURL() and url.hasDirectoryPath()) or _workspace_file_url(
+            url, getattr(self, "extensions", ALLOWED_EXTENSIONS)
+        )
 
 
 def _is_local_url(value: str) -> bool:
@@ -256,6 +261,7 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         self.about_web_view = None
         self._ready_thread = None
         self._terminating = False
+        self._open_panel = None
         return self
 
     def applicationDidFinishLaunching_(self, _notification):
@@ -555,38 +561,66 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         # property for the DOM input's accept list or identifier.
         def present(intent, error):
             self._open_file_panel(
-                directories, multiple, error is None and bool(intent), completion_handler
+                directories, multiple, str(intent) if error is None and intent else False, completion_handler
             )
 
-        web_view.evaluateJavaScript_inFrame_inContentWorld_completionHandler_(
-            "window.takeWorkspaceFilePickerIntent?.() ?? false",
-            frame, WKContentWorld.worldWithName_(WORKSPACE_PICKER_WORLD), present,
-        )
+        try:
+            web_view.evaluateJavaScript_inFrame_inContentWorld_completionHandler_(
+                "window.takeWorkspaceFilePickerIntent?.() ?? false",
+                frame, WKContentWorld.worldWithName_(WORKSPACE_PICKER_WORLD), present,
+            )
+        except Exception:
+            LOGGER.exception("Could not identify the WebKit file input")
+            completion_handler(None)
 
     def _open_file_panel(self, directories, multiple, workspace, completion_handler):
-        panel = NSOpenPanel.alloc().init()
-        if panel is None:
-            LOGGER.error("Could not create the native open panel")
+        if self._terminating or self._open_panel is not None:
             completion_handler(None)
             return
-        panel.setCanChooseFiles_(True)
-        panel.setCanChooseDirectories_(directories and not workspace)
-        panel.setAllowsMultipleSelection_(multiple)
-        if workspace:
-            # Pass extension strings rather than broad audio/video/MIME types.
-            # The delegate also rejects aliases that AppKit's type matching
-            # may consider equivalent but the upload endpoint does not accept.
-            panel.setAllowedFileTypes_(sorted(extension[1:] for extension in ALLOWED_EXTENSIONS))
-            panel.setAllowsOtherFileTypes_(False)
-            file_filter = WorkspaceFilePanelDelegate.alloc().init()
-            panel.setDelegate_(file_filter)
-        if panel.runModal() != NSModalResponseOK:
-            completion_handler(None)
-            return
-        urls = panel.URLs()
-        completion_handler(
-            urls if not workspace or (urls and all(_workspace_file_url(url) for url in urls)) else None
-        )
+        replied = False
+        extensions = {"studio": STUDIO_MEDIA_EXTENSIONS, "bundle": {".zip"}}.get(workspace, ALLOWED_EXTENSIONS)
+
+        def finish(result):
+            nonlocal replied
+            if replied:
+                return
+            replied = True
+            selected = None
+            try:
+                if result == NSModalResponseOK:
+                    urls = panel.URLs()
+                    if urls and (not workspace or all(_workspace_file_url(url, extensions) for url in urls)):
+                        selected = urls
+            except Exception:
+                LOGGER.exception("Could not read the native open-panel selection")
+            finally:
+                self._open_panel = None
+            completion_handler(selected)
+
+        try:
+            panel = NSOpenPanel.alloc().init()
+            if panel is None:
+                raise RuntimeError("AppKit did not create the open panel")
+            panel.setCanChooseFiles_(True)
+            panel.setCanChooseDirectories_(directories and not workspace)
+            panel.setAllowsMultipleSelection_(multiple)
+            file_filter = None
+            if workspace:
+                panel.setAllowedFileTypes_(sorted(extension[1:] for extension in extensions))
+                panel.setAllowsOtherFileTypes_(False)
+                file_filter = WorkspaceFilePanelDelegate.alloc().init()
+                file_filter.extensions = extensions
+                panel.setDelegate_(file_filter)
+            self._open_panel = (panel, file_filter)
+            if self.window is None:
+                finish(panel.runModal())
+            else:
+                # WebKit is already handling a UI callback. Keep its owner,
+                # delegate and completion alive without nesting a modal loop.
+                panel.beginSheetModalForWindow_completionHandler_(self.window, finish)
+        except Exception:
+            LOGGER.exception("Could not present the native open panel")
+            finish(None)
 
     def webView_runJavaScriptAlertPanelWithMessage_initiatedByFrame_completionHandler_(
         self, _web_view, message, _frame, completion_handler

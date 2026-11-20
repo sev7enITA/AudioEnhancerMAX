@@ -665,8 +665,35 @@
 
     function renderCommands() {
         const needle = search.value.trim().toLowerCase();
-        const targets = [...document.querySelectorAll('.sidebar-nav-item[data-panel]')];
+        const targets = [...document.querySelectorAll('#workspace-dock .sidebar-nav-item[data-panel]')];
+        const quickCommands = [
+            { action: 'verify', label: 'Verify C2PA Content Credentials' },
+            { action: 'clean', label: 'Clean up audio' }
+        ];
         commandResults.replaceChildren();
+        for (const {action, label} of quickCommands) {
+            const target = document.querySelector(`[data-dock-action="${action}"]`);
+            if (!target || target.hidden || !label.toLowerCase().includes(needle)) continue;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = label;
+            button.addEventListener('click', () => {
+                commandDialog.close();
+                target.click();
+            });
+            commandResults.append(button);
+        }
+        for (const command of window.aemStudioTimeline?.commands() || []) {
+            if (!`${command.label} ${command.keywords || ''}`.toLowerCase().includes(needle)) continue;
+            const action = document.createElement('button');
+            action.type = 'button';
+            action.textContent = command.label;
+            action.addEventListener('click', () => {
+                commandDialog.close();
+                command.run();
+            });
+            commandResults.append(action);
+        }
         for (const target of targets) {
             const label = target.textContent.trim().replace(/\s+/g, ' ');
             if (!label.toLowerCase().includes(needle) || target.hidden || target.style.display === 'none') continue;
@@ -695,7 +722,15 @@
     }
 
     commandDialog.addEventListener('keydown', (event) => {
-        if (event.target === search && event.key === 'Enter') commandResults.firstElementChild?.click();
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            commandDialog.close();
+            return;
+        }
+        if (event.target === search && event.key === 'Enter') {
+            event.preventDefault();
+            commandResults.firstElementChild?.click();
+        }
         if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
         const commands = [...commandResults.children];
         const current = commands.indexOf(event.target);
@@ -706,7 +741,11 @@
     search.addEventListener('input', renderCommands);
     byId('command-search-button').addEventListener('click', openCommandSearch);
     document.addEventListener('keydown', (event) => {
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        if (event.defaultPrevented || event.isComposing) return;
+        const customPalette = window.aemStudioTimeline?.matchesPaletteShortcut(event);
+        const defaultPalette = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
+        if ((customPalette ?? defaultPalette) && !document.querySelector('dialog[open]')) {
+            if (!(event.metaKey || event.ctrlKey) && event.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
             event.preventDefault();
             openCommandSearch();
         }
@@ -766,17 +805,23 @@
     });
     byId('workspace-history-reload').addEventListener('click', () => loadHistory());
     historyOlder.addEventListener('click', () => loadHistory(true));
-    byId('studio-verify-credentials').addEventListener('click', () => {
+    function openVerifier() {
         const verifier = byId('credentials-inspector');
         if (verifier.hidden) return;
         verifier.open = true;
         verifier.querySelector('summary').focus();
-    });
+    }
+    byId('studio-verify-credentials').addEventListener('click', openVerifier);
+    byId('home-verify-content').addEventListener('click', openVerifier);
 
-    const credentialObserver = new MutationObserver(() => {
-        byId('studio-verify-credentials').hidden = byId('credentials-inspector').hidden;
-    });
+    function syncVerifierButtons() {
+        const hidden = byId('credentials-inspector').hidden;
+        byId('studio-verify-credentials').hidden = hidden;
+        byId('home-verify-content').hidden = hidden;
+    }
+    const credentialObserver = new MutationObserver(syncVerifierButtons);
     credentialObserver.observe(byId('credentials-inspector'), {attributes: true, attributeFilter: ['hidden']});
+    syncVerifierButtons();
 
     window.aemWorkspace = {selectStage, attachWaveform, refreshTransport, refreshSession, refreshPresets, refreshRecipe, refreshHistory, sourceOpened, sourceClosed, resultOpened, showSourceAnalysis, seekTranscriptWord};
     refreshSession();

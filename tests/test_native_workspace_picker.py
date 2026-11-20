@@ -49,3 +49,38 @@ def test_native_dialog_enforces_workspace_only(tmp_path, monkeypatch):
     panel.setAllowedFileTypes_.assert_not_called()
     panel.setCanChooseDirectories_.assert_called_with(True)
     panel.setAllowsMultipleSelection_.assert_called_with(True)
+
+
+def test_sheet_keeps_delegate_and_answers_only_once(tmp_path, monkeypatch):
+    panel = Mock()
+    choice = file_url(tmp_path / "clip.wav")
+    panel.URLs.return_value = [choice]
+    wrapper = SimpleNamespace(alloc=lambda: SimpleNamespace(init=lambda: panel))
+    monkeypatch.setattr(native_window, "NSOpenPanel", wrapper)
+    app = native_window.NativeAppDelegate.alloc().init()
+    app.window = object()
+    selected = []
+    app._open_file_panel(False, False, True, selected.append)
+    sheet, delegate = app._open_panel
+    assert sheet is panel
+    panel.setDelegate_.assert_called_once_with(delegate)
+    panel.runModal.assert_not_called()
+    window, finish = panel.beginSheetModalForWindow_completionHandler_.call_args.args
+    assert window is app.window
+    finish(native_window.NSModalResponseOK)
+    finish(native_window.NSModalResponseOK)
+    assert selected == [[choice]]
+    assert app._open_panel is None
+
+
+def test_could_not_present_sheet_cancels_the_webkit_request(monkeypatch):
+    panel = Mock()
+    panel.beginSheetModalForWindow_completionHandler_.side_effect = RuntimeError("sheet unavailable")
+    wrapper = SimpleNamespace(alloc=lambda: SimpleNamespace(init=lambda: panel))
+    monkeypatch.setattr(native_window, "NSOpenPanel", wrapper)
+    app = native_window.NativeAppDelegate.alloc().init()
+    app.window = object()
+    selected = []
+    app._open_file_panel(False, False, True, selected.append)
+    assert selected == [None]
+    assert app._open_panel is None

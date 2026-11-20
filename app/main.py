@@ -26,7 +26,7 @@ from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 
 from app.config import (
-    APP_STORE_MODE, UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
+    APP_STORE_MODE, DATA_DIR, UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
     ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB, ROADMAP_VOTES_FILE,
     bundled_whisper_model_available,
 )
@@ -37,7 +37,7 @@ from app.models.schemas import (
     VoiceProfileEnrollRequest, VoiceProfileUpdateRequest,
     SpeechEditorAnalyzeRequest, SpeechEditorUpdateRequest, SpeechEditorRenderRequest,
     SpeechEditorManualEditRequest, RevisionRequest, RuntimePrivacySettingsRequest,
-    ProjectCapsuleRequest, BlindABReviewRequest,
+    ProjectCapsuleRequest, BlindABReviewRequest, SavedWorkspaces,
 )
 from app.models.music import MusicBriefRequest, MusicRefineRequest
 from app.utils.audio_io import (
@@ -153,6 +153,8 @@ async def prevent_stale_frontend(request, call_next):
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 app.mount("/img", StaticFiles(directory=str(FRONTEND_DIR / "img")), name="public-images")
 app.mount("/outputs", StaticFiles(directory=str(OUTPUT_DIR)), name="outputs")
+from app.services.project_studio_routes import router as studio_router
+app.include_router(studio_router)
 if not APP_STORE_MODE:
     from desktop.companion.control import router as companion_router
     app.include_router(companion_router)
@@ -287,6 +289,38 @@ async def update_runtime_privacy_settings(request: RuntimePrivacySettingsRequest
         if not APP_STORE_MODE:
             from desktop.companion.control import suspend_workers
             suspend_workers()
+    return settings
+
+
+@app.get("/api/settings/workspaces")
+def load_workspaces(request: Request):
+    _require_local_credentials_request(request, "Workspaces")
+    try:
+        return SavedWorkspaces.model_validate_json((DATA_DIR / "workspaces.json").read_bytes())
+    except FileNotFoundError:
+        return SavedWorkspaces(workspaces=[])
+    except (OSError, ValueError) as exc:
+        logger.warning("Could not read saved workspaces", exc_info=True)
+        raise HTTPException(503, "Could not load your workspaces.") from exc
+
+
+@app.put("/api/settings/workspaces")
+def save_workspaces(request: Request, settings: SavedWorkspaces):
+    _require_local_credentials_request(request, "Workspaces")
+    from app.services.artifact_store import atomic_json
+
+    names = set()
+    for workspace in settings.workspaces:
+        workspace.name = workspace.name.strip()
+        key = workspace.name.casefold()
+        if not key or key in names or len(set(workspace.tools)) != len(workspace.tools):
+            raise HTTPException(422, "Use a distinct name and add each tool once.")
+        names.add(key)
+    try:
+        atomic_json(DATA_DIR / "workspaces.json", settings.model_dump())
+    except OSError as exc:
+        logger.warning("Could not save workspaces", exc_info=True)
+        raise HTTPException(503, "Could not save your workspaces.") from exc
     return settings
 
 
@@ -509,6 +543,9 @@ def upload_file(file: UploadFile = File(...)):
             raise HTTPException(422, "This file could not be decoded as supported audio.") from exc
         if not audio.size:
             raise HTTPException(422, "The selected file contains no audio samples.")
+        for offset in range(0, audio.size, 1024 * 1024):
+            if not np.isfinite(audio[offset:offset + 1024 * 1024]).all():
+                raise HTTPException(422, "This file contains invalid audio samples. Try another copy or convert it to PCM WAV.")
         if ext != ".wav":
             save_audio(audio, sr, wav_path)
 
@@ -547,7 +584,8 @@ def upload_file(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, f"Failed to process upload: {str(e)}")
+        logger.exception("Workspace import failed for %s (%s)", file_id, ext)
+        raise HTTPException(500, "Could not import the file. Try another copy or check the local app log.") from e
     finally:
         if not completed:
             upload_path.unlink(missing_ok=True)
@@ -2148,15 +2186,15 @@ async def _resolve_export(file_id: str, format: str | None = None,
         raise HTTPException(409, str(exc)) from exc
 
 
-def _require_local_credentials_request(request: Request) -> None:
-    """Signing authority and media inspection are limited to this local UI."""
+def _require_local_credentials_request(request: Request, feature: str = "Content Credentials") -> None:
+    """Limit access to integrations and their private data to the local UI."""
     if request.url.hostname not in {"localhost", "127.0.0.1", "::1"}:
-        raise HTTPException(403, "Open AudioEnhancerMAX on this device to use Content Credentials")
+        raise HTTPException(403, f"Open AudioEnhancerMAX on this device to use {feature}")
     if request.client is None or request.client.host not in {"127.0.0.1", "::1"}:
-        raise HTTPException(403, "Content Credentials are available on this device only")
+        raise HTTPException(403, f"{feature} are available on this device only")
     origin = request.headers.get("origin")
     if origin and origin != f"{request.url.scheme}://{request.url.netloc}":
-        raise HTTPException(403, "Content Credentials require a same-origin request")
+        raise HTTPException(403, f"{feature} require a same-origin request")
 
 
 @app.get("/api/content-credentials")
@@ -2370,13 +2408,8 @@ async def health():
     gemma_status = "unknown"
     gemma_model = None
     try:
-        from app.services.smart_mode import _check_ollama_available
-        import app.services.smart_mode as smart_mod
-        if _check_ollama_available():
-            gemma_status = "available"
-            gemma_model = smart_mod.OLLAMA_MODEL
-        else:
-            gemma_status = "not_running"
+        from app.services.smart_mode import local_model_status
+        gemma_status, gemma_model = await asyncio.to_thread(local_model_status)
     except Exception:
         gemma_status = "error"
 

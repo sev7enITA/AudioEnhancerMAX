@@ -11,6 +11,21 @@ from app.services import artifact_store, delivery_compliance, processing_report,
 from app.utils import audio_io
 
 
+def test_desktop_workspace_settings_preserve_order_and_reject_other_origins(tmp_path, monkeypatch):
+    monkeypatch.setattr(main, "DATA_DIR", tmp_path)
+    client = TestClient(main.app, base_url="http://127.0.0.1", client=("127.0.0.1", 23456))
+    route = "/api/settings/workspaces"
+    state = {"workspaces": [{"name": " Editorial review ", "tools": ["verify-content", "stt-panel"]}]}
+    assert client.get(route).json() == {"workspaces": []}
+    assert client.put(route, json=state, headers={"Origin": "https://example.com"}).status_code == 403
+    result = client.put(route, json=state)
+    assert result.status_code == 200
+    saved = {"workspaces": [{"name": "Editorial review", "tools": ["verify-content", "stt-panel"]}]}
+    assert result.json() == client.get(route).json() == saved
+    assert client.put(route, json={"workspaces": [state["workspaces"][0]] * 2}).status_code == 422
+    assert client.get(route).json() == saved
+
+
 def test_workspace_source_history_and_exact_original(tmp_path, monkeypatch):
     uploads = tmp_path / "uploads"
     outputs = tmp_path / "outputs"
