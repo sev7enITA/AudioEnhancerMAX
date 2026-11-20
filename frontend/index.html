@@ -1321,11 +1321,11 @@ Start with a description. Refine styles, instruments and arrangement as needed."
         </div>
 
         <div class="about-resource-grid" aria-label="Official project resources">
-            <a class="about-resource" href="#about-privacy">
+            <a class="about-resource" href="https://www.fabriziodegni.com/AudioEnhancerMAX/privacy.html" target="_blank" rel="noopener noreferrer">
                 <img src="/static/img/icons/lock.svg" alt="" aria-hidden="true">
                 <span><strong>Privacy and data flow</strong><small>What stays local and when the network is used</small></span>
             </a>
-            <a class="about-resource" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank" rel="noopener noreferrer">
+            <a class="about-resource" href="https://www.fabriziodegni.com/AudioEnhancerMAX/support.html" target="_blank" rel="noopener noreferrer">
                 <img src="/static/img/icons/info.svg" alt="" aria-hidden="true">
                 <span><strong>Support and bug reports</strong><small>Open a public, traceable GitHub issue</small></span>
             </a>
@@ -1370,20 +1370,19 @@ Start with a description. Refine styles, instruments and arrangement as needed."
             <div class="about-section-heading">
                 <div>
                     <span class="about-kicker">Companion apps</span>
-                    <h3>Companion apps and legacy worker</h3>
+                    <h3>Android and iOS companions</h3>
                 </div>
             </div>
             <div class="about-companion-grid">
                 <article class="about-companion available">
                     <div class="about-companion-head">
                         <img src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">
-                        <div><h4>Android Worker</h4><span>Legacy v1.2.0</span></div>
+                        <div><h4>Android Companion</h4><span>BETA APK</span></div>
                     </div>
-                    <p>Pairs an Android 8.0 or later device on the same trusted Wi-Fi network and exposes supported DSP work to the desktop cluster.</p>
-                    <p class="about-disclosure">Manual installation via debug APK. See the <a class="about-text-link" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer">companion guide</a> for current Android and iOS availability.</p>
+                    <p>Import audio by format, review an edit on the phone and send it to a paired Mac over Wi-Fi.</p>
+                    <p class="about-disclosure">See the <a class="about-text-link" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer">companion guide</a> for requirements and installation.</p>
                     <div class="about-actions">
-                        <a class="btn btn-sm btn-primary" href="https://raw.githubusercontent.com/sev7enITA/AudioEnhancerMAX/main/releases/AudioEnhancerMAX-Worker-v1.2.0-debug.apk" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="" aria-hidden="true">Download APK</a>
-                        <a class="btn btn-sm btn-secondary" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/android-worker/README.md" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Setup guide</a>
+                        <a class="btn btn-sm btn-primary" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="" aria-hidden="true">Get Android Companion</a>
                     </div>
                 </article>
                 <article class="about-companion planned">
@@ -1391,7 +1390,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
                         <img src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">
                         <div><h4>iOS Companion</h4><span>Source available</span></div>
                     </div>
-                    <p>The iPhone and iPad companion is available as source code. See current download options and Mac pairing requirements in the companion guide.</p>
+                    <p>Import, trim and review audio on iPhone or iPad, then send it to a paired Mac. The iOS companion is available as source code.</p>
                     <a class="about-text-link" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer">Companion availability</a>
                 </article>
             </div>
@@ -1413,7 +1412,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
                 <article>
                     <img src="/static/img/icons/external-flow.svg" alt="" aria-hidden="true">
                     <h4>Network use is contextual</h4>
-                    <p>Text leaves the device only when an online TTS option is selected. Audio chunks are sent across the LAN only when you connect and use a trusted edge worker.</p>
+                    <p>Online speech services and C2PA timestamping use the network when selected. Companion transfers and optional edge processing use the local network after you enable them.</p>
                 </article>
                 <article>
                     <img src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">

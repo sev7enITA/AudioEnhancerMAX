@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="${0:A:h:h}"
 BUILD_DIR="${AEMAX_BUILD_DIR:-${ROOT}/build/macos}"
 DIST_DIR="${AEMAX_DIST_DIR:-${ROOT}/dist/macos}"
-ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
+MASTER_ICON="${ROOT}/frontend/img/audioenhancermax-logo.png"
 ICONSET="${BUILD_DIR}/AudioEnhancerMAX.iconset"
 ICON="${ROOT}/packaging/macos/AudioEnhancerMAX.icns"
 PYTHON="${AEMAX_PYTHON:-${ROOT}/venv/bin/python}"
@@ -93,9 +93,6 @@ PY
 
     rm -rf "${BUILD_DIR}" "${DIST_DIR}" "${ICONSET}"
     mkdir -p "${BUILD_DIR}" "${DIST_DIR}" "${ICONSET}"
-
-    qlmanage -t -s 1024 -o "${BUILD_DIR}" "${ICON_SOURCE}" >/dev/null 2>&1
-    MASTER_ICON="${BUILD_DIR}/AudioEnhancerMAX.svg.png"
 
     for size in 16 32 128 256 512; do
         sips -z "${size}" "${size}" "${MASTER_ICON}" --out "${ICONSET}/icon_${size}x${size}.png" >/dev/null

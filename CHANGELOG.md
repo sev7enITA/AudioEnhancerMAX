@@ -2,13 +2,15 @@
 
 All notable changes to AudioEnhancerMAX are documented here.
 
-## [4.0.0 BETA / build 4.0.4] - Unreleased
+## [4.0.0 BETA / build 4.0.5] - 2026-11-20
 
 ### Mac workspace
 
 - Organize the main workflow around import and cleanup, listening and editing, and export.
 - Keep the audio timeline and transport accessible during review. Restore access to advanced tools through the workspace and command search.
 - Identify the version, build and BETA channel consistently in the app and package.
+- Restore the original full-resolution brand mark and make privacy and support reachable from About.
+- Compare the source and rendered revision at the same playback position. Transcript-driven cuts preserve the corresponding position across the edit timeline.
 
 ### Provenance and export
 
@@ -25,6 +27,7 @@ All notable changes to AudioEnhancerMAX are documented here.
 - Apply the selected format at import and validate the decoded media before replacing the current file.
 - Cache waveform peaks and align A/B seek positions after a trim. Match levels in playback while preserving export levels.
 - Send a source or reviewed result to an opted-in paired Mac. Show the target and transfer state, and connect the handoff to the exact audio revision.
+- Add a native About screen to Android build 14 and iOS build 10 with live version/build, developer, privacy, support and license information. The launcher and About screen use variants of the original artwork.
 
 ## [3.9.0 / build 3.9.2] - 2026-10-27
 

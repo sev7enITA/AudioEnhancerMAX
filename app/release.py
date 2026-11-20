@@ -2,7 +2,7 @@
 
 APP_NAME = "AudioEnhancerMAX"
 APP_VERSION = "4.0.0"
-APP_BUILD = "4.0.4"
+APP_BUILD = "4.0.5"
 RELEASE_CHANNEL = "beta"
 RELEASE_LABEL = "BETA"
 RELEASE_TAG = f"v{APP_VERSION}-beta.1"

@@ -41,6 +41,8 @@ struct CompanionView:View {
             NavigationStack{brief}
                 .fileImporter(isPresented:$importBrief,allowedContentTypes:[.json],onCompletion:openBrief)
                 .tabItem{Label("Music brief",systemImage:"text.alignleft")}.tag(3)
+            NavigationStack { CompanionAboutView() }
+                .tabItem { Label("About", systemImage: "info.circle") }.tag(4)
         }
         .task(id:phase) {
             while phase == .active && !Task.isCancelled {
@@ -109,7 +111,6 @@ struct CompanionView:View {
                     Text("Edit locally. Files are filtered by the chosen format. Some providers show disabled files.").foregroundStyle(.secondary)
                 }
                 if model.busy{ProgressView("Working…")}
-                Text("Companion \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?") · build \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?")").font(.caption.monospaced()).foregroundStyle(.secondary)
             }.padding(20)
         }.background(canvas).navigationTitle("Studio").navigationBarTitleDisplayMode(.inline)
     }
@@ -236,6 +237,48 @@ struct CompanionView:View {
         }.navigationTitle("Music brief")
     }
 }
+
+private struct CompanionAboutView: View {
+    private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+    private let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 16) {
+                    Image("BrandMark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("AudioEnhancerMAX").font(.headline)
+                        Text("iOS Companion").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+                LabeledContent("Version", value: version)
+                LabeledContent("Build", value: build)
+                LabeledContent("Channel", value: "BETA")
+                LabeledContent("Developer", value: "Fabrizio Degni")
+            }
+            Section("Support and privacy") {
+                Link(destination: URL(string: "https://www.fabriziodegni.com/AudioEnhancerMAX/support.html")!) {
+                    Label("Support and contact", systemImage: "questionmark.circle")
+                }
+                Link(destination: URL(string: "https://www.fabriziodegni.com/AudioEnhancerMAX/privacy.html")!) {
+                    Label("Privacy policy", systemImage: "hand.raised")
+                }
+            }
+            Section("Project") {
+                Link(destination: URL(string: "https://github.com/sev7enITA/AudioEnhancerMAX")!) {
+                    Label("Source code and license", systemImage: "curlybraces")
+                }
+            }
+        }
+        .navigationTitle("About")
+    }
+}
+
 private struct SignalOverview:View {
     let peaks:[Float]
     let duration:Double

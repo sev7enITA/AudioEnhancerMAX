@@ -1,4 +1,4 @@
-# AudioEnhancerMAX iOS Companion 4.0.0 (9)
+# AudioEnhancerMAX iOS Companion 4.0.0 (10)
 
 Native SwiftUI companion for iOS 17+. This preview is validated with the simulator and an unsigned device archive; it is not a TestFlight or App Store release. Installing on an iPhone requires development signing and provisioning.
 
@@ -12,6 +12,7 @@ Native SwiftUI companion for iOS 17+. This preview is validated with the simulat
 - To begin from the Mac, choose **Make this device discoverable** on the phone, search for nearby phones in the Mac app, and send an invitation. Accept the invitation on the phone and compare the eight digits on both devices. Visibility ends when the sheet closes, the app goes into the background, or the 90-second window expires.
 - Foreground worker advertises only portable `auto_eq`, up to 2 MiB per chunk. It stops on backgrounding, heat, editing, upload or explicit stop. No continuous background worker is claimed.
 - Music brief stores editable text/JSON and separate lyrics; it does not generate audio.
+- **About** shows the installed version and build, the BETA channel, the developer and links to support, privacy, source code and the MIT license.
 
 Pairing lives in Keychain with ThisDeviceOnly protection. Restarting the Mac session requires a new pairing. Local files persist in the app until replaced or removed. No audio upload is implicit.
 

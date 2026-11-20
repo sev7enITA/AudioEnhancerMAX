@@ -1,6 +1,6 @@
-# AudioEnhancerMAX Android Companion 4.0.0 (13)
+# AudioEnhancerMAX Android Companion 4.0.0 (14)
 
-Native Compose companion, Android 8/API 26 or later, target API 35. This is a local debug preview, not a Google Play release. Package ID remains `com.audioenhancermax.worker`; install updates with the same debug signing key.
+Native Compose companion, Android 8/API 26 or later, target API 35. The GitHub BETA APK is built in release mode and uses the existing QA signing key for direct installation. The package ID is `com.audioenhancermax.worker`.
 
 ## Current features
 
@@ -13,6 +13,7 @@ Native Compose companion, Android 8/API 26 or later, target API 35. This is a lo
 - Before sending, the app shows the destination and source or result fingerprint. Mac transfer is limited to 20 MiB decoded WAV. The app shows upload, processing, verification and completion. Completed audio and report are associated using SHA-256. Device information, Voice EQ benchmark and round-trip latency are available.
 - The worker only accepts `auto_eq`, at most 2 MiB per chunk. It stops on backgrounding, heat, local editing, upload or explicit stop; the Mac can fall back locally. No phone HTTP server, continuous background processing or second pairing is required.
 - Music brief builds persistent editable text/JSON with separate lyrics. It does not generate music.
+- **About** shows the installed version and build, developer, project site, support, privacy policy and project licence.
 
 Credentials use Android Keystore AES-GCM, backups are disabled, redirects/cleartext are disabled. Stopping/restarting the Mac session requires a new pairing. No audio is sent until explicitly requested.
 
@@ -28,3 +29,7 @@ Use JDK 17 or 21 with the installed Android SDK (JDK 25 is incompatible with thi
 The custom native instrumentation runner checks codecs, MIME intent extras, selected-format rejection, video replacement and preservation of original fixtures. JVM tests cover content signatures, PCM limits, stereo DSP, waveform tail coverage, pairing and text briefs. The optional Mac integration test skips without an isolated QA pairing fixture. Never commit session credentials.
 
 The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Before distributing an artifact, verify its compiled manifest, signing identity and SHA-256. Validate file providers, hotspot pairing and playback on physical devices before promoting the preview.
+
+For a Google Play submission, target API 36 and sign the Android App Bundle with the Play Console upload key. Review the current [target API requirements](https://support.google.com/googleplay/android-developer/answer/11926878).
+
+The launcher and About artwork are rendered from [the original vector](../packaging/macos/AudioEnhancerMAX.svg). The adaptive foreground is centred within the Android masking safe area. [The Google Play listing artwork](branding/google-play-icon.png) is a separate 512 × 512 PNG with transparent margins.

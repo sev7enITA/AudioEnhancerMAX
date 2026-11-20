@@ -6,7 +6,7 @@ VERSION="${AEMAX_MARKETING_VERSION:-3.8.3}"
 BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.8.4}"
 BUILD_DIR="${ROOT}/build/macos-app-store"
 DIST_DIR="${ROOT}/dist/macos-app-store"
-ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
+MASTER_ICON="${ROOT}/frontend/img/audioenhancermax-logo.png"
 ICONSET="${BUILD_DIR}/AudioEnhancerMAX.iconset"
 ICON="${ROOT}/packaging/macos/AudioEnhancerMAX.icns"
 PYTHON="${AEMAX_PYTHON:-${ROOT}/venv/bin/python}"
@@ -185,9 +185,6 @@ PY
     cp "${FASTER_WHISPER_LICENSE}" "${LICENSE_DIR}/Faster-Whisper-LICENSE.txt"
     cp "${FASTER_WHISPER_LICENSE}" "${LICENSE_DIR}/Whisper-Medium-LICENSE.txt"
     cp "${LGPL_LICENSE}" "${LICENSE_DIR}/COPYING.LGPLv3"
-
-    qlmanage -t -s 1024 -o "${BUILD_DIR}" "${ICON_SOURCE}" >/dev/null 2>&1
-    MASTER_ICON="${BUILD_DIR}/AudioEnhancerMAX.svg.png"
 
     for size in 16 32 128 256 512; do
         sips -z "${size}" "${size}" "${MASTER_ICON}" --out "${ICONSET}/icon_${size}x${size}.png" >/dev/null

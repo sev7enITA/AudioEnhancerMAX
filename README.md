@@ -1,13 +1,15 @@
 <div align="center">
 
+<img src="frontend/img/audioenhancermax-logo.png" alt="" width="96">
+
 # AudioEnhancerMAX
 
 ### The open-source AI audio media center
 
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
-**16+ processing modules · native Apple Silicon app · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.9.0**
+**Native Apple Silicon app · local DSP · reviewable speech edits · Android and iOS companions**
 
-Version 3.9.0 adds a local Music brief assistant: six original presets, editable structured prompts, separate lyrics and JSON export, with optional reviewed Ollama suggestions. [Release notes](releases/RELEASE_NOTES_v3.9.0.md) · [Music brief guide](docs/music-brief-assistant.md).
+**[4.0 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1)** adds a new editing workspace, bidirectional local Wi-Fi pairing, and C2PA Content Credentials linked to the exact processing report. [4.0 BETA release notes](releases/RELEASE_NOTES_v4.0.0-beta.1.md) · [Companion guide](https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-06b6d4.svg)](https://python.org)
@@ -64,7 +66,9 @@ Requires Apple Silicon and macOS 13+.
 
 | Channel | Download and status |
 | --- | --- |
+| 4.0 BETA | [4.0.0, Mac build 4.0.5, and Android companion build 14](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1). iOS companion build 10 source and unsigned developer archive are available. |
 | Latest stable | [3.9.0, build 3.9.2](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0): Music brief assistant and updated dependency pins |
+| Previous BETA | [3.9.1, build 3.9.10](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.1): first public C2PA BETA |
 | Previous stable | [3.8.3, build 3.8.4](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.8.3): retained for rollback |
 | Earlier experimental preview | [3.9.0 Experimental 1, build 3.9.1](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0-experimental.1): separate installation and data; its Music brief feature is now part of stable 3.9.0 |
 | Mac App Store | A separate distribution workflow. This release does not establish App Store availability or approval. |
@@ -204,6 +208,7 @@ Do not expose the FastAPI server directly to the public internet without adding 
 - Governance through product choices: [English](https://fabriziodegni.com/AudioEnhancerMAX/governance.html) / [Italiano](https://fabriziodegni.com/AudioEnhancerMAX/governance-it.html)
 - [macOS App and Packaging](docs/macos-app.md)
 - [v3.9.0 Release Notes](releases/RELEASE_NOTES_v3.9.0.md)
+- [v4.0.0 BETA Release Notes](releases/RELEASE_NOTES_v4.0.0-beta.1.md)
 - [Previous v3.8.3 Release Notes](releases/RELEASE_NOTES_v3.8.3.md)
 - [3.7.4 Delivery Review Evidence](docs/delivery-review-evidence.md)
 - [v3.6-to-v3.7 Implementation Record](docs/v3.6-implementation-plan.md)

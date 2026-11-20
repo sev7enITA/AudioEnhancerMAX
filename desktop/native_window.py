@@ -137,7 +137,7 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
               <div class="card"><h3>Enhance audio locally</h3><p class="muted">Import, inspect, clean, compare and export recordings while preserving the original.</p></div>
               <div class="card"><h3>Speech tools</h3><p class="muted">Local Faster-Whisper transcription plus clearly identified optional speech services.</p></div>
               <div class="card"><h3>Native macOS experience</h3><p class="muted">Apple Silicon app with native Open and Save panels and no Terminal command required.</p></div>
-              <div class="card"><h3>Optional trusted devices</h3><p class="muted">User-enabled local-network workers can extend selected processing tasks.</p></div>
+              <div class="card"><h3>Companion pairing</h3><p class="muted">Find the Mac from the companion or invite a discoverable phone from the Mac. Confirm the same code on both devices before transferring audio.</p></div>
             </div>
           </section>
 
@@ -149,8 +149,8 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
               <div class="card"><h3>User-controlled files</h3><p class="muted">You choose source files and export destinations with standard macOS panels.</p></div>
             </div>
             <div class="actions">
-              <a class="button primary" href="https://fabriziodegni.com/AudioEnhancerMAX/privacy.html" target="_blank">Privacy notice</a>
-              <a class="button" href="https://fabriziodegni.com/AudioEnhancerMAX/accessibility.html" target="_blank">Accessibility</a>
+              <a class="button primary" href="https://www.fabriziodegni.com/AudioEnhancerMAX/privacy.html" target="_blank">Privacy notice</a>
+              <a class="button" href="https://www.fabriziodegni.com/AudioEnhancerMAX/accessibility.html" target="_blank">Accessibility</a>
             </div>
           </section>
 
@@ -168,7 +168,7 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
             <p class="muted">Include the app version and distribution, macOS version, Mac model and chip, exact reproduction steps, selected modules, output format and the complete redacted error message.</p>
             <div class="notice"><strong>Do not publish sensitive material.</strong><br>Never attach confidential recordings, transcripts, credentials, personal identifiers or unreviewed logs to a public ticket. Use a synthetic or redacted sample.</div>
             <div class="actions">
-              <a class="button primary" href="https://fabriziodegni.com/AudioEnhancerMAX/support.html" target="_blank">Official support page</a>
+              <a class="button primary" href="https://www.fabriziodegni.com/AudioEnhancerMAX/support.html" target="_blank">Official support page</a>
               <a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new/choose" target="_blank">Open support ticket</a>
               <a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank">Search tickets</a>
               <a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank">Releases</a>

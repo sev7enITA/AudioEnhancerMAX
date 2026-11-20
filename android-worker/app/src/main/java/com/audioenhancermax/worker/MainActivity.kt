@@ -28,6 +28,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -84,7 +85,8 @@ private val Amber=Color(0xFFFFBC65)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable fun CompanionScreen(vm:CompanionViewModel,importAudio:(AudioImportPolicy.Filter)->Unit,importBrief:()->Unit,share:(File)->Unit) {
     var tab by rememberSaveable{mutableIntStateOf(0)}
-    if (tab == 1) DisposableEffect(vm) {
+    var aboutOpen by rememberSaveable { mutableStateOf(false) }
+    if (tab == 1 && !aboutOpen) DisposableEffect(vm) {
         onDispose { vm.cancelNearbyPairing() }
     }
     var code by remember{mutableStateOf("")}
@@ -100,13 +102,18 @@ private val Amber=Color(0xFFFFBC65)
     }
     var profile by remember{mutableStateOf("voice")}
     val context=androidx.compose.ui.platform.LocalContext.current
-    val installedVersion = remember(context) {
-        val info = context.packageManager.getPackageInfo(context.packageName, 0)
-        "${info.versionName} (${androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(info)})"
-    }
     MaterialTheme(colorScheme=darkColorScheme(primary=Violet,secondary=Cyan,background=CanvasColor,surface=Color(0xFF101418),onPrimary=Color(0xFF151020))) {
         Scaffold(containerColor=CanvasColor,
-            topBar={TopAppBar(title={Text("AudioEnhancerMAX",fontWeight=FontWeight.Bold)})},
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold) },
+                    actions = {
+                        IconButton(onClick = { aboutOpen = true }) {
+                            Icon(Icons.Default.Info, contentDescription = stringResource(R.string.about_title))
+                        }
+                    },
+                )
+            },
             bottomBar={NavigationBar{listOf("Studio" to Icons.Default.GraphicEq,"Connection" to Icons.Default.Computer,"Music brief" to Icons.Default.Notes).forEachIndexed{index,item->NavigationBarItem(selected=tab==index,onClick={tab=index},icon={Icon(item.second,contentDescription=null)},label={Text(item.first)})}}}
         ){padding->
             Column(Modifier.padding(padding).imePadding().fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
@@ -230,9 +237,9 @@ private val Amber=Color(0xFFFFBC65)
                     }
                 }
                 if(vm.busy){LinearProgressIndicator(Modifier.fillMaxWidth());Text(if(tab==1)vm.macState else "Working…")}
-                Text("Companion preview · $installedVersion",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        if (aboutOpen) AboutDialog(onDismiss = { aboutOpen = false })
         vm.error?.let{message->AlertDialog(onDismissRequest={vm.error=null},title={Text("AudioEnhancerMAX")},text={Text(message)},confirmButton={TextButton(onClick={vm.error=null}){Text("OK")}})}
     }
 }
