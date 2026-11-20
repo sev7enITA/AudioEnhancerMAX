@@ -2,7 +2,9 @@
 
 # AudioEnhancerMAX
 
-### The open-source AI audio media center
+#**[4.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)** brings offline C2PA, SHA-256 and audio measurements to Mac, Android and iOS. [Downloads and verification examples](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-0).
+
+## The open-source AI audio media center
 
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
 **16+ processing modules · native Apple Silicon app · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.9.0**
