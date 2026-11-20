@@ -67,14 +67,21 @@
         <p class="hero-copy">Verified processing revisions, exact-format delivery evidence, and an explicit macOS distribution status.</p>
         <div class="hero-meta">
             <span><span class="meta-label">Audited</span> <strong>November 20, 2026</strong></span>
-            <span><span class="meta-label">Direct downloads</span> <strong>4.1 BETA and stable 3.9.0</strong></span>
-            <span><span class="meta-label">Signed package</span> <strong>Mac 4.1.0 BETA notarized</strong></span>
+            <span><span class="meta-label">Direct downloads</span> <strong>4.1.2 BETA and stable 3.9.0</strong></span>
+            <span><span class="meta-label">Signed package</span> <strong>Mac 4.1.2 BETA · build 4.1.4</strong></span>
         </div>
     </header>
 
     <main id="main-content" class="container">
+<section class="aem4-release" id="beta-4-1-2" aria-labelledby="beta-4-1-2-heading">
+<h2 id="beta-4-1-2-heading">4.1.2 BETA build verification</h2>
+<p><strong>Mac build 4.1.4</strong> targets Apple Silicon and macOS 13 or later. <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.2-beta.1/RELEASE-VERIFICATION.json">Mac verification record</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.2-beta.1/SHA256SUMS.txt">Package checksums</a>.</p>
+<p><strong>Android build 19</strong> is a signed APK. <strong>iOS build 14</strong> is an unsigned Xcode archive. <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.2-mobile-beta.1/RELEASE-VERIFICATION.json">Mobile verification record</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.2-mobile-beta.1/SHA256SUMS.txt">Package checksums</a>.</p>
+<p>The public C2PA samples use a test certificate. For those samples, you can inspect the manifest and compare the exact processing report with its recorded SHA-256. Apple package notarization and C2PA media signing use separate trust systems.</p>
+<p><a href="download.html#beta-4-1-2">Download the BETA</a> · <a href="press.html#gallery-4-1-2">See the build screenshots</a></p>
+</section>
 <section class="aem4-release" id="beta-4-1-0" aria-labelledby="beta-4-1-0-heading">
-<h2 id="beta-4-1-0-heading">4.1 BETA verification evidence</h2>
+<h2 id="beta-4-1-0-heading">Earlier 4.1 BETA verification evidence</h2>
 <p>Mac 4.1.0 is a signed and notarized Apple Silicon download. Android build 16 is a signed BETA APK. iOS build 12 is an unsigned developer archive with source. Mobile store availability and physical phone testing are pending.</p><p>The release evidence records package checks and local media verification. The public C2PA examples use a test signer.</p>
 <p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.0-beta.1/RELEASE-VERIFICATION.json">Build and verification evidence</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.0-beta.1/SHA256SUMS.txt">Package checksums</a> · <a href="./#verify-content-4-1-0">Sample audio and report</a></p></section>
         <section class="aem4-release " id="beta-4-0-0" aria-labelledby="beta-4-0-0-heading"><h2 id="beta-4-0-0-heading">Mac 4.0.0 BETA · build 4.0.5</h2>
@@ -89,7 +96,7 @@
 <p>Apple Silicon (arm64), macOS 13 or later. Developer ID signed, Apple notarized and stapled.</p>
 <p>Quit AudioEnhancerMAX before replacing the app. Keep the earlier stable DMG available if you need to return to 3.9.0.</p>
 <p>Playhead mapping covers speech-editor cuts. Other Enhance operations that change duration may use independent playheads. Speech analysis requires the local model. See the exact scope in the <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.0.0-beta.1/RELEASE-VERIFICATION.json">build verification record</a>.</p><p><a href="./#c2pa-4-0-0">Check the test-signed audio and report</a></p><p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1">GitHub release and notes</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.0.0-beta.1/RELEASE-VERIFICATION.json">Build verification record</a></p></section>
-<section class="content-section" id="mobile-companion"><span class="section-index">Updated / November 20, 2026</span><h2>Native iOS and Android companion BETA</h2>
+<section class="content-section" id="mobile-companion"><span class="section-index">Updated / November 20, 2026</span><h2>Earlier native iOS and Android companion 4.1.1 BETA</h2><p><a href="#beta-4-1-2">Current companion BETA evidence</a>.</p>
 <p>Android 4.1.1 build 18 is a signed BETA APK. iOS 4.1.1 build 13 is an unsigned Xcode archive. Store availability and physical device testing are pending.</p><p>About → Updates routes store installations to their store and verifies the distribution manifest and artifacts on the direct channel.</p><p>Studio provides format selection with validation, trim, gain, Voice EQ, peak normalisation, A/B and separate exports. The companion and Mac can each start discovery on the local Wi-Fi network. Pairing compares a code on both devices before sending audio.</p>
 <p>The Mac and iOS simulator completed nearby pairing. Android emulator tests covered phone discovery and receipt of an invitation. The packaged Mac flow was also checked through secure audio transfer. Physical phone, battery, file-provider and listening tests remain open.</p>
 <p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.1-mobile-beta.2/AudioEnhancerMAX-Companion-v4.1.1-build-18-Android-QA.apk">Android BETA APK</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.1-mobile-beta.2/AudioEnhancerCompanion-4.1.1-build-13-unsigned-xcarchive.zip">iOS developer archive</a> · <a href="companion.html#pairing">Pairing guide</a> · <a href="https://sourceforge.net/projects/audioenhancermax/files/mobile-preview-2026-11-06/">Earlier mobile preview</a>.</p><p><a href="download.html#mobile-updates">Update instructions</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.1.1-mobile-beta.2/RELEASE-VERIFICATION.json">Mobile BETA verification</a> · <a href="https://sourceforge.net/projects/audioenhancermax/files/v4.1.1-mobile-beta.2/">SourceForge mirror</a>.</p>

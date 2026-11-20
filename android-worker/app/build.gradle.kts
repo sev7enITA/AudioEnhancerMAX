@@ -18,8 +18,8 @@ android {
         minSdk = 26
         testInstrumentationRunner = "com.audioenhancermax.worker.MediaInstrumentation"
         targetSdk = if (playStoreOnly) 36 else 35
-        versionCode = 18
-        versionName = "4.1.1"
+        versionCode = 19
+        versionName = "4.1.2"
         buildConfigField("boolean", "PLAY_STORE_ONLY", playStoreOnly.toString())
     }
 
@@ -73,6 +73,7 @@ dependencies {
 
     // Core KTX
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
 
     // Foreground lifecycle and regression tests
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.2")

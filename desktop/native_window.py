@@ -11,6 +11,7 @@ from html import escape
 from pathlib import Path
 from urllib.parse import urlparse
 
+from app.config import ALLOWED_EXTENSIONS
 from app.release import RELEASE_LABEL
 
 import objc
@@ -36,11 +37,14 @@ from AppKit import (
 )
 from Foundation import NSURL, NSURLRequest
 from WebKit import (
+    WKContentWorld,
     WKNavigationActionPolicyAllow,
     WKNavigationActionPolicyCancel,
     WKNavigationActionPolicyDownload,
     WKNavigationResponsePolicyAllow,
     WKNavigationResponsePolicyDownload,
+    WKUserScript,
+    WKUserScriptInjectionTimeAtDocumentStart,
     WKWebView,
     WKWebViewConfiguration,
 )
@@ -54,6 +58,39 @@ WINDOW_STYLE = (
     | NSWindowStyleMaskMiniaturizable
     | NSWindowStyleMaskResizable
 )
+
+WORKSPACE_PICKER_WORLD = "AudioEnhancerMAXWorkspaceFilePicker"
+WORKSPACE_PICKER_SCRIPT = """
+(() => {
+    let workspaceInput = false;
+    document.addEventListener("click", ({ target }) => {
+        if (target instanceof HTMLInputElement && target.type === "file") {
+            workspaceInput = target.id === "file-input";
+        }
+    }, true);
+    window.takeWorkspaceFilePickerIntent = () => {
+        const intent = workspaceInput;
+        workspaceInput = false;
+        return intent;
+    };
+})();
+"""
+
+
+def _workspace_file_url(url) -> bool:
+    return bool(
+        url is not None and url.isFileURL() and not url.hasDirectoryPath()
+        and Path(str(url.lastPathComponent())).suffix.lower() in ALLOWED_EXTENSIONS
+    )
+
+
+class WorkspaceFilePanelDelegate(
+    objc.lookUpClass("NSObject"), protocols=[objc.protocolNamed("NSOpenSavePanelDelegate")]
+):
+    def panel_shouldEnableURL_(self, _panel, url):
+        # Folders must stay available for navigation. The panel separately
+        # disables choosing a directory as the recording.
+        return bool(url.isFileURL() and url.hasDirectoryPath()) or _workspace_file_url(url)
 
 
 def _is_local_url(value: str) -> bool:
@@ -179,7 +216,7 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
             <div class="grid">
               <div class="card"><h3>Backend</h3><p class="muted">FastAPI + Python 3.11</p></div>
               <div class="card"><h3>Native shell</h3><p class="muted">AppKit + WKWebView</p></div>
-              <div class="card"><h3>Audio and AI</h3><p class="muted">PyAV, scipy, pedalboard, PyTorch MPS and Faster-Whisper</p></div>
+              <div class="card"><h3>Audio and AI</h3><p class="muted">PyAV, SciPy and Pedalboard. The app shows which optional model engines and hardware backends are available.</p></div>
               <div class="card"><h3>Project</h3><p class="muted">Source code, documentation and release history are available on GitHub.</p></div>
             </div>
             <div class="actions"><a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank">GitHub repository</a><a class="button" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank">SourceForge project</a></div>
@@ -240,6 +277,11 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         self.window.setDelegate_(self)
 
         configuration = WKWebViewConfiguration.alloc().init()
+        world = WKContentWorld.worldWithName_(WORKSPACE_PICKER_WORLD)
+        picker_script = WKUserScript.alloc().initWithSource_injectionTime_forMainFrameOnly_inContentWorld_(
+            WORKSPACE_PICKER_SCRIPT, WKUserScriptInjectionTimeAtDocumentStart, True, world
+        )
+        configuration.userContentController().addUserScript_(picker_script)
         self.web_view = WKWebView.alloc().initWithFrame_configuration_(frame, configuration)
         self.web_view.setNavigationDelegate_(self)
         self.web_view.setUIDelegate_(self)
@@ -492,20 +534,59 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         LOGGER.error("WebKit download failed: %s", error)
 
     def webView_runOpenPanelWithParameters_initiatedByFrame_completionHandler_(
-        self, _web_view, parameters, _frame, completion_handler
+        self, web_view, parameters, frame, completion_handler
     ):
+        directories = parameters.allowsDirectories()
+        multiple = parameters.allowsMultipleSelection()
+        url = frame.request().URL() if frame.isMainFrame() else None
+        if web_view != self.web_view or not url or not self.frontend_url:
+            self._open_file_panel(directories, multiple, False, completion_handler)
+            return
+
+        current = urlparse(str(url.absoluteString()))
+        expected = urlparse(self.frontend_url)
+        if not _is_local_url(str(url.absoluteString())) or (
+            current.scheme, current.netloc, current.path
+        ) != (expected.scheme, expected.netloc, expected.path):
+            self._open_file_panel(directories, multiple, False, completion_handler)
+            return
+
+        # WKOpenPanelParameters exposes selection flags, but no public
+        # property for the DOM input's accept list or identifier.
+        def present(intent, error):
+            self._open_file_panel(
+                directories, multiple, error is None and bool(intent), completion_handler
+            )
+
+        web_view.evaluateJavaScript_inFrame_inContentWorld_completionHandler_(
+            "window.takeWorkspaceFilePickerIntent?.() ?? false",
+            frame, WKContentWorld.worldWithName_(WORKSPACE_PICKER_WORLD), present,
+        )
+
+    def _open_file_panel(self, directories, multiple, workspace, completion_handler):
         panel = NSOpenPanel.alloc().init()
         if panel is None:
             LOGGER.error("Could not create the native open panel")
             completion_handler(None)
             return
         panel.setCanChooseFiles_(True)
-        panel.setCanChooseDirectories_(parameters.allowsDirectories())
-        panel.setAllowsMultipleSelection_(parameters.allowsMultipleSelection())
-        if panel.runModal() == NSModalResponseOK:
-            completion_handler(panel.URLs())
-        else:
+        panel.setCanChooseDirectories_(directories and not workspace)
+        panel.setAllowsMultipleSelection_(multiple)
+        if workspace:
+            # Pass extension strings rather than broad audio/video/MIME types.
+            # The delegate also rejects aliases that AppKit's type matching
+            # may consider equivalent but the upload endpoint does not accept.
+            panel.setAllowedFileTypes_(sorted(extension[1:] for extension in ALLOWED_EXTENSIONS))
+            panel.setAllowsOtherFileTypes_(False)
+            file_filter = WorkspaceFilePanelDelegate.alloc().init()
+            panel.setDelegate_(file_filter)
+        if panel.runModal() != NSModalResponseOK:
             completion_handler(None)
+            return
+        urls = panel.URLs()
+        completion_handler(
+            urls if not workspace or (urls and all(_workspace_file_url(url) for url in urls)) else None
+        )
 
     def webView_runJavaScriptAlertPanelWithMessage_initiatedByFrame_completionHandler_(
         self, _web_view, message, _frame, completion_handler

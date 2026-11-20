@@ -2,6 +2,40 @@
   "updated_on": "2026-11-20",
   "resources": [
     {
+      "id": "mac-beta-4-1-2",
+      "name": "AudioEnhancerMAX Mac 4.1.2 BETA",
+      "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-2",
+      "group": "official",
+      "status": "published",
+      "language": "English",
+      "verified_on": "2026-11-20",
+      "type": {
+        "en": "Mac BETA release",
+        "it": "Release BETA per Mac"
+      },
+      "description": {
+        "en": "Mac Apple Silicon build 4.1.4, refreshed workspace, speech tools and release evidence.",
+        "it": "Build Mac Apple Silicon 4.1.4, area di lavoro aggiornata, strumenti vocali e verifiche di rilascio."
+      }
+    },
+    {
+      "id": "mobile-beta-4-1-2",
+      "name": "AudioEnhancerMAX Companion 4.1.2 BETA",
+      "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-companion",
+      "group": "official",
+      "status": "published",
+      "language": "English",
+      "verified_on": "2026-11-20",
+      "type": {
+        "en": "Mobile BETA updates",
+        "it": "Aggiornamenti BETA mobile"
+      },
+      "description": {
+        "en": "Signed Android APK build 19 and unsigned iOS Xcode archive build 14, with on-device media metadata.",
+        "it": "APK Android firmato build 19 e archivio Xcode iOS non firmato build 14, con metadati multimediali letti sul dispositivo."
+      }
+    },
+    {
       "id": "mobile-beta-4-1-1",
       "name": "AudioEnhancerMAX Companion 4.1.1 BETA",
       "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.1-mobile-beta.2",

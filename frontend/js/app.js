@@ -11,12 +11,15 @@ const state = {
     fileName: null,
     duration: 0,
     sampleRate: 0,
+    isImporting: false,
+    sourceRequestId: 0,
     isProcessing: false,
     hasProcessed: false,
     processedUrl: null,
     cloneVoiceFileId: null,
     voiceProfiles: [],
     voiceCloneAdapter: null,
+    ttsEngines: undefined,
     batchFiles: [],
     smartSuggestions: null,
     smartProfile: 'balanced',
@@ -41,6 +44,10 @@ const state = {
     complianceTargetId: 'podcast',
     complianceRequestId: 0,
     blindAB: null,
+    workspacePresets: [],
+    workspacePreset: null,
+    workspaceRun: { phase: 'ready' },
+    renderedRecipe: null,
 };
 
 const options = {
@@ -75,6 +82,7 @@ const options = {
     output_profile: null,
     output_profile_overrides: {},
 };
+const defaultProcessingOptions = Object.freeze({...options});
 
 const ICON_BASE = '/static/img/icons';
 let reportReturnFocus = null;
@@ -100,8 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPresets();
     initSettingsPanel();
     loadOutputProfiles();
-    loadRuntimePrivacySettings();
-    loadVoiceProfiles();
+    Promise.allSettled([loadRuntimePrivacySettings(), loadVoiceProfiles()]).then(loadTTSEngines);
     initAboutPanel();
     initReviewDeck();
     if (typeof initMusicAssistant === 'function') initMusicAssistant();
@@ -140,12 +147,6 @@ async function initCapabilities() {
             if (diarizationDescription) {
                 diarizationDescription.textContent = 'Approximate local speaker-change detection. Neural diarization is not packaged in this build.';
             }
-        }
-        if (!systemCapabilities.kokoro_local_tts) {
-            const kokoroVoices = document.getElementById('tts-kokoro-voices');
-            if (kokoroVoices) kokoroVoices.remove();
-            const description = document.getElementById('tts-engine-description');
-            if (description) description.textContent = 'Generate speech with Microsoft Edge Neural TTS. Text is sent to Microsoft only when you start synthesis.';
         }
         const whisperSelect = document.getElementById('setting-whisper-model');
         if (whisperSelect && systemCapabilities.transcription_bundled) {
@@ -240,6 +241,11 @@ async function configurePreflight() {
     }
 }
 
+function mpsAvailability(available) {
+    if (typeof available !== 'boolean') return 'Unknown';
+    return available ? 'Available' : 'Unavailable';
+}
+
 async function checkSystemHealth() {
     try {
         const res = await fetch('/api/health');
@@ -258,8 +264,14 @@ async function checkSystemHealth() {
             }
         }
 
-        // Update compute label
-        document.getElementById('compute-label').textContent = data.compute || 'CPU';
+        const compute = document.getElementById('compute-label');
+        compute.textContent = data.mps_available === true ? 'MPS available' : 'Local runtime';
+        compute.title = 'PyTorch Metal (MPS) availability. Processing engines select their own backend.';
+
+        const chip = document.getElementById('connection-mac-chip');
+        const runtime = document.getElementById('connection-mac-runtime');
+        if (chip) chip.textContent = data.system?.chip || 'Chip not identified';
+        if (runtime) runtime.textContent = mpsAvailability(data.mps_available);
 
         // Update Gemma status
         const dot = document.getElementById('gemma-dot');
@@ -355,11 +367,16 @@ function initUploadZone() {
 }
 
 async function uploadFile(file) {
-    if (state.isProcessing) { showToast('warning', 'Wait for the current operation before replacing the source'); return; }
-    invalidateProcessedResult();
-    state.speechEdl = null;
-    const uploadRequestId = state.resultRequestId;
-    showLoading('Uploading ' + file.name + '...');
+    if (state.isProcessing || state.isImporting) {
+        showToast('warning', 'Wait for the current operation before replacing the source');
+        return;
+    }
+    const uploadRequestId = ++state.sourceRequestId;
+    state.isImporting = true;
+    clearWorkspaceProgress();
+    showLoading(`Importing original: ${file.name}`);
+    updateProcessButton();
+    window.aemWorkspace?.refreshSession();
 
     const formData = new FormData();
     formData.append('file', file);
@@ -372,23 +389,35 @@ async function uploadFile(file) {
         }
 
         const data = await res.json();
-        if (uploadRequestId !== state.resultRequestId) return;
+        if (uploadRequestId !== state.sourceRequestId) return;
         showImportedAudio(data);
-
-        hideLoading();
-        showToast('success', `"${data.filename}" uploaded successfully`);
-
-    } catch (e) {
-        hideLoading();
-        showToast('error', e.message);
+    } catch (error) {
+        if (uploadRequestId === state.sourceRequestId) showToast('error', error.message);
+    } finally {
+        if (uploadRequestId === state.sourceRequestId) {
+            state.isImporting = false;
+            hideLoading();
+            updateProcessButton();
+            window.aemWorkspace?.refreshSession();
+        }
     }
 }
 
 function showImportedAudio(data) {
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
+    invalidateProcessedResult();
+    if (state.wavesurferOriginal) {
+        state.wavesurferOriginal.destroy();
+        state.wavesurferOriginal = null;
+    }
     state.fileId = data.file_id;
     state.fileName = data.filename;
     state.duration = data.duration_seconds;
     state.sampleRate = data.sample_rate;
+    state.speechEdl = null;
+    state.smartSuggestions = null;
+    state.workspaceRun = { phase: 'ready' };
     document.getElementById('file-info-bar').classList.add('visible');
     document.getElementById('file-name').textContent = data.filename;
     document.getElementById('file-duration').textContent = formatDuration(data.duration_seconds);
@@ -398,11 +427,12 @@ function showImportedAudio(data) {
     initWaveform(data.audio_url);
 
     for (const id of [
-        'btn-process', 'btn-transcribe', 'btn-speech-editor-analyze',
+        'btn-transcribe', 'btn-speech-editor-analyze',
         'btn-diarize', 'btn-smart-analyze', 'btn-watermark', 'btn-detect-watermark',
     ]) {
         document.getElementById(id).disabled = false;
     }
+    updateProcessButton();
     document.querySelectorAll('.requires-file-notice').forEach(element => element.style.display = 'none');
     document.getElementById('upload-zone').style.display = 'none';
     setReviewWorkflowStage('process');
@@ -410,22 +440,27 @@ function showImportedAudio(data) {
 }
 
 function openCompanionImport(data) {
-    if (state.isProcessing) {
-        showToast('warning', 'Wait for the current operation before opening the mobile source');
+    if (state.isProcessing || state.isImporting) {
+        showToast('warning', 'Wait for the current operation before opening another source');
         return false;
     }
-    invalidateProcessedResult();
-    state.speechEdl = null;
+    state.sourceRequestId++;
     showImportedAudio(data);
     switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
     return true;
 }
 
 function removeFile() {
-    if (state.isProcessing) return;
+    if (state.isProcessing || state.isImporting) return;
+    state.sourceRequestId++;
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
     invalidateProcessedResult();
     state.fileId = null;
     state.fileName = null;
+    state.duration = 0;
+    state.sampleRate = 0;
+    state.workspaceRun = { phase: 'ready' };
     state.hasProcessed = false;
     state.processedUrl = null;
     state.smartSuggestions = null;
@@ -590,8 +625,8 @@ function toggleFeature(checkbox) {
         item.classList.remove('enabled');
     }
 
-    updateProcessButton();
     syncOutputProfileOverrides();
+    updateProcessButton();
 }
 
 function updateSliderValue(slider, unit = '%') {
@@ -613,6 +648,7 @@ function updateSliderValue(slider, unit = '%') {
         options[option] = parseFloat(val) / 100;
     }
     syncOutputProfileOverrides();
+    window.aemWorkspace?.refreshRecipe();
 }
 
 function updateOptions() {
@@ -622,24 +658,44 @@ function updateOptions() {
         options[option] = isNaN(val) ? val : parseInt(val);
     });
     syncOutputProfileOverrides();
+    updateProcessButton();
+}
+
+function workspaceProcessingOptions() {
+    return {...options, watermark_identifier: document.getElementById('opt-watermark-identifier')?.value?.trim() || null};
+}
+
+function hasProcessingChoices(selected) {
+    return Boolean(selected.output_profile || selected.watermark_identifier ||
+        Object.keys(FILTER_BENCHMARKS).some(key => selected[key] === true));
+}
+
+function workspaceSelectedRecipe(selected = workspaceProcessingOptions()) {
+    const signature = JSON.stringify(selected);
+    const preset = state.workspacePreset;
+    const label = preset
+        ? (preset.signature === signature ? preset.name : `${preset.name} · adjusted`)
+        : hasProcessingChoices(selected) ? 'Custom settings' : 'No processing preset';
+    return { label, signature };
 }
 
 function updateProcessButton() {
     const hasFile = !!state.fileId;
-    const watermark = document.getElementById('opt-watermark-identifier')?.value?.trim();
-    const hasOptions = !!options.output_profile || !!watermark || Object.keys(options).some(k => {
-        if (typeof options[k] === 'boolean') return options[k];
-        return false;
-    });
+    const hasOptions = hasProcessingChoices(workspaceProcessingOptions());
     const btn = document.getElementById('btn-process');
-    btn.disabled = !hasFile || !hasOptions;
+    btn.disabled = !hasFile || !hasOptions || state.isImporting || state.isProcessing;
+    window.aemWorkspace?.refreshRecipe();
+    if (state.isProcessing) {
+        btn.textContent = 'Processing audio…';
+        return;
+    }
 
     // Show estimated time on the button when filters are selected
     if (hasFile && hasOptions) {
         const audioDur = getAudioDuration();
         const estimate = estimateFilterSetETA(options, audioDur);
         if (estimate.totalSeconds > 0) {
-            btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio <span class="btn-eta-badge">${formatETA(estimate.totalSeconds)}</span>`;
+            btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio <span class="btn-eta-badge" title="Reference estimate">${formatETA(estimate.totalSeconds)}</span>`;
         } else {
             btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio`;
         }
@@ -704,7 +760,7 @@ function syncOutputProfileOverrides() {
     }
 }
 
-function setOptionsFromPreset(presetOptions) {
+function setOptionsFromPreset(presetOptions, { notify = true } = {}) {
     Object.keys(presetOptions).forEach(key => {
         if (key in options) {
             options[key] = presetOptions[key];
@@ -745,7 +801,30 @@ function setOptionsFromPreset(presetOptions) {
     });
 
     updateProcessButton();
-    showToast('info', 'Preset settings applied');
+    if (notify) showToast('info', 'Settings selected for the next run.');
+}
+
+function selectWorkspacePreset(preset) {
+    if (!preset || state.isProcessing || state.isImporting) return;
+    state.outputProfileBase = null;
+    setOptionsFromPreset({...defaultProcessingOptions, ...preset.options}, { notify: false });
+    const delivery = document.getElementById('output-profile-select');
+    if (delivery) delivery.value = options.output_profile || '';
+    const description = document.getElementById('output-profile-description');
+    const profile = state.outputProfiles.find(item => item.id === options.output_profile);
+    if (description) description.textContent = profile?.description || 'Custom controls are active; values will be recorded in the report.';
+    if (profile) {
+        state.outputProfileBase = Object.fromEntries(
+            ['output_format', 'normalize', 'target_loudness_lufs'].map(key => [
+                key, options.output_profile_overrides?.[key] === undefined ? options[key] : profile.values[key],
+            ])
+        );
+    }
+    state.workspacePreset = {
+        id: preset.id, name: preset.name, description: preset.description || '',
+        signature: JSON.stringify(workspaceProcessingOptions()),
+    };
+    updateProcessButton();
 }
 
 // ==========================================================
@@ -754,7 +833,7 @@ function setOptionsFromPreset(presetOptions) {
 
 /**
  * Per-filter benchmarks: estimated seconds to process 60 seconds of audio.
- * Calibrated on Apple Silicon M3 MAX.
+ * Reference estimates for the initial display, before observed processing timings.
  * Each filter has: secondsPer60s, firstLoadCost (one-time model init), group.
  * Filters sharing a 'group' (e.g. 'whisper') share the firstLoadCost.
  */
@@ -789,7 +868,7 @@ const FILTER_BENCHMARKS = {
 const OPERATION_BENCHMARKS = {
     'Speech-to-Text Transcription':        { rate: 2.5,  base: 12, reason: 'Bundled Whisper Medium model inference' },
     'Smart Mode - Ollama/Gemma Analysis':  { rate: 0.0,  base: 12, reason: 'Local Ollama/Gemma analysis + spectral features' },
-    'Speaker Diarization (MPS)':           { rate: 1.5,  base: 5,  reason: 'Energy-based speaker segmentation (MPS)' },
+    'Speaker Diarization':           { rate: 1.5,  base: 5,  reason: 'Speaker segmentation' },
     'Speech Synthesis (TTS)':              { rate: 0.0,  base: 15, reason: 'XTTS-v2 neural synthesis' },
 };
 
@@ -803,6 +882,7 @@ const activity = {
     active: false,
     startTime: null,
     timerInterval: null,
+    dismissTimer: null,
     currentOperation: '',
     completedSteps: 0,
     totalSteps: 0,
@@ -895,9 +975,9 @@ function estimateFilterSetETA(filterOptions, audioDurationSec) {
     let reason;
     if (heavyFilters.length > 0) {
         const heavyNames = heavyFilters.map(h => h.label.split('(')[0].trim()).join(', ');
-        reason = `${activeFilters.length} filtri attivi - più costosi: ${heavyNames} - stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
+        reason = `${activeFilters.length} filtri attivi - più costosi: ${heavyNames} - stima indicativa per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
     } else {
-        reason = `${activeFilters.length} filtri DSP leggeri - stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
+        reason = `${activeFilters.length} filtri DSP leggeri - stima indicativa per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
     }
 
     return { totalSeconds, breakdown, reason };
@@ -940,7 +1020,7 @@ function estimateInitialETA(operationName) {
     if (bench) {
         const estimated = bench.base + (audioDur * bench.rate);
         activity.etaSource = 'benchmark';
-        activity.etaReason = `${bench.reason} - stima per ${formatElapsed(Math.round(audioDur))} di audio`;
+        activity.etaReason = `${bench.reason} - stima indicativa per ${formatElapsed(Math.round(audioDur))} di audio`;
         return Math.max(3, Math.round(estimated));
     }
 
@@ -1085,6 +1165,8 @@ function saveOperationTiming(operationName, elapsedSeconds) {
 }
 
 function startActivity(operationName, totalSteps = 0, etaMode = 'auto', etaReason = '') {
+    clearTimeout(activity.dismissTimer);
+    activity.dismissTimer = null;
     activity.active = true;
     activity.startTime = Date.now();
     activity.currentOperation = operationName;
@@ -1266,8 +1348,10 @@ function stopActivity(success = true) {
     hideETAElements();
 
     // Hide after delay
-    setTimeout(() => {
+    clearTimeout(activity.dismissTimer);
+    activity.dismissTimer = setTimeout(() => {
         bar.classList.remove('visible');
+        activity.dismissTimer = null;
     }, success ? 3000 : 5000);
 
     // Hide loading overlay
@@ -1292,48 +1376,71 @@ function formatElapsed(seconds) {
 // Processing
 // ==========================================================
 
+function clearWorkspaceProgress() {
+    if (state.wsConnection) {
+        state.wsConnection.onmessage = null;
+        state.wsConnection.close();
+        state.wsConnection = null;
+    }
+    document.getElementById('progress-container')?.classList.remove('visible');
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-steps').innerHTML = '';
+    document.getElementById('progress-percent').textContent = '0%';
+    document.getElementById('progress-elapsed').textContent = '0:00';
+    document.getElementById('progress-current-step').textContent = '';
+    document.getElementById('progress-spinner').style.display = 'none';
+
+    if (!activity.active && ['Audio Processing', 'Rendering approved speech edits'].includes(activity.currentOperation)) {
+        clearTimeout(activity.dismissTimer);
+        activity.dismissTimer = null;
+        document.getElementById('activity-bar').classList.remove('visible');
+        document.getElementById('activity-bar-fill').style.width = '0%';
+        document.getElementById('activity-bar-text').textContent = '';
+        hideETAElements();
+    }
+}
+
 async function startProcessing() {
-    if (!state.fileId || state.isProcessing) return;
-    const watermarkIdentifier = document.getElementById('opt-watermark-identifier')?.value?.trim() || null;
+    if (!state.fileId || state.isProcessing || state.isImporting) return;
+    const selected = workspaceProcessingOptions();
+    if (!hasProcessingChoices(selected)) return;
+    const watermarkIdentifier = selected.watermark_identifier;
     if (watermarkIdentifier && !/^[A-Za-z0-9_-]{1,32}$/.test(watermarkIdentifier)) {
         showToast('error', 'Use 1–32 letters, digits, hyphens or underscores for the watermark.');
         return;
     }
+    const recipe = workspaceSelectedRecipe(selected);
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
     state.isProcessing = true;
+    state.workspaceRun = { phase: 'running', label: recipe.label };
     const fileId = state.fileId;
     const requestId = invalidateProcessedResult();
     setReviewWorkflowStage('process');
 
     // Count processing steps
-    const stepCount = Object.keys(options).filter(k => typeof options[k] === 'boolean' && options[k]).length +
+    const stepCount = Object.keys(FILTER_BENCHMARKS).filter(key => selected[key] === true).length +
         Number(Boolean(watermarkIdentifier));
 
     startActivity('Audio Processing', stepCount);
 
     const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
-    const progressSteps = document.getElementById('progress-steps');
     progressContainer.classList.add('visible');
-    progressBar.style.width = '0%';
-    progressSteps.innerHTML = '';
-    document.getElementById('progress-percent').textContent = '0%';
-    document.getElementById('progress-current-step').textContent = 'Starting pipeline...';
+    document.getElementById('progress-current-step').textContent = 'Starting processing…';
     const spinner = document.getElementById('progress-spinner');
     if (spinner) spinner.style.display = '';
 
-    document.getElementById('btn-process').disabled = true;
-    document.getElementById('btn-process').innerHTML = ' Processing...';
+    updateProcessButton();
 
-    // Connect WebSocket for progress
-    connectProgressWS(state.fileId);
+    connectProgressWS(fileId, requestId);
 
     try {
         const res = await fetch('/api/process', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                file_id: state.fileId,
-                options: {...options, watermark_identifier: watermarkIdentifier},
+                file_id: fileId,
+                options: selected,
             }),
         });
 
@@ -1350,11 +1457,18 @@ async function startProcessing() {
         state.processedUrl = result.output_url;
         state.processedVersion = 'processed';
         state.processingReportUrl = result.report_url || null;
+        state.renderedRecipe = {...recipe, revision: result.revision};
+        state.workspaceRun = { phase: 'completed' };
         window.aemWorkspace?.resultOpened(result);
 
         // Show processed waveform
-        await initProcessedWaveform(result.output_url);
-        showWaveform('processed');
+        try {
+            await initProcessedWaveform(result.output_url);
+            if (fileId !== state.fileId || requestId !== state.resultRequestId) return;
+            showWaveform('processed');
+        } catch (error) {
+            console.warn('Revision waveform could not be initialized:', error);
+        }
 
         // Show download bar
         const dlBar = document.getElementById('download-bar');
@@ -1368,29 +1482,33 @@ async function startProcessing() {
         if (reportButton) reportButton.style.display = state.processingReportUrl ? '' : 'none';
         activateReviewDeck(result);
 
-        updateActivity('Complete!', 1.0);
-        addActivityStep('Processing complete - audio ready for download');
         stopActivity(true);
-        showToast('success', 'Processing complete! Download your enhanced audio.');
+        showToast('success', `Revision ${result.revision.slice(0, 8)} is ready to listen to or export.`);
 
-    } catch (e) {
-        addActivityStep(`Error: ${e.message}`, 'error');
+    } catch (error) {
+        if (fileId !== state.fileId || requestId !== state.resultRequestId) return;
+        const interrupted = ['AbortError', 'TypeError'].includes(error.name);
+        state.workspaceRun = { phase: interrupted ? 'interrupted' : 'failed', message: error.message };
         stopActivity(false);
-        showToast('error', e.message);
+        window.aemWorkspace?.refreshHistory();
     } finally {
         state.isProcessing = false;
+        clearWorkspaceProgress();
         updateProcessButton();
         window.aemWorkspace?.refreshSession();
     }
 }
 
-function connectProgressWS(fileId) {
+function connectProgressWS(fileId, requestId) {
     try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(`${protocol}//${window.location.host}/ws/progress/${fileId}`);
 
         ws.onmessage = (event) => {
+            if (state.wsConnection !== ws || !state.isProcessing || state.fileId !== fileId ||
+                state.resultRequestId !== requestId || state.workspaceRun.phase !== 'running') return;
             const data = JSON.parse(event.data);
+            if (data.status === 'completed' || data.status === 'error') return;
 
             // -- Handle initial estimate from backend --
             if (data.status === 'estimate') {
@@ -1463,7 +1581,7 @@ function connectProgressWS(fileId) {
 async function runSmartMode(profile = null, {quiet = false} = {}) {
     if (!state.fileId) return;
 
-    const fileId = state.fileId;
+    const {fileId, sourceRequestId} = state;
     const profileSelect = document.getElementById('smart-profile');
     state.smartProfile = profile || (profileSelect ? profileSelect.value : state.smartProfile) || 'balanced';
     if (profileSelect) profileSelect.value = state.smartProfile;
@@ -1478,7 +1596,7 @@ async function runSmartMode(profile = null, {quiet = false} = {}) {
         if (!res.ok) throw new Error('Smart mode analysis failed');
 
         const data = await res.json();
-        if (fileId !== state.fileId) {
+        if (fileId !== state.fileId || sourceRequestId !== state.sourceRequestId) {
             if (!quiet) stopActivity(false);
             return;
         }
@@ -1556,10 +1674,15 @@ async function runSmartMode(profile = null, {quiet = false} = {}) {
 
 function applySmartPreset() {
     if (state.smartSuggestions && state.smartSuggestions.suggested_options) {
-        setOptionsFromPreset(state.smartSuggestions.suggested_options);
+        const data = state.smartSuggestions;
+        selectWorkspacePreset({
+            id: 'source-analysis',
+            name: data.profiles?.[data.selected_profile]?.name || 'Suggested settings',
+            description: data.description,
+            options: data.suggested_options,
+        });
         switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
         window.aemWorkspace?.selectStage('clean');
-        showToast('success', `${state.smartProfile} Smart Enhance profile applied`);
     }
 }
 
@@ -1885,8 +2008,11 @@ function previewSpeechEdit(candidateId, mode) {
 }
 
 async function renderSpeechEditor() {
-    if (!state.fileId || !state.speechEdl || !state.speechEdl.summary.selected_candidates || state.isProcessing) return;
+    if (!state.fileId || !state.speechEdl || !state.speechEdl.summary.selected_candidates || state.isProcessing || state.isImporting) return;
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
     state.isProcessing = true;
+    state.workspaceRun = { phase: 'running', label: 'approved speech edits' };
     const fileId = state.fileId;
     const requestId = invalidateProcessedResult();
     const button = document.getElementById('btn-speech-editor-render');
@@ -1910,6 +2036,8 @@ async function renderSpeechEditor() {
         state.processedUrl = result.output_url;
         state.processedVersion = 'speech_edit';
         state.processingReportUrl = result.report_url || null;
+        state.renderedRecipe = {label: 'Approved speech edits', revision: result.revision};
+        state.workspaceRun = { phase: 'completed' };
         window.aemWorkspace?.resultOpened(result);
         await initProcessedWaveform(result.output_url);
         showWaveform('processed');
@@ -1925,11 +2053,15 @@ async function renderSpeechEditor() {
         stopActivity(true);
         showToast('success', 'Approved speech edits rendered to a new file');
     } catch (error) {
+        if (fileId !== state.fileId || requestId !== state.resultRequestId) return;
+        state.workspaceRun = { phase: ['AbortError', 'TypeError'].includes(error.name) ? 'interrupted' : 'failed', message: error.message };
         stopActivity(false);
         showToast('error', error.message);
     } finally {
         state.isProcessing = false;
+        clearWorkspaceProgress();
         button.disabled = false;
+        updateProcessButton();
         window.aemWorkspace?.refreshSession();
     }
 }
@@ -2266,6 +2398,80 @@ function downloadTranscript() {
 // Text-to-Speech
 // ==========================================================
 
+async function loadTTSEngines() {
+    try {
+        const response = await fetch('/api/tts/voices', {cache: 'no-store'});
+        if (!response.ok) throw new Error('Voice availability unavailable');
+        const {installed_engines: engines} = await response.json();
+        if (typeof engines?.kokoro !== 'boolean' || typeof engines?.edge !== 'boolean') {
+            throw new Error('Voice availability not reported');
+        }
+        state.ttsEngines = engines;
+    } catch (_) {
+        state.ttsEngines = null;
+    }
+    refreshTTSVoiceAvailability();
+}
+
+function refreshTTSVoiceAvailability() {
+    const engines = state.ttsEngines;
+    if (engines === undefined) return;
+    const voiceSelect = document.getElementById('tts-voice');
+    const previousSelection = voiceSelect.value;
+    const allowEdge = engines?.edge && state.runtimePrivacy?.external_services_allowed === true;
+    document.getElementById('tts-kokoro-voices').hidden = !engines?.kokoro;
+    for (const option of voiceSelect.options) {
+        if (!option.value || option.dataset.profileId) continue;
+        option.disabled = option.value.startsWith('kokoro_') ? !engines?.kokoro : !allowEdge;
+    }
+    const available = [...voiceSelect.options].filter(option => option.value && !option.disabled);
+    voiceSelect.disabled = !available.length;
+    if (!available.some(option => option.value === previousSelection)) {
+        const fallback = available.find(option => option.value === 'it_giuseppe') || available[0];
+        voiceSelect.value = fallback?.value || '';
+    }
+    if (voiceSelect.value !== previousSelection) {
+        handleTTSVoiceChange();
+    } else {
+        renderTTSVoiceStatus();
+    }
+}
+
+function renderTTSVoiceStatus() {
+    const voice = document.getElementById('tts-voice').value;
+    const status = document.getElementById('tts-voice-status');
+    const privacyButton = document.getElementById('tts-privacy-settings');
+    const engines = state.ttsEngines;
+    document.getElementById('btn-generate-speech').disabled = !voice;
+    privacyButton.hidden = true;
+    if (voice.startsWith('personal_')) {
+        status.textContent = 'This personal voice is processed locally on your Mac.';
+    } else if (voice.startsWith('kokoro_')) {
+        status.textContent = 'Kokoro generates this voice locally on your Mac.';
+    } else if (voice) {
+        status.textContent = 'Your script is sent to Microsoft when you start synthesis with this voice.';
+    } else if (engines === undefined) {
+        status.textContent = 'Checking voice availability…';
+    } else if (engines?.edge && state.runtimePrivacy?.external_services_allowed !== true) {
+        status.textContent = state.runtimePrivacy
+            ? 'No local voice is available. Privacy Settings disables external speech services.'
+            : 'No local voice is available. Check external speech permissions in Privacy Settings.';
+        privacyButton.hidden = false;
+    } else if (engines === null) {
+        status.textContent = 'Voice availability could not be checked. Reopen the app to try again.';
+    } else {
+        status.textContent = 'No synthesis voice is available in this build.';
+    }
+}
+
+function openTTSPrivacySettings() {
+    switchPanel('settings-panel');
+    const privacyHeading = document.querySelector('.settings-privacy-group h3');
+    privacyHeading.tabIndex = -1;
+    privacyHeading.focus({preventScroll: true});
+    privacyHeading.scrollIntoView({block: 'center'});
+}
+
 function selectedVoiceProfile() {
     const option = document.getElementById('tts-voice')?.selectedOptions?.[0];
     const profileId = option?.dataset?.profileId;
@@ -2322,7 +2528,6 @@ async function loadVoiceProfiles(selectProfileId = null) {
                 const option = document.createElement('option');
                 option.value = `personal_${profile.id}`;
                 option.dataset.profileId = profile.id;
-                option.dataset.localVoice = 'true';
                 option.disabled = !profile.available;
                 const progress = Math.round((profile.finetune_progress || 0) * 100);
                 const profileState = profile.finetune_workflow === 'makemyvoice-managed'
@@ -2345,10 +2550,11 @@ async function loadVoiceProfiles(selectProfileId = null) {
                 handleTTSVoiceChange();
             }
         }
-        applyRuntimePrivacyUi();
+        refreshTTSVoiceAvailability();
     } catch (error) {
         group.innerHTML = '<option value="" disabled>Personal voices unavailable</option>';
         if (engineStatus) engineStatus.textContent = error.message;
+        refreshTTSVoiceAvailability();
     }
 }
 
@@ -2374,6 +2580,7 @@ function handleTTSVoiceChange() {
         if (saveButton) saveButton.style.display = 'none';
         if (status) status.textContent = 'Create a named reusable voice, or select one above to improve it.';
     }
+    renderTTSVoiceStatus();
 }
 
 async function saveVoiceProfileSettings() {
@@ -2516,6 +2723,8 @@ async function previewRewrite() {
 }
 
 async function synthesizeSpeech() {
+    const voiceId = document.getElementById('tts-voice').value;
+    if (!voiceId) return;
     const isExpressive = document.getElementById('tts-expressive')?.checked || false;
 
     // If expressive mode is on and there's rewritten text in the preview, use it
@@ -2535,7 +2744,6 @@ async function synthesizeSpeech() {
         return;
     }
 
-    const voiceId = document.getElementById('tts-voice').value;
     const voiceProfile = selectedVoiceProfile();
     const isKokoro = voiceId.startsWith('kokoro');
     const language = voiceProfile?.settings?.language || (isKokoro ? 'en' : (voiceId.split('_')[0] || 'en'));
@@ -2632,7 +2840,7 @@ async function synthesizeSpeech() {
 async function startDiarization() {
     if (!state.fileId) return;
 
-    startActivity('Speaker Diarization (MPS)');
+    startActivity('Speaker Diarization');
     updateActivity('Analyzing speakers...', 0.1);
 
     try {
@@ -2758,6 +2966,8 @@ async function loadPresets() {
         if (!res.ok) return;
 
         const data = await res.json();
+        state.workspacePresets = data.builtin || [];
+        window.aemWorkspace?.refreshPresets();
 
         // Render built-in presets
         const builtinGrid = document.getElementById('builtin-presets');
@@ -2769,7 +2979,7 @@ async function loadPresets() {
                 : '';
             const filterCount = Object.keys(p.options).filter(k => p.options[k] === true).length;
             return `
-            <div class="preset-card" onclick="applyPreset(${JSON.stringify(p.options).replace(/"/g, '&quot;')})">
+            <div class="preset-card" onclick="applyPreset(${JSON.stringify(p.options).replace(/"/g, '&quot;')}, '${p.id}')">
                 <div class="preset-card-name">${p.name}</div>
                 <div class="preset-card-desc">${p.description}</div>
                 <div class="preset-card-meta">
@@ -2797,9 +3007,12 @@ async function loadPresets() {
     }
 }
 
-function applyPreset(presetOptions) {
-    setOptionsFromPreset(presetOptions);
+function applyPreset(presetOptions, presetId) {
+    const preset = state.workspacePresets.find(item => item.id === presetId);
+    if (preset) selectWorkspacePreset(preset);
+    else setOptionsFromPreset(presetOptions);
     switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+    window.aemWorkspace?.selectStage('clean');
 }
 
 async function loadAndApplyPreset(presetId) {
@@ -2807,8 +3020,9 @@ async function loadAndApplyPreset(presetId) {
         const res = await fetch(`/api/presets/${presetId}`);
         if (!res.ok) throw new Error('Preset not found');
         const data = await res.json();
-        setOptionsFromPreset(data.options);
+        selectWorkspacePreset(data);
         switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+        window.aemWorkspace?.selectStage('clean');
     } catch (e) {
         showToast('error', e.message);
     }
@@ -3020,6 +3234,7 @@ function invalidateProcessedResult() {
     state.processedUrl = null;
     state.processingReportUrl = null;
     state.currentReport = null;
+    state.renderedRecipe = null;
     closeProcessingReport(false);
     stopPlayback();
     if (state.wavesurferProcessed) {
@@ -3354,8 +3569,19 @@ async function readApiError(response, fallback) {
     }
 }
 
+function downloadOriginal() {
+    if (!state.fileId || state.isProcessing || state.isImporting) return;
+    const anchor = document.createElement('a');
+    anchor.href = `/api/download/${encodeURIComponent(state.fileId)}?version=original`;
+    anchor.download = state.fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.aemWorkspace?.refreshHistory({followDownload: true});
+}
+
 async function downloadFile(format) {
-    if (!state.fileId || !state.hasProcessed || state.isProcessing || !state.processedRevision) return;
+    if (!state.fileId || !state.hasProcessed || state.isProcessing || state.isImporting || !state.processedRevision) return;
     const fileId = state.fileId;
     const revision = state.processedRevision;
     state.deliveryFormat = format;
@@ -3368,6 +3594,7 @@ async function downloadFile(format) {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
+    window.aemWorkspace?.refreshHistory({followDownload: true});
 }
 
 function handleComplianceFormatChange(format) {
@@ -3543,6 +3770,15 @@ function hideLoading() {
 
 let workspaceNoticeTimeout;
 
+function clearWorkspaceNotice() {
+    clearTimeout(workspaceNoticeTimeout);
+    const notice = document.getElementById('studio-session-notice');
+    if (notice) {
+        notice.hidden = true;
+        notice.textContent = '';
+    }
+}
+
 function showToast(type, message) {
     const notice = document.getElementById('studio-session-notice');
     if (notice && state.fileId && document.getElementById('upload-panel')?.classList.contains('active')) {
@@ -3611,133 +3847,114 @@ async function pollClusterStatus() {
 }
 
 async function refreshCluster() {
+    const button = document.getElementById('cluster-enable-button');
+    const discoveryStatus = document.getElementById('cluster-discovery-status');
+    button.disabled = true;
     try {
         const enableRes = await fetch('/api/cluster/enable', { method: 'POST' });
-        if (!enableRes.ok) throw new Error('Discovery could not be enabled');
+        if (!enableRes.ok) throw new Error(await readApiError(enableRes, 'Discovery could not be enabled'));
         const res = await fetch('/api/cluster/health-check', { method: 'POST' });
-        if (!res.ok) throw new Error('Cluster refresh failed');
-        const data = await res.json();
-        updateClusterUI(data);
-        showToast('info', 'Local-network discovery enabled');
-    } catch (e) {
-        showToast('error', 'Failed to refresh cluster');
+        if (!res.ok) throw new Error(await readApiError(res, 'Worker refresh failed'));
+        updateClusterUI(await res.json());
+        showToast('info', 'Legacy worker discovery is active');
+    } catch (error) {
+        if (discoveryStatus) discoveryStatus.textContent = error.message;
+        showToast('error', error.message);
+    } finally {
+        button.disabled = false;
     }
 }
 
+let legacyWorkerSnapshot = null;
+
 function updateClusterUI(data) {
-    const { workers, online_workers, total_workers, orchestrator_ip } = data;
+    const { workers, online_workers } = data;
     const enableButton = document.getElementById('cluster-enable-button');
-    if (enableButton) {
+    const discoveryStatus = document.getElementById('cluster-discovery-status');
+    const discoveryText = data.enabled ? 'Discovery active' : 'Discovery off';
+    if (discoveryStatus && discoveryStatus.textContent !== discoveryText) {
+        discoveryStatus.textContent = discoveryText;
+    }
+    if (enableButton && enableButton.dataset.enabled !== String(data.enabled)) {
+        enableButton.dataset.enabled = String(data.enabled);
         enableButton.innerHTML = data.enabled
-            ? `${buttonIcon('refresh')}Refresh discovery`
-            : `${buttonIcon('power')}Enable &amp; discover`;
+            ? `${buttonIcon('refresh')}Refresh workers`
+            : `${buttonIcon('power')}Enable discovery`;
     }
 
-    // Update header badge
     const badge = document.getElementById('cluster-badge');
-    const dot = document.getElementById('cluster-dot');
     const label = document.getElementById('cluster-label');
     const sidebarBadge = document.getElementById('sidebar-cluster-count');
-
-    if (online_workers > 0) {
-        badge.style.display = '';
-        dot.className = 'status-dot';
-        label.textContent = `${online_workers} Worker${online_workers > 1 ? 's' : ''}`;
-        if (sidebarBadge) {
-            sidebarBadge.style.display = '';
-            sidebarBadge.textContent = online_workers;
-        }
-    } else {
-        badge.style.display = 'none';
-        if (sidebarBadge) sidebarBadge.style.display = 'none';
+    badge.style.display = online_workers > 0 ? '' : 'none';
+    label.textContent = `${online_workers} worker${online_workers === 1 ? '' : 's'}`;
+    if (sidebarBadge) {
+        sidebarBadge.style.display = online_workers > 0 ? '' : 'none';
+        sidebarBadge.textContent = online_workers;
     }
 
-    // Update master node
-    const masterChip = document.getElementById('master-chip');
-    const masterName = document.getElementById('master-node-name');
-    if (masterChip) masterChip.textContent = document.getElementById('compute-label')?.textContent || 'M3 MAX';
-    if (masterName) masterName.textContent = `Mac (${masterChip?.textContent || 'M3 MAX'})`;
+    // Paired mobile companions are shown in the pairing section.
+    const legacyWorkers = workers.filter(worker => !worker.mobile_id);
+    const legacyOnline = legacyWorkers.filter(worker => worker.status === 'online' || worker.status === 'busy').length;
+    document.getElementById('cluster-worker-count').textContent = `${legacyOnline} connected`;
 
-    // Update worker count text
-    const countEl = document.getElementById('cluster-worker-count');
-    if (countEl) countEl.textContent = `(${online_workers} connected)`;
-
-    // Render worker cards
+    const snapshot = JSON.stringify(legacyWorkers.map(({last_seen, ...worker}) => worker));
+    if (snapshot === legacyWorkerSnapshot) return;
+    legacyWorkerSnapshot = snapshot;
     const list = document.getElementById('cluster-workers-list');
     const empty = document.getElementById('cluster-empty');
-
-    const legacyWorkers = workers.filter(worker => !worker.mobile_id);
-    if (legacyWorkers.length === 0) {
-        if (empty) empty.style.display = '';
-        // Remove any worker cards but keep empty state
-        list.querySelectorAll('.cluster-node.worker-node').forEach(n => n.remove());
-        return;
-    }
-
-    if (empty) empty.style.display = 'none';
-
-    // Remove old worker cards
-    list.querySelectorAll('.cluster-node.worker-node').forEach(n => n.remove());
-
-    // Render new worker cards
-    legacyWorkers.forEach(worker => {
-        const card = createWorkerCard(worker);
-        list.appendChild(card);
-    });
+    // Keep the empty state and avoid rebuilding unchanged cards on each poll.
+    empty.hidden = legacyWorkers.length > 0;
+    list.querySelectorAll('.cluster-node.worker-node').forEach(card => card.remove());
+    list.append(...legacyWorkers.map(createWorkerCard));
 }
 
 function createWorkerCard(worker) {
-    const card = document.createElement('div');
+    const card = document.createElement('article');
     card.className = 'cluster-node worker-node';
 
-    const isOnline = worker.status === 'online' || worker.status === 'busy';
-    const isBusy = worker.status === 'busy';
-    const statusClass = isBusy ? 'busy' : (isOnline ? 'online' : 'offline');
-    const statusText = isBusy ? 'Processing' : (isOnline ? 'Online' : 'Offline');
+    const header = document.createElement('div');
+    header.className = 'cluster-node-header';
+    const name = document.createElement('h4');
+    name.className = 'cluster-node-name';
+    name.textContent = worker.name || worker.device_model || 'Legacy worker';
+    const status = document.createElement('span');
+    status.className = 'cluster-node-role worker';
+    status.textContent = {online: 'Online', busy: 'Processing', offline: 'Offline'}[worker.status] || 'Status unknown';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-xs btn-ghost';
+    remove.textContent = 'Remove';
+    remove.setAttribute('aria-label', `Remove ${name.textContent}`);
+    remove.addEventListener('click', () => removeWorker(worker.ip, worker.port));
+    header.append(name, status, remove);
 
-    // Compute benchmark score: estimate relative power based on cores and RAM
-    const benchmarkScore = computeBenchmark(worker);
-    const benchmarkPct = Math.min(95, benchmarkScore); // Max 95% (master is 100%)
+    const stats = document.createElement('dl');
+    stats.className = 'cluster-node-stats';
+    const displayed = [
+        ['Address', `${worker.ip}:${worker.port}`],
+        ['Completed chunks', worker.tasks_completed ?? 0],
+    ];
+    if (worker.avg_speed > 0) {
+        displayed.push(['Mean time per chunk', `${worker.avg_speed} s`]);
+    }
+    if (worker.current_task) {
+        displayed.push(['Current task', worker.current_task]);
+    }
+    for (const [label, value] of displayed) {
+        const stat = document.createElement('div');
+        stat.className = 'cluster-stat';
+        const term = document.createElement('dt');
+        term.className = 'cluster-stat-label';
+        term.textContent = label;
+        const description = document.createElement('dd');
+        description.className = 'cluster-stat-value';
+        description.textContent = value;
+        stat.append(term, description);
+        stats.append(stat);
+    }
 
-    // Estimate power tier
-    const powerTier = benchmarkPct >= 70 ? 'High Performance' :
-                      benchmarkPct >= 40 ? 'Mid Range' : 'Light Compute';
-    const tierClass = benchmarkPct >= 70 ? 'high' : (benchmarkPct >= 40 ? 'mid' : 'low');
-
-    card.innerHTML = `
-        <div class="cluster-node-header">
-            <div class="cluster-node-status ${statusClass}"></div>
-            <div class="cluster-node-name">${escapeHtml(worker.name || worker.device_model || 'Unknown')}</div>
-            <span class="cluster-node-role worker">${statusText}</span>
-            <button class="btn btn-xs btn-ghost" onclick="removeWorker('${worker.ip}', ${worker.port})" title="Remove">Remove</button>
-        </div>
-        <div class="cluster-node-stats">
-            <div class="cluster-stat"><span class="cluster-stat-label">Model</span><span class="cluster-stat-value">${escapeHtml(worker.device_model || '-')}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">IP</span><span class="cluster-stat-value">${worker.ip}:${worker.port}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">CPU</span><span class="cluster-stat-value">${worker.cpu_cores || '?'} cores</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">RAM</span><span class="cluster-stat-value">${worker.ram_gb || '?'} GB</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">DSP Filters</span><span class="cluster-stat-value">${(worker.available_filters || []).length}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">Tasks Done</span><span class="cluster-stat-value">${worker.tasks_completed || 0}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">Avg Speed</span><span class="cluster-stat-value">${worker.avg_speed ? worker.avg_speed + 's' : '-'}</span></div>
-            ${worker.current_task ? `<div class="cluster-stat"><span class="cluster-stat-label">Current</span><span class="cluster-stat-value highlight">${escapeHtml(worker.current_task)}</span></div>` : ''}
-        </div>
-        <div class="cluster-benchmark">
-            <div class="cluster-benchmark-label">Benchmark Power - <span class="tier-${tierClass}">${powerTier}</span></div>
-            <div class="cluster-benchmark-bar"><div class="cluster-benchmark-fill ${tierClass}" style="width:${benchmarkPct}%"></div></div>
-            <span class="cluster-benchmark-value">${benchmarkPct}% - ${(worker.available_filters || []).length} DSP filters</span>
-        </div>
-    `;
-
+    card.append(header, stats);
     return card;
-}
-
-function computeBenchmark(worker) {
-    // Simple benchmark based on CPU cores, RAM, and number of filters
-    // Master M3 MAX ~baseline: 16 cores, 96GB RAM, 16 filters = 100%
-    const coreScore = Math.min(100, (worker.cpu_cores || 4) / 16 * 40); // up to 40pts
-    const ramScore = Math.min(30, (worker.ram_gb || 4) / 96 * 30);     // up to 30pts
-    const filterScore = Math.min(30, ((worker.available_filters || []).length / 16) * 30); // up to 30pts
-    return Math.round(coreScore + ramScore + filterScore);
 }
 
 async function addWorkerManually() {
@@ -3942,37 +4159,31 @@ async function _pollHWMetrics() {
         const health = await fetch('/api/health', { signal: controller.signal }).then(r => r.json());
         clearTimeout(timeoutId);
         if (health.system) {
-            const cpu = health.system.cpu_percent || 0;
-            const gpu = health.system.gpu_percent || 0;
-            const ram = health.system.ram_percent || 0;
+            for (const [meter, metric] of [['cpu', 'cpu_percent'], ['gpu', 'gpu_percent'], ['ram', 'ram_percent']]) {
+                const reading = health.system[metric];
+                const measured = Number.isFinite(reading);
+                const fill = document.getElementById(`proc-master-${meter}`);
+                const label = document.getElementById(`proc-master-${meter}-val`);
+                if (fill) fill.style.width = measured ? `${Math.min(100, Math.max(0, reading))}%` : '0%';
+                if (label) {
+                    label.textContent = measured ? `${Math.round(reading)}%` : '—';
+                    label.title = measured ? '' : `System ${meter.toUpperCase()} reading unavailable`;
+                    label.setAttribute('aria-label', measured ? label.textContent : label.title);
+                }
+            }
 
-            const cpuFill = document.getElementById('proc-master-cpu');
-            const gpuFill = document.getElementById('proc-master-gpu');
-            const ramFill = document.getElementById('proc-master-ram');
-            const cpuVal = document.getElementById('proc-master-cpu-val');
-            const gpuVal = document.getElementById('proc-master-gpu-val');
-            const ramVal = document.getElementById('proc-master-ram-val');
-
-            if (cpuFill) cpuFill.style.width = cpu + '%';
-            if (gpuFill) gpuFill.style.width = gpu + '%';
-            if (ramFill) ramFill.style.width = ram + '%';
-            if (cpuVal) cpuVal.textContent = Math.round(cpu) + '%';
-            if (gpuVal) gpuVal.textContent = Math.round(gpu) + '%';
-            if (ramVal) ramVal.textContent = Math.round(ram) + '%';
-
-            // Update chip name
             const chipEl = document.getElementById('proc-master-chip');
-            if (chipEl && health.system.chip) chipEl.textContent = health.system.chip;
+            if (chipEl) chipEl.textContent = health.system.chip || 'Chip not detected';
 
             // Per-core CPU heatmap + extra metrics (power, benchmark)
             const extrasEl = document.getElementById('proc-master-extras');
             if (extrasEl) {
                 const cores = health.system.cpu_per_core || [];
-                const power = health.system.power_watts || 0;
-                const freq = health.system.cpu_freq_ghz || 0;
-                const bench = health.system.benchmark_score || 0;
-                const ane = health.system.ane_percent || 0;
-                const socCpu = health.system.soc_cpu_percent || 0;
+                const power = health.system.power_watts;
+                const freq = health.system.cpu_freq_ghz;
+                const bench = health.system.benchmark_score;
+                const anePower = health.system.ane_power_watts;
+                const socCpu = health.system.soc_cpu_percent;
                 const appCpu = health.system.app_cpu_percent || 0;
                 const appCoreCpu = health.system.app_cpu_core_percent || 0;
                 const appRam = health.system.app_ram_mb || 0;
@@ -3991,30 +4202,29 @@ async function _pollHWMetrics() {
                 let extrasHtml = coreHtml;
                 extrasHtml += `<div class="proc-extras-row">`;
                 extrasHtml += `<span class="proc-extra-chip bench" title="AudioEnhancerMAX backend and active model workers; normalized across all logical CPU cores">${svgIcon('activity-live', 'icon-img inline-icon')}App CPU ${appCpu.toFixed(1)}% (${appCoreCpu.toFixed(0)}% core)</span>`;
-                if (socCpu > 0) extrasHtml += `<span class="proc-extra-chip" title="Apple SoC CPU cluster residency reported by macmon; this differs from process and whole-system CPU usage">SoC CPU ${socCpu.toFixed(1)}%</span>`;
+                if (Number.isFinite(socCpu)) extrasHtml += `<span class="proc-extra-chip" title="Apple SoC CPU cluster residency reported by macmon; this differs from process and whole-system CPU usage">SoC CPU ${socCpu.toFixed(1)}%</span>`;
                 if (appRam > 0) extrasHtml += `<span class="proc-extra-chip" title="Resident memory used by AudioEnhancerMAX and active model workers">App ${appRam >= 1024 ? (appRam / 1024).toFixed(1) + ' GB' : appRam.toFixed(0) + ' MB'}</span>`;
-                if (power > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('power', 'icon-img inline-icon')}${power.toFixed(1)}W</span>`;
+                if (Number.isFinite(power)) extrasHtml += `<span class="proc-extra-chip" title="System power reported by macmon">${svgIcon('power', 'icon-img inline-icon')}${power.toFixed(1)} W</span>`;
                 if (freq > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('refresh', 'icon-img inline-icon')}${freq.toFixed(1)} GHz</span>`;
-                if (ane > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('smart-ai', 'icon-img inline-icon')}ANE ${Math.round(ane)}%</span>`;
+                if (Number.isFinite(anePower)) extrasHtml += `<span class="proc-extra-chip" title="Apple Neural Engine power reported by macmon">${svgIcon('smart-ai', 'icon-img inline-icon')}ANE ${anePower.toFixed(2)} W</span>`;
                 if (bench > 0) extrasHtml += `<span class="proc-extra-chip bench">${svgIcon('benchmark', 'icon-img inline-icon')}${Math.round(bench)} ops/s</span>`;
 
                 // Temperature display
-                const cpuTemp = health.system.cpu_temp_c || 0;
-                const gpuTemp = health.system.gpu_temp_c || 0;
-                const thermal = health.system.thermal_pressure || 'nominal';
-                if (cpuTemp > 0) {
-                    const tempClass = cpuTemp > 90 ? 'critical' : cpuTemp > 80 ? 'warn' : '';
-                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">${svgIcon('monitor', 'icon-img inline-icon')}CPU ${Math.round(cpuTemp)} C</span>`;
+                const cpuTemp = health.system.cpu_temp_c;
+                const gpuTemp = health.system.gpu_temp_c;
+                const thermal = health.system.thermal_pressure;
+                if (Number.isFinite(cpuTemp)) {
+                    extrasHtml += `<span class="proc-extra-chip">${svgIcon('monitor', 'icon-img inline-icon')}CPU ${Math.round(cpuTemp)} °C</span>`;
                 }
-                if (gpuTemp > 0) {
-                    const tempClass = gpuTemp > 85 ? 'critical' : gpuTemp > 75 ? 'warn' : '';
-                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">${svgIcon('monitor', 'icon-img inline-icon')}GPU ${Math.round(gpuTemp)} C</span>`;
+                if (Number.isFinite(gpuTemp)) {
+                    extrasHtml += `<span class="proc-extra-chip">${svgIcon('monitor', 'icon-img inline-icon')}GPU ${Math.round(gpuTemp)} °C</span>`;
                 }
-                if (thermal !== 'nominal') {
-                    extrasHtml += `<span class="proc-extra-chip ${thermal}">${svgIcon('warning', 'icon-img inline-icon')}${thermal.toUpperCase()}</span>`;
+                if (['fair', 'serious', 'critical'].includes(thermal)) {
+                    extrasHtml += `<span class="proc-extra-chip ${thermal}">${svgIcon('warning', 'icon-img inline-icon')}Thermal pressure ${thermal}</span>`;
                 }
 
-                extrasHtml += `</div>`;
+                if (!health.system.macmon_available) extrasHtml += '<span class="proc-extra-chip">Optional sensors unavailable</span>';
+                extrasHtml += '</div>';
 
                 extrasEl.innerHTML = extrasHtml;
             }
@@ -4182,7 +4392,7 @@ async function loadRuntimePrivacySettings() {
         document.getElementById('setting-trusted-lan').checked = state.runtimePrivacy.trusted_lan_processing_allowed;
         applyRuntimePrivacyUi();
         document.getElementById('privacy-settings-status').textContent = state.runtimePrivacy.warning || 'Current boundaries loaded from this Mac.';
-        if (state.runtimePrivacy.status !== 'saved' && state.runtimePrivacy.warning) {
+        if (['invalid', 'unavailable'].includes(state.runtimePrivacy.status) && state.runtimePrivacy.warning) {
             showToast('warning', state.runtimePrivacy.warning);
         }
     } catch (error) {
@@ -4219,24 +4429,9 @@ async function saveRuntimePrivacySettings() {
 function applyRuntimePrivacyUi() {
     if (typeof refreshMusicAssistantPrivacy === 'function') refreshMusicAssistantPrivacy();
     if (!state.runtimePrivacy) return;
-    const allowExternal = state.runtimePrivacy.external_services_allowed;
+    refreshTTSVoiceAvailability();
     const allowOllama = state.runtimePrivacy.ollama_editorial_allowed;
     const allowLan = state.runtimePrivacy.trusted_lan_processing_allowed;
-    const voiceSelect = document.getElementById('tts-voice');
-    if (voiceSelect) {
-        voiceSelect.querySelectorAll('option').forEach(option => {
-            const isLocal = option.value.startsWith('kokoro_') || option.dataset.localVoice === 'true';
-            if (option.value && !option.dataset.profileId) option.disabled = !allowExternal && !isLocal;
-        });
-        if (voiceSelect.selectedOptions[0]?.disabled) {
-            const localVoice = [...voiceSelect.options].find(option =>
-                (option.value.startsWith('kokoro_') || option.dataset.localVoice === 'true') && !option.disabled
-            );
-            if (localVoice) voiceSelect.value = localVoice.value;
-        }
-    }
-    const description = document.getElementById('tts-engine-description');
-    if (description && !allowExternal) description.textContent = 'Offline boundary active: only packaged local TTS voices can be used.';
     const dynamicTuning = document.getElementById('setting-dynamic-tuning');
     if (dynamicTuning) {
         dynamicTuning.checked = allowOllama;
@@ -4260,11 +4455,8 @@ async function initAboutPanel() {
         const accelEl = document.getElementById('about-accel-list');
         if (accelEl && accel.accelerations) {
             accelEl.innerHTML = accel.accelerations.map(a =>
-                `<div class="about-accel-item">${a}</div>`
+                `<div class="about-accel-item">${escapeHtml(a)}</div>`
             ).join('');
-            if (accel.mps_available) {
-                accelEl.innerHTML += `<div class="about-accel-item">${svgIcon('check', 'icon-img inline-icon')}MPS Available</div>`;
-            }
         }
     } catch (e) {
         console.warn('Accel info unavailable:', e);
@@ -4278,23 +4470,22 @@ async function initAboutPanel() {
             const s = health.system;
             const items = [
                 ['Chip', s.chip || 'Unknown'],
-                ['CPU Cores', (s.cpu_per_core || []).length + ' cores'],
-                ['CPU Freq', (s.cpu_freq_ghz || 0) + ' GHz'],
-                ['RAM', (s.ram_used_gb || 0).toFixed(1) + ' / ' + (s.ram_total_gb || 0).toFixed(1) + ' GB'],
-                ['GPU', health.compute || 'N/A'],
-                ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
+                ['CPU Cores', s.cpu_per_core?.length ? `${s.cpu_per_core.length} cores` : 'Unmeasured'],
+                ['CPU Freq', Number.isFinite(s.cpu_freq_ghz) ? `${s.cpu_freq_ghz} GHz` : 'Unmeasured'],
+                ['RAM', s.ram_total_gb > 0 ? `${s.ram_used_gb.toFixed(1)} / ${s.ram_total_gb.toFixed(1)} GB` : 'Unmeasured'],
+                ['PyTorch MPS', mpsAvailability(health.mps_available)],
                 ['Version', health.version || 'Unavailable'],
-                ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
+                ['Benchmark', s.benchmark_score > 0 ? `${s.benchmark_score} ops/s` : 'Not measured'],
             ];
             sysEl.innerHTML = items.map(([label, value]) =>
-                `<div class="about-sysinfo-item"><span class="label">${label}</span><span class="value">${value}</span></div>`
+                `<div class="about-sysinfo-item"><span class="label">${label}</span><span class="value">${escapeHtml(value)}</span></div>`
             ).join('');
         }
 
         // Update sidebar chip
         const sideChip = document.getElementById('sidebar-chip');
-        if (sideChip && health.system && health.system.chip) {
-            sideChip.textContent = health.system.chip.replace('Apple ', '');
+        if (sideChip) {
+            sideChip.textContent = health.system?.chip?.replace(/^Apple /, '') || 'Chip not detected';
         }
     } catch (e) {
         console.warn('System info unavailable:', e);
@@ -4313,14 +4504,10 @@ function injectFilterCapabilityBadges() {
         'remove_breaths': true, 'remove_long_silences': true, 'auto_eq': true,
         'studio_sound': true, 'normalize': true, 'frequency_restoration': true,
     };
-    // ML filters - local Whisper (ARM NEON optimized)
+    // Speech filters can use local Whisper.
     const mlLocal = {
         'remove_filler_words': true, 'eliminate_hesitations': true,
         'remove_stuttering': true,
-    };
-    // GPU Metal filters - PyTorch MPS
-    const gpuMetal = {
-        'keep_music': true,  // Demucs uses MPS
     };
 
     document.querySelectorAll('.feature-item input[data-option]').forEach(input => {
@@ -4332,11 +4519,11 @@ function injectFilterCapabilityBadges() {
         if (!nameEl || nameEl.querySelector('.feat-cap-badge')) return; // already injected
 
         let badge = null;
-        if (gpuMetal[key]) {
+        if (key === 'keep_music') {
             badge = document.createElement('span');
-            badge.className = 'feat-cap-badge gpu';
-            badge.textContent = 'Metal';
-            badge.title = 'GPU-accelerated via Apple Metal (MPS)';
+            badge.className = 'feat-cap-badge ml';
+            badge.textContent = 'ML';
+            badge.title = 'Optional local Demucs source separation';
         } else if (edgeCapable[key]) {
             badge = document.createElement('span');
             badge.className = 'feat-cap-badge edge';
@@ -4346,7 +4533,7 @@ function injectFilterCapabilityBadges() {
             badge = document.createElement('span');
             badge.className = 'feat-cap-badge ml';
             badge.textContent = 'ML';
-            badge.title = 'AI inference via ARM NEON (CTranslate2)';
+            badge.title = 'Can use the local Whisper engine';
         }
 
         if (badge) {

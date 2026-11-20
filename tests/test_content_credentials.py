@@ -131,6 +131,7 @@ def test_real_signed_export_round_trip(api, fmt):
         assert assertion["processing_report_sha256"] == hashlib.sha256(downloaded_report.content).hexdigest()
         assert assertion["unsigned_export_sha256"] == hashlib.sha256(unsigned.content).hexdigest()
         assert assertion["artifact_revision"] == revision
+        assert assertion["executed_steps"] == [{"step": "normalize", "result": "changed"}]
     original_samples, original_rate = sf.read(io.BytesIO(unsigned.content))
     signed_samples, signed_rate = sf.read(io.BytesIO(response.content))
     assert signed_rate == original_rate
@@ -139,7 +140,68 @@ def test_real_signed_export_round_trip(api, fmt):
     assert result.status_code == 200, result.text
     assert result.json()["status"] == "valid"
     assert result.json()["timestamp_trusted"] is False
-    assert {"c2pa.opened", "c2pa.modified"} <= set(result.json()["actions"])
+    assert result.json()["actions"] == ["c2pa.opened", "c2pa.enhanced"]
+    assert result.json()["declared_processing_steps"] == [{"step": "normalize", "result": "changed"}]
+
+
+def test_signed_noop_records_execution_without_claiming_change(api, monkeypatch):
+    from app.services import enhancement
+
+    client, _, _ = api
+    monkeypatch.setattr(enhancement, "normalize_volume", lambda audio, *_: audio)
+    file_id, revision = process(client, wav_bytes(), "source.wav")
+    response = signed_request(client, file_id, revision, "wav")
+    assert response.status_code == 200, response.text
+    with c2pa.Reader("wav", io.BytesIO(response.content)) as reader:
+        assertions = {
+            item["label"]: item["data"] for item in reader.get_active_manifest()["assertions"]
+        }
+    assert assertions[content_credentials.ASSERTION_LABEL]["executed_steps"] == [
+        {"step": "normalize", "result": "unchanged"},
+    ]
+    actions = assertions["c2pa.actions.v2"]
+    assert actions["allActionsIncluded"] is False
+    assert [item["action"] for item in actions["actions"]] == ["c2pa.opened"]
+
+
+def test_unexecuted_and_unknown_operations_do_not_become_claims(api, tmp_path):
+    # Exercise the signed payload with the equivalent of a partially populated
+    # report, including a change marker for an operation that did not run.
+    source = tmp_path / "unsigned.wav"
+    source.write_bytes(wav_bytes())
+    signed = tmp_path / "signed.wav"
+    status = content_credentials.sign_export(
+        source, source, signed, revision="a" * 32, operation="processed",
+        app_version="test", report_sha256="1" * 64,
+        executed_steps=["normalize", "private transcript", "auto_eq", "normalize"],
+        changed_steps=["normalize", "private transcript", "audio_watermark"],
+    )
+    assert status["actions"] == ["c2pa.opened", "c2pa.enhanced"]
+    assert status["declared_processing_steps"] == [
+        {"step": "normalize", "result": "changed"},
+        {"step": "auto_eq", "result": "unchanged"},
+    ]
+    with c2pa.Reader(signed) as reader:
+        assert "private transcript" not in reader.json()
+        assertion = next(item["data"] for item in reader.get_active_manifest()["assertions"]
+                         if item["label"] == content_credentials.ASSERTION_LABEL)
+    assert assertion["executed_steps"] == [
+        {"step": "normalize", "result": "changed"},
+        {"step": "auto_eq", "result": "unchanged"},
+    ]
+    assert assertion["execution_scope"] == "recognized_observed_steps"
+    assert assertion["unsigned_export_sha256"] == hashlib.sha256(source.read_bytes()).hexdigest()
+
+
+def test_replaced_export_cannot_be_signed_for_a_revision(api, tmp_path):
+    source = tmp_path / "unsigned.wav"
+    source.write_bytes(wav_bytes())
+    signed = tmp_path / "signed.wav"
+    with pytest.raises(content_credentials.CredentialsError, match="export differs"):
+        content_credentials.sign_export(
+            source, source, signed, revision="a" * 32, operation="processed",
+            app_version="test", report_sha256="1" * 64, expected_export_sha256="0" * 64,
+        )
 
 
 def test_keychain_profile_cannot_fall_back_to_existing_test_key(api, tmp_path, monkeypatch):
@@ -243,9 +305,13 @@ def test_revision_watermark_survives_lossless_export_and_signing(api, fmt):
     assert report.status_code == 200
     assert report.json()["pipeline"][0]["step"] == "audio_watermark"
     with c2pa.Reader(fmt, io.BytesIO(signed.content)) as reader:
+        assert "episode-04" not in reader.json()
         assertion = next(item["data"] for item in reader.get_active_manifest()["assertions"]
                          if item["label"] == content_credentials.ASSERTION_LABEL)
     assert assertion["processing_report_sha256"] == hashlib.sha256(report.content).hexdigest()
+    result = client.post("/api/content-credentials/inspect", files={"file": (f"signed.{fmt}", signed.content)})
+    assert result.status_code == 200, result.text
+    assert result.json()["actions"] == ["c2pa.opened", "c2pa.watermarked.unbound"]
 
 
 def test_unsigned_tampered_stale_and_cross_origin(api):
@@ -265,6 +331,7 @@ def test_unsigned_tampered_stale_and_cross_origin(api):
     result = client.post(inspection, files={"file": ("test.wav", bytes(tampered))})
     assert result.status_code == 200, result.text
     assert result.json()["status"] == "invalid"
+    assert result.json()["declared_processing_steps"] is None
     assert signed_request(client, file_id, "0" * 32, "wav").status_code == 409
     (uploads / f"{file_id}.wav").write_bytes(source[:-2] + b"\0\0")
     # Ensure the fixture bytes actually changed, independent of the final sample value.
@@ -311,10 +378,12 @@ def test_inherited_credential_survives_flac_ingest(api, tmp_path):
     source = tmp_path / "source.flac"
     sf.write(source, audio, sr)
     signed_source = tmp_path / "signed.flac"
-    content_credentials.sign_export(
+    signed_result = content_credentials.sign_export(
         source, source, signed_source, revision="a" * 32, operation="processed",
         app_version="test", report_sha256="1" * 64,
     )
+    assert signed_result["actions"] == ["c2pa.opened"]
+    assert signed_result["declared_processing_steps"] is None
     file_id, revision = process(client, signed_source.read_bytes(), "incoming.flac")
     response = signed_request(client, file_id, revision, "wav")
     assert response.status_code == 200, response.text

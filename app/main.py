@@ -1,7 +1,7 @@
 """
 AudioEnhancerMAX by Fd - Main FastAPI Application
 Full-featured audio processing dashboard backend.
-Optimized for Apple Silicon M3 MAX.
+Supports local audio processing on Apple Silicon.
 """
 import os
 import asyncio
@@ -11,6 +11,7 @@ import threading
 import logging
 import mimetypes
 import re
+import sqlite3
 import uuid
 from pathlib import Path
 from typing import Literal, Optional, List
@@ -45,6 +46,7 @@ from app.utils.audio_io import (
     generate_waveform_data
 )
 from app.utils.progress import progress_tracker
+from app.services.workspace_history import read_history, record_event, signal_fingerprint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -387,7 +389,7 @@ async def serve_roadmap_html():
 
 
 # ══════════════════════════════════════════════════════════
-# Per-Filter Benchmarks (seconds per 60s of audio on M3 MAX)
+# Reference per-filter timings (seconds per 60s of audio)
 # ══════════════════════════════════════════════════════════
 
 FILTER_BENCHMARKS = {
@@ -490,6 +492,7 @@ def upload_file(file: UploadFile = File(...)):
     upload_path = get_upload_path(file_id, ext)
     wav_path = get_upload_path(file_id, ".wav")
     size_bytes = 0
+    digest = hashlib.sha256()
     completed = False
     try:
         with upload_path.open("wb") as destination:
@@ -497,13 +500,20 @@ def upload_file(file: UploadFile = File(...)):
                 size_bytes += len(chunk)
                 if size_bytes > MAX_FILE_SIZE_MB * 1024 * 1024:
                     raise HTTPException(400, f"File too large. Max: {MAX_FILE_SIZE_MB}MB")
+                digest.update(chunk)
                 destination.write(chunk)
-        info = get_audio_info(upload_path)
-        audio, sr = load_audio(upload_path)
+        try:
+            info = get_audio_info(upload_path)
+            audio, sr = load_audio(upload_path)
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise HTTPException(422, "This file could not be decoded as supported audio.") from exc
+        if not audio.size:
+            raise HTTPException(422, "The selected file contains no audio samples.")
         if ext != ".wav":
             save_audio(audio, sr, wav_path)
 
         waveform = generate_waveform_data(audio, num_points=500)
+        source_sha256 = digest.hexdigest()
         # Preserve the original container as a possible C2PA parent even when DSP
         # works from the normalized WAV derivative.
         from app.services.content_credentials import MEDIA_TYPES
@@ -511,14 +521,21 @@ def upload_file(file: UploadFile = File(...)):
             from app.services.artifact_store import atomic_json, sha256_file
             atomic_json(get_upload_path(file_id, ".source.json"), {
                 "original_suffix": ext,
-                "original_sha256": sha256_file(upload_path),
+                "original_sha256": source_sha256,
                 "decoded_sha256": sha256_file(wav_path),
             })
+        history_recorded = record_event(
+            file_id, "source_imported", source_sha256=source_sha256,
+            format=ext.lstrip("."), size_bytes=size_bytes,
+            duration_seconds=info["duration"], sample_rate=info["sample_rate"], channels=info["channels"],
+        )
         completed = True
         return {
             "file_id": file_id,
             "filename": file.filename,
             "size_bytes": size_bytes,
+            "source_sha256": source_sha256,
+            "history_recorded": history_recorded,
             "duration_seconds": info["duration"],
             "sample_rate": info["sample_rate"],
             "channels": info["channels"],
@@ -600,7 +617,10 @@ async def process_audio(request: ProcessingRequest):
     if file_id in _PROCESSING_FILES:
         raise HTTPException(409, "This file is already being processed")
     _PROCESSING_FILES.add(file_id)
+    executed_steps: list[str] = []
+    changed_steps: list[str] = []
     try:
+        await asyncio.to_thread(record_event, file_id, "processing_started", mode="processed")
         audio_duration_sec = 60.0
         try:
             info = get_audio_info(source_path)
@@ -705,11 +725,17 @@ async def process_audio(request: ProcessingRequest):
                 supported_filters = cluster_manager.distributable_filters(opts_dict)
                 offload_opts = {key: True for key in supported_filters}
                 if offload_opts:
+                    before = await asyncio.to_thread(signal_fingerprint, audio, sr) if len(offload_opts) == 1 else None
                     audio = await cluster_manager.process_distributed(
                         audio, sr, offload_opts,
                         progress_callback=lambda name, pct, msg: progress_tracker.send_progress(file_id, name, pct, msg)
                     )
                     distributed_filters = set(offload_opts.keys())
+                    if before is not None:
+                        step = next(iter(offload_opts))
+                        executed_steps.append(step)
+                        if before != await asyncio.to_thread(signal_fingerprint, audio, sr):
+                            changed_steps.append(step)
                     logger.info(f" Distributed processing done for: {distributed_filters}")
                     await progress_tracker.send_progress(
                         file_id, "cluster_done", 0.35,
@@ -745,11 +771,16 @@ async def process_audio(request: ProcessingRequest):
             )
 
             # Execute the actual processing - in thread to keep server responsive
-            result = await asyncio.to_thread(process_fn, audio, sr)
-            if isinstance(result, tuple):
-                audio, sr = result
-            else:
-                audio = result
+            def execute():
+                before = signal_fingerprint(audio, sr)
+                result = process_fn(audio, sr)
+                output, rate = result if isinstance(result, tuple) else (result, sr)
+                return output, rate, before != signal_fingerprint(output, rate)
+
+            audio, sr, changed = await asyncio.to_thread(execute)
+            executed_steps.append(step_name)
+            if changed:
+                changed_steps.append(step_name)
 
             elapsed = timing_engine.end_step(job_id, step_name)
             current_step_idx[0] += 1
@@ -895,6 +926,7 @@ async def process_audio(request: ProcessingRequest):
         result_url = f"/outputs/{output_path.name}"
         report_url = None
         report_summary = None
+        report_sha256 = None
         compliance_result = None
         compliance_target = {
             "youtube": "video",
@@ -929,8 +961,21 @@ async def process_audio(request: ProcessingRequest):
                 compliance=compliance_result,
             )
             processing_report["artifact_revision"] = artifact["revision"]
+            processing_report["executed_steps"] = executed_steps
+            processing_report["changed_steps"] = changed_steps
+            for entry in processing_report["pipeline"]:
+                step = entry["step"]
+                if step in executed_steps:
+                    entry["execution"] = "completed"
+                    entry["signal_changed"] = step in changed_steps
+                elif step in resumed_steps:
+                    entry["execution"] = "checkpoint_reused"
+                elif step in distributed_filters:
+                    entry["execution"] = "distributed_group_completed"
             processing_report["checkpoint"] = {"identity": identity, "enabled": checkpoint_enabled, "resumed_steps": resumed_steps}
-            atomic_json(output_path.with_suffix(".report.json"), processing_report)
+            report_path = output_path.with_suffix(".report.json")
+            atomic_json(report_path, processing_report)
+            report_sha256 = hashlib.sha256(report_path.read_bytes()).hexdigest()
             report_url = f"/api/reports/{file_id}?revision={artifact['revision']}"
             report_summary = {
                 "input_quality_score": processing_report["input"]["quality_score"],
@@ -941,6 +986,13 @@ async def process_audio(request: ProcessingRequest):
             }
         except Exception as report_error:
             logger.warning("Processing report could not be generated: %s", report_error)
+
+        history_recorded = await asyncio.to_thread(
+            record_event, file_id, "revision_rendered", revision=artifact["revision"],
+            mode="processed", format=fmt, executed_steps=executed_steps, changed_steps=changed_steps,
+            resumed_steps=resumed_steps, distributed_steps=sorted(distributed_filters),
+            output_sha256=artifact["exports"][fmt]["sha256"], processing_report_sha256=report_sha256,
+        )
 
         # Clean up checkpoints on success
         import shutil
@@ -962,14 +1014,26 @@ async def process_audio(request: ProcessingRequest):
             "waveform_data": waveform,
             "format": fmt,
             "report_url": report_url,
+            "history_recorded": history_recorded,
             "report_summary": report_summary,
             "compliance_url": f"/api/compliance/{file_id}" if compliance_result else None,
             "compliance_summary": compliance_result,
         }
 
     except HTTPException:
+        await asyncio.to_thread(
+            record_event, file_id, "processing_failed", mode="processed", executed_steps=executed_steps,
+        )
+        raise
+    except asyncio.CancelledError:
+        await asyncio.to_thread(
+            record_event, file_id, "processing_interrupted", mode="processed", executed_steps=executed_steps,
+        )
         raise
     except Exception as e:
+        await asyncio.to_thread(
+            record_event, file_id, "processing_failed", mode="processed", executed_steps=executed_steps,
+        )
         logger.error(f"Processing failed: {e}", exc_info=True)
         try:
             timing_engine.end_job(file_id)
@@ -1018,6 +1082,8 @@ def cleanup_preview(
         sf.write(buffer, excerpt, sample_rate, format="WAV", subtype="PCM_16")
     except (OSError, RuntimeError, ValueError) as exc:
         raise HTTPException(409, "Unable to read a cleanup preview from this source") from exc
+    if variant == "spectral":
+        record_event(file_id, "preview_generated", mode="spectral_cleanup", start_seconds=start_seconds, strength=strength)
     return Response(buffer.getvalue(), media_type="audio/wav", headers={"Cache-Control": "no-store"})
 
 
@@ -1034,9 +1100,32 @@ async def smart_mode_analyze(
     try:
         audio, sr = load_audio(source_path)
         from app.services.smart_mode import analyze_and_suggest
-        return await asyncio.to_thread(analyze_and_suggest, audio, sr, profile.value)
+        analysis = await asyncio.to_thread(analyze_and_suggest, audio, sr, profile.value)
+        analysis["history_recorded"] = await asyncio.to_thread(
+            record_event, file_id, "analysis_completed", profile=profile.value,
+            detected_type=analysis.get("detected_type"),
+            quality_score=analysis.get("quality", {}).get("quality_score"),
+        )
+        return analysis
     except Exception as e:
         raise HTTPException(500, f"Smart mode failed: {str(e)}")
+
+
+@app.get("/api/workspace/{file_id}/history")
+def get_workspace_history(
+    file_id: str, request: Request,
+    before: int | None = Query(default=None, gt=0),
+):
+    _require_local_credentials_request(request)
+    file_id = _require_file_id(file_id)
+    if _find_source(file_id) is None:
+        raise HTTPException(404, "Source file not found")
+    try:
+        history = read_history(file_id, before=before)
+    except (OSError, sqlite3.Error, ValueError) as exc:
+        logger.warning("Could not read workspace history", exc_info=True)
+        raise HTTPException(503, "Local action history is unavailable") from exc
+    return JSONResponse(history, headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/reports/{file_id}")
@@ -1387,7 +1476,12 @@ async def analyze_speech_edits(request: SpeechEditorAnalyzeRequest):
         )
 
     try:
-        return await asyncio.to_thread(analyze_sync)
+        edl = await asyncio.to_thread(analyze_sync)
+        await asyncio.to_thread(
+            record_event, file_id, "speech_analysis_completed",
+            candidate_count=len(edl.get("candidates", [])), edl_revision=edl.get("revision"),
+        )
+        return edl
     except Exception as exc:
         logger.error("Speech editor analysis failed: %s", exc, exc_info=True)
         raise HTTPException(500, f"Speech editor analysis failed: {exc}") from exc
@@ -1413,12 +1507,18 @@ async def update_speech_edits(file_id: str, request: SpeechEditorUpdateRequest):
     if edl is None:
         raise HTTPException(404, "Speech edit list not found")
     try:
-        return await asyncio.to_thread(
+        updated = await asyncio.to_thread(
             update_speech_edl,
             edl,
             [item.model_dump() for item in request.decisions],
             request.revision,
         )
+        if updated["revision"] != request.revision:
+            await asyncio.to_thread(
+                record_event, file_id, "speech_decisions_saved",
+                edl_revision=updated["revision"], decision_count=len(request.decisions),
+            )
+        return updated
     except KeyError as exc:
         raise HTTPException(400, str(exc)) from exc
     except ValueError as exc:
@@ -1435,9 +1535,14 @@ async def add_manual_speech_edit_endpoint(file_id: str, request: SpeechEditorMan
     if edl is None:
         raise HTTPException(404, "Speech edit list not found")
     try:
-        return await asyncio.to_thread(
+        updated = await asyncio.to_thread(
             add_manual_speech_edit, edl, request.model_dump(), request.revision
         )
+        await asyncio.to_thread(
+            record_event, file_id, "speech_decisions_saved",
+            edl_revision=updated["revision"], decision_count=1,
+        )
+        return updated
     except ValueError as exc:
         status_code = 409 if "changed" in str(exc) else 400
         raise HTTPException(status_code, str(exc)) from exc
@@ -1461,9 +1566,15 @@ async def _navigate_speech_edit_history(file_id: str, revision: int, direction: 
     if edl is None:
         raise HTTPException(404, "Speech edit list not found")
     try:
-        return await asyncio.to_thread(
+        updated = await asyncio.to_thread(
             navigate_speech_edl_history, edl, revision, direction
         )
+        if updated["revision"] != revision:
+            await asyncio.to_thread(
+                record_event, file_id, "speech_decisions_saved",
+                edl_revision=updated["revision"], mode=direction,
+            )
+        return updated
     except ValueError as exc:
         status_code = 409 if "changed" in str(exc) else 400
         raise HTTPException(status_code, str(exc)) from exc
@@ -1582,6 +1693,7 @@ async def render_speech_edits(file_id: str, request: SpeechEditorRenderRequest):
 
         input_summary = quality_summary(audio, sr)
         timeline = speech_edit_timeline(len(audio), sr, edl)
+        before = signal_fingerprint(audio, sr)
         rendered = render_speech_edl(audio, sr, edl, timeline=timeline)
         output_format = request.output_format.value
         from app.services.artifact_store import publish_audio, atomic_json
@@ -1608,12 +1720,25 @@ async def render_speech_edits(file_id: str, request: SpeechEditorRenderRequest):
             app_build=APP_BUILD, source_path=source_path, output_path=output_path,
         )
         report["artifact_revision"] = artifact["revision"]
-        atomic_json(output_path.with_suffix(".report.json"), report)
+        report["executed_steps"] = ["speech_edl_render"]
+        report["changed_steps"] = ["speech_edl_render"] if before != signal_fingerprint(rendered, sr) else []
+        report["pipeline"][0]["execution"] = "completed"
+        report["pipeline"][0]["signal_changed"] = bool(report["changed_steps"])
+        report_path = output_path.with_suffix(".report.json")
+        atomic_json(report_path, report)
+        record_event(
+            file_id, "revision_rendered", revision=artifact["revision"], mode="speech_edit", format=output_format,
+            executed_steps=report["executed_steps"], changed_steps=report["changed_steps"],
+            output_sha256=artifact["exports"][output_format]["sha256"],
+            processing_report_sha256=hashlib.sha256(report_path.read_bytes()).hexdigest(),
+        )
         return rendered, sr, output_format, report, artifact, output_path, timeline
 
     try:
+        await asyncio.to_thread(record_event, file_id, "processing_started", mode="speech_edit")
         rendered, sr, output_format, report, artifact, output_path, timeline = await asyncio.to_thread(render_sync)
     except Exception as exc:
+        await asyncio.to_thread(record_event, file_id, "processing_failed", mode="speech_edit")
         logger.error("Speech edit rendering failed: %s", exc, exc_info=True)
         raise HTTPException(500, f"Speech edit rendering failed: {exc}") from exc
 
@@ -1691,12 +1816,17 @@ async def update_voice_profile_endpoint(profile_id: str, request: VoiceProfileUp
 
 @app.get("/api/tts/voices")
 async def get_voices():
+    from app.services.capability_registry import get_capability_registry
     from app.services.tts import get_available_voices
     from app.services.runtime_settings import external_service_allowed
     voices = get_available_voices()
     if not external_service_allowed("external"):
         voices = [voice for voice in voices if voice.get("engine") != "edge"]
-    return {"voices": voices}
+    engines = get_capability_registry()["engines"]
+    return {"voices": voices, "installed_engines": {
+        "kokoro": engines["local_tts"]["available"],
+        "edge": engines["cloud_tts"]["available"],
+    }}
 
 
 @app.post("/api/tts/synthesize")
@@ -2126,9 +2256,10 @@ def export_content_credentials(file_id: str, options: CredentialsExportRequest, 
             raise CredentialsError("The processing report does not match this result. Process it again.") from exc
         if fmt not in {"wav", "flac"} and report.get("options", {}).get("watermark_identifier"):
             raise CredentialsError("Choose WAV or FLAC to preserve the audio watermark in the signed copy.")
-        export = master if fmt == artifact["master_format"] else resolve_export(
-            file_id, fmt, version, options.revision,
-        )[0]
+        if fmt == artifact["master_format"]:
+            export = master
+        else:
+            export, artifact = resolve_export(file_id, fmt, version, options.revision)
         source = _find_source(file_id)
         if source is None:
             raise CredentialsError("The source for this result is unavailable.")
@@ -2143,6 +2274,13 @@ def export_content_credentials(file_id: str, options: CredentialsExportRequest, 
             operation=version,
             app_version=APP_VERSION,
             report_sha256=hashlib.sha256(report_bytes).hexdigest(),
+            expected_export_sha256=artifact["exports"][fmt]["sha256"],
+            executed_steps=report.get("executed_steps"),
+            changed_steps=report.get("changed_steps"),
+        )
+        record_event(
+            file_id, "signed_export_prepared", revision=options.revision, mode=version, format=fmt,
+            verification_status=verification["status"], timestamp_trusted=verification["timestamp_trusted"],
         )
         headers = {
             "Cache-Control": "no-store",
@@ -2181,14 +2319,19 @@ async def download_file(file_id: str, format: str = "wav", version: str = "proce
     format = _require_choice(format, DOWNLOAD_AUDIO_FORMATS, "format")
     version = _require_choice(version, DOWNLOAD_AUDIO_VERSIONS, "version")
     if version == "original":
-        path = _find_source(file_id)
+        paths = (get_upload_path(file_id, suffix) for suffix in sorted(ALLOWED_EXTENSIONS) if suffix != ".wav")
+        path = next((candidate for candidate in paths if candidate.is_file()), None) or _find_source(file_id)
         if path is None:
             raise HTTPException(404, "Original audio not found")
-        # Original downloads preserve the original artifact; the suffix is explicit.
+        await asyncio.to_thread(record_event, file_id, "export_prepared", mode="original", format=path.suffix[1:])
         return FileResponse(path, media_type=AUDIO_MEDIA_TYPES.get(path.suffix),
                             filename=f"AudioEnhancerMAX_{file_id}_original{path.suffix}",
                             headers={"Cache-Control": "no-store"})
     path, artifact = await _resolve_export(file_id, format, version, revision)
+    await asyncio.to_thread(
+        record_event, file_id, "export_prepared", revision=artifact["revision"], mode=version, format=format,
+        output_sha256=artifact["exports"][format]["sha256"],
+    )
     return FileResponse(path, media_type=AUDIO_MEDIA_TYPES[path.suffix],
                         filename=f"AudioEnhancerMAX_{file_id}.{format}",
                         headers={"Cache-Control": "no-store", "X-Audio-Revision": artifact["revision"],
@@ -2219,11 +2362,8 @@ async def websocket_progress(websocket: WebSocket, file_id: str):
 
 @app.get("/api/health")
 async def health():
-    try:
-        import torch
-        mps_available = bool(torch.backends.mps.is_available())
-    except (ImportError, OSError):
-        mps_available = False
+    from app.services.apple_acceleration import is_mps_available
+    mps_available = is_mps_available()
     gpu_info = "Apple Silicon MPS" if mps_available else "CPU"
 
     # Check local Ollama / Gemma-family model
@@ -2247,32 +2387,34 @@ async def health():
         metrics = system_monitor.get_stats()
         if metrics:
             system_data = {
-                "chip": metrics.get("chip", "Apple M3 Max"),
+                "chip": metrics.get("chip") or None,
                 "cpu_percent": metrics.get("cpu_percent", 0),
-                "soc_cpu_percent": metrics.get("soc_cpu_percent", 0),
+                "soc_cpu_percent": metrics.get("soc_cpu_percent"),
                 "app_cpu_percent": metrics.get("app_cpu_percent", 0),
                 "app_cpu_core_percent": metrics.get("app_cpu_core_percent", 0),
                 "app_ram_mb": metrics.get("app_ram_mb", 0),
                 "metric_scope": metrics.get("metric_scope", "system"),
                 "cpu_per_core": metrics.get("cpu_per_core", []),
-                "cpu_freq_ghz": metrics.get("cpu_freq_ghz", 0),
-                "gpu_percent": metrics.get("gpu_percent", 0),
-                "gpu_freq_ghz": metrics.get("gpu_freq_ghz", 0),
+                "cpu_freq_ghz": metrics.get("cpu_freq_ghz"),
+                "gpu_percent": metrics.get("gpu_percent"),
+                "gpu_freq_ghz": metrics.get("gpu_freq_ghz"),
                 "ram_percent": metrics.get("ram_percent", 0),
                 "ram_used_gb": metrics.get("ram_used_gb", 0),
                 "ram_total_gb": metrics.get("ram_total_gb", 0),
                 "swap_used_gb": metrics.get("swap_used_gb", 0),
-                "ane_percent": metrics.get("ane_percent", 0),
-                "power_watts": metrics.get("power_watts", 0),
-                "thermal_pressure": metrics.get("thermal_pressure", "nominal"),
-                "cpu_temp_c": metrics.get("cpu_temp_c", 0),
-                "gpu_temp_c": metrics.get("gpu_temp_c", 0),
+                "ane_percent": metrics.get("ane_percent"),
+                "ane_power_watts": metrics.get("ane_power_watts"),
+                "macmon_available": metrics.get("macmon_available", False),
+                "power_watts": metrics.get("power_watts"),
+                "thermal_pressure": metrics.get("thermal_pressure"),
+                "cpu_temp_c": metrics.get("cpu_temp_c"),
+                "gpu_temp_c": metrics.get("gpu_temp_c"),
                 "timestamp": metrics.get("timestamp", 0),
             }
             # Include benchmark score if available
             try:
                 from app.services.benchmark import get_benchmark_result
-                bench = get_benchmark_result()
+                bench = get_benchmark_result(run_if_missing=False)
                 if bench:
                     system_data["benchmark_score"] = bench.get("score", 0)
             except Exception:

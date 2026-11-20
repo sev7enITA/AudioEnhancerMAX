@@ -14,7 +14,7 @@ function harness() {
     document:{head:{appendChild(){}},createElement(){return {}},addEventListener(){},getElementById:element,querySelector(){return null},querySelectorAll(){return []}},
     window:{addEventListener(){},location:{hostname:'localhost',protocol:'http:',host:'localhost'}},
     fetch:async()=>{throw Error('unexpected request')}});
-  vm.runInContext(source+`;globalThis.stateRef=state;`,context);
+  vm.runInContext(source+`;globalThis.stateRef=state;globalThis.optionsRef=options;`,context);
   vm.runInContext(`stopPlayback=()=>{};showWaveform=()=>{};setReviewWorkflowStage=()=>{};resetReviewDeck=()=>{state.complianceRequestId++};
     startActivity=()=>{};connectProgressWS=()=>{};addActivityStep=()=>{};stopActivity=()=>{};showToast=()=>{};
     buttonIcon=()=>'';setComplianceLoading=()=>{};setComplianceError=()=>{};renderDeliveryCompliance=x=>{globalThis.rendered=x};`,context);
@@ -22,10 +22,35 @@ function harness() {
 }
 test('starting a failed job removes the prior downloadable result', async()=>{
   const c=harness(); Object.assign(c.stateRef,{fileId:'one',hasProcessed:true,processedRevision:'old',processedUrl:'/old.wav'});
+  c.optionsRef.normalize = true;
   let destroyed=false;c.stateRef.wavesurferProcessed={destroy(){destroyed=true}};
   c.fetch=async()=>({ok:false,json:async()=>({detail:'interrupted'})});
   await c.startProcessing();
   assert.equal(c.stateRef.hasProcessed,false);assert.equal(c.stateRef.processedRevision,null);assert.equal(destroyed,true);assert.equal(c.stateRef.isProcessing,false);
+  assert.equal(c.stateRef.workspaceRun.phase, 'failed');
+  assert.equal(c.document.getElementById('progress-current-step').textContent, '');
+});
+test('a source with no selected processing choices does not submit a render', async () => {
+  const c = harness();
+  c.stateRef.fileId = 'one';
+  c.fetch = async () => assert.fail('a render needs an explicit treatment or output profile');
+  await c.startProcessing();
+  assert.equal(c.stateRef.workspaceRun.phase, 'ready');
+  assert.equal(c.stateRef.processedRevision, null);
+});
+test('workspace reset detaches progress from the previous file', () => {
+  const c = harness();
+  const progress = c.document.getElementById('progress-current-step');
+  progress.textContent = 'Complete!';
+  let stopped = false;
+  const connection = {onmessage() {}, close() { stopped = true; }};
+  c.stateRef.wsConnection = connection;
+  c.clearWorkspaceProgress();
+  assert.equal(connection.onmessage, null);
+  assert.equal(stopped, true);
+  assert.equal(c.stateRef.wsConnection, null);
+  assert.equal(progress.textContent, '');
+  assert.equal(c.document.getElementById('progress-percent').textContent, '0%');
 });
 test('an old compliance response cannot replace new-revision evidence', async()=>{
   const c=harness();Object.assign(c.stateRef,{fileId:'one',hasProcessed:true,processedRevision:'old'});
@@ -54,6 +79,7 @@ test('download is unavailable while processing and without a completed result', 
 });
 test('a completed response for a replaced file is discarded', async()=>{
   const c=harness();Object.assign(c.stateRef,{fileId:'one'});let finish;
+  c.optionsRef.normalize = true;
   c.fetch=()=>new Promise(resolve=>{finish=resolve});const pending=c.startProcessing();c.stateRef.fileId='two';
   finish({ok:true,json:async()=>({revision:'old',format:'wav',output_url:'/old.wav'})});await pending;
   assert.equal(c.stateRef.hasProcessed,false);assert.equal(c.stateRef.processedUrl,null);

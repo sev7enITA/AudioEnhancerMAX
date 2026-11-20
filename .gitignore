@@ -20,6 +20,7 @@ env/
 
 ## Uploads and outputs (user data)
 app/uploads/
+app/workspace-history.sqlite3*
 app/outputs/
 app/presets/
 app/roadmap_votes.json

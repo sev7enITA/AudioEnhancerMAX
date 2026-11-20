@@ -6,15 +6,20 @@ import java.nio.ByteOrder
 /** Picker hints are not validation: classify bytes before handing them to a decoder. */
 object AudioImportPolicy {
     val mimeTypes get() = Filter.ALL.mimeTypes
-    enum class Filter(val label:String, val mimeTypes:Array<String>) {
-        ALL("All supported", arrayOf("audio/*", "video/mp4", "video/quicktime", "video/3gpp", "application/ogg")),
-        WAV("WAV", arrayOf("audio/wav", "audio/x-wav", "audio/vnd.wave")),
-        MP3("MP3", arrayOf("audio/mpeg", "audio/mp3")),
-        M4A_AAC("M4A / AAC", arrayOf("audio/mp4", "audio/x-m4a", "audio/aac", "audio/aac-adts")),
-        FLAC("FLAC", arrayOf("audio/flac", "audio/x-flac")),
-        OGG("Ogg / Opus", arrayOf("audio/ogg", "application/ogg", "audio/opus")),
-        AMR("AMR", arrayOf("audio/amr", "audio/amr-wb")),
-        VIDEO("Video · MP4 / MOV / 3GP", arrayOf("video/mp4", "video/quicktime", "video/3gpp"));
+    enum class Filter(val label: String, val mimeTypes: Array<String>, val compatibility: String) {
+        ALL("Browse media", arrayOf("audio/*", "video/mp4", "video/quicktime", "video/3gpp", "application/ogg"),
+            "Lists audio and common video files. Studio checks the container and audio track after you select a file."),
+        WAV("WAV", arrayOf("audio/wav", "audio/x-wav", "audio/vnd.wave"),
+            "RIFF WAV with PCM 16/24/32-bit or float32, 8–96 kHz, mono or stereo. RF64 and RIFX are outside this import path."),
+        MP3("MP3", arrayOf("audio/mpeg", "audio/mp3"), "MPEG Layer III audio decoded by Android."),
+        M4A_AAC("M4A / AAC", arrayOf("audio/mp4", "audio/x-m4a", "audio/aac", "audio/aac-adts"),
+            "Audio-only M4A and raw AAC with ADTS headers. ALAC in M4A depends on the phone’s extractor and decoder."),
+        FLAC("FLAC", arrayOf("audio/flac", "audio/x-flac"), "Native FLAC files decoded by Android."),
+        OGG("Ogg / Opus", arrayOf("audio/ogg", "application/ogg", "audio/opus"),
+            "Ogg containers such as Vorbis or Opus. The codec must be available on this device."),
+        AMR("AMR", arrayOf("audio/amr", "audio/amr-wb"), "AMR-NB and AMR-WB speech recordings decoded by Android."),
+        VIDEO("MP4 / MOV / 3GP", arrayOf("video/mp4", "video/quicktime", "video/3gpp"),
+            "A recognized video container with one readable audio track. Studio edits the audio. Video replacement is available only for compatible tracks.");
 
         fun accepts(kind:Kind, hasVideo:Boolean=false):Boolean = when(this) {
             ALL -> true
@@ -27,7 +32,7 @@ object AudioImportPolicy {
             VIDEO -> kind==Kind.MP4 && hasVideo
         }
         fun validate(kind:Kind,hasVideo:Boolean=false) {
-            require(accepts(kind,hasVideo)) { "This file does not match $label. Choose the matching import format or All supported. Your previous recording is preserved." }
+            require(accepts(kind,hasVideo)) { "This file does not match $label. Choose the matching import format or Browse media. Your previous recording is preserved." }
         }
     }
     enum class Kind { WAV, MP3, MP4, AAC, OGG, FLAC, AMR }

@@ -2,6 +2,7 @@ package com.audioenhancermax.worker
 
 import android.content.Intent
 import android.content.ClipData
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -28,6 +29,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -111,6 +113,12 @@ internal fun CompanionScreen(
     var aboutOpen by rememberSaveable { mutableStateOf(false) }
     var updatesOpen by rememberSaveable { mutableStateOf(false) }
     var handledShare by rememberSaveable { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    val build = remember(context) { readInstalledBuild(context) }
+    val welcomePreferences = remember(context) { context.getSharedPreferences("build-welcome", Context.MODE_PRIVATE) }
+    var welcomeOpen by rememberSaveable(build.number) {
+        mutableStateOf(welcomePreferences.getLong("seen-build", -1L) != build.number)
+    }
 
     LaunchedEffect(verification.navigationRequest) {
         if (verification.navigationRequest != handledShare) {
@@ -120,11 +128,18 @@ internal fun CompanionScreen(
         }
     }
 
-    if (tab == 1 && !aboutOpen && !updatesOpen) {
+    if (tab == 1 && !aboutOpen && !updatesOpen && !welcomeOpen) {
         DisposableEffect(vm) { onDispose { vm.cancelNearbyPairing() } }
     }
 
     MaterialTheme(colorScheme = workspaceColorScheme) {
+        if (welcomeOpen) {
+            VersionWelcomeScreen(build) {
+                welcomePreferences.edit().putLong("seen-build", build.number).apply()
+                welcomeOpen = false
+            }
+            return@MaterialTheme
+        }
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -184,6 +199,9 @@ internal fun CompanionScreen(
         if (aboutOpen) AboutDialog(onDismiss = { aboutOpen = false }, onUpdates = {
             aboutOpen = false
             updatesOpen = true
+        }, onWelcome = {
+            aboutOpen = false
+            welcomeOpen = true
         })
         if (updatesOpen) {
             LaunchedEffect(updates) { updates.opened() }

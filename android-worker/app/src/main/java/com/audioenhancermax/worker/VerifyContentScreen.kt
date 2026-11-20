@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.FolderOpen
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -39,7 +41,7 @@ private val SupportedShareKinds = setOf("audio", "video")
 
 internal fun singleSharedContent(context: Context, intent: Intent): Uri? {
     if (intent.action != Intent.ACTION_SEND ||
-        intent.type?.substringBefore('/') !in SupportedShareKinds ||
+        (intent.type?.substringBefore('/') !in SupportedShareKinds && intent.type != "application/ogg") ||
         (intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION) == 0) return null
     return runCatching {
         val clip = intent.clipData
@@ -133,7 +135,7 @@ internal class MediaVerificationViewModel(app: Application) : AndroidViewModel(a
 @Composable
 internal fun VerifyContentScreen(model: MediaVerificationViewModel, share: (File) -> Unit) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let(model::verify) }
-    WorkspaceTitle("Verify Content", "Read Content Credentials and measure the original file on this device.")
+    WorkspaceTitle("Verify Content", "Inspect media metadata, Content Credentials and audio on this device.")
     if (model.sharedFile != null) {
         WorkspaceCard {
             WorkspaceSection("Shared file", Icons.Default.AudioFile)
@@ -144,10 +146,10 @@ internal fun VerifyContentScreen(model: MediaVerificationViewModel, share: (File
     } else {
         WorkspaceCard {
             WorkspaceSection("Choose an original file", Icons.Default.FolderOpen)
-            Text("WAV, MP3, FLAC, M4A, MP4 and MOV · up to 100 MiB.", color = WorkspaceMuted,
+            Text("WAV, MP3, FLAC, M4A, MP4 and MOV for C2PA. AAC, Ogg, AMR and 3GP for metadata and audio where supported. Up to 100 MiB.", color = WorkspaceMuted,
                 style = MaterialTheme.typography.bodySmall)
             ActionButton("Choose a file", !model.working && !model.saving) {
-                picker.launch(arrayOf("audio/*", "video/*", "application/octet-stream"))
+                picker.launch(arrayOf("audio/*", "video/*", "application/ogg", "application/octet-stream"))
             }
         }
     }
@@ -164,6 +166,7 @@ internal fun VerifyContentScreen(model: MediaVerificationViewModel, share: (File
             VerificationText("SHA-256", report.asset.digest)
         }
         VerificationCredentials(report.credentials)
+        VerificationMetadata(report.metadata, report.asset)
         VerificationAudio(report.audio, report.audioDetail)
         Button(
             onClick = { model.shareReport(share) },
@@ -174,6 +177,8 @@ internal fun VerifyContentScreen(model: MediaVerificationViewModel, share: (File
             Spacer(Modifier.width(8.dp))
             Text(if (model.saving) "Preparing report…" else "Share JSON report")
         }
+        if (report.metadata != null) Text("The report includes technical media facts. Embedded text tags and cover EXIF stay on this device.",
+            color = WorkspaceMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -209,6 +214,72 @@ private fun VerificationCredentials(summary: CredentialSummary) {
         if (summary.failureCodes.isNotEmpty()) {
             HorizontalDivider(color = WorkspaceLine)
             VerificationText("Reader findings", summary.failureCodes.joinToString("\n"))
+        }
+    }
+}
+
+@Composable
+private fun VerificationMetadata(metadata: LocalMediaMetadata?, asset: VerifiedAsset) {
+    WorkspaceCard {
+        WorkspaceSection("Media metadata", Icons.AutoMirrored.Filled.ListAlt)
+        if (metadata == null) {
+            Text("Media metadata is unavailable for this file format.", color = WorkspaceMuted)
+            return@WorkspaceCard
+        }
+        VerificationText(if (metadata.hasTechnicalMetadata) "Container" else "Container signature", metadata.container)
+        MetadataFacts(metadata.facts)
+        metadata.tracks.forEach { track ->
+            HorizontalDivider(color = WorkspaceLine)
+            Text("Track ${track.number}", color = WorkspaceMint, style = MaterialTheme.typography.titleSmall)
+            VerificationText("Android track media type", track.mediaType)
+            MetadataFacts(track.facts)
+        }
+        if (!metadata.hasTechnicalMetadata) {
+            Text("Only the file signature was recognized. Android could not read its technical properties.", color = WorkspaceMuted,
+                style = MaterialTheme.typography.bodySmall)
+        }
+        if (metadata.tags.isNotEmpty() || metadata.artworkExif.isNotEmpty()) {
+            HorizontalDivider(color = WorkspaceLine)
+            var showTags by rememberSaveable(asset.digest) { mutableStateOf(false) }
+            Text("Embedded tags may contain personal information. View them locally if you want to inspect their contents.",
+                color = WorkspaceMuted, style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { showTags = !showTags }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(if (showTags) "Hide embedded tags" else "Show embedded tags")
+            }
+            if (showTags) {
+                metadata.tags.forEach { (label, value) -> VerificationText(label, value) }
+                if (metadata.artworkExif.isNotEmpty()) {
+                    Text("Cover artwork EXIF", color = WorkspaceMint, style = MaterialTheme.typography.titleSmall)
+                    Text("Camera information read from the embedded JPEG image.", color = WorkspaceMuted,
+                        style = MaterialTheme.typography.bodySmall)
+                    metadata.artworkExif.forEach { (label, value) -> VerificationText(label, value) }
+                }
+            }
+        }
+        if (metadata.artworkScanLimited) {
+            Text("Cover artwork EXIF is checked in files up to 12 MiB with JPEG artwork up to 2 MiB.",
+                color = WorkspaceMuted, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun MetadataFacts(facts: Map<String, Number>) {
+    val fields = listOf(
+        Triple("duration_ms", "Duration", "s"), Triple("bit_rate_bps", "Bitrate", "kb/s"),
+        Triple("track_count", "Track count", ""), Triple("sample_rate_hz", "Sample rate", "Hz"),
+        Triple("channels", "Audio channels", ""), Triple("bits_per_sample", "Bits per sample", ""),
+        Triple("width_px", "Width", "px"), Triple("height_px", "Height", "px"),
+        Triple("frame_rate_fps", "Frame rate", "fps"), Triple("rotation_degrees", "Rotation", "°"),
+    )
+    fields.forEach { (key, name, unit) ->
+        facts[key]?.let { value ->
+            val formatted = when (key) {
+                "duration_ms", "bit_rate_bps" -> String.format(Locale.US, "%.2f", value.toDouble() / 1000)
+                "frame_rate_fps" -> String.format(Locale.US, "%.2f", value.toDouble())
+                else -> String.format(Locale.US, "%,d", value.toLong())
+            }
+            VerificationText(name, if (unit.isEmpty()) formatted else "$formatted $unit")
         }
     }
 }

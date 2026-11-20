@@ -46,6 +46,8 @@ class MediaInstrumentation: Instrumentation() {
                 val checked = verifyCopiedMedia(targetContext, originalProofFile, originalProof) {}
                 check(checked.asset.digest == sha256(originalProofFile.readBytes()) && checked.asset.sizeBytes == originalProofFile.length())
                 check(checked.audioStatus == "measured" && requireNotNull(checked.audio).analyzedSamples > 0)
+                val metadata = requireNotNull(checked.metadata)
+                check(metadata.hasTechnicalMetadata && metadata.tracks.any { it.mediaType.startsWith("audio/") })
                 if (android.os.Build.VERSION.SDK_INT >= 28) {
                     check(checked.credentials.actions.any { it.action == "c2pa.opened" })
                     check(checked.credentials.actions.any { it.action == "c2pa.modified" })
@@ -59,6 +61,8 @@ class MediaInstrumentation: Instrumentation() {
                 check(exported["schema"].asString == MediaVerificationSchema)
                 check(exported.getAsJsonObject("asset")["sha256"].asString == checked.asset.digest)
                 check(exported.getAsJsonObject("credentials")["status"].asString == checked.credentials.status)
+                check(exported.getAsJsonObject("metadata")["status"].asString == "read")
+                verifyMetadataFixtures(report)
                 val unsafeShare = Intent(Intent.ACTION_SEND).setType("audio/wav")
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).putExtra(Intent.EXTRA_STREAM, Uri.fromFile(originalProofFile))
                 check(singleSharedContent(targetContext, unsafeShare) == null)
@@ -181,5 +185,40 @@ class MediaInstrumentation: Instrumentation() {
             }
             finish(-1,report)
         } catch(e:Throwable) {report.putString("stream","FAIL: ${e.stackTraceToString()}\n");finish(0,report)}
+    }
+
+    private suspend fun verifyMetadataFixtures(report: Bundle) {
+        val fixtures = File(targetContext.cacheDir, "qa-metadata").listFiles()?.filter { it.isFile && it.name.startsWith("fixture-") }
+            ?.sortedBy { it.name }.orEmpty()
+        if (fixtures.isEmpty()) return
+        val matrix = fixtures.map { file ->
+            val bytes = file.readBytes()
+            val original = file.inputStream().use { copyAndHash(it, java.io.ByteArrayOutputStream(), VerifyFileLimit) {} }
+            val checked = verifyCopiedMedia(targetContext, file, original) {}
+            val metadata = checked.metadata
+            val imported = runCatching { AudioImporter.decode(targetContext, Uri.fromFile(file)) }.getOrNull()
+            check(checked.asset.digest == sha256(bytes) && bytes.contentEquals(file.readBytes()))
+            if (file.name in setOf("fixture-mp3-cover-exif.mp3", "fixture-aac-cover-exif.m4a")) {
+                check(metadata?.artworkExif?.get("Camera make") == "QA Camera Corp") { "Cover EXIF: $metadata" }
+                check(metadata?.artworkExif?.keys?.none { it.contains("GPS", ignoreCase = true) } == true)
+                check(metadata?.artworkExif?.get("Orientation") != "0")
+            }
+            if (file.name == "fixture-invalid.mp4") {
+                check(metadata?.hasTechnicalMetadata != true && checked.credentials.status != "unsigned")
+            }
+            if (file.name == "fixture-pcm24-bwf.wav") check(metadata?.container == "Broadcast WAV / RIFF")
+            if (file.name == "fixture-renamed.wav") {
+                check(checked.asset.mediaType == "audio/mpeg")
+                check(runCatching { AudioImporter.decode(targetContext, Uri.fromFile(file), AudioImportPolicy.Filter.WAV) }.isFailure)
+            }
+            if (metadata?.artworkExif?.isNotEmpty() == true) check(!checked.json().contains("QA Camera Corp"))
+            val result = "${file.name}: ${checked.asset.mediaType}; metadata=${metadata?.hasTechnicalMetadata}; " +
+                "tracks=${metadata?.tracks?.joinToString { it.mediaType }}; tags=${metadata?.tags?.keys}; " +
+                "coverExif=${metadata?.artworkExif?.keys}; audio=${checked.audioStatus}; studio=${imported != null}; " +
+                "videoReplacement=${imported?.video != null}; c2pa=${checked.credentials.status}"
+            imported?.video?.delete()
+            result
+        }
+        report.putString("metadataFormats", matrix.joinToString("\n"))
     }
 }

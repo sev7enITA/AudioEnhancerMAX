@@ -5,7 +5,7 @@ import Foundation
 import UniformTypeIdentifiers
 
 enum VerificationFormat: String, CaseIterable {
-    case wav, mp3, flac, m4a, mp4, mov
+    case wav, mp3, flac, m4a, mp4, mov, aac, caf, aiff, aif, threeGP = "3gp"
 
     var mimeType: String {
         switch self {
@@ -15,6 +15,19 @@ enum VerificationFormat: String, CaseIterable {
         case .m4a: "audio/mp4"
         case .mp4: "video/mp4"
         case .mov: "video/quicktime"
+        case .aac: "audio/aac"
+        case .caf: "audio/x-caf"
+        case .aiff, .aif: "audio/aiff"
+        case .threeGP: "video/3gpp"
+        }
+    }
+
+    static let inputFormats = "WAV, MP3, FLAC, M4A, AAC, CAF, AIFF, MP4, MOV or 3GP"
+
+    var supportsCredentials: Bool {
+        switch self {
+        case .wav, .mp3, .flac, .m4a, .mp4, .mov: true
+        case .aac, .caf, .aiff, .aif, .threeGP: false
         }
     }
 
@@ -27,7 +40,10 @@ enum VerificationFormat: String, CaseIterable {
             return kind == .wav || (prefix.starts(with: "RF64".utf8) && prefix.dropFirst(8).starts(with: "WAVE".utf8))
         case .mp3: return kind == .mp3
         case .flac: return kind == .flac
-        case .m4a, .mp4: return kind == .mp4
+        case .m4a, .mp4, .threeGP: return kind == .mp4
+        case .aac: return kind == .aac
+        case .caf: return kind == .caf
+        case .aiff, .aif: return kind == .aiff
         case .mov:
             if kind == .mp4 { return true }
             // QuickTime movies produced before the ftyp convention may start with one of these atoms.
@@ -56,12 +72,15 @@ struct MediaVerificationReport: Codable, Sendable {
     let asset: Asset
     let credentials: CredentialSummary
     let audio: AudioVerification
+    var metadata: MediaMetadata?
 
     func json() throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         encoder.keyEncodingStrategy = .convertToSnakeCase
-        return try encoder.encode(self)
+        var exported = self
+        exported.metadata = metadata?.technicalExport
+        return try encoder.encode(exported)
     }
 }
 
@@ -110,7 +129,7 @@ enum MobileMediaVerification {
 
     static func verify(_ source: URL, bundle: Bundle = .main) async throws -> MediaVerificationReport {
         guard source.isFileURL, let format = VerificationFormat(rawValue: source.pathExtension.lowercased()) else {
-            throw CompanionError.message("Choose a local WAV, MP3, FLAC, M4A, MP4 or MOV file.")
+            throw CompanionError.message("Choose a local \(VerificationFormat.inputFormats) file.")
         }
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("media-verification-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
@@ -120,29 +139,32 @@ enum MobileMediaVerification {
         try Task.checkCancellation()
         let credentials: CredentialSummary
         let audio: AudioVerification
+        let metadata: MediaMetadata
         if asset.mediaType == format.mimeType {
             credentials = MobileContentCredentials.inspect(local, bundle: bundle)
             try Task.checkCancellation()
-            audio = try await analyzeAudio(local)
+            // Restrict both readers to the copied original, including embedded references.
+            let localAsset = AVURLAsset(url: local, options: [
+                AVURLAssetReferenceRestrictionsKey: AVAssetReferenceRestrictions.forbidAll.rawValue,
+                AVURLAssetAllowsCellularAccessKey: false,
+            ])
+            metadata = try await MediaMetadataReader.inspect(localAsset, format: format, sizeBytes: asset.sizeBytes)
+            audio = try await analyzeAudio(localAsset)
         } else {
             credentials = CredentialSummary(status: "format_mismatch", detail: "The file header does not match the selected media format.")
             audio = AudioVerification(status: "unreadable_audio")
+            metadata = MediaMetadata(status: .formatMismatch)
         }
         return MediaVerificationReport(
             schema: "audioenhancermax.media-verification.v1",
             generatedAtUtc: ISO8601DateFormatter().string(from: .now),
             application: .init(version: bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
                                build: bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown", platform: "ios"),
-            asset: asset, credentials: credentials, audio: audio
+            asset: asset, credentials: credentials, audio: audio, metadata: metadata
         )
     }
 
-    private static func analyzeAudio(_ local: URL) async throws -> AudioVerification {
-        // Disallow references to data outside the selected container, including remote URLs.
-        let asset = AVURLAsset(url: local, options: [
-            AVURLAssetReferenceRestrictionsKey: AVAssetReferenceRestrictions.forbidAll.rawValue,
-            AVURLAssetAllowsCellularAccessKey: false,
-        ])
+    private static func analyzeAudio(_ asset: AVURLAsset) async throws -> AudioVerification {
         do {
             guard let track = try await asset.loadTracks(withMediaType: .audio).first else {
                 return AudioVerification(status: "no_audio_track")

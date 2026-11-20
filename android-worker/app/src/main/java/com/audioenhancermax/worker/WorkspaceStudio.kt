@@ -4,8 +4,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -41,7 +43,7 @@ internal fun StudioScreen(
     if (vm.wave == null) {
         WorkspaceCard {
             WorkspaceSection("Open a recording", Icons.Default.AudioFile)
-            Text("Pick the file format before opening your audio library.", color = WorkspaceMuted)
+            Text("Choose a format filter or browse for an audio or video file.", color = WorkspaceMuted)
             FileActions(vm, importAudio)
         }
     }
@@ -68,6 +70,7 @@ internal fun StudioScreen(
 @Composable
 private fun FileActions(vm: CompanionViewModel, importAudio: (AudioImportPolicy.Filter) -> Unit) {
     var formatsOpen by rememberSaveable { mutableStateOf(false) }
+    var compatibilityOpen by rememberSaveable { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Button(
             onClick = { importAudio(vm.importFilter) },
@@ -80,7 +83,7 @@ private fun FileActions(vm: CompanionViewModel, importAudio: (AudioImportPolicy.
         }
         Box {
             OutlinedButton(onClick = { formatsOpen = true }, enabled = !vm.busy, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(if (vm.importFilter == AudioImportPolicy.Filter.ALL) "Any format" else vm.importFilter.label)
+                Text(vm.importFilter.label)
                 Icon(Icons.Default.ExpandMore, contentDescription = null, modifier = Modifier.size(17.dp))
             }
             DropdownMenu(expanded = formatsOpen, onDismissRequest = { formatsOpen = false }) {
@@ -95,6 +98,29 @@ private fun FileActions(vm: CompanionViewModel, importAudio: (AudioImportPolicy.
                 }
             }
         }
+    }
+    TextButton(onClick = { compatibilityOpen = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Import compatibility")
+    }
+    if (compatibilityOpen) {
+        AlertDialog(
+            onDismissRequest = { compatibilityOpen = false },
+            title = { Text("Import compatibility") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Files up to 100 MiB, with one readable mono or stereo audio track. The decoded edit can use up to 64 MiB.")
+                    AudioImportPolicy.Filter.entries.forEach { format ->
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(format.label, fontWeight = FontWeight.SemiBold, color = WorkspaceMint)
+                            Text(format.compatibility, color = WorkspaceMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { compatibilityOpen = false }) { Text("Done") } },
+        )
     }
 }
 

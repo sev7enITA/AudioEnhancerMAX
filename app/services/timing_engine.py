@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # ── Persistence path ──
 HISTORY_FILE = TIMING_HISTORY_FILE
 
-# ── Static benchmarks: seconds per 60s of audio (M3 MAX calibrated) ──
+# ── Static reference values: seconds per 60s of audio ──
 STATIC_BENCHMARKS = {
     # Noise filters
     "remove_noise":           {"secs_per_60": 8.0,   "model_load": 5.0,   "group": "deepfilter"},
@@ -214,8 +214,8 @@ class TimingEngine:
         total = 2.0  # base I/O overhead
         per_step = {}
         groups_costed = set()
-        history_count = 0
-        benchmark_count = 0
+        sources = set()
+        confidences = set()
 
         for step in active_steps:
             est, source, conf = self._estimate_single_step(step, audio_duration, groups_costed)
@@ -225,40 +225,24 @@ class TimingEngine:
                 "confidence": conf,
             }
             total += est
-            if source == "history":
-                history_count += 1
-            else:
-                benchmark_count += 1
+            sources.add(source)
+            confidences.add(conf)
 
-        # Overall confidence
-        if history_count > 0 and benchmark_count == 0:
-            confidence = "high"
+        duration = self._fmt_duration(audio_duration)
+        total_steps = len(active_steps)
+        if sources == {"history"}:
+            confidence = "high" if confidences == {"high"} else "medium"
             source = "history"
-        elif history_count > benchmark_count:
-            confidence = "medium"
-            source = "history+benchmark"
-        else:
+            basis = "tempi osservati e salvati in questa installazione"
+        elif not sources or sources == {"benchmark"}:
             confidence = "low"
             source = "benchmark"
-
-        # Human-readable summary
-        total_steps = len(active_steps)
-        if confidence == "high":
-            n = self._get_sample_count(active_steps)
-            breakdown_text = (
-                f"{total_steps} filtri - stima calibrata su {n} esecuzioni precedenti "
-                f"per {self._fmt_duration(audio_duration)} di audio"
-            )
-        elif confidence == "medium":
-            breakdown_text = (
-                f"{total_steps} filtri - stima mista (dati reali + benchmark) "
-                f"per {self._fmt_duration(audio_duration)} di audio"
-            )
+            basis = "riferimento iniziale indicativo, senza misure registrate"
         else:
-            breakdown_text = (
-                f"{total_steps} filtri - stima iniziale da benchmark M3 MAX "
-                f"per {self._fmt_duration(audio_duration)} di audio"
-            )
+            confidence = "low" if "low" in confidences else "medium"
+            source = "history+benchmark"
+            basis = "riferimenti indicativi e tempi osservati in questa installazione"
+        breakdown_text = f"{total_steps} filtri - {basis} per {duration} di audio"
 
         return {
             "total_seconds": round(total, 1),
@@ -302,10 +286,7 @@ class TimingEngine:
                 est -= bench["model_load"]
             confidence = "low"
             source = "benchmark"
-            reason = (
-                f"Stima iniziale da benchmark M3 MAX - "
-                f"nessuna esecuzione precedente registrata"
-            )
+            reason = "Riferimento iniziale indicativo, senza misure registrate"
 
         return {
             "total_seconds": round(max(2, est), 1),

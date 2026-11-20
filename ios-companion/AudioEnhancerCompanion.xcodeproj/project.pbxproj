@@ -9,8 +9,11 @@
 /* Begin PBXBuildFile section */
 		00508B846B063FC701FF6E56 /* StudioEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD231ADCFB1F96A932C59CC /* StudioEditingTests.swift */; };
 		0303B0B0F8F47DDB591E97D6 /* AudioCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FC129A90F2EE70374801E8 /* AudioCore.swift */; };
+		0639817B7F4F14C5F012855E /* fixture-avc-aac.mov in Resources */ = {isa = PBXBuildFile; fileRef = 04FDAC17B81B0F1A0B25A853 /* fixture-avc-aac.mov */; };
 		099647581A502CD913B1E16E /* C2PA in Frameworks */ = {isa = PBXBuildFile; productRef = 5F3C834F29E7D4689265DED6 /* C2PA */; };
+		0B976325E6E57CF7BA4AF138 /* fixture-aac-cover-exif.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 9F972AE04208CC13032963C0 /* fixture-aac-cover-exif.m4a */; };
 		111FB5BF164C227BD2DB2DA5 /* pairing-fixture.png in Resources */ = {isa = PBXBuildFile; fileRef = 755EDBD1E832EBB2B41B7D9A /* pairing-fixture.png */; };
+		116B5BE1A4F98D8CF13DB74C /* fixture-rf64.wav in Resources */ = {isa = PBXBuildFile; fileRef = EFB613AEB3F2D79DEC37AFDF /* fixture-rf64.wav */; };
 		11A23CA2DF58DA22F354E814 /* StudioEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E55A4B8EC8B35E6432D6296 /* StudioEditing.swift */; };
 		18641AB37FB19D51C1583528 /* phone.flac in Resources */ = {isa = PBXBuildFile; fileRef = B1AD0823A1A8CFB8F98C7676 /* phone.flac */; };
 		1B675D774289A1904B857F34 /* PairingScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C639109FD085185274D79441 /* PairingScanner.swift */; };
@@ -24,36 +27,47 @@
 		332D332D9B93C951B423D9A6 /* NearbyPairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5448DF93409101681875DCB1 /* NearbyPairing.swift */; };
 		3CCD2FA349E362743D2CE14C /* MusicBriefView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D8C1BB261A63310FF6BDFC /* MusicBriefView.swift */; };
 		4674EC07F5B018F852276F6E /* CompanionUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B662CE803957B8709B9BD59 /* CompanionUpdates.swift */; };
+		497DD4026291D016CB29A1B1 /* fixture-pcm24-bwf.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1C58DC10F764378E771E9985 /* fixture-pcm24-bwf.wav */; };
+		4C51B14A7ACB53FC8E060F59 /* fixture-vorbis.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 850BD610C734EA1F443284F6 /* fixture-vorbis.ogg */; };
+		4E0323D5E17FD1D9B4C74F67 /* fixture-native-camera.mov in Resources */ = {isa = PBXBuildFile; fileRef = 13EB2E883DB3492656C91747 /* fixture-native-camera.mov */; };
 		4F2BCC40985FDA83E607386E /* phone.aac in Resources */ = {isa = PBXBuildFile; fileRef = 714BB212D5A9A7435751783C /* phone.aac */; };
 		50E1ED1777D990F1482CD2CC /* VerifyContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A61633D1186139936BC302 /* VerifyContentView.swift */; };
 		52AFD63C5488BFE3814616B8 /* CompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA909689CEB2927CC20D59F9 /* CompanionApp.swift */; };
 		52DBF20B043F66AD95C5E1B4 /* MediaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C679271F9F36D6B9B8CD6BA6 /* MediaTests.swift */; };
 		53B882D2A2873E918FE0828A /* CoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471F85E647A01E11DDBF63F6 /* CoreTests.swift */; };
+		593552473AC3AD0E39C8C5BF /* CompanionWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB8C0E14D583B0695C03567D /* CompanionWelcomeView.swift */; };
 		5E1ACEF61102935F8E84C5BD /* offset-rotated.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = D4E0CCEA6C23E8766EC9EE59 /* offset-rotated.mp4 */; };
 		67AD3E0DEBAEA99FF91714E5 /* C2PA-TRUST-LIST.pem in Resources */ = {isa = PBXBuildFile; fileRef = CD977CB9AD06456E64C1E4DF /* C2PA-TRUST-LIST.pem */; };
 		6924999E215DBC97985B964D /* CompanionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19676C183AB3D2B483EE0DD4 /* CompanionModel.swift */; };
 		6A5AB1F2AF0573C6362FE8BC /* phone90.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 70D8063C31975C55229E2A5E /* phone90.m4a */; };
 		6CCE7168CC8C35F6743C1231 /* music-brief-presets.json in Resources */ = {isa = PBXBuildFile; fileRef = DDE7D11F674DB6555F2BE76F /* music-brief-presets.json */; };
+		6D6247D284AA3406A5C074C8 /* fixture-wb.awb in Resources */ = {isa = PBXBuildFile; fileRef = 216022439BDC1218BB519D85 /* fixture-wb.awb */; };
 		6EAD3FF2987A7F70808CB203 /* IntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC47CAAAE679B195E1659749 /* IntegrationTests.swift */; };
 		7D258042E92ED0D191E2E923 /* AudioAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C15F752527FE168B5214431 /* AudioAnalysis.swift */; };
+		835F4832159BA6052E6919D1 /* MediaMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0781273DFC1B7C8E9DD0715E /* MediaMetadata.swift */; };
 		836E975B3DDFFED8A2867647 /* ConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2EF2F9044EF5998C2BAB8B /* ConnectionView.swift */; };
 		84D8749FBB7125DEF952A34F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1FC2179EFAFDA421331924E8 /* Assets.xcassets */; };
 		89E31FD9381BD3DAC6792879 /* MediaImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56374D9A7461186EE115A23E /* MediaImport.swift */; };
 		8D62922725EB346895C96DB7 /* pairing-fixture.json in Resources */ = {isa = PBXBuildFile; fileRef = 7A6C9C7A5111EF8E9F60F18B /* pairing-fixture.json */; };
 		8F4396146A7BE320957A01E2 /* C2PA-TSA-TRUST-LIST.pem in Resources */ = {isa = PBXBuildFile; fileRef = FAA426A2FFD7B908930013A6 /* C2PA-TSA-TRUST-LIST.pem */; };
 		938FCFCF83675AF2A2991DAB /* PairingQrTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10B8928560FA5C1FB7C5CCD /* PairingQrTests.swift */; };
+		9C87EC4CED7B3301BCF61108 /* fixture-nb.amr in Resources */ = {isa = PBXBuildFile; fileRef = 48E5DE32024352FF67EEA8D3 /* fixture-nb.amr */; };
 		9DB142DCB056DA42DC7F9B5A /* MediaVerificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77CF011950FEF3D9FA4DF367 /* MediaVerificationTests.swift */; };
 		A687F309E786DB590EAC68D8 /* v4.0.0-beta.1 in Resources */ = {isa = PBXBuildFile; fileRef = E00EA6745E594E73A68BB420 /* v4.0.0-beta.1 */; };
 		AAA7C2A5457D840AC41324E0 /* silent.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 3D6F16ACF295DE6B5235D7A5 /* silent.mp4 */; };
 		B82ADB41E61F6F251B265406 /* NearbyPairingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71076325A2B2D5E207AAE603 /* NearbyPairingTests.swift */; };
 		B8406E63B0DC470CEBE43A6E /* ContentCredentialsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D83E1401C478C106CD4AC3DF /* ContentCredentialsTests.swift */; };
 		C1D5B894E8A84EEA5ABD8168 /* WorkerUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0575D2FC7F9BE63F13173D61 /* WorkerUsage.swift */; };
+		CFB10EDE12EC2E54705A5841 /* fixture-mp3-cover-exif.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 3B5C8B2AFC488D80B4E0660E /* fixture-mp3-cover-exif.mp3 */; };
+		D019AF7EAFA157AD30972D56 /* MediaMetadataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 516A18DF2B0A3FB77F3276FC /* MediaMetadataTests.swift */; };
 		D06371A12C7B893E41656D5F /* NearbyPhoneVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842717F5B7EBECD45B66653B /* NearbyPhoneVisibility.swift */; };
 		DA88E576913710A69CB33697 /* PROVENANCE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9889FFD4652F202820E85FB5 /* PROVENANCE.txt */; };
+		DABF1D9B0E5CED9E7C64D76B /* fixture-avc-aac.3gp in Resources */ = {isa = PBXBuildFile; fileRef = 2B5FD65B97C9BE43C7B26057 /* fixture-avc-aac.3gp */; };
 		DB3134728389EE5B5C9E941E /* phone.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 40BA850782FEB89555B6B8EB /* phone.aiff */; };
 		DEF19DE30C222E4C140F510A /* CompanionUpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1C11A60E3C99B756A74DA8 /* CompanionUpdatesView.swift */; };
 		E31C21C67B1E020FBEE7AEEF /* phone-alac.m4a in Resources */ = {isa = PBXBuildFile; fileRef = C535FE13019E2A4D1898DE96 /* phone-alac.m4a */; };
 		E6CE1D741A73637F04FF7545 /* short.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB7D6438A2C6CCD05EA1C36D /* short.mp4 */; };
+		F5C7B61E569DC59348AB1500 /* fixture-opus.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 7D38897F0BDA66FB881F4FBB /* fixture-opus.ogg */; };
 		F9397709551D3E2139B331A7 /* StudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA683D8A2E2D00F4D8E5410 /* StudioView.swift */; };
 		FA38388722B76668CB661D36 /* ContentCredentialsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3924E6F19BB9AB9F4D6DDD58 /* ContentCredentialsCard.swift */; };
 		FCB1819CF4D135ABDB3E27AA /* short.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0D5310E960F996097493FDF2 /* short.mp3 */; };
@@ -73,19 +87,28 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		04FDAC17B81B0F1A0B25A853 /* fixture-avc-aac.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "fixture-avc-aac.mov"; sourceTree = "<group>"; };
 		0575D2FC7F9BE63F13173D61 /* WorkerUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerUsage.swift; sourceTree = "<group>"; };
 		06805E67E569542169AC86D1 /* phone.ogg */ = {isa = PBXFileReference; path = phone.ogg; sourceTree = "<group>"; };
+		0781273DFC1B7C8E9DD0715E /* MediaMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaMetadata.swift; sourceTree = "<group>"; };
 		09C9018B6FB314004461E1E8 /* phone24.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = phone24.wav; sourceTree = "<group>"; };
 		0D5310E960F996097493FDF2 /* short.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = short.mp3; sourceTree = "<group>"; };
+		13EB2E883DB3492656C91747 /* fixture-native-camera.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "fixture-native-camera.mov"; sourceTree = "<group>"; };
 		19676C183AB3D2B483EE0DD4 /* CompanionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionModel.swift; sourceTree = "<group>"; };
 		1B662CE803957B8709B9BD59 /* CompanionUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionUpdates.swift; sourceTree = "<group>"; };
+		1C58DC10F764378E771E9985 /* fixture-pcm24-bwf.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "fixture-pcm24-bwf.wav"; sourceTree = "<group>"; };
 		1FC2179EFAFDA421331924E8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		216022439BDC1218BB519D85 /* fixture-wb.awb */ = {isa = PBXFileReference; path = "fixture-wb.awb"; sourceTree = "<group>"; };
+		2B5FD65B97C9BE43C7B26057 /* fixture-avc-aac.3gp */ = {isa = PBXFileReference; path = "fixture-avc-aac.3gp"; sourceTree = "<group>"; };
 		2C15F752527FE168B5214431 /* AudioAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioAnalysis.swift; sourceTree = "<group>"; };
 		3924E6F19BB9AB9F4D6DDD58 /* ContentCredentialsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentCredentialsCard.swift; sourceTree = "<group>"; };
+		3B5C8B2AFC488D80B4E0660E /* fixture-mp3-cover-exif.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "fixture-mp3-cover-exif.mp3"; sourceTree = "<group>"; };
 		3D6F16ACF295DE6B5235D7A5 /* silent.mp4 */ = {isa = PBXFileReference; path = silent.mp4; sourceTree = "<group>"; };
 		3FA683D8A2E2D00F4D8E5410 /* StudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioView.swift; sourceTree = "<group>"; };
 		40BA850782FEB89555B6B8EB /* phone.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = phone.aiff; sourceTree = "<group>"; };
 		471F85E647A01E11DDBF63F6 /* CoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTests.swift; sourceTree = "<group>"; };
+		48E5DE32024352FF67EEA8D3 /* fixture-nb.amr */ = {isa = PBXFileReference; path = "fixture-nb.amr"; sourceTree = "<group>"; };
+		516A18DF2B0A3FB77F3276FC /* MediaMetadataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaMetadataTests.swift; sourceTree = "<group>"; };
 		5448DF93409101681875DCB1 /* NearbyPairing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPairing.swift; sourceTree = "<group>"; };
 		56374D9A7461186EE115A23E /* MediaImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaImport.swift; sourceTree = "<group>"; };
 		56FC129A90F2EE70374801E8 /* AudioCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCore.swift; sourceTree = "<group>"; };
@@ -98,11 +121,14 @@
 		755EDBD1E832EBB2B41B7D9A /* pairing-fixture.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pairing-fixture.png"; sourceTree = "<group>"; };
 		77CF011950FEF3D9FA4DF367 /* MediaVerificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaVerificationTests.swift; sourceTree = "<group>"; };
 		7A6C9C7A5111EF8E9F60F18B /* pairing-fixture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "pairing-fixture.json"; sourceTree = "<group>"; };
+		7D38897F0BDA66FB881F4FBB /* fixture-opus.ogg */ = {isa = PBXFileReference; path = "fixture-opus.ogg"; sourceTree = "<group>"; };
 		8258BAD6ABD7C89F0C4D1B6D /* companion-update-public.pem */ = {isa = PBXFileReference; path = "companion-update-public.pem"; sourceTree = "<group>"; };
 		842717F5B7EBECD45B66653B /* NearbyPhoneVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPhoneVisibility.swift; sourceTree = "<group>"; };
+		850BD610C734EA1F443284F6 /* fixture-vorbis.ogg */ = {isa = PBXFileReference; path = "fixture-vorbis.ogg"; sourceTree = "<group>"; };
 		9184BFFDB98E8F38DE3BFADD /* CompanionTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CompanionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		96D8C1BB261A63310FF6BDFC /* MusicBriefView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBriefView.swift; sourceTree = "<group>"; };
 		9889FFD4652F202820E85FB5 /* PROVENANCE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = PROVENANCE.txt; sourceTree = "<group>"; };
+		9F972AE04208CC13032963C0 /* fixture-aac-cover-exif.m4a */ = {isa = PBXFileReference; path = "fixture-aac-cover-exif.m4a"; sourceTree = "<group>"; };
 		AB7D6438A2C6CCD05EA1C36D /* short.mp4 */ = {isa = PBXFileReference; path = short.mp4; sourceTree = "<group>"; };
 		B10B8928560FA5C1FB7C5CCD /* PairingQrTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingQrTests.swift; sourceTree = "<group>"; };
 		B1AD0823A1A8CFB8F98C7676 /* phone.flac */ = {isa = PBXFileReference; path = phone.flac; sourceTree = "<group>"; };
@@ -123,10 +149,12 @@
 		E7A61633D1186139936BC302 /* VerifyContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerifyContentView.swift; sourceTree = "<group>"; };
 		EC47CAAAE679B195E1659749 /* IntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationTests.swift; sourceTree = "<group>"; };
 		EE1C11A60E3C99B756A74DA8 /* CompanionUpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionUpdatesView.swift; sourceTree = "<group>"; };
+		EFB613AEB3F2D79DEC37AFDF /* fixture-rf64.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "fixture-rf64.wav"; sourceTree = "<group>"; };
 		F07F1CC04330495C0DF4D81E /* AudioEnhancerCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AudioEnhancerCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F397A392B55310B83C1F807F /* phone.caf */ = {isa = PBXFileReference; path = phone.caf; sourceTree = "<group>"; };
 		F87DFADB209F87821E474488 /* MediaVerification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaVerification.swift; sourceTree = "<group>"; };
 		FAA426A2FFD7B908930013A6 /* C2PA-TSA-TRUST-LIST.pem */ = {isa = PBXFileReference; path = "C2PA-TSA-TRUST-LIST.pem"; sourceTree = "<group>"; };
+		FB8C0E14D583B0695C03567D /* CompanionWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionWelcomeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +172,17 @@
 		01D351932DF5519C736D62EF /* MediaFixtures */ = {
 			isa = PBXGroup;
 			children = (
+				9F972AE04208CC13032963C0 /* fixture-aac-cover-exif.m4a */,
+				2B5FD65B97C9BE43C7B26057 /* fixture-avc-aac.3gp */,
+				04FDAC17B81B0F1A0B25A853 /* fixture-avc-aac.mov */,
+				3B5C8B2AFC488D80B4E0660E /* fixture-mp3-cover-exif.mp3 */,
+				13EB2E883DB3492656C91747 /* fixture-native-camera.mov */,
+				48E5DE32024352FF67EEA8D3 /* fixture-nb.amr */,
+				7D38897F0BDA66FB881F4FBB /* fixture-opus.ogg */,
+				1C58DC10F764378E771E9985 /* fixture-pcm24-bwf.wav */,
+				EFB613AEB3F2D79DEC37AFDF /* fixture-rf64.wav */,
+				850BD610C734EA1F443284F6 /* fixture-vorbis.ogg */,
+				216022439BDC1218BB519D85 /* fixture-wb.awb */,
 				D4E0CCEA6C23E8766EC9EE59 /* offset-rotated.mp4 */,
 				C535FE13019E2A4D1898DE96 /* phone-alac.m4a */,
 				714BB212D5A9A7435751783C /* phone.aac */,
@@ -221,10 +260,12 @@
 				19676C183AB3D2B483EE0DD4 /* CompanionModel.swift */,
 				1B662CE803957B8709B9BD59 /* CompanionUpdates.swift */,
 				EE1C11A60E3C99B756A74DA8 /* CompanionUpdatesView.swift */,
+				FB8C0E14D583B0695C03567D /* CompanionWelcomeView.swift */,
 				CB2EF2F9044EF5998C2BAB8B /* ConnectionView.swift */,
 				3924E6F19BB9AB9F4D6DDD58 /* ContentCredentialsCard.swift */,
 				B1C3C81FE32868F11AEED9F0 /* DeviceAssessment.swift */,
 				56374D9A7461186EE115A23E /* MediaImport.swift */,
+				0781273DFC1B7C8E9DD0715E /* MediaMetadata.swift */,
 				F87DFADB209F87821E474488 /* MediaVerification.swift */,
 				96D8C1BB261A63310FF6BDFC /* MusicBriefView.swift */,
 				601844D39F0AE79C411DE495 /* NearbyMacSheet.swift */,
@@ -256,6 +297,7 @@
 				D83E1401C478C106CD4AC3DF /* ContentCredentialsTests.swift */,
 				471F85E647A01E11DDBF63F6 /* CoreTests.swift */,
 				EC47CAAAE679B195E1659749 /* IntegrationTests.swift */,
+				516A18DF2B0A3FB77F3276FC /* MediaMetadataTests.swift */,
 				C679271F9F36D6B9B8CD6BA6 /* MediaTests.swift */,
 				77CF011950FEF3D9FA4DF367 /* MediaVerificationTests.swift */,
 				71076325A2B2D5E207AAE603 /* NearbyPairingTests.swift */,
@@ -357,6 +399,17 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0B976325E6E57CF7BA4AF138 /* fixture-aac-cover-exif.m4a in Resources */,
+				DABF1D9B0E5CED9E7C64D76B /* fixture-avc-aac.3gp in Resources */,
+				0639817B7F4F14C5F012855E /* fixture-avc-aac.mov in Resources */,
+				CFB10EDE12EC2E54705A5841 /* fixture-mp3-cover-exif.mp3 in Resources */,
+				4E0323D5E17FD1D9B4C74F67 /* fixture-native-camera.mov in Resources */,
+				9C87EC4CED7B3301BCF61108 /* fixture-nb.amr in Resources */,
+				F5C7B61E569DC59348AB1500 /* fixture-opus.ogg in Resources */,
+				497DD4026291D016CB29A1B1 /* fixture-pcm24-bwf.wav in Resources */,
+				116B5BE1A4F98D8CF13DB74C /* fixture-rf64.wav in Resources */,
+				4C51B14A7ACB53FC8E060F59 /* fixture-vorbis.ogg in Resources */,
+				6D6247D284AA3406A5C074C8 /* fixture-wb.awb in Resources */,
 				5E1ACEF61102935F8E84C5BD /* offset-rotated.mp4 in Resources */,
 				8D62922725EB346895C96DB7 /* pairing-fixture.json in Resources */,
 				111FB5BF164C227BD2DB2DA5 /* pairing-fixture.png in Resources */,
@@ -403,10 +456,12 @@
 				6924999E215DBC97985B964D /* CompanionModel.swift in Sources */,
 				4674EC07F5B018F852276F6E /* CompanionUpdates.swift in Sources */,
 				DEF19DE30C222E4C140F510A /* CompanionUpdatesView.swift in Sources */,
+				593552473AC3AD0E39C8C5BF /* CompanionWelcomeView.swift in Sources */,
 				836E975B3DDFFED8A2867647 /* ConnectionView.swift in Sources */,
 				FA38388722B76668CB661D36 /* ContentCredentialsCard.swift in Sources */,
 				2F4C3F5FE8442F6BD01E966C /* DeviceAssessment.swift in Sources */,
 				89E31FD9381BD3DAC6792879 /* MediaImport.swift in Sources */,
+				835F4832159BA6052E6919D1 /* MediaMetadata.swift in Sources */,
 				1FD309C80D2524BCCCD4930E /* MediaVerification.swift in Sources */,
 				3CCD2FA349E362743D2CE14C /* MusicBriefView.swift in Sources */,
 				FF3128FF2A23DE8E25F0A1A3 /* NearbyMacSheet.swift in Sources */,
@@ -428,6 +483,7 @@
 				B8406E63B0DC470CEBE43A6E /* ContentCredentialsTests.swift in Sources */,
 				53B882D2A2873E918FE0828A /* CoreTests.swift in Sources */,
 				6EAD3FF2987A7F70808CB203 /* IntegrationTests.swift in Sources */,
+				D019AF7EAFA157AD30972D56 /* MediaMetadataTests.swift in Sources */,
 				52DBF20B043F66AD95C5E1B4 /* MediaTests.swift in Sources */,
 				9DB142DCB056DA42DC7F9B5A /* MediaVerificationTests.swift in Sources */,
 				B82ADB41E61F6F251B265406 /* NearbyPairingTests.swift in Sources */,
@@ -550,7 +606,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -568,7 +624,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 4.1.1;
+				MARKETING_VERSION = 4.1.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -633,7 +689,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -657,7 +713,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 4.1.1;
+				MARKETING_VERSION = 4.1.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -707,7 +763,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -725,7 +781,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 4.1.1;
+				MARKETING_VERSION = 4.1.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

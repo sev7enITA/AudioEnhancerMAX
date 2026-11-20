@@ -4,47 +4,54 @@
     if (!root) return;
 
     root.innerHTML = `
-        <h3>Mobile devices and transfers</h3>
-        <p>Find a nearby phone, or let the phone find this Mac. Then compare the code on both screens.</p>
-        <div data-connected-devices></div>
-        <details class="companion-networks">
-            <summary>Shared network</summary>
-            <label for="companion-host">Wi-Fi or hotspot address</label>
-            <select id="companion-host" class="setting-select"></select>
-            <button type="button" class="btn btn-secondary" data-action="refresh">Refresh networks</button>
-        </details>
-        <div class="flex gap-12">
-            <button type="button" class="btn btn-primary" data-action="find-phones" disabled>Find nearby phones</button>
-            <button type="button" class="btn btn-secondary" data-action="start" disabled>Start nearby pairing</button>
-            <button type="button" class="btn btn-secondary" data-action="show" hidden>Use QR instead</button>
-            <button type="button" class="btn btn-secondary" data-action="stop" disabled>Stop and revoke</button>
+        <div class="connection-card-heading">
+            <img class="icon-img" src="/static/img/icons/workspace-device.svg" alt="">
+            <h2 id="connection-pair-title">Pair a phone</h2>
         </div>
-        <div data-phone-search hidden>
-            <h4>Nearby phones</h4>
-            <p data-phone-search-status role="status"></p>
+        <p class="connection-copy">Connect both devices to the same Wi-Fi or hotspot. Compare the pairing code on both screens.</p>
+        <div class="connection-actions">
+            <button type="button" class="btn btn-primary" data-action="find-phones" disabled>Find nearby phones</button>
+            <button type="button" class="btn btn-secondary" data-action="start" disabled>Make this Mac discoverable</button>
+            <button type="button" class="btn btn-secondary" data-action="show" hidden>Use a QR code</button>
+            <button type="button" class="btn btn-secondary" data-action="stop" hidden disabled>End pairing session</button>
+        </div>
+        <p class="connection-status" data-connection-status role="status">Checking local connection…</p>
+        <div class="connection-result" data-phone-search hidden>
+            <h3>Nearby phones</h3>
+            <p class="connection-copy" data-phone-search-status role="status"></p>
             <div data-phone-results></div>
             <button type="button" class="btn btn-secondary" data-action="stop-search">Stop search</button>
         </div>
-        <div data-nearby-section hidden>
-            <h4>Devices asking to connect</h4>
+        <div class="connection-result" data-nearby-section hidden>
+            <h3>Devices asking to connect</h3>
             <div data-nearby-requests></div>
         </div>
-        <div data-pairing-view hidden>
-            <p>Open <strong>Connection → Scan QR code</strong> on your phone. The code grants access to this session. Share it only with your devices.</p>
-            <img data-pairing-qr alt="Companion pairing QR code" width="288" height="288" style="max-width:100%;height:auto;background:white;border-radius:8px" hidden>
+        <div class="connection-result connection-qr" data-pairing-view hidden>
+            <h3>Pair with a QR code</h3>
+            <p class="connection-copy">Open <strong>Connection → Scan QR code</strong> on your phone. Share the code only with your devices.</p>
+            <img data-pairing-qr alt="Companion pairing QR code" width="288" height="288" hidden>
             <details data-pairing-manual>
                 <summary>Manual pairing</summary>
-                <textarea aria-label="Private pairing code" readonly rows="4" style="width:100%;overflow-wrap:anywhere"></textarea>
+                <textarea aria-label="Private pairing code" readonly rows="4"></textarea>
                 <button type="button" class="btn btn-secondary" data-action="copy">Copy pairing code</button>
             </details>
             <button type="button" class="btn btn-secondary" data-action="hide">Hide pairing code</button>
         </div>
-        <p data-connection-status role="status">Checking local connection…</p>
-        <div data-transfer-section hidden>
-            <h4>Received audio this session</h4>
+        <div class="connection-result" data-connected-devices></div>
+        <div class="connection-result" data-transfer-section hidden>
+            <h3>Received audio this session</h3>
             <div data-transfers></div>
         </div>
-        <p class="setting-supporting-text">To let a phone contribute Voice EQ, enable it on the phone and turn on Allow trusted LAN processing in Mac preferences.</p>
+        <details class="companion-networks">
+            <summary>Shared network</summary>
+            <div class="connection-network-fields">
+                <label for="companion-host">Wi-Fi or hotspot address
+                    <select id="companion-host" class="setting-select"></select>
+                </label>
+                <button type="button" class="btn btn-sm btn-secondary" data-action="refresh">Refresh networks</button>
+            </div>
+        </details>
+        <p class="connection-note">For Voice EQ, enable processing on your phone and allow trusted LAN processing in Mac Settings.</p>
     `;
 
     const status = root.querySelector('[data-connection-status]');
@@ -99,6 +106,7 @@
         action('start').disabled = active || busy || !host.value;
         action('show').hidden = !active || !view.hidden;
         action('show').disabled = busy;
+        action('stop').hidden = !active;
         action('stop').disabled = !active || busy;
         action('find-phones').disabled = busy || (!active && !host.value) || phoneSearchState === 'searching';
         action('stop-search').hidden = phoneSearchState !== 'searching';
@@ -182,7 +190,9 @@
             row.append(detail);
             list.append(row);
         }
-        devices.replaceChildren(...(displayed.length ? [list] : []));
+        const heading = document.createElement('h3');
+        heading.textContent = 'Paired devices';
+        devices.replaceChildren(...(displayed.length ? [heading, list] : []));
     }
 
     function renderNearby(items) {
@@ -201,7 +211,7 @@
             value.className = 'companion-code';
             value.textContent = `${item.code.slice(0, 4)} ${item.code.slice(4)}`;
             const buttons = document.createElement('div');
-            buttons.className = 'flex gap-12';
+            buttons.className = 'connection-actions';
             for (const approved of [true, false]) {
                 const button = document.createElement('button');
                 button.type = 'button';
@@ -235,7 +245,7 @@
         phoneSnapshot = snapshot;
         phoneResults.replaceChildren(...items.map(phone => {
             const row = document.createElement('div');
-            row.className = 'companion-pair-request';
+            row.className = 'companion-pair-request connection-phone-result';
             const name = document.createElement('h5');
             name.textContent = phone.name;
             const button = document.createElement('button');
@@ -328,7 +338,7 @@
         } else if (!active && data.reason === 'network_changed') {
             describe('The shared network changed. Refresh networks, then start a new pairing session.');
         } else if (!active && !host.value) {
-            describe('Connect this Mac to Wi-Fi or a hotspot, then refresh networks.');
+            describe('Connect this Mac to Wi-Fi or a hotspot, then refresh under Shared network.');
         }
     }
 
@@ -411,7 +421,7 @@
             const data = await read('session');
             await readNetworks();
             renderSession(data);
-            if (!data.active && host.value && !data.reason) describe('Pairing is off. Select the network shared by your phone.');
+            if (!data.active && host.value && !data.reason) describe('Ready to pair on the shared network.');
         } catch (error) {
             describe(error.message);
         } finally {

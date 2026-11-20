@@ -1,8 +1,6 @@
 package com.audioenhancermax.worker
 
 import android.content.Context
-import android.media.MediaExtractor
-import android.media.MediaFormat
 import android.net.Uri
 import android.os.Build
 import com.google.gson.GsonBuilder
@@ -37,6 +35,7 @@ internal data class MediaVerification(
     val audioDetail: String? = null,
     val application: VerificationApplication = VerificationApplication("unknown", "unknown"),
     val generatedAtUtc: String = Instant.now().toString(),
+    val metadata: LocalMediaMetadata? = null,
 ) {
     fun json(): String {
         val technical = audio?.let {
@@ -81,7 +80,7 @@ internal data class MediaVerification(
                 "failure_codes" to credentials.failureCodes,
             ),
             "audio" to technical,
-        )) + "\n"
+        ).apply { metadata?.let { put("metadata", it.technicalReport()) } }) + "\n"
     }
 }
 
@@ -173,26 +172,37 @@ internal fun copyAndHash(
 internal fun verifyCopiedMedia(context: Context, file: File, copy: CopiedMedia, checkActive: () -> Unit): MediaVerification {
     checkActive()
     val kind = try { AudioImportPolicy.classify(copy.header) } catch (_: IllegalArgumentException) { null }
+    val metadata = kind?.let { inspectMediaMetadata(file, it, copy.header, checkActive) }
     val mime = when (kind) {
         AudioImportPolicy.Kind.WAV -> "audio/wav"
         AudioImportPolicy.Kind.MP3 -> "audio/mpeg"
         AudioImportPolicy.Kind.FLAC -> "audio/flac"
-        AudioImportPolicy.Kind.MP4 -> mp4Type(file, copy.header)
-        else -> "application/octet-stream"
+        AudioImportPolicy.Kind.MP4 -> mp4Type(metadata?.tracks.orEmpty(), copy.header)
+        AudioImportPolicy.Kind.AAC -> "audio/aac"
+        AudioImportPolicy.Kind.OGG -> "audio/ogg"
+        AudioImportPolicy.Kind.AMR -> if (isAmrWideband(copy.header)) "audio/amr-wb" else "audio/amr"
+        null -> "application/octet-stream"
     }
     val asset = VerifiedAsset(copy.digest, copy.bytes, mime)
     val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
     @Suppress("DEPRECATION")
     val build = if (Build.VERSION.SDK_INT >= 28) packageInfo.longVersionCode else packageInfo.versionCode.toLong()
     val app = VerificationApplication(packageInfo.versionName ?: "unknown", build.toString())
-    if (kind == null || mime == "application/octet-stream") {
-        return MediaVerification(asset, CredentialSummary("unsupported", "Unsupported format", "Use WAV, MP3, FLAC, M4A, MP4 or MOV."),
+    if (kind == null) {
+        return MediaVerification(asset, CredentialSummary("unsupported", "Unsupported format", "Choose an audio or video format listed above."),
             null, "unsupported", "This format is outside the local media analysis scope.", app)
     }
-    val credential = if (Build.VERSION.SDK_INT >= 28) inspectCredentialFile(context, file, mime)
-        else unavailableCredentials("On-device credential checks require Android 9 or later.")
+    val credential = when {
+        mime !in CredentialMediaTypes -> CredentialSummary("unsupported", "Credential check unavailable", "The app reads media metadata for this format. Embedded C2PA checks cover WAV, MP3, FLAC, M4A, MP4 and MOV.")
+        Build.VERSION.SDK_INT < 28 -> unavailableCredentials("On-device credential checks require Android 9 or later.")
+        else -> inspectCredentialFile(context, file, mime).let { result ->
+            if (result.status == "unsigned" && metadata?.hasTechnicalMetadata != true)
+                unavailableCredentials("The file signature was recognized, but Android could not confirm a readable media container.")
+            else result
+        }
+    }
     checkActive()
-    return try {
+    val report = try {
         val measured = AudioImporter.measure(file, kind, checkActive)
         MediaVerification(asset, credential, measured, "measured", application = app)
     } catch (cancelled: CancellationException) {
@@ -204,26 +214,21 @@ internal fun verifyCopiedMedia(context: Context, file: File, copy: CopiedMedia, 
     } catch (_: Exception) {
         MediaVerification(asset, credential, null, "unreadable_audio", "The local decoder could not read a supported audio track.", app)
     }
+    return report.copy(metadata = metadata)
 }
 
-private fun mp4Type(file: File, header: ByteArray): String {
-    if (header.size >= 12 && String(header, 8, 4, Charsets.US_ASCII) == "qt  ") return "video/quicktime"
-    val media = MediaExtractor()
-    try {
-        file.inputStream().use { media.setDataSource(it.fd) }
-        val tracks = media.trackCount
-        if (tracks in 1..32) {
-            val types = (0 until tracks).mapNotNull { media.getTrackFormat(it).getString(MediaFormat.KEY_MIME) }
-            if (types.any { it.startsWith("audio/") } && types.none { it.startsWith("video/") }) return "audio/mp4"
-        }
-    } catch (_: Exception) {
-        // The C2PA parser can still read an embedded manifest from this ISO BMFF container.
-    } catch (_: OutOfMemoryError) {
-        // Keep the original file digest if the metadata parser reaches its memory limit.
-    } finally {
-        media.release()
+private val CredentialMediaTypes = setOf("audio/wav", "audio/mpeg", "audio/flac", "audio/mp4", "video/mp4", "video/quicktime")
+
+private fun mp4Type(tracks: List<MetadataTrack>, header: ByteArray): String {
+    val brand = bmffMajorBrand(header)
+    val hasAudio = tracks.any { it.mediaType.startsWith("audio/") }
+    val hasVideo = tracks.any { it.mediaType.startsWith("video/") }
+    return when {
+        brand == "qt  " -> "video/quicktime"
+        brand?.startsWith("3gp") == true || brand?.startsWith("3g2") == true -> if (hasAudio && !hasVideo) "audio/3gpp" else "video/3gpp"
+        brand == "M4A " || brand == "M4B " || (hasAudio && !hasVideo) -> "audio/mp4"
+        else -> "video/mp4"
     }
-    return "video/mp4"
 }
 
 internal fun saveVerificationReport(context: Context, verification: MediaVerification): File {

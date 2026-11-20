@@ -16,7 +16,7 @@ final class VerificationWorkspace: ObservableObject {
         export = nil
         error = nil
         guard MobileMediaVerification.accepts(url) else {
-            error = "Choose a local WAV, MP3, FLAC, M4A, MP4 or MOV file."
+            error = "Choose a local \(VerificationFormat.inputFormats) file."
             return
         }
         fileName = String(url.lastPathComponent.prefix(160).filter { !$0.isNewline })
@@ -62,6 +62,7 @@ struct VerifyContentView: View {
                 introduction
                 if let report = workspace.report {
                     fingerprint(report.asset)
+                    if let metadata = report.metadata { MediaMetadataCard(metadata: metadata) }
                     credentials(report.credentials)
                     audio(report.audio)
                     if let export = workspace.export {
@@ -92,7 +93,7 @@ struct VerifyContentView: View {
     private var introduction: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("On-device verification", systemImage: "checkmark.shield").font(.title2.bold())
-            Text("Check a file’s fingerprint, C2PA Content Credentials and decoded audio levels. The app never uploads the file.")
+            Text("Read a file’s metadata, fingerprint, C2PA Content Credentials and decoded audio levels on this device.")
                 .font(.subheadline).foregroundStyle(WorkspaceColor.muted)
             Button { picking = true } label: {
                 Label("Choose a file", systemImage: "folder").frame(maxWidth: .infinity, minHeight: 30)
@@ -101,7 +102,7 @@ struct VerifyContentView: View {
             .foregroundStyle(WorkspaceColor.background)
             .disabled(workspace.working)
             .accessibilityIdentifier("choose-verification-file")
-            Text("WAV, MP3, FLAC, M4A, MP4, MOV · up to 500 MiB")
+            Text("\(VerificationFormat.inputFormats) · up to 500 MiB")
                 .font(.caption).foregroundStyle(WorkspaceColor.muted)
             if workspace.working {
                 ProgressView("Checking \(workspace.fileName)…")
@@ -205,5 +206,113 @@ struct VerifyContentView: View {
         case "c2pa.published": "Published"
         default: code
         }
+    }
+}
+
+
+private struct MediaMetadataCard: View {
+    let metadata: MediaMetadata
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Media metadata", systemImage: "list.bullet.rectangle").font(.headline)
+                .accessibilityIdentifier("media-metadata-heading")
+            switch metadata.status {
+            case .read:
+                if let container = metadata.container { LabeledContent("Container", value: container) }
+                if let duration = metadata.durationSeconds { LabeledContent("Duration", value: displaySeconds(duration)) }
+                if let count = metadata.trackCount { LabeledContent("Tracks", value: String(count)) }
+                if !metadata.tagNamespaces.isEmpty {
+                    LabeledContent("Tag systems", value: metadata.tagNamespaces.joined(separator: ", "))
+                }
+                DisclosureGroup("Track formats") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(metadata.tracks, id: \.index) { track in
+                            trackDetails(track)
+                        }
+                        if let count = metadata.trackCount, count > metadata.tracks.count {
+                            Text("Showing the first \(metadata.tracks.count) tracks.").font(.caption).foregroundStyle(WorkspaceColor.muted)
+                        }
+                    }.padding(.top, 8)
+                }
+            case .formatMismatch:
+                Text("Metadata unavailable because the file header does not match the selected format.")
+                    .font(.subheadline).foregroundStyle(WorkspaceColor.muted)
+            case .noTracks:
+                Text("iOS reported a container without readable media tracks.")
+                    .font(.subheadline).foregroundStyle(WorkspaceColor.muted)
+            case .unreadable:
+                Text("iOS could not read this file’s track metadata.")
+                    .font(.subheadline).foregroundStyle(WorkspaceColor.muted)
+            }
+            if !metadata.localTags.isEmpty {
+                DisclosureGroup("Selected tags on this device") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(metadata.localTags, id: \.label) { tag in
+                            LabeledContent(tag.label, value: tag.value).textSelection(.enabled)
+                        }
+                        Text("Shared JSON includes technical metadata only.").font(.caption).foregroundStyle(WorkspaceColor.muted)
+                    }.padding(.top, 8)
+                }
+            }
+            if let artwork = metadata.artworkExif {
+                artworkDetails(artwork)
+            }
+        }.workspaceCard()
+    }
+
+    private func trackDetails(_ track: MediaMetadata.Track) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("Track \(track.index) · \(track.mediaType.replacingOccurrences(of: "_", with: " ").capitalized)")
+                .font(.subheadline.weight(.semibold))
+            if !track.codecs.isEmpty { LabeledContent("Codec", value: track.codecs.joined(separator: ", ")) }
+            if let duration = track.durationSeconds { LabeledContent("Track duration", value: displaySeconds(duration)) }
+            if let rate = track.sampleRateHz { LabeledContent("Sample rate", value: rate.formatted() + " Hz") }
+            if let channels = track.channels { LabeledContent("Channels", value: String(channels)) }
+            if let bits = track.bitDepth { LabeledContent("Bit depth", value: "\(bits) bit") }
+            if let width = track.width, let height = track.height { LabeledContent("Dimensions", value: "\(width) × \(height)") }
+            if let fps = track.nominalFrameRate {
+                LabeledContent("Nominal frame rate", value: fps.formatted(.number.precision(.fractionLength(2))) + " fps")
+            }
+        }
+        .padding(10)
+        .background(WorkspaceColor.background, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func artworkDetails(_ artwork: ArtworkExif) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider()
+            Label("EXIF in embedded artwork", systemImage: "camera.aperture").font(.subheadline.weight(.semibold))
+            switch artwork.status {
+            case .read:
+                let camera = [artwork.cameraMake, artwork.cameraModel].compactMap { $0 }.joined(separator: " ")
+                let lens = [artwork.lensMake, artwork.lensModel].compactMap { $0 }.joined(separator: " ")
+                if !camera.isEmpty { LabeledContent("Camera", value: camera) }
+                if !lens.isEmpty { LabeledContent("Lens", value: lens) }
+                if let exposure = artwork.exposureSeconds {
+                    let shutter = exposure < 1 ? "1/" + (1 / exposure).formatted(.number.precision(.fractionLength(0...2))) + " s"
+                    : exposure.formatted(.number.precision(.fractionLength(0...2))) + " s"
+                    LabeledContent("Exposure", value: shutter)
+                }
+                if let aperture = artwork.fNumber { LabeledContent("Aperture", value: "f/" + aperture.formatted()) }
+                if let iso = artwork.iso { LabeledContent("ISO", value: iso.formatted()) }
+                if let focal = artwork.focalLengthMillimeters { LabeledContent("Focal length", value: focal.formatted() + " mm") }
+                Text("Photo metadata from the embedded image. Selected fields are visible on this device.")
+                    .font(.caption).foregroundStyle(WorkspaceColor.muted)
+            case .notFound:
+                Text("No EXIF was found in the JPEG or TIFF artwork exposed by iOS.")
+                    .font(.caption).foregroundStyle(WorkspaceColor.muted)
+            case .notCheckedSize:
+                Text("Artwork checks are limited to files up to 16 MiB and artwork up to 4 MiB.")
+                    .font(.caption).foregroundStyle(WorkspaceColor.muted)
+            case .unreadable:
+                Text("iOS could not read embedded artwork.")
+                    .font(.caption).foregroundStyle(WorkspaceColor.muted)
+            }
+        }
+    }
+
+    private func displaySeconds(_ duration: Double) -> String {
+        duration.formatted(.number.precision(.fractionLength(2))) + " s"
     }
 }

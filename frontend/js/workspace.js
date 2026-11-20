@@ -9,6 +9,10 @@
     const recentKey = 'aemax-studio-recent';
     const previewPlayer = byId('cleanup-preview-player');
     const speechPlayer = byId('speech-editor-preview');
+    const presetSelect = byId('workspace-preset-select');
+    const historyPanel = byId('workspace-history');
+    const historyButton = byId('workspace-history-button');
+    const historyOlder = byId('workspace-history-older');
     let stage = 'clean';
     let timeline = null;
     let selectedWord = null;
@@ -16,6 +20,9 @@
     let preview = null;
     let previewRequest = null;
     let previewUrl = null;
+    let choosingManual = false;
+    let historyRequest = null;
+    let historyBefore = null;
 
     function currentTrack(kind = state.currentWaveform) {
         const track = tracks[kind];
@@ -25,7 +32,7 @@
 
     function selectStage(next, focusHeading = false) {
         if (!['clean', 'review', 'export'].includes(next)) return;
-        if (next === 'export' && (!state.hasProcessed || state.isProcessing)) return;
+        if (next === 'export' && (!state.hasProcessed || state.isProcessing || state.isImporting)) return;
         if (next === 'review' && !state.fileId) return;
         if (next !== 'review' && state.blindAB?.status === 'open') {
             stopPlayback();
@@ -51,14 +58,21 @@
     function refreshSession() {
         const hasSource = Boolean(state.fileId);
         const hasRevision = Boolean(state.hasProcessed && state.processedRevision);
+        const busy = state.isProcessing || state.isImporting;
         byId('studio-welcome').hidden = hasSource;
         byId('studio-session').hidden = !hasSource;
         byId('session-revision').textContent = hasRevision ? `Revision ${state.processedRevision.slice(0, 8)}` : 'Original';
-        byId('review-go-export').disabled = !hasRevision || state.isProcessing;
-        byId('studio-blind-ab').hidden = !hasRevision || state.isProcessing;
+        byId('open-another-source').disabled = busy;
+        byId('close-studio-source').disabled = busy;
+        byId('upload-zone').disabled = busy;
+        byId('go-to-rendered-export').hidden = !hasRevision;
+        byId('go-to-rendered-export').disabled = busy;
+        byId('download-original-audio').disabled = busy;
+        byId('review-go-export').disabled = !hasRevision || busy;
+        byId('studio-blind-ab').hidden = !hasRevision || busy;
         stageButtons.forEach((button) => {
             const target = button.dataset.workspaceStage;
-            button.disabled = target === 'export' && (!hasRevision || state.isProcessing);
+            button.disabled = target === 'export' && (!hasRevision || busy);
             if (target === stage) button.setAttribute('aria-current', 'step');
             else button.removeAttribute('aria-current');
         });
@@ -66,8 +80,167 @@
         const verifier = byId('credentials-inspector');
         byId('studio-verify-credentials').hidden = verifier.hidden;
         renderRecent();
+        refreshRecipe();
+        refreshRunStatus();
         applyListeningLevels();
         refreshTransport();
+    }
+
+    function refreshPresets() {
+        const items = [new Option('Choose a preset', ''), new Option('Set processing controls manually', 'custom')];
+        for (const preset of state.workspacePresets) {
+            items.push(new Option(preset.name, `preset:${preset.id}`));
+        }
+        presetSelect.replaceChildren(...items);
+        refreshRecipe();
+    }
+
+    function refreshRecipe() {
+        const selected = workspaceSelectedRecipe();
+        const preset = state.workspacePreset;
+        const rendered = state.renderedRecipe;
+        presetSelect.disabled = state.isImporting || state.isProcessing;
+        if (preset && state.workspacePresets.some(item => item.id === preset.id)) {
+            presetSelect.value = `preset:${preset.id}`;
+        } else {
+            presetSelect.value = choosingManual || selected.label === 'Custom settings' ? 'custom' : '';
+        }
+        const description = preset?.description.trim();
+        byId('workspace-preset-description').textContent = [
+            description && (/[.!?]$/.test(description) ? description : `${description}.`),
+            'Choose Process audio to render the selected settings.',
+        ].filter(Boolean).join(' ');
+        byId('workspace-selected-recipe').textContent = selected.label;
+        byId('workspace-rendered-recipe').textContent = rendered && rendered.revision === state.processedRevision
+            ? `${rendered.label} · ${rendered.revision.slice(0, 8)}`
+            : 'None · original available';
+    }
+
+    function refreshRunStatus() {
+        const status = byId('workspace-run-status');
+        const run = state.workspaceRun;
+        const phase = state.isImporting ? 'importing' : run.phase;
+        const messages = {
+            ready: 'Original ready. Select settings or open the speech editor.',
+            importing: 'Importing the original file…',
+            running: `Rendering with ${run.label || 'the selected settings'}…`,
+            completed: 'Revision ready. Listen to the result or open export.',
+            failed: 'Processing failed. The original is still available. Check your settings and try again.',
+            interrupted: 'The processing connection was interrupted. Check processing status before retrying.',
+        };
+        const text = [messages[phase], !state.isImporting && run.message].filter(Boolean).join(' ');
+        if (status.textContent !== text) status.textContent = text;
+        status.dataset.phase = phase;
+    }
+
+    function closeHistory() {
+        historyRequest?.abort();
+        historyRequest = null;
+        historyBefore = null;
+        historyButton.setAttribute('aria-expanded', 'false');
+        historyPanel.hidden = true;
+        byId('workspace-history-events').replaceChildren();
+        byId('workspace-history-status').textContent = '';
+        historyOlder.hidden = true;
+    }
+
+    const historyLabels = {
+        source_imported: 'Original imported',
+        analysis_completed: 'Original analyzed',
+        preview_generated: 'Cleanup preview prepared',
+        speech_analysis_completed: 'Transcript analyzed',
+        processing_started: 'Processing started',
+        revision_rendered: 'Revision rendered',
+        processing_failed: 'Processing reported an error',
+        export_prepared: 'Download prepared',
+        signed_export_prepared: 'Signed copy prepared',
+    };
+
+    function showHistoryEvent(event, list) {
+        const item = document.createElement('li');
+        const title = document.createElement('strong');
+        const timestamp = document.createElement('time');
+        const details = event.details || {};
+        const date = new Date(event.occurred_at);
+        title.textContent = historyLabels[event.action] || 'Workspace action';
+        if (Number.isFinite(date.getTime())) {
+            timestamp.dateTime = date.toISOString();
+            timestamp.textContent = date.toLocaleString();
+        }
+        item.append(title, timestamp);
+        const parts = [
+            event.revision && `Revision ${event.revision.slice(0, 8)}`,
+            details.mode && String(details.mode).replaceAll('_', ' '),
+            details.format && String(details.format).toUpperCase(),
+            Array.isArray(details.executed_steps) && details.executed_steps.length
+                ? `Executed ${details.executed_steps.join(', ').replaceAll('_', ' ')}` : null,
+            Array.isArray(details.changed_steps)
+                ? (details.changed_steps.length
+                    ? `Changed audio ${details.changed_steps.join(', ').replaceAll('_', ' ')}`
+                    : 'No signal change recorded')
+                : null,
+        ].filter(Boolean);
+        if (parts.length) {
+            const line = document.createElement('p');
+            line.textContent = parts.join(' · ');
+            item.append(line);
+        }
+        const reportHash = details.report_sha256 || details.processing_report_sha256;
+        if (typeof reportHash === 'string' && /^[a-f0-9]{64}$/i.test(reportHash)) {
+            const row = document.createElement('p');
+            const code = document.createElement('code');
+            code.textContent = reportHash;
+            row.append('Report SHA-256 ', code);
+            item.append(row);
+        }
+        list.append(item);
+    }
+
+    async function loadHistory(older = false) {
+        if (!state.fileId || historyPanel.hidden || older && !historyBefore) return;
+        historyRequest?.abort();
+        const request = historyRequest = new AbortController();
+        const {fileId, sourceRequestId} = state;
+        const list = byId('workspace-history-events');
+        const status = byId('workspace-history-status');
+        const query = new URLSearchParams({limit: '12'});
+        if (older) query.set('before', historyBefore);
+        status.textContent = 'Loading actions for the current source…';
+        historyOlder.disabled = true;
+        try {
+            const response = await fetch(`/api/workspace/${encodeURIComponent(fileId)}/history?${query}`, {
+                signal: request.signal, cache: 'no-store',
+            });
+            if (!response.ok) throw new Error('Actions history is unavailable. Try refreshing.');
+            const data = await response.json();
+            if (request !== historyRequest || fileId !== state.fileId || sourceRequestId !== state.sourceRequestId) return;
+            if (!older) list.replaceChildren();
+            for (const event of data.events || []) showHistoryEvent(event, list);
+            historyBefore = data.next_before || null;
+            historyOlder.hidden = !historyBefore;
+            status.textContent = list.childElementCount ? '' : 'No recorded actions for this source.';
+        } catch (error) {
+            if (request === historyRequest && fileId === state.fileId && sourceRequestId === state.sourceRequestId) {
+                status.textContent = error.message;
+            }
+        } finally {
+            if (historyRequest === request) {
+                historyRequest = null;
+                historyOlder.disabled = false;
+            }
+        }
+    }
+
+    function refreshHistory({followDownload = false} = {}) {
+        if (historyPanel.hidden) return;
+        if (!followDownload) {
+            loadHistory();
+            return;
+        }
+        const {fileId, sourceRequestId} = state;
+        setTimeout(() => {
+            if (fileId === state.fileId && sourceRequestId === state.sourceRequestId) loadHistory();
+        }, 450);
     }
 
     // A source point inside a cut maps to its join. During a crossfade, use
@@ -302,13 +475,13 @@
     async function openRecent(entry) {
         if (state.isProcessing) return;
         const request = ++latestSourceRequest;
-        const previousResultRequest = state.resultRequestId;
+        const previousSourceRequest = state.sourceRequestId;
         const url = `/api/audio/${encodeURIComponent(entry.file_id)}`;
         importStatus('Checking local source…');
         try {
             const response = await fetch(url, {cache: 'no-store', headers: {Range: 'bytes=0-0'}});
             await response.body?.cancel();
-            if (request !== latestSourceRequest || previousResultRequest !== state.resultRequestId) return;
+            if (request !== latestSourceRequest || previousSourceRequest !== state.sourceRequestId) return;
             if (response.status === 404) {
                 writeRecent(readRecent().filter(item => item.file_id !== entry.file_id));
                 throw new Error('This source was removed from local storage. Open the original file again.');
@@ -322,7 +495,7 @@
 
     async function openSample() {
         const request = ++latestSourceRequest;
-        const previousResultRequest = state.resultRequestId;
+        const previousSourceRequest = state.sourceRequestId;
         const button = byId('open-workspace-sample');
         button.disabled = true;
         importStatus('Opening sample…');
@@ -330,7 +503,7 @@
             const response = await fetch('/static/media/studio-sample.wav');
             if (!response.ok) throw new Error('The bundled sample could not be opened.');
             const content = await response.blob();
-            if (request === latestSourceRequest && previousResultRequest === state.resultRequestId) {
+            if (request === latestSourceRequest && previousSourceRequest === state.sourceRequestId) {
                 await uploadFile(new File([content], 'Signal study.wav', {type: 'audio/wav'}));
             }
         } catch (error) {
@@ -348,7 +521,7 @@
             const intro = document.createElement('strong');
             const description = document.createElement('p');
             const profile = data.profiles?.[data.selected_profile];
-            intro.textContent = profile?.name ? `Suggested profile · ${profile.name}` : 'Source analysis';
+            intro.textContent = profile?.name ? `Suggested preset · ${profile.name}` : 'Analysis ready';
             description.textContent = data.description || 'Local signal analysis complete.';
             target.append(intro, description);
             const issues = data.quality?.issues?.slice(0, 3) || [];
@@ -365,17 +538,18 @@
         const action = document.createElement('button');
         action.type = 'button';
         action.className = 'btn btn-sm btn-secondary';
-        action.textContent = data ? 'Apply suggested settings' : 'Analyze source';
-        action.addEventListener('click', data ? applySmartPreset : () => analyzeSource(true));
+        action.textContent = data ? 'Select suggested settings' : 'Analyze original';
+        action.addEventListener('click', data ? applySmartPreset : analyzeSource);
         target.append(action);
     }
 
-    async function analyzeSource(showProgress) {
-        const requestedFile = state.fileId;
+    async function analyzeSource() {
+        const {fileId, sourceRequestId} = state;
         const target = byId('studio-source-analysis');
-        target.textContent = 'Analyzing the source on this Mac…';
-        const analysis = await runSmartMode(null, {quiet: !showProgress});
-        if (!analysis && requestedFile === state.fileId) showSourceAnalysis();
+        target.textContent = 'Reading the original on this Mac to suggest settings…';
+        const analysis = await runSmartMode(null, {quiet: true});
+        if (!analysis && fileId === state.fileId && sourceRequestId === state.sourceRequestId) showSourceAnalysis();
+        if (analysis && !historyPanel.hidden) loadHistory();
     }
 
     function resetPreview() {
@@ -448,6 +622,7 @@
         latestSourceRequest++;
         timeline = null;
         clearSpeechAnalysis();
+        closeHistory();
         importStatus('');
         resetPreview();
         speechPlayer.pause();
@@ -461,7 +636,7 @@
                 ...readRecent().filter(item => item.file_id !== file_id)]);
         }
         showSourceAnalysis();
-        if (duration_seconds <= 60) analyzeSource(false);
+        if (duration_seconds <= 60) analyzeSource();
         selectStage('clean');
         stageButtons[0].focus({preventScroll: true});
     }
@@ -472,6 +647,7 @@
         tracks.processed = null;
         timeline = null;
         clearSpeechAnalysis();
+        closeHistory();
         resetPreview();
         selectStage('clean');
         byId('upload-zone').focus({preventScroll: true});
@@ -480,6 +656,7 @@
     function resultOpened(result) {
         timeline = {revision: result.revision, map: result.timeline || null};
         refreshSession();
+        if (!historyPanel.hidden) loadHistory();
     }
 
     const commandDialog = byId('command-search-dialog');
@@ -564,6 +741,31 @@
     previewPlayer.addEventListener('play', () => { currentTrack()?.wave.pause(); speechPlayer.pause(); });
     speechPlayer.addEventListener('play', () => { currentTrack()?.wave.pause(); previewPlayer.pause(); });
     byId('download-current-format').addEventListener('click', () => downloadFile(byId('compliance-format').value));
+    byId('download-original-audio').addEventListener('click', downloadOriginal);
+    presetSelect.addEventListener('change', () => {
+        choosingManual = presetSelect.value === 'custom';
+        if (choosingManual) {
+            state.workspacePreset = null;
+            document.querySelector('.studio-advanced').open = true;
+            refreshRecipe();
+            return;
+        }
+        const wanted = presetSelect.value;
+        const preset = state.workspacePresets.find(item => `preset:${item.id}` === wanted);
+        if (preset) selectWorkspacePreset(preset);
+        else refreshRecipe();
+    });
+    historyButton.addEventListener('click', () => {
+        if (!historyPanel.hidden) {
+            closeHistory();
+            return;
+        }
+        historyPanel.hidden = false;
+        historyButton.setAttribute('aria-expanded', 'true');
+        loadHistory();
+    });
+    byId('workspace-history-reload').addEventListener('click', () => loadHistory());
+    historyOlder.addEventListener('click', () => loadHistory(true));
     byId('studio-verify-credentials').addEventListener('click', () => {
         const verifier = byId('credentials-inspector');
         if (verifier.hidden) return;
@@ -576,6 +778,6 @@
     });
     credentialObserver.observe(byId('credentials-inspector'), {attributes: true, attributeFilter: ['hidden']});
 
-    window.aemWorkspace = {selectStage, attachWaveform, refreshTransport, refreshSession, sourceOpened, sourceClosed, resultOpened, showSourceAnalysis, seekTranscriptWord};
+    window.aemWorkspace = {selectStage, attachWaveform, refreshTransport, refreshSession, refreshPresets, refreshRecipe, refreshHistory, sourceOpened, sourceClosed, resultOpened, showSourceAnalysis, seekTranscriptWord};
     refreshSession();
 })();

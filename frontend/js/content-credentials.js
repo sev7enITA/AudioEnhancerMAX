@@ -11,6 +11,7 @@
     const evidence = document.getElementById('media-verification-evidence');
     const fingerprint = document.getElementById('media-verification-fingerprint');
     const processingReport = document.getElementById('media-verification-processing-report');
+    const declaredProcessing = document.getElementById('media-verification-declared-processing');
     const audioDetails = document.getElementById('media-verification-audio');
     const waveform = document.getElementById('media-verification-waveform');
     const audioseal = document.getElementById('media-verification-audioseal');
@@ -123,6 +124,13 @@
                 ? 'Processing report SHA-256 claimed in the manifest' : 'Unverified processing report SHA-256';
             processingReport.textContent = result.processing_report_sha256
                 ? `${referenceLabel}: ${result.processing_report_sha256}` : '';
+            const declaredSteps = result.declared_processing_steps || [];
+            const stepResult = {changed: 'signal changed', unchanged: 'no signal change', unknown: 'effect unrecorded'};
+            declaredProcessing.hidden = declaredSteps.length === 0;
+            declaredProcessing.textContent = declaredSteps.length
+                ? `Processing declared by the signer: ${declaredSteps.map(({step, result}) =>
+                    `${step.replaceAll('_', ' ')} (${stepResult[result]})`).join(' · ')}`
+                : '';
             showAudio(report.audio);
             const measurement = report.watermark;
             watermarkDetails.hidden = !measurement;
@@ -191,6 +199,7 @@
             anchor.click();
             anchor.remove();
             setTimeout(() => URL.revokeObjectURL(url), 30000);
+            window.aemWorkspace?.refreshHistory?.();
             exportStatus.textContent = [
                 messages[response.headers.get('X-Content-Credentials')],
                 response.headers.get('X-C2PA-Timestamp') === 'trusted' && trustedTimestamp,

@@ -1,9 +1,11 @@
 """Local creation and validation of embedded C2PA Content Credentials."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import stat
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import BinaryIO
@@ -21,6 +23,26 @@ MEDIA_TYPES = {
     ".mov": "video/quicktime",
 }
 ASSERTION_LABEL = "com.fabriziodegni.audioenhancermax.processing"
+PROCESSING_ACTIONS = {
+    "remove_noise": ("c2pa.enhanced", "Applied background-noise reduction"),
+    "wind_noise_remover": ("c2pa.enhanced", "Applied wind-noise filtering"),
+    "buzzing_noise_remover": ("c2pa.enhanced", "Applied hum filtering"),
+    "static_noise_remover": ("c2pa.enhanced", "Applied static-noise filtering"),
+    "reverb_echo_remover": ("c2pa.enhanced", "Applied reverb and echo processing"),
+    "remove_mouth_sounds": ("c2pa.enhanced", "Applied mouth-sound processing"),
+    "remove_filler_words": ("c2pa.edited", "Edited filler words"),
+    "eliminate_hesitations": ("c2pa.edited", "Edited hesitations"),
+    "remove_stuttering": ("c2pa.edited", "Edited stutters"),
+    "remove_breaths": ("c2pa.enhanced", "Applied breath processing"),
+    "remove_long_silences": ("c2pa.edited", "Edited silent passages"),
+    "keep_music": ("c2pa.edited", "Applied music isolation"),
+    "auto_eq": ("c2pa.enhanced", "Applied automatic equalization"),
+    "studio_sound": ("c2pa.enhanced", "Applied studio sound processing"),
+    "frequency_restoration": ("c2pa.enhanced", "Applied frequency restoration"),
+    "normalize": ("c2pa.enhanced", "Normalized audio level"),
+    "audio_watermark": ("c2pa.watermarked.unbound", "Embedded an audio watermark"),
+    "speech_edl_render": ("c2pa.edited", "Rendered approved speech edits"),
+}
 TRUST_DIRECTORY = RESOURCE_DIR / "app" / "resources" / "c2pa"
 TRUST_SNAPSHOT_NEXT_UPDATE = datetime(2027, 2, 2, 17, 24, 49, tzinfo=timezone.utc)
 OFFLINE_SETTINGS = {
@@ -208,6 +230,9 @@ def inspect_stream(stream: BinaryIO, suffix: str) -> dict:
                     if isinstance(value := data.get("processing_report_sha256"), str)
                     and len(value) == 64 and all(char in "0123456789abcdefABCDEF" for char in value)
                 ), None)
+                declared_steps = None
+                if state in {"Valid", "Trusted"}:
+                    declared_steps = _read_declared_processing_steps(manifest)
                 return {
                     "status": {"Trusted": "trusted", "Valid": "valid"}.get(state, "invalid"),
                     "embedded": reader.is_embedded(),
@@ -215,6 +240,7 @@ def inspect_stream(stream: BinaryIO, suffix: str) -> dict:
                     "actions": actions,
                     "ingredient_count": len(manifest.get("ingredients", [])),
                     "processing_report_sha256": processing_digest,
+                    "declared_processing_steps": declared_steps,
                     "failure_codes": [item["code"] for item in failures if "code" in item],
                     "timestamp_trusted": {"timeStamp.trusted", "timeStamp.validated"} <= successes,
                     "trust_snapshot_expired": _trust_snapshot_expired(),
@@ -236,23 +262,34 @@ def sign_export(
     operation: str,
     app_version: str,
     report_sha256: str,
+    expected_export_sha256: str | None = None,
+    executed_steps: list[str] | None = None,
+    changed_steps: list[str] | None = None,
 ) -> dict:
     c2pa = _sdk()
     if export.suffix not in MEDIA_TYPES or parent.suffix not in MEDIA_TYPES:
         raise CredentialsError("This export or its source has an unsupported format.")
-    changes = "c2pa.edited" if operation == "speech_edit" else "c2pa.modified"
+    changes, execution = _processing_actions(executed_steps, changed_steps)
+    parent_label = "source-media"
+    actions = [
+        {"action": "c2pa.opened", "parameters": {"ingredientIds": [parent_label]}},
+        *changes,
+    ]
+    processing_evidence = {
+        "schema_version": 2,
+        "operation": operation,
+        "artifact_revision": revision,
+        "processing_report_sha256": report_sha256,
+    }
+    if execution is not None:
+        processing_evidence["executed_steps"] = execution
+        processing_evidence["execution_scope"] = "recognized_observed_steps"
     manifest = {
         "claim_generator_info": [{"name": "AudioEnhancerMAX", "version": app_version}],
         "title": "AudioEnhancerMAX export",
         "assertions": [
-            {"label": "c2pa.actions.v2", "data": {"actions": [{"action": changes}]}},
-            {"label": ASSERTION_LABEL, "data": {
-                "schema_version": 1,
-                "operation": operation,
-                "artifact_revision": revision,
-                "processing_report_sha256": report_sha256,
-                "unsigned_export_sha256": sha256_file(export),
-            }},
+            {"label": "c2pa.actions.v2", "data": {"actions": actions, "allActionsIncluded": False}},
+            {"label": ASSERTION_LABEL, "data": processing_evidence},
         ],
     }
     try:
@@ -260,18 +297,28 @@ def sign_export(
         with (
             signer,
             _validation_context(c2pa, timestamp_host=timestamp_host) as context,
-            c2pa.Builder.from_json(manifest, context=context) as builder,
             parent.open("rb") as ingredient,
-            export.open("rb") as source,
+            export.open("rb") as export_stream,
+            tempfile.TemporaryFile() as source,
             destination.open("w+b") as output,
         ):
-            builder.set_intent(c2pa.C2paBuilderIntent.EDIT)
-            builder.add_ingredient(
-                {"title": "Source media", "relationship": "parentOf"},
-                MEDIA_TYPES[parent.suffix],
-                ingredient,
-            )
-            builder.sign(signer, MEDIA_TYPES[export.suffix], source, output)
+            digest = hashlib.sha256()
+            for chunk in iter(lambda: export_stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+                source.write(chunk)
+            unsigned_hash = digest.hexdigest()
+            if expected_export_sha256 is not None and expected_export_sha256 != unsigned_hash:
+                raise CredentialsError("The export differs from this revision. Process it again.")
+            processing_evidence["unsigned_export_sha256"] = unsigned_hash
+            source.seek(0)
+            with c2pa.Builder.from_json(manifest, context=context) as builder:
+                builder.set_intent(c2pa.C2paBuilderIntent.EDIT)
+                builder.add_ingredient(
+                    {"title": "Source media", "relationship": "parentOf", "label": parent_label},
+                    MEDIA_TYPES[parent.suffix],
+                    ingredient,
+                )
+                builder.sign(signer, MEDIA_TYPES[export.suffix], source, output)
             output.seek(0)
             verification = inspect_stream(output, export.suffix)
         if verification["status"] not in {"valid", "trusted"} or not verification["embedded"]:
@@ -281,6 +328,57 @@ def sign_export(
         return verification
     except (c2pa.C2paError, OSError) as exc:
         raise CredentialsError("Could not sign this audio with the configured C2PA identity.") from exc
+
+
+def _processing_actions(
+    executed_steps: list[str] | None,
+    changed_steps: list[str] | None,
+) -> tuple[list[dict[str, str]], list[dict[str, str]] | None]:
+    """Project the revision report's observed execution into public, signed facts."""
+    if not isinstance(executed_steps, list):
+        return [], None
+    known_steps = dict.fromkeys(
+        step for step in executed_steps if isinstance(step, str) and step in PROCESSING_ACTIONS
+    )
+    changed = (
+        set(changed_steps)
+        if isinstance(changed_steps, list) and all(isinstance(step, str) for step in changed_steps)
+        else None
+    )
+    actions = []
+    execution = []
+    for step in known_steps:
+        if changed is None:
+            result = "unknown"
+        elif step in changed:
+            result = "changed"
+            action, description = PROCESSING_ACTIONS[step]
+            actions.append({"action": action, "description": description})
+        else:
+            result = "unchanged"
+        execution.append({"step": step, "result": result})
+    return actions, execution
+
+
+def _read_declared_processing_steps(manifest: dict) -> list[dict[str, str]] | None:
+    """Expose a bounded projection of a cryptographically valid claim."""
+    for assertion in manifest.get("assertions") or []:
+        data = assertion.get("data")
+        if assertion.get("label") != ASSERTION_LABEL or not isinstance(data, dict):
+            continue
+        steps = data.get("executed_steps")
+        if data.get("schema_version") != 2 or not isinstance(steps, list):
+            continue
+        known_steps = {}
+        for entry in steps[:len(PROCESSING_ACTIONS)]:
+            if not isinstance(entry, dict):
+                continue
+            step, result = entry.get("step"), entry.get("result")
+            if (isinstance(step, str) and step in PROCESSING_ACTIONS
+                    and isinstance(result, str) and result in {"changed", "unchanged", "unknown"}):
+                known_steps.setdefault(step, result)
+        return [{"step": step, "result": result} for step, result in known_steps.items()]
+    return None
 
 
 def select_parent(source: Path, report: dict, original_record: Path) -> Path:

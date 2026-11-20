@@ -21,22 +21,22 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.pm.PackageInfoCompat
 
-private const val WEBSITE = "https://www.fabriziodegni.com/AudioEnhancerMAX/"
-private const val SOURCE_LICENSE = "https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/LICENSE"
+internal const val ProductWebsite = "https://www.fabriziodegni.com/AudioEnhancerMAX/"
+internal const val ProductSupport = "${ProductWebsite}support.html"
+private const val SourceLicense = "https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/LICENSE"
 
 @Composable
-internal fun AboutDialog(onDismiss: () -> Unit, onUpdates: () -> Unit) {
+internal fun AboutDialog(onDismiss: () -> Unit, onUpdates: () -> Unit, onWelcome: () -> Unit) {
     val context = LocalContext.current
-    val info = remember(context) { context.packageManager.getPackageInfo(context.packageName, 0) }
+    val build = remember(context) { readInstalledBuild(context) }
     val uriHandler = LocalUriHandler.current
     var couldNotOpen by remember { mutableStateOf(false) }
     val links = listOf(
-        R.string.about_website to WEBSITE,
-        R.string.about_support to "${WEBSITE}support.html",
-        R.string.about_privacy to "${WEBSITE}privacy.html",
-        R.string.about_license to SOURCE_LICENSE,
+        R.string.about_website to ProductWebsite,
+        R.string.about_support to ProductSupport,
+        R.string.about_privacy to "${ProductWebsite}privacy.html",
+        R.string.about_license to SourceLicense,
     )
 
     AlertDialog(
@@ -54,15 +54,10 @@ internal fun AboutDialog(onDismiss: () -> Unit, onUpdates: () -> Unit) {
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.about_edition), style = MaterialTheme.typography.titleSmall)
-                Text(
-                    stringResource(
-                        R.string.about_version,
-                        info.versionName.orEmpty(),
-                        PackageInfoCompat.getLongVersionCode(info),
-                    ),
-                )
+                Text(stringResource(R.string.about_version, build.version, build.number))
                 Text(stringResource(R.string.about_developer))
                 TextButton(onClick = onUpdates) { Text("Updates") }
+                TextButton(onClick = onWelcome) { Text("What's new") }
                 links.forEach { (label, url) ->
                     TextButton(onClick = {
                         couldNotOpen = runCatching { uriHandler.openUri(url) }.isFailure

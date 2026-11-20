@@ -138,9 +138,9 @@ def run_dsp_benchmark(duration_seconds: float = 5.0, sample_rate: int = 44100) -
     return _benchmark_result
 
 
-def get_benchmark_result() -> Optional[dict]:
+def get_benchmark_result(*, run_if_missing: bool = True) -> Optional[dict]:
     """Get cached benchmark result, or run if not available."""
     global _benchmark_result
-    if _benchmark_result is None:
+    if _benchmark_result is None and run_if_missing:
         run_dsp_benchmark()
     return _benchmark_result

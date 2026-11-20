@@ -7,31 +7,49 @@ import UniformTypeIdentifiers
 enum MediaImportPolicy {
     enum Kind { case wav, mp3, mp4, aac, flac, caf, aiff, ogg, amr }
     enum Filter:String,CaseIterable,Identifiable,Sendable {
-        case all, wav, mp3, m4a, flac, cafAiff, video
+        case all, wav, mp3, m4a, flac, cafAiff, video, conditional
         var id:String {rawValue}
         var label:String {
             switch self {
-            case .all:return "All supported"
+            case .all:return "Any supported format"
             case .wav:return "WAV"
             case .mp3:return "MP3"
             case .m4a:return "M4A / AAC"
             case .flac:return "FLAC"
             case .cafAiff:return "CAF / AIFF"
-            case .video:return "Video · MP4 / MOV"
+            case .video:return "Video · MP4 / MOV / 3GP"
+            case .conditional:return "Ogg / AMR · device dependent"
             }
         }
-        var contentTypes:[UTType] {
-            let extensions:[String]
+        var extensions: [String] {
             switch self {
-            case .all:return [.audio,.movie]
-            case .wav:extensions=["wav"]
-            case .mp3:extensions=["mp3"]
-            case .m4a:extensions=["m4a","aac"]
-            case .flac:extensions=["flac"]
-            case .cafAiff:extensions=["caf","aif","aiff"]
-            case .video:extensions=["mp4","mov","3gp"]
+            case .all: Self.allCases.filter { $0 != .all }.flatMap { $0.extensions }
+            case .wav: ["wav"]
+            case .mp3: ["mp3"]
+            case .m4a: ["m4a", "aac"]
+            case .flac: ["flac"]
+            case .cafAiff: ["caf", "aif", "aiff"]
+            case .video: ["mp4", "mov", "3gp"]
+            case .conditional: ["ogg", "oga", "opus", "amr", "awb"]
             }
-            return extensions.compactMap{UTType(filenameExtension:$0)}
+        }
+
+        var contentTypes: [UTType] {
+            let specific = extensions.compactMap { UTType(filenameExtension: $0) }
+            return self == .all ? specific + [.audio, .movie] : specific
+        }
+
+        var help: String {
+            switch self {
+            case .all: "Check each file’s container and codec before importing. Files may show other audio or video types."
+            case .wav: "PCM and float WAV. Use a decoded mono or stereo track."
+            case .mp3: "MPEG Layer III audio."
+            case .m4a: "AAC or ALAC in an audio-only M4A file, or raw AAC in ADTS."
+            case .flac: "FLAC audio decoded by iOS."
+            case .cafAiff: "Apple CAF and AIFF audio with a codec that iOS can decode."
+            case .video: "Extract one supported audio track from video. MP4 video replacement has separate codec and duration requirements."
+            case .conditional: "Ogg Vorbis, Ogg Opus and AMR are attempted with the iOS decoder. Availability depends on the codec and device. Convert unreadable files to WAV or M4A."
+            }
         }
         func accepts(_ kind:Kind,hasVideo:Bool=false)->Bool {
             switch self {
@@ -42,10 +60,11 @@ enum MediaImportPolicy {
             case .flac:return kind == .flac && !hasVideo
             case .cafAiff:return (kind == .caf || kind == .aiff) && !hasVideo
             case .video:return kind == .mp4 && hasVideo
+            case .conditional:return (kind == .ogg || kind == .amr) && !hasVideo
             }
         }
         func validate(_ kind:Kind,hasVideo:Bool=false) throws {
-            guard accepts(kind,hasVideo:hasVideo) else {throw CompanionError.message("This file does not match \(label). Choose the matching import format or All supported. Your previous recording is preserved.")}
+            guard accepts(kind,hasVideo:hasVideo) else {throw CompanionError.message("This file does not match \(label). Choose the matching import format or Any supported format. Your previous recording is preserved.")}
         }
     }
     static let videoMaxBytes = 100 * 1024 * 1024

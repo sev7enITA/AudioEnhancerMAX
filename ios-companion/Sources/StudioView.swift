@@ -23,6 +23,7 @@ struct StudioView: View {
     let openConnection: () -> Void
     let openVerification: () -> Void
     @State private var importing = false
+    @State private var showingFormatHelp = false
 
     var body: some View {
         ScrollView {
@@ -35,7 +36,7 @@ struct StudioView: View {
                     importHero
                 }
                 Button(action: openVerification) {
-                    Label("Verify C2PA Content Credentials", systemImage: "checkmark.shield")
+                    Label("Verify metadata and credentials", systemImage: "checkmark.shield")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
@@ -56,12 +57,14 @@ struct StudioView: View {
                     Menu {
                         Picker("Format", selection: $model.importFilter) { formatOptions }
                         Button("Choose a file", systemImage: "folder") { importing = true }
+                        Button("Import format guide", systemImage: "questionmark.circle") { showingFormatHelp = true }
                     } label: {
                         Label("Import", systemImage: "folder.badge.plus")
                     }.disabled(model.busy)
                 }
             }
         }
+        .sheet(isPresented: $showingFormatHelp) { ImportFormatGuide() }
         .fileImporter(isPresented: $importing, allowedContentTypes: model.importFilter.contentTypes) { result in
             switch result {
             case .success(let url): Task { await model.importAudio(url) }
@@ -80,9 +83,20 @@ struct StudioView: View {
             Text("Your next edit").font(.largeTitle.bold())
             Text("Trim, shape and compare an audio or video recording. Your source stays intact.")
                 .foregroundStyle(WorkspaceColor.muted)
-            Picker("Import format", selection: $model.importFilter) { formatOptions }
-                .pickerStyle(.menu)
-                .padding(.vertical, 5)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Picker("Import format", selection: $model.importFilter) { formatOptions }
+                        .pickerStyle(.menu)
+                    Spacer()
+                    formatHelpButton
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Picker("Import format", selection: $model.importFilter) { formatOptions }
+                        .pickerStyle(.menu)
+                    formatHelpButton
+                }
+            }
+            Text(model.importFilter.help).font(.caption).foregroundStyle(WorkspaceColor.muted)
             Button {
                 importing = true
             } label: {
@@ -95,6 +109,12 @@ struct StudioView: View {
             if model.busy { ProgressView("Opening…") }
         }
         .workspaceCard(padding: 21)
+    }
+
+    private var formatHelpButton: some View {
+        Button("Format guide", systemImage: "questionmark.circle") { showingFormatHelp = true }
+            .font(.caption.weight(.semibold))
+            .accessibilityIdentifier("studio-format-guide")
     }
 
     private func recording(_ source: Wave) -> some View {
@@ -415,4 +435,36 @@ private struct EditableWaveform: View {
 private func timecode(_ time: Double) -> String {
     let millis = Int((max(0, time.isFinite ? time : 0) * 1000).rounded())
     return String(format: "%02d:%02d.%03d", millis / 60_000, (millis / 1000) % 60, millis % 1000)
+}
+
+
+private struct ImportFormatGuide: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Studio imports one decodable mono or stereo audio track at 8–96 kHz. The source limit is 100 MiB and the decoded workspace limit is 64 MiB.")
+                    Text("Availability depends on the codec inside the container. WAV and M4A/AAC are practical choices when converting a file.")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(MediaImportPolicy.Filter.allCases.filter { $0 != .all }) { format in
+                    Section(format.label) {
+                        Text(format.extensions.map { "." + $0 }.joined(separator: "  "))
+                            .font(.caption.monospaced()).foregroundStyle(WorkspaceColor.mint)
+                        Text(format.help)
+                    }
+                }
+                Section("Verification") {
+                    Text("Verify reads technical details independently of Studio. Open Verify to see the media metadata and C2PA checks available for a file.")
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(WorkspaceColor.background)
+            .navigationTitle("Import format guide")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }
+    }
 }

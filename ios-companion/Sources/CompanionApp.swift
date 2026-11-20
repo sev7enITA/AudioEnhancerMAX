@@ -26,6 +26,9 @@ private struct CompanionView: View {
     @Environment(\.scenePhase) private var phase
     @State private var tab = Page.studio
     @StateObject private var verification = VerificationWorkspace()
+    @AppStorage("lastCompanionWelcomeBuild") private var lastWelcomeBuild = ""
+    @State private var welcomePresented = false
+    private let identity = CompanionBuildIdentity.installed
 
     private enum Page { case studio, verify, connection, music, about }
 
@@ -39,8 +42,14 @@ private struct CompanionView: View {
                 .tabItem { Label("Connection", systemImage: "desktopcomputer") }.tag(Page.connection)
             NavigationStack { MusicBriefView(model: model) }
                 .tabItem { Label("Music brief", systemImage: "music.note.list") }.tag(Page.music)
-            NavigationStack { CompanionAboutView() }
+            NavigationStack { CompanionAboutView(openWelcome: { welcomePresented = true }) }
                 .tabItem { Label("About", systemImage: "info.circle") }.tag(Page.about)
+        }
+        .task {
+            if identity.needsWelcome(after: lastWelcomeBuild) { welcomePresented = true }
+        }
+        .sheet(isPresented: $welcomePresented, onDismiss: { lastWelcomeBuild = identity.presentationKey }) {
+            CompanionWelcomeView()
         }
         .onOpenURL { url in
             guard url.isFileURL else { return }
@@ -69,8 +78,8 @@ private struct CompanionView: View {
 }
 
 private struct CompanionAboutView: View {
-    private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
-    private let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+    let openWelcome: () -> Void
+    private let identity = CompanionBuildIdentity.installed
 
     var body: some View {
         Form {
@@ -86,12 +95,14 @@ private struct CompanionAboutView: View {
                         Text("iOS Companion").font(.subheadline).foregroundStyle(.secondary)
                     }
                 }
-                LabeledContent("Version", value: version)
-                LabeledContent("Build", value: build)
+                LabeledContent("Version", value: identity.version)
+                LabeledContent("Build", value: identity.build)
                 LabeledContent("Channel", value: CompanionDistribution.appStore ? "App Store" : "Developer BETA")
                 LabeledContent("Developer", value: "Fabrizio Degni")
             }
             Section {
+                Button(action: openWelcome) { Label("Welcome and build notes", systemImage: "sparkle") }
+                    .accessibilityIdentifier("companion-welcome")
                 NavigationLink {
                     CompanionUpdatesView()
                 } label: {

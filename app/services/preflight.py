@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import logging
 import os
 import platform
 import shutil
@@ -26,6 +27,7 @@ from app.config import (
     bundled_whisper_model_available,
 )
 
+logger = logging.getLogger(__name__)
 
 MIN_MACOS_MAJOR = 13
 MIN_MEMORY_GB = 8
@@ -324,35 +326,54 @@ def _speech_model_check() -> dict[str, Any]:
 
 
 def _mps_check() -> dict[str, Any]:
+    check_id = "metal_acceleration"
+    label = "PyTorch GPU acceleration"
     try:
         import torch
-
-        available = bool(torch.backends.mps.is_available())
-    except Exception:
-        if APP_STORE_MODE:
+    except ModuleNotFoundError as exc:
+        if exc.name == "torch":
             return _check(
-                "metal_acceleration",
-                "Apple silicon acceleration",
+                check_id,
+                label,
                 "pass",
                 False,
-                "Apple Accelerate and optimized arm64 DSP are available; optional PyTorch MPS engines are not part of this Store build.",
+                "This runtime does not include PyTorch or its optional MPS model engines.",
+                "The bundled audio editing and transcription engines remain available.",
             )
-        available = False
-    if available:
-        return _check(
-            "metal_acceleration",
-            "Metal acceleration",
-            "pass",
-            False,
-            "PyTorch MPS acceleration is available.",
-        )
+        logger.warning("A PyTorch dependency is missing: %s", exc.name)
+    except Exception:
+        logger.warning("Could not load PyTorch for the MPS check", exc_info=True)
+    else:
+        try:
+            backend = getattr(torch.backends, "mps", None)
+            if backend is None or not backend.is_built():
+                return _check(
+                    check_id, label, "warning", False,
+                    "This PyTorch installation was built without the MPS backend.",
+                    "PyTorch models can use CPU processing.",
+                )
+            if backend.is_available():
+                return _check(
+                    check_id, label, "pass", False,
+                    "PyTorch can access the GPU via Metal (MPS).",
+                    "MPS is used by compatible PyTorch models that select it.",
+                )
+            return _check(
+                check_id, label, "warning", False,
+                "PyTorch includes MPS, but cannot access it in this session.",
+                "PyTorch models can use CPU processing.",
+            )
+        except Exception:
+            logger.warning("Could not query the PyTorch MPS backend", exc_info=True)
+            return _check(
+                check_id, label, "warning", False,
+                "PyTorch loaded, but its MPS check failed.",
+                "See the application log for details.",
+            )
     return _check(
-        "metal_acceleration",
-        "Metal acceleration",
-        "warning",
-        False,
-        "MPS acceleration is unavailable; compatible processing falls back to CPU.",
-        "No installation is required. Performance depends on the current hardware and model.",
+        check_id, label, "warning", False,
+        "PyTorch or one of its dependencies could not be loaded.",
+        "See the application log for details. Bundled audio editing and transcription remain available.",
     )
 
 

@@ -63,8 +63,8 @@ enum MobileContentCredentials {
     private static let trustExpiry = ISO8601DateFormatter().date(from: "2027-02-02T17:24:49Z")!
 
     static func inspect(_ url: URL, bundle: Bundle = .main) -> CredentialSummary {
-        guard let format = VerificationFormat(rawValue: url.pathExtension.lowercased()) else {
-            return CredentialSummary(status: "unsupported", detail: "Choose WAV, MP3, FLAC, M4A, MP4 or MOV.")
+        guard let format = VerificationFormat(rawValue: url.pathExtension.lowercased()), format.supportsCredentials else {
+            return CredentialSummary(status: "unsupported", detail: "C2PA checks are available for WAV, MP3, FLAC, M4A, MP4 and MOV.")
         }
         let granted = url.startAccessingSecurityScopedResource()
         defer { if granted { url.stopAccessingSecurityScopedResource() } }

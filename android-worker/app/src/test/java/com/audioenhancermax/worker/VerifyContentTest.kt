@@ -86,6 +86,31 @@ class VerifyContentTest {
         assertEquals("c2pa.edited", root.getAsJsonObject("credentials").getAsJsonArray("action_timeline").first().asJsonObject["action"].asString)
     }
 
+    @Test fun technicalMetadataExcludesPrivateTagsFromSharedReport() {
+        val metadata = LocalMediaMetadata(
+            "MP3", mapOf("duration_ms" to 1000), listOf(MetadataTrack(1, "audio/mpeg", mapOf("sample_rate_hz" to 44100))),
+            mapOf("Title" to "Private recording", "Artist" to "Private name"),
+            mapOf("Camera model" to "Private camera"), false,
+        )
+        val report = MediaVerification(VerifiedAsset("aa".repeat(32), 800, "audio/mpeg"), credential("Valid"),
+            null, "unavailable", metadata = metadata).json()
+        val exported = JsonParser.parseString(report).asJsonObject.getAsJsonObject("metadata")
+        assertEquals("read", exported["status"].asString)
+        assertEquals("audio/mpeg", exported.getAsJsonArray("tracks")[0].asJsonObject["media_type"].asString)
+        assertFalse(report.contains("Private"))
+        assertEquals("header_only", metadata.copy(facts = emptyMap(), tracks = emptyList()).technicalReport()["status"])
+    }
+
+    @Test fun jpegExifProbeRejectsMissingAndTruncatedSegments() {
+        val prefix = listOf(0xff, 0xd8, 0xff, 0xe1, 0, 8).map(Int::toByte).toByteArray()
+        val bounded = prefix + "Exif\u0000\u0000".toByteArray()
+        assertTrue(hasJpegExif(bounded))
+        assertFalse(hasJpegExif(bounded.copyOf(11)))
+        assertFalse(hasJpegExif(bounded.copyOf().apply { this[5] = 12 }))
+        assertFalse(hasJpegExif(bounded.copyOf().apply { this[3] = 0xe0.toByte() }))
+        assertEquals("Safe title", cleanMetadataText("Safe\u202E title\u0000\n"))
+    }
+
     private fun credential(state: String, vararg failures: String): CredentialSummary {
         val failureJson = failures.joinToString(",") { "{\"code\":\"$it\"}" }
         val root = JsonParser.parseString(

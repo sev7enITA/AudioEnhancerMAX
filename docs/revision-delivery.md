@@ -9,6 +9,14 @@ Processing and speech-edit rendering return `revision` and an immutable `output_
 
 The UI measures the chosen format before downloading and labels the completed revision. A new operation invalidates the prior UI result immediately. Changing controls alone does not reprocess audio; a completed revision describes the previous successful operation until Process is pressed.
 
+## Workspace action history
+
+The local history records imports, completed analysis, spectral previews, saved speech decisions, rendering outcomes and prepared exports. The SHA-256 of the uploaded bytes links repeated imports with identical content. Names, playback activity and suggestions alone do not link assets. Downloading the original returns the bytes uploaded, including the original container when the workspace uses a decoded copy.
+
+Each render records its revision ID, output fingerprint, and the exact processing-report fingerprint when available. The report distinguishes completed steps from steps that changed the signal in a sample and sample-rate comparison. A reused checkpoint and work attributed only to a group of distributed filters carry their own evidence status.
+
+The C2PA-signed copy embeds the applicable source link, observed processing for the exported revision, and the SHA-256 of its processing report. The local timeline also includes events independent of that signed copy, such as analysis, preview and other revisions. The signed assertion excludes private paths, transcript text and watermark identifier values.
+
 ## Checkpoint contract
 
 The identity combines original bytes, requested and resolved/tuned options, step order, app version/build, engine inventory and DSP package versions. Diagnosis and tuning always run on the original. Snapshots retain the exact float dtype and samples, have SHA-256 receipts and an atomic metadata pointer. Only valid ordered prefixes can resume. Legacy WAV snapshots, corruption or an identity change restart cleanly.
