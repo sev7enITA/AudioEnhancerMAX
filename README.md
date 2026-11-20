@@ -9,9 +9,9 @@
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
 **Native Apple Silicon app · local DSP · reviewable speech edits · Android and iOS companions**
 
-**[Mac 4.1.5 BETA, build 4.1.9](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.5-beta.1)** adds a floating dock, quick tools and a non-destructive multitrack Studio. [Download and verification](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-5) · [Dock screenshots](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html#gallery-4-1-5).
+**[Mac 4.1.6 BETA, build 4.1.10](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-beta.1)** adds Home with recent projects and file drop, a SHA-256 reference check and a C2PA processing-report match. [Downloads](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-6) · [Screenshots](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html#gallery-4-1-6).
 
-**[Companion 4.1.2 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-mobile-beta.1)** adds audio and video metadata inspection, embedded artwork EXIF where available, format guidance and a release welcome screen. [Mobile release notes](releases/RELEASE_NOTES_v4.1.2-mobile-beta.1.md) · [Mobile download channels](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates).
+**[Companion 4.1.6 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-mobile-beta.1)** adds a local reference SHA-256 check and includes the result in exportable JSON. [Mobile download channels](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates).
 
 **[4.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)** adds local verification of received media on Mac, Android and iOS, with offline C2PA, SHA-256, audio measurements and a JSON report. [Release notes](releases/RELEASE_NOTES_v4.1.0-beta.1.md) · [Verification guide](docs/media-verification.md).
 
@@ -72,6 +72,7 @@ Requires Apple Silicon and macOS 13+.
 
 | Channel | Download and status |
 | --- | --- |
+| 4.1.6 BETA | [Mac build 4.1.10](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-beta.1) · [Android build 20 and iOS build 15 developer archive](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-mobile-beta.1). |
 | Mac 4.1.5 BETA | [Mac build 4.1.9](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.5-beta.1) · Developer ID signed and Apple notarized. |
 | 4.1.2 BETA | [Mac build 4.1.4](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-beta.1) · [Android build 19 and iOS build 14 developer archive](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-mobile-beta.1). |
 | Latest stable | [3.9.0, build 3.9.2](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0): Music brief assistant and updated dependency pins |

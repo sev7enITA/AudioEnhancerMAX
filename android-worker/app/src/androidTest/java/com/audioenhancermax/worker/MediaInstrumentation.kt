@@ -62,6 +62,12 @@ class MediaInstrumentation: Instrumentation() {
                 check(exported.getAsJsonObject("asset")["sha256"].asString == checked.asset.digest)
                 check(exported.getAsJsonObject("credentials")["status"].asString == checked.credentials.status)
                 check(exported.getAsJsonObject("metadata")["status"].asString == "read")
+                val comparison = requireNotNull(compareMediaFingerprint(checked.asset.digest.uppercase(), checked.asset.digest))
+                val comparedReport = JsonParser.parseString(
+                    saveVerificationReport(targetContext, checked.copy(fingerprintComparison = comparison)).readText(),
+                ).asJsonObject
+                check(comparedReport.getAsJsonObject("fingerprint_comparison")["result"].asString == "match")
+                check(comparedReport.getAsJsonObject("credentials")["status"].asString == checked.credentials.status)
                 verifyMetadataFixtures(report)
                 val unsafeShare = Intent(Intent.ACTION_SEND).setType("audio/wav")
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).putExtra(Intent.EXTRA_STREAM, Uri.fromFile(originalProofFile))
@@ -74,7 +80,7 @@ class MediaInstrumentation: Instrumentation() {
                 check(abs(measured.analyzedSeconds - 2) < .12 && measured.complete && measured.sampleRate == 48000)
                 val longMeasure = AudioImporter.measure(fixture("phone90.m4a"), AudioImportPolicy.Kind.MP4) {}
                 check(!longMeasure.complete && longMeasure.analyzedSeconds == 30.0)
-                report.putString("verification", "PASS: exact original bytes/hash, native audio metrics with time window, safe share rejection, versioned FileProvider report")
+                report.putString("verification", "PASS: exact original bytes/hash, independent fingerprint comparison in the report, native audio metrics with time window, safe share rejection")
                 val updateManifestFile = File(targetContext.cacheDir, "qa-update-feed.json")
                 val updateArtifact = File(targetContext.cacheDir, "qa-update-artifact.apk")
                 if (updateManifestFile.isFile && updateArtifact.isFile) {

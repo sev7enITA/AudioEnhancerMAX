@@ -36,14 +36,10 @@
         const panel = tool === 'verify-content' ? 'upload-panel' : tool;
         switchPanel(panel);
         if (tool === 'verify-content') {
-            const verifier = byId('credentials-inspector');
-            if (verifier.hidden) {
+            if (!window.aemWorkspace.openVerifier()) {
                 switchPanel('workspaces-panel');
                 status.textContent = 'Verify Content is unavailable in this build.';
-                return;
             }
-            verifier.open = true;
-            verifier.querySelector('summary').focus();
             return;
         }
         const main = byId('main-content');
@@ -154,10 +150,6 @@
         }
     }
 
-    byId('home-workspaces').addEventListener('click', () => {
-        switchPanel('workspaces-panel');
-        byId('workspaces-title').focus();
-    });
     create.addEventListener('click', () => editWorkspace(null));
     byId('workspace-cancel').addEventListener('click', () => {
         form.hidden = true;

@@ -6,7 +6,6 @@
     const playButton = byId('btn-play');
     const levelMatch = byId('signal-level-match');
     const tracks = {};
-    const recentKey = 'aemax-studio-recent';
     const previewPlayer = byId('cleanup-preview-player');
     const speechPlayer = byId('speech-editor-preview');
     const presetSelect = byId('workspace-preset-select');
@@ -16,7 +15,6 @@
     let stage = 'clean';
     let timeline = null;
     let selectedWord = null;
-    let latestSourceRequest = 0;
     let preview = null;
     let previewRequest = null;
     let previewUrl = null;
@@ -79,7 +77,6 @@
         views.forEach((view) => { view.hidden = view.dataset.workspaceView !== stage; });
         const verifier = byId('credentials-inspector');
         byId('studio-verify-credentials').hidden = verifier.hidden;
-        renderRecent();
         refreshRecipe();
         refreshRunStatus();
         applyListeningLevels();
@@ -429,91 +426,6 @@
         wave.play(from, Math.min(wave.getDuration(), to))?.catch(() => showToast('warning', 'Unable to play this selection'));
     }
 
-    function readRecent() {
-        try {
-            const stored = JSON.parse(localStorage.getItem(recentKey) || '[]');
-            return Array.isArray(stored) ? stored.slice(0, 6).filter(item =>
-                /^[a-z0-9-]{1,80}$/i.test(item?.file_id || '') &&
-                typeof item.filename === 'string' && typeof item.format === 'string' &&
-                [item.duration_seconds, item.sample_rate, item.size_bytes].every(Number.isFinite)
-            ) : [];
-        } catch {
-            return [];
-        }
-    }
-
-    function writeRecent(items) {
-        try { localStorage.setItem(recentKey, JSON.stringify(items.slice(0, 6))); }
-        catch { /* Storage access is optional. */ }
-        renderRecent();
-    }
-
-    function renderRecent() {
-        const files = readRecent();
-        const list = byId('studio-recent-files');
-        list.replaceChildren();
-        byId('studio-recent').hidden = Boolean(state.fileId) || files.length === 0;
-        if (byId('studio-recent').hidden) return;
-        for (const entry of files) {
-            const item = document.createElement('li');
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.title = entry.filename;
-            button.textContent = entry.filename;
-            button.addEventListener('click', () => openRecent(entry));
-            item.append(button);
-            list.append(item);
-        }
-    }
-
-    function importStatus(message) {
-        const status = byId('studio-import-status');
-        status.hidden = !message;
-        status.textContent = message;
-    }
-
-    async function openRecent(entry) {
-        if (state.isProcessing) return;
-        const request = ++latestSourceRequest;
-        const previousSourceRequest = state.sourceRequestId;
-        const url = `/api/audio/${encodeURIComponent(entry.file_id)}`;
-        importStatus('Checking local source…');
-        try {
-            const response = await fetch(url, {cache: 'no-store', headers: {Range: 'bytes=0-0'}});
-            await response.body?.cancel();
-            if (request !== latestSourceRequest || previousSourceRequest !== state.sourceRequestId) return;
-            if (response.status === 404) {
-                writeRecent(readRecent().filter(item => item.file_id !== entry.file_id));
-                throw new Error('This source was removed from local storage. Open the original file again.');
-            }
-            if (!response.ok) throw new Error('The local source could not be opened.');
-            openCompanionImport({...entry, audio_url: url});
-        } catch (error) {
-            if (request === latestSourceRequest) importStatus(error.message);
-        }
-    }
-
-    async function openSample() {
-        const request = ++latestSourceRequest;
-        const previousSourceRequest = state.sourceRequestId;
-        const button = byId('open-workspace-sample');
-        button.disabled = true;
-        importStatus('Opening sample…');
-        try {
-            const response = await fetch('/static/media/studio-sample.wav');
-            if (!response.ok) throw new Error('The bundled sample could not be opened.');
-            const content = await response.blob();
-            if (request === latestSourceRequest && previousSourceRequest === state.sourceRequestId) {
-                await uploadFile(new File([content], 'Signal study.wav', {type: 'audio/wav'}));
-            }
-        } catch (error) {
-            if (request === latestSourceRequest) importStatus(error.message);
-        } finally {
-            button.disabled = false;
-            if (byId('studio-import-status').textContent === 'Opening sample…') importStatus('');
-        }
-    }
-
     function showSourceAnalysis(data) {
         const target = byId('studio-source-analysis');
         target.replaceChildren();
@@ -619,30 +531,22 @@
     }
 
     function sourceOpened(data) {
-        latestSourceRequest++;
         timeline = null;
         clearSpeechAnalysis();
         closeHistory();
-        importStatus('');
         resetPreview();
         speechPlayer.pause();
         speechPlayer.removeAttribute('src');
         speechPlayer.load();
         state.transcriptSelection = [];
         byId('speech-editor-results').style.display = 'none';
-        const {file_id, filename, size_bytes, duration_seconds, sample_rate, format} = data;
-        if (filename !== 'Signal study.wav') {
-            writeRecent([{file_id, filename, size_bytes, duration_seconds, sample_rate, format},
-                ...readRecent().filter(item => item.file_id !== file_id)]);
-        }
         showSourceAnalysis();
-        if (duration_seconds <= 60) analyzeSource();
+        if (data.duration_seconds <= 60) analyzeSource();
         selectStage('clean');
         stageButtons[0].focus({preventScroll: true});
     }
 
     function sourceClosed() {
-        latestSourceRequest++;
         tracks.original = null;
         tracks.processed = null;
         timeline = null;
@@ -770,8 +674,6 @@
     byId('btn-show-original').addEventListener('click', () => switchListeningVersion('original'));
     byId('btn-show-processed').addEventListener('click', () => switchListeningVersion('processed'));
     byId('btn-audition-range').addEventListener('click', auditionSelection);
-    byId('studio-clear-recent').addEventListener('click', () => writeRecent([]));
-    byId('open-workspace-sample').addEventListener('click', openSample);
     byId('preview-cleanup').addEventListener('click', beginPreview);
     document.querySelectorAll('[data-preview-variant]').forEach(button =>
         button.addEventListener('click', () => showPreview(button.dataset.previewVariant)));
@@ -805,24 +707,42 @@
     });
     byId('workspace-history-reload').addEventListener('click', () => loadHistory());
     historyOlder.addEventListener('click', () => loadHistory(true));
-    function openVerifier() {
-        const verifier = byId('credentials-inspector');
-        if (verifier.hidden) return;
+    const verifier = byId('credentials-inspector');
+    const verifierButtons = [byId('home-verify-content'), byId('studio-verify-credentials')];
+    let verificationTrigger;
+    function openVerifier(trigger = document.activeElement) {
+        if (verifier.hidden) return false;
+        verificationTrigger = trigger;
         verifier.open = true;
         verifier.querySelector('summary').focus();
+        return true;
     }
-    byId('studio-verify-credentials').addEventListener('click', openVerifier);
-    byId('home-verify-content').addEventListener('click', openVerifier);
+    for (const button of verifierButtons) {
+        button.addEventListener('click', () => openVerifier(button));
+    }
+    verifier.addEventListener('toggle', () => {
+        const expanded = String(verifier.open);
+        for (const button of verifierButtons) button.setAttribute('aria-expanded', expanded);
+        if (verifier.open || !byId('upload-panel').classList.contains('active')) return;
+        const active = document.activeElement;
+        if (active !== document.body && !verifier.contains(active)) return;
+        const target = [verificationTrigger, ...verifierButtons, byId('upload-zone'), byId('main-content')]
+            .find(item => item?.getClientRects().length);
+        target?.focus();
+    });
+    verifier.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || event.defaultPrevented) return;
+        event.preventDefault();
+        verifier.open = false;
+    });
 
     function syncVerifierButtons() {
-        const hidden = byId('credentials-inspector').hidden;
-        byId('studio-verify-credentials').hidden = hidden;
-        byId('home-verify-content').hidden = hidden;
+        for (const button of verifierButtons) button.hidden = verifier.hidden;
     }
     const credentialObserver = new MutationObserver(syncVerifierButtons);
-    credentialObserver.observe(byId('credentials-inspector'), {attributes: true, attributeFilter: ['hidden']});
+    credentialObserver.observe(verifier, {attributes: true, attributeFilter: ['hidden']});
     syncVerifierButtons();
 
-    window.aemWorkspace = {selectStage, attachWaveform, refreshTransport, refreshSession, refreshPresets, refreshRecipe, refreshHistory, sourceOpened, sourceClosed, resultOpened, showSourceAnalysis, seekTranscriptWord};
+    window.aemWorkspace = {selectStage, attachWaveform, refreshTransport, refreshSession, refreshPresets, refreshRecipe, refreshHistory, sourceOpened, sourceClosed, resultOpened, showSourceAnalysis, seekTranscriptWord, openVerifier};
     refreshSession();
 })();

@@ -1,8 +1,8 @@
 """Identity of the direct-download release."""
 
 APP_NAME = "AudioEnhancerMAX"
-APP_VERSION = "4.1.5"
-APP_BUILD = "4.1.9"
+APP_VERSION = "4.1.6"
+APP_BUILD = "4.1.10"
 RELEASE_CHANNEL = "beta"
 RELEASE_LABEL = "BETA"
 RELEASE_TAG = f"v{APP_VERSION}-beta.1"

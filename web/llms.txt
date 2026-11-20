@@ -2,6 +2,14 @@
 
 > Free, open-source local audio editing for Apple Silicon Macs. Created by Fabrizio Degni. Canonical product website: https://www.fabriziodegni.com/AudioEnhancerMAX/
 
+## 4.1.6 BETA
+
+Mac 4.1.10 adds recent projects and media drop on Home. Android build 20 is a signed APK. iOS build 15 is an unsigned Xcode archive for developers. All three platforms compare the received file with a reference SHA-256 and can record a match or mismatch in a JSON report. Mac can compare a processing report with a digest declared in a C2PA manifest.
+
+- [Direct Mac BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-beta.1)
+- [Companion BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-mobile-beta.1)
+- [Screenshots](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html#gallery-4-1-6)
+
 ## Mac 4.1.5 BETA
 
 Mac 4.1.5 build 4.1.9 is a Developer ID-signed and Apple-notarized direct download for Apple Silicon on macOS 13 or later. Studio includes a floating dock, quick tools, non-destructive multitrack editing and a playback meter.

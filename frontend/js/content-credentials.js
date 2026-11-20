@@ -17,7 +17,15 @@
     const audioseal = document.getElementById('media-verification-audioseal');
     const watermarkDetails = document.getElementById('media-verification-watermark');
     const downloadReport = document.getElementById('media-verification-download');
+    const expectedFingerprint = document.getElementById('media-expected-fingerprint');
+    const fingerprintComparison = document.getElementById('media-fingerprint-comparison');
+    const linkedReportCheck = document.getElementById('media-linked-report-check');
+    const linkedReportFile = document.getElementById('media-linked-report-file');
+    const linkedReportStatus = document.getElementById('media-linked-report-status');
+    const maxLinkedReportBytes = 16 * 1024 * 1024;
     let currentReport = null;
+    let linkedComparison = null;
+    let linkedComparisonRequest = 0;
     let canSign = false;
     let signing = false;
     let availabilityRequest = 0;
@@ -89,10 +97,63 @@
         waveform.append(bars);
     }
 
+    function normalizeFingerprint(value) {
+        const candidate = typeof value === 'string' ? value.trim() : '';
+        return /^[0-9a-f]{64}$/i.test(candidate) ? candidate.toLowerCase() : null;
+    }
+
+    function compareFingerprint(expected, actual) {
+        return {expected_sha256: expected, result: expected === actual ? 'match' : 'mismatch'};
+    }
+
+    expectedFingerprint.addEventListener('input', () => {
+        const expected = normalizeFingerprint(expectedFingerprint.value);
+        expectedFingerprint.setAttribute('aria-invalid', String(Boolean(expectedFingerprint.value.trim()) && !expected));
+        if (!currentReport || !expected) {
+            fingerprintComparison.textContent = expectedFingerprint.value.trim()
+                ? 'Enter exactly 64 hexadecimal characters.' : '';
+            return;
+        }
+        const {result} = compareFingerprint(expected, currentReport.asset.sha256);
+        fingerprintComparison.textContent = result === 'match'
+            ? 'The file fingerprint matches.' : 'The file fingerprint differs from the expected value.';
+    });
+
+    linkedReportFile.addEventListener('change', async () => {
+        const file = linkedReportFile.files[0];
+        const expected = normalizeFingerprint(currentReport?.credentials.processing_report_sha256);
+        if (!file || !expected) return;
+        const request = ++linkedComparisonRequest;
+        linkedComparison = null;
+        linkedReportFile.value = '';
+        linkedReportStatus.textContent = 'Comparing processing report…';
+        try {
+            if (!/\.json$/i.test(file.name) || file.size > maxLinkedReportBytes) {
+                throw new Error('Choose a JSON processing report up to 16 MB.');
+            }
+            const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+            if (request !== linkedComparisonRequest) return;
+            const actual = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+            linkedComparison = {...compareFingerprint(expected, actual), actual_sha256: actual};
+            linkedReportStatus.textContent = linkedComparison.result === 'match'
+                ? 'The report matches the fingerprint declared in the manifest.'
+                : 'The report differs from the fingerprint declared in the manifest.';
+        } catch (error) {
+            if (request === linkedComparisonRequest) linkedReportStatus.textContent = error.message;
+        }
+    });
+
     fileInput.addEventListener('change', async () => {
         const file = fileInput.files[0];
         if (!file) return;
         currentReport = null;
+        expectedFingerprint.value = '';
+        expectedFingerprint.removeAttribute('aria-invalid');
+        fingerprintComparison.textContent = '';
+        linkedComparison = null;
+        linkedComparisonRequest += 1;
+        linkedReportStatus.textContent = '';
+        linkedReportCheck.hidden = true;
         evidence.hidden = true;
         fileInput.disabled = true;
         inspectionStatus.textContent = 'Verifying the received file…';
@@ -120,6 +181,7 @@
             inspectionStatus.textContent = detail.join(' ');
             fingerprint.textContent = report.asset.sha256;
             processingReport.hidden = !result.processing_report_sha256;
+            linkedReportCheck.hidden = !normalizeFingerprint(result.processing_report_sha256);
             const referenceLabel = ['trusted', 'valid'].includes(result.status)
                 ? 'Processing report SHA-256 claimed in the manifest' : 'Unverified processing report SHA-256';
             processingReport.textContent = result.processing_report_sha256
@@ -156,7 +218,11 @@
 
     downloadReport.addEventListener('click', () => {
         if (!currentReport) return;
-        const json = new Blob([JSON.stringify(currentReport, null, 2) + '\n'], {type: 'application/json'});
+        const expected = normalizeFingerprint(expectedFingerprint.value);
+        const report = {...currentReport};
+        if (expected) report.fingerprint_comparison = compareFingerprint(expected, currentReport.asset.sha256);
+        if (linkedComparison) report.linked_report_comparison = linkedComparison;
+        const json = new Blob([JSON.stringify(report, null, 2) + '\n'], {type: 'application/json'});
         const url = URL.createObjectURL(json);
         const anchor = document.createElement('a');
         anchor.href = url;

@@ -8,6 +8,7 @@ import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
 import java.time.Instant
+import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -21,11 +22,21 @@ private const val MiB = 1024L * 1024L
 internal const val VerifyFileLimit = 100L * MiB
 private val BytesHex = "0123456789abcdef"
 private val FingerprintPattern = Regex("[a-f0-9]{64}")
+private val ExpectedFingerprintPattern = Regex("[A-Fa-f0-9]{64}")
 private val ReportName = Regex("verify-[a-f0-9]{64}\\.json")
 private const val ScratchMaxAgeMs = 24 * 60 * 60 * 1000L
 
 internal data class VerifiedAsset(val digest: String, val sizeBytes: Long, val mediaType: String)
 internal data class VerificationApplication(val version: String, val build: String, val platform: String = "android")
+
+internal data class FingerprintComparison(val expectedSha256: String, val matches: Boolean)
+
+internal fun compareMediaFingerprint(expected: String, measured: String): FingerprintComparison? {
+    val reference = expected.trim()
+    if (!ExpectedFingerprintPattern.matches(reference) || !FingerprintPattern.matches(measured)) return null
+    val normalized = reference.lowercase(Locale.ROOT)
+    return FingerprintComparison(normalized, normalized == measured)
+}
 
 internal data class MediaVerification(
     val asset: VerifiedAsset,
@@ -36,6 +47,7 @@ internal data class MediaVerification(
     val application: VerificationApplication = VerificationApplication("unknown", "unknown"),
     val generatedAtUtc: String = Instant.now().toString(),
     val metadata: LocalMediaMetadata? = null,
+    val fingerprintComparison: FingerprintComparison? = null,
 ) {
     fun json(): String {
         val technical = audio?.let {
@@ -80,7 +92,15 @@ internal data class MediaVerification(
                 "failure_codes" to credentials.failureCodes,
             ),
             "audio" to technical,
-        ).apply { metadata?.let { put("metadata", it.technicalReport()) } }) + "\n"
+        ).apply {
+            metadata?.let { put("metadata", it.technicalReport()) }
+            fingerprintComparison?.let { comparison ->
+                put("fingerprint_comparison", mapOf(
+                    "expected_sha256" to comparison.expectedSha256,
+                    "result" to if (comparison.matches) "match" else "mismatch",
+                ))
+            }
+        }) + "\n"
     }
 }
 

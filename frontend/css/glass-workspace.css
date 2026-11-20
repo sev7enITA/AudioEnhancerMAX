@@ -96,24 +96,120 @@ body:has(#project-studio-panel.active) .main-content {
     color: var(--text-primary);
 }
 
-/* The Home hero keeps its local product illustration and its existing action shortcuts. */
+.media-verification-comparison {
+    margin-block: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--workbench-edge);
+    border-radius: 9px;
+    background: var(--bg-input);
+}
+.media-verification-comparison label { display: block; margin-block-end: 4px; }
+#media-expected-fingerprint { display: block; width: min(100%, 68ch); }
+.media-verification-comparison [role="status"]:empty { display: none; }
+
 .studio-welcome {
-    background: linear-gradient(108deg, #173b4c, #0e2633 63%, #102735);
-    border-color: var(--workbench-edge);
+    display: grid;
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+    gap: 18px;
+    max-width: 1120px;
+    margin: 0 auto;
 }
-.studio-welcome-art {
-    background: radial-gradient(ellipse at center, #32607167, transparent 68%);
+.studio-welcome[hidden] { display: none; }
+
+.studio-home-heading {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0 3px;
 }
-.home-action {
-    --action-accent: #89eafa;
-    --action-background: #234655;
-    border-color: #5d7888;
+.studio-home-heading h1 {
+    color: var(--text-primary);
+    font-size: clamp(1.75rem, 3vw, 2.35rem);
+    letter-spacing: -.035em;
+    margin: 0;
 }
-.home-action-import {
-    --action-background: #254f5e;
-    border-color: #83cdec;
+.studio-home-import,
+.studio-home-recent {
+    min-width: 0;
+    padding: clamp(16px, 2.4vw, 24px);
+    border: 1px solid var(--workbench-edge);
+    border-radius: 14px;
+    background: var(--workbench-glass);
 }
-.home-action-art { background: #102631c7; }
+.studio-welcome h2 {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    font-weight: 650;
+    margin: 0 0 14px;
+}
+.studio-home-dropzone {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 150px;
+    padding: 16px;
+    border: 1px dashed #6f9dad;
+    border-radius: 10px;
+    color: var(--text-primary);
+    background: #102d3b;
+    font-family: inherit;
+    cursor: copy;
+}
+.studio-home-dropzone > * { pointer-events: none; }
+.studio-home-dropzone img { width: 29px; height: 29px; }
+.studio-home-dropzone :is(strong, small) { display: block; }
+.studio-home-dropzone strong { font-size: .97rem; }
+.studio-home-dropzone small { margin-top: 6px; color: var(--text-secondary); font-size: .82rem; }
+.studio-home-dropzone:is(:hover, .drag-over):not(:disabled) {
+    border-color: var(--workbench-highlight);
+    background: #1c4152;
+}
+.studio-home-dropzone.drag-over { border-style: solid; }
+.studio-home-dropzone:disabled { opacity: .66; cursor: wait; }
+.studio-welcome :is(.studio-home-dropzone, li button):focus-visible {
+    outline: 2px solid var(--workbench-focus);
+    outline-offset: 3px;
+}
+
+.studio-home-recent ul { list-style: none; padding: 0; margin: 0; }
+.studio-home-recent li + li { border-top: 1px solid var(--workbench-edge); }
+.studio-home-recent li button {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 42px;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: 6px;
+    color: var(--text-primary);
+    background: transparent;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+.studio-home-recent li button:hover { background: #214252; }
+.studio-home-recent li button strong {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-size: .91rem;
+    font-weight: 610;
+}
+.studio-home-recent li button span,
+#studio-home-status { color: var(--text-secondary); font-size: .8rem; }
+#studio-home-status { margin: 8px 0 12px; }
+
+@media (max-width: 650px) {
+    .studio-welcome { grid-template-columns: 1fr; }
+    .studio-home-dropzone { min-height: 124px; }
+}
 
 /* The editor is a pair of glass panes aligned on the same horizontal axis. */
 #project-studio {

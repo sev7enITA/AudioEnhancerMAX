@@ -331,16 +331,18 @@ function switchTab(tabId, tabBtn) {
 // ==========================================================
 
 function initUploadZone() {
-    const zone = document.getElementById('studio-welcome');
+    const zone = document.getElementById('upload-zone');
     const input = document.getElementById('file-input');
 
-    document.getElementById('upload-zone').addEventListener('click', () => input.click());
+    zone.addEventListener('click', () => input.click());
     document.getElementById('open-another-source').addEventListener('click', () => input.click());
     document.getElementById('stt-open-audio').addEventListener('click', () => input.click());
 
     zone.addEventListener('dragover', (e) => {
+        if (!e.dataTransfer.types.includes('Files')) return;
         e.preventDefault();
-        zone.classList.add('drag-over');
+        e.dataTransfer.dropEffect = zone.disabled ? 'none' : 'copy';
+        zone.classList.toggle('drag-over', !zone.disabled);
     });
 
     zone.addEventListener('dragleave', () => {
@@ -350,9 +352,9 @@ function initUploadZone() {
     zone.addEventListener('drop', (e) => {
         e.preventDefault();
         zone.classList.remove('drag-over');
-        if (e.dataTransfer.files.length > 0) {
-            uploadFile(e.dataTransfer.files[0]);
-        }
+        const files = e.dataTransfer.files;
+        if (files.length === 1) uploadFile(files[0]);
+        if (files.length > 1) showToast('warning', 'Drop one file at a time');
     });
 
     input.addEventListener('change', (e) => {

@@ -164,38 +164,29 @@
     <!-- --- AUDIO WORKSPACE --- -->
     <div class="panel active" id="upload-panel">
         <section class="studio-welcome" id="studio-welcome" aria-labelledby="studio-welcome-title">
-            <div class="studio-welcome-copy">
-                <h1 id="studio-welcome-title">Start with audio</h1>
-                <p>Open a recording to preview cleanup, review edits and export a revision on this Mac.</p>
-                <div class="studio-open-actions" role="group" aria-label="Start here">
-                    <button class="home-action home-action-import" id="upload-zone" type="button" aria-controls="file-input" data-tip="Choose a supported audio or video file from this Mac. The original stays intact.">
-                        <span class="home-action-art"><img src="/static/img/icons/workspace-import.svg" alt=""></span>
-                        <span>Open audio</span>
-                    </button>
-                    <button class="home-action home-action-sample" id="open-workspace-sample" type="button" data-tip="Load the bundled recording to try playback, analysis, and edits.">
-                        <span class="home-action-art"><img src="/static/img/icons/workspace-compare.svg" alt=""></span>
-                        <span>Open sample</span>
-                    </button>
-                    <button class="home-action home-action-verify" id="home-verify-content" type="button" aria-controls="credentials-inspector" data-tip="Check for C2PA Content Credentials and review the provenance and signature information available in the file." hidden>
-                        <span class="home-action-art"><img src="/static/img/icons/content-credentials.svg" alt=""></span>
-                        <span>Verify content</span>
-                    </button>
-                    <button class="home-action home-action-workspaces" id="home-workspaces" type="button" data-tip="Open or create a workspace with your preferred tools and shortcuts.">
-                        <span class="home-action-art"><img src="/static/img/icons/workspace-capsule.svg" alt=""></span>
-                        <span>My Workspaces</span>
-                    </button>
-                </div>
+            <header class="studio-home-heading">
+                <h1 id="studio-welcome-title">Home</h1>
+                <button class="btn btn-secondary" id="home-verify-content" type="button" aria-controls="credentials-inspector" aria-expanded="false"
+                    data-tip="Check the C2PA Content Credentials, signature and provenance information available in the file." hidden>
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/content-credentials.svg" alt="">
+                    Verify C2PA
+                </button>
+            </header>
+            <section class="studio-home-import" aria-labelledby="studio-home-import-heading">
+                <h2 id="studio-home-import-heading">Open media</h2>
+                <button class="studio-home-dropzone" id="upload-zone" type="button" aria-controls="file-input">
+                    <img src="/static/img/icons/workspace-import.svg" alt="">
+                    <span><strong>Choose a file</strong><small>or drag audio or video here</small></span>
+                </button>
                 <input type="file" id="file-input" accept=".mp3,.mp4,.wav,.flac,.ogg,.m4a,.aac,.wma" hidden>
-                <p class="studio-drop-caption">You can also drop an audio or video file here.</p>
-                <p id="studio-import-status" class="studio-import-status" role="status" hidden></p>
-            </div>
-            <div class="studio-welcome-art" aria-hidden="true">
-                <img src="/static/img/workspace-signal.webp" alt="" width="1360" height="544">
-            </div>
-        </section>
-        <section class="studio-recent" id="studio-recent" aria-labelledby="studio-recent-heading" hidden>
-            <div><h2 id="studio-recent-heading">Recent files</h2><button class="btn btn-sm btn-ghost" id="studio-clear-recent" type="button">Clear</button></div>
-            <ul id="studio-recent-files"></ul>
+            </section>
+            <section class="studio-home-recent" id="studio-recent" aria-labelledby="studio-recent-heading">
+                <h2 id="studio-recent-heading">Recent projects</h2>
+                <ul id="studio-recent-projects"></ul>
+                <p id="studio-home-status" role="status">Loading projects…</p>
+                <button class="btn btn-sm btn-secondary" id="open-workspace-sample" type="button" hidden>Open sample</button>
+                <button class="btn btn-sm btn-secondary" id="studio-recent-retry" type="button" hidden>Try again</button>
+            </section>
         </section>
         <div id="studio-session" class="studio-session" hidden>
         <div class="file-info-bar" id="file-info-bar">
@@ -755,7 +746,7 @@
                         <p class="text-sm" id="credentials-export-status" role="status"></p>
                     </details>
 
-                            <button class="btn btn-sm btn-secondary" type="button" id="studio-verify-credentials" hidden><img class="icon-img btn-icon-svg" src="/static/img/icons/content-credentials.svg" alt="">Verify a signed file</button>
+                            <button class="btn btn-sm btn-secondary" type="button" id="studio-verify-credentials" aria-controls="credentials-inspector" aria-expanded="false" hidden><img class="icon-img btn-icon-svg" src="/static/img/icons/content-credentials.svg" alt="">Verify a signed file</button>
                             <button class="btn btn-sm btn-ghost" type="button" onclick="switchPanel('watermark-panel', document.querySelector('[data-panel=watermark-panel]'))"><img class="icon-img btn-icon-svg" src="/static/img/icons/audio-watermark.svg" alt="">Open audio watermark</button>
                         </section>
                     </section>
@@ -763,7 +754,7 @@
             </div>
         </div>
         <details class="card studio-verifier" id="credentials-inspector" hidden>
-            <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt="" aria-hidden="true"> Verify content</summary>
+            <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt=""> Close C2PA verification</summary>
             <p class="text-sm text-muted">Check C2PA and audio measurements for the file received. Supports WAV, MP3, FLAC, M4A, MP4 and MOV. Verification runs on this Mac.</p>
             <label class="text-sm"><input type="checkbox" id="media-verification-audioseal"> Include the experimental AudioSeal signal measurement</label>
             <p class="text-sm text-muted">Requires the optional local detector package.</p>
@@ -773,6 +764,17 @@
             <div id="media-verification-evidence" hidden>
                 <p class="text-sm">File received SHA-256<br><code id="media-verification-fingerprint" style="overflow-wrap:anywhere"></code></p>
                 <p id="media-verification-processing-report" class="text-sm" style="overflow-wrap:anywhere" hidden></p>
+                <div class="media-verification-comparison">
+                    <label for="media-expected-fingerprint">Expected file SHA-256</label>
+                    <input id="media-expected-fingerprint" type="text" autocomplete="off" spellcheck="false" maxlength="80" aria-describedby="media-fingerprint-purpose" placeholder="Paste 64 hexadecimal characters">
+                    <p id="media-fingerprint-purpose" class="text-sm text-muted">Use a fingerprint from a source you trust. This compares file bytes. Certificate trust has its own status.</p>
+                    <p id="media-fingerprint-comparison" class="text-sm" role="status"></p>
+                </div>
+                <div id="media-linked-report-check" class="media-verification-comparison" hidden>
+                    <label for="media-linked-report-file">Compare a processing report with the manifest</label>
+                    <input id="media-linked-report-file" type="file" accept=".json,application/json">
+                    <p id="media-linked-report-status" class="text-sm" role="status"></p>
+                </div>
                 <p id="media-verification-declared-processing" class="text-sm" hidden></p>
                 <p id="media-verification-audio" class="text-sm"></p>
                 <p id="media-verification-watermark" class="text-sm" hidden></p>
@@ -2014,6 +2016,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
 <script src="/static/js/studio-layout.js"></script>
 <script src="/static/js/studio-timeline.js"></script>
 <script src="/static/js/studio-engine.js"></script>
+<script src="/static/js/studio-home.js"></script>
 <script src="/static/js/companion.js"></script>
 <script src="/static/js/music-assistant.js?v=1"></script>
 <script src="/static/js/workspace-dock.js"></script>

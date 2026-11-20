@@ -86,6 +86,27 @@ class VerifyContentTest {
         assertEquals("c2pa.edited", root.getAsJsonObject("credentials").getAsJsonArray("action_timeline").first().asJsonObject["action"].asString)
     }
 
+    @Test fun expectedFingerprintIsValidatedAndExportedSeparatelyFromCredentials() {
+        val measured = "ab".repeat(32)
+        val report = MediaVerification(
+            VerifiedAsset(measured, 800, "audio/wav"), credential("Valid"), null, "unavailable",
+        )
+        fun export(expected: String) = JsonParser.parseString(
+            report.copy(fingerprintComparison = compareMediaFingerprint(expected, measured)).json(),
+        ).asJsonObject
+
+        val matched = export("  " + "AB".repeat(32) + "\n")
+        assertEquals("match", matched.getAsJsonObject("fingerprint_comparison")["result"].asString)
+        assertEquals(measured, matched.getAsJsonObject("fingerprint_comparison")["expected_sha256"].asString)
+        assertEquals("valid", matched.getAsJsonObject("credentials")["status"].asString)
+        val mismatch = export("ff".repeat(32))
+        assertEquals("mismatch", mismatch.getAsJsonObject("fingerprint_comparison")["result"].asString)
+        assertEquals("valid", mismatch.getAsJsonObject("credentials")["status"].asString)
+        for (invalid in listOf("", "ab".repeat(31), measured + " file.wav", measured + measured, "Ｇ".repeat(64))) {
+            assertFalse(export(invalid).has("fingerprint_comparison"))
+        }
+    }
+
     @Test fun technicalMetadataExcludesPrivateTagsFromSharedReport() {
         val metadata = LocalMediaMetadata(
             "MP3", mapOf("duration_ms" to 1000), listOf(MetadataTrack(1, "audio/mpeg", mapOf("sample_rate_hz" to 44100))),

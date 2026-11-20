@@ -35,6 +35,9 @@ internal fun readInstalledBuild(context: Context): InstalledBuild {
 private data class BuildHighlight(val icon: ImageVector, val title: String, val description: String)
 
 private fun highlights(build: Long): List<BuildHighlight> = when (build) {
+    20L -> listOf(
+        BuildHighlight(Icons.Default.Fingerprint, "Compare file fingerprints", "Paste an expected SHA-256 in Verify Content and see whether it matches the inspected file. Include the comparison in the local JSON report."),
+    )
     19L -> listOf(
         BuildHighlight(Icons.Default.Fingerprint, "Inspect media offline", "See codecs, duration and track properties alongside the file fingerprint and Content Credentials."),
         BuildHighlight(Icons.Default.PhotoCamera, "Read cover artwork EXIF", "Reveal available camera and exposure tags from embedded JPEG covers without adding them to a shared report."),

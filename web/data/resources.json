@@ -2,6 +2,40 @@
   "updated_on": "2026-11-20",
   "resources": [
     {
+      "id": "mac-beta-4-1-6",
+      "name": "AudioEnhancerMAX Mac 4.1.6 BETA",
+      "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-6",
+      "group": "official",
+      "status": "published",
+      "language": "English",
+      "verified_on": "2026-11-20",
+      "type": {
+        "en": "Mac BETA release",
+        "it": "Release BETA per Mac"
+      },
+      "description": {
+        "en": "Mac build 4.1.10 with recent projects, drag and drop, and SHA-256 comparisons.",
+        "it": "Build Mac 4.1.10 con progetti recenti, trascinamento e confronto SHA-256."
+      }
+    },
+    {
+      "id": "mobile-beta-4-1-6",
+      "name": "AudioEnhancerMAX Companion 4.1.6 BETA",
+      "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates",
+      "group": "official",
+      "status": "published",
+      "language": "English",
+      "verified_on": "2026-11-20",
+      "type": {
+        "en": "Mobile BETA updates",
+        "it": "Aggiornamenti BETA mobile"
+      },
+      "description": {
+        "en": "Signed Android APK build 20 and unsigned iOS Xcode archive build 15.",
+        "it": "APK Android firmato build 20 e archivio Xcode iOS non firmato build 15."
+      }
+    },
+    {
       "id": "mac-beta-4-1-5",
       "name": "AudioEnhancerMAX Mac 4.1.5 BETA",
       "url": "https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-5",

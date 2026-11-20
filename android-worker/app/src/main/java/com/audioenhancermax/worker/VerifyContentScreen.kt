@@ -10,6 +10,7 @@ import android.os.Process
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
@@ -23,8 +24,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -67,6 +73,10 @@ internal class MediaVerificationViewModel(app: Application) : AndroidViewModel(a
         private set
     var result by mutableStateOf<MediaVerification?>(null)
         private set
+    var expectedFingerprint by mutableStateOf("")
+        private set
+    val fingerprintComparison: FingerprintComparison?
+        get() = result?.let { compareMediaFingerprint(expectedFingerprint, it.asset.digest) }
     var error by mutableStateOf<String?>(null)
         private set
     var working by mutableStateOf(false)
@@ -79,6 +89,7 @@ internal class MediaVerificationViewModel(app: Application) : AndroidViewModel(a
         revision++
         sharedFile = singleSharedContent(getApplication<Application>(), intent)
         result = null
+        expectedFingerprint = ""
         error = if (sharedFile == null) "The shared file is unavailable. Choose one audio or video file in Verify Content." else null
         navigationRequest++
     }
@@ -92,6 +103,7 @@ internal class MediaVerificationViewModel(app: Application) : AndroidViewModel(a
         val request = ++revision
         sharedFile = null
         result = null
+        expectedFingerprint = ""
         error = null
         viewModelScope.launch {
             try {
@@ -113,8 +125,12 @@ internal class MediaVerificationViewModel(app: Application) : AndroidViewModel(a
         }
     }
 
+    fun changeExpectedFingerprint(value: String) {
+        expectedFingerprint = value
+    }
+
     fun shareReport(onSaved: (File) -> Unit) {
-        val report = result ?: return
+        val report = result?.copy(fingerprintComparison = fingerprintComparison) ?: return
         if (saving || working) return
         saving = true
         viewModelScope.launch {
@@ -164,6 +180,8 @@ internal fun VerifyContentScreen(model: MediaVerificationViewModel, share: (File
             Text(String.format(Locale.US, "%,d bytes · %s", report.asset.sizeBytes, report.asset.mediaType),
                 color = WorkspaceMuted, style = MaterialTheme.typography.bodyMedium)
             VerificationText("SHA-256", report.asset.digest)
+            HorizontalDivider(color = WorkspaceLine)
+            CompareFingerprint(model)
         }
         VerificationCredentials(report.credentials)
         VerificationMetadata(report.metadata, report.asset)
@@ -180,6 +198,40 @@ internal fun VerifyContentScreen(model: MediaVerificationViewModel, share: (File
         if (report.metadata != null) Text("The report includes technical media facts. Embedded text tags and cover EXIF stay on this device.",
             color = WorkspaceMuted, style = MaterialTheme.typography.bodySmall)
     }
+}
+
+@Composable
+private fun CompareFingerprint(model: MediaVerificationViewModel) {
+    val expected = model.expectedFingerprint
+    val comparison = model.fingerprintComparison
+    val invalid = expected.isNotBlank() && comparison == null
+    OutlinedTextField(
+        value = expected,
+        onValueChange = model::changeExpectedFingerprint,
+        label = { Text("Expected SHA-256") },
+        placeholder = { Text("Paste 64 hexadecimal characters") },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done),
+        singleLine = true,
+        isError = invalid,
+        enabled = !model.saving,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    val status = when {
+        invalid -> "Invalid SHA-256. Enter 64 hexadecimal characters."
+        comparison?.matches == true -> "Match. The file has the expected SHA-256."
+        comparison != null -> "Mismatch. The file has a different SHA-256."
+        else -> "No fingerprint comparison yet."
+    }
+    val statusColor = when {
+        invalid -> MaterialTheme.colorScheme.error
+        comparison?.matches == true -> WorkspaceMint
+        comparison != null -> WorkspaceAmber
+        else -> WorkspaceMuted
+    }
+    Text(status, color = statusColor, style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+    Text("Use a reference hash from a trusted source. C2PA signer trust is shown separately.",
+        color = WorkspaceMuted, style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable

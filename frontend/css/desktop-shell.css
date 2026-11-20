@@ -411,33 +411,6 @@ body:has(#upload-panel.active) .main-content {
         var(--bg-primary);
 }
 
-.studio-welcome {
-    grid-template-columns: minmax(310px, .88fr) minmax(0, 1.12fr);
-    min-height: clamp(295px, 38vh, 410px);
-    background: linear-gradient(112deg, #152530, #11212b 59%, #0e1c25);
-    border-color: #35515b;
-    border-radius: 13px;
-}
-
-.studio-welcome-copy {
-    padding: 30px 18px 30px clamp(24px, 4.3vw, 64px);
-}
-
-.studio-welcome-copy h1 {
-    margin: 0 0 13px;
-    font-size: clamp(2.03rem, 4.1vw, 3rem);
-    line-height: 1.06;
-    letter-spacing: -.045em;
-}
-
-.studio-welcome-copy > p:first-of-type {
-    margin: 0 0 21px;
-    color: var(--text-secondary);
-    font-size: 1.02rem;
-    line-height: 1.5;
-    max-width: 35ch;
-}
-
 .context-tip {
     position: fixed;
     z-index: 2700;
@@ -454,16 +427,6 @@ body:has(#upload-panel.active) .main-content {
     overflow-wrap: anywhere;
 }
 .context-tip[hidden] { display: none; }
-.studio-drop-caption, .studio-import-status { color: var(--text-secondary); font-size: .88rem; }
-.studio-import-status { color: var(--studio-amber); }
-
-.studio-welcome-art {
-    align-self: stretch;
-    background: radial-gradient(ellipse at 56% 60%, #203b43, transparent 65%);
-}
-.studio-welcome-art::after { content: none; }
-.studio-welcome-art img { object-fit: contain; object-position: center; padding-inline: clamp(10px, 2.7vw, 33px); }
-
 .studio-verifier.card {
     padding: 11px 13px;
     border-color: #35515b;
@@ -525,7 +488,6 @@ body:has(#upload-panel.active) .main-content {
 
 @media (max-width: 790px) {
     .studio-layout { grid-template-columns: minmax(0, 1fr); }
-    .studio-welcome { grid-template-columns: minmax(260px, 1.12fr) minmax(0, .88fr); }
 }
 
 @media (max-width: 720px) {
@@ -555,15 +517,6 @@ body:has(#upload-panel.active) .main-content {
 }
 
 @media (max-width: 530px) {
-    .studio-welcome {
-        display: flex;
-        flex-direction: column-reverse;
-        min-height: auto;
-    }
-    .studio-welcome-art { width: 100%; height: clamp(116px, 34vw, 174px); }
-    .studio-welcome-copy { padding: 10px 16px 21px; }
-    .studio-welcome-copy h1 { font-size: clamp(1.93rem, 8.1vw, 2.5rem); }
-    .studio-welcome-copy > p:first-of-type { margin-bottom: 16px; }
     .studio-stages {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -94,7 +94,7 @@
     transcribeQuickAction.addEventListener('click', () => transcribe.click());
     verifyQuickAction.addEventListener('click', () => {
         switchPanel('upload-panel');
-        verify.click();
+        window.aemWorkspace.openVerifier();
     });
     tray.querySelector('[data-dock-action="clean"]').addEventListener('click', () => {
         switchPanel('upload-panel');

@@ -73,14 +73,43 @@ struct MediaVerificationReport: Codable, Sendable {
     let credentials: CredentialSummary
     let audio: AudioVerification
     var metadata: MediaMetadata?
+    private(set) var fingerprintComparison: MediaFingerprintComparison? = nil
 
-    func json() throws -> Data {
+    func json(comparison: MediaFingerprintComparison? = nil) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         encoder.keyEncodingStrategy = .convertToSnakeCase
         var exported = self
         exported.metadata = metadata?.technicalExport
+        exported.fingerprintComparison = comparison
         return try encoder.encode(exported)
+    }
+}
+
+struct MediaFingerprintComparison: Codable, Equatable, Sendable {
+    enum Result: String, Codable, Sendable { case match, mismatch }
+
+    enum Check: Equatable {
+        case empty
+        case invalid
+        case compared(MediaFingerprintComparison)
+    }
+
+    let expectedSha256: String
+    let result: Result
+
+    private init(expectedSha256: String, result: Result) {
+        self.expectedSha256 = expectedSha256
+        self.result = result
+    }
+
+    static func check(expected: String, actual: String) -> Check {
+        let hex = expected.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !hex.isEmpty else { return .empty }
+        guard hex.utf8.count == 64, hex.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }) else {
+            return .invalid
+        }
+        return .compared(.init(expectedSha256: hex, result: hex == actual.lowercased() ? .match : .mismatch))
     }
 }
 

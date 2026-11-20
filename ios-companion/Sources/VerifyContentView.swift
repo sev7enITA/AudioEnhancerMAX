@@ -7,13 +7,22 @@ final class VerificationWorkspace: ObservableObject {
     @Published private(set) var fileName = ""
     @Published private(set) var working = false
     @Published private(set) var error: String?
+    @Published var expectedFingerprint = "" {
+        didSet { updateExport() }
+    }
     private var operation: Task<Void, Never>?
     private var revision = UUID()
+
+    var fingerprintCheck: MediaFingerprintComparison.Check {
+        guard let report else { return .empty }
+        return MediaFingerprintComparison.check(expected: expectedFingerprint, actual: report.asset.sha256)
+    }
 
     func verify(_ url: URL) {
         cancel()
         report = nil
-        export = nil
+        expectedFingerprint = ""
+        fileName = ""
         error = nil
         guard MobileMediaVerification.accepts(url) else {
             error = "Choose a local \(VerificationFormat.inputFormats) file."
@@ -29,8 +38,7 @@ final class VerificationWorkspace: ObservableObject {
                 try Task.checkCancellation()
                 guard revision == current else { return }
                 report = result
-                let data = try result.json()
-                export = VerificationJSON(contents: data, fileName: "verification-\(result.asset.sha256.prefix(12)).json")
+                updateExport()
             } catch {
                 guard !Task.isCancelled, revision == current else { return }
                 self.error = (error as? CompanionError)?.localizedDescription ?? "Could not read the selected file. Try opening a local copy in Files."
@@ -39,6 +47,19 @@ final class VerificationWorkspace: ObservableObject {
                 working = false
                 operation = nil
             }
+        }
+    }
+
+    private func updateExport() {
+        export = nil
+        guard let report else { return }
+        let comparison: MediaFingerprintComparison?
+        if case .compared(let record) = fingerprintCheck { comparison = record } else { comparison = nil }
+        do {
+            let data = try report.json(comparison: comparison)
+            export = VerificationJSON(contents: data, fileName: "verification-\(report.asset.sha256.prefix(12)).json")
+        } catch {
+            self.error = "Could not prepare the JSON report."
         }
     }
 
@@ -80,6 +101,7 @@ struct VerifyContentView: View {
             .frame(maxWidth: 740).frame(maxWidth: .infinity)
         }
         .background(WorkspaceColor.background)
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Verify Content")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $picking, allowedContentTypes: VerificationFormat.contentTypes) { result in
@@ -123,6 +145,37 @@ struct VerifyContentView: View {
             Text("SHA-256").font(.caption.weight(.semibold)).foregroundStyle(WorkspaceColor.muted)
             Text(asset.sha256).font(.footnote.monospaced()).textSelection(.enabled)
                 .accessibilityIdentifier("verification-sha256")
+            Divider()
+            Text("Compare SHA-256").font(.subheadline.weight(.semibold))
+            Text("Paste the expected SHA-256 from a trusted source. The comparison checks the file bytes. C2PA signer trust is reported separately.")
+                .font(.caption).foregroundStyle(WorkspaceColor.muted)
+            TextField("Expected SHA-256", text: $workspace.expectedFingerprint,
+                      prompt: Text("Expected SHA-256").foregroundStyle(WorkspaceColor.muted))
+                .font(.footnote.monospaced())
+                .textFieldStyle(.plain)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(WorkspaceColor.background, in: RoundedRectangle(cornerRadius: 8))
+                .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(WorkspaceColor.line) }
+                .accessibilityIdentifier("expected-sha256")
+            switch workspace.fingerprintCheck {
+            case .empty:
+                Text("No fingerprint comparison yet.")
+                    .font(.caption).foregroundStyle(WorkspaceColor.muted)
+            case .invalid:
+                Label("Enter exactly 64 hexadecimal characters.", systemImage: "exclamationmark.circle")
+                    .font(.subheadline).foregroundStyle(.orange)
+                    .accessibilityIdentifier("fingerprint-comparison-result")
+            case .compared(let comparison):
+                let matches = comparison.result == .match
+                Label(matches ? "SHA-256 matches the expected fingerprint." : "SHA-256 differs from the expected fingerprint.",
+                      systemImage: matches ? "checkmark.circle" : "exclamationmark.circle")
+                    .font(.subheadline).foregroundStyle(matches ? WorkspaceColor.mint : .orange)
+                    .accessibilityIdentifier("fingerprint-comparison-result")
+            }
         }.workspaceCard()
     }
 

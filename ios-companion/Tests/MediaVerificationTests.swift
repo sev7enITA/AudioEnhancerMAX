@@ -32,7 +32,52 @@ final class MediaVerificationTests: XCTestCase {
         let credentials = try XCTUnwrap(document["credentials"] as? [String: Any])
         XCTAssertEqual(credentials["actions"] as? [String], report.credentials.actions)
         XCTAssertEqual(credentials["processing_report_sha256"] as? String, report.credentials.reportFingerprint)
+        XCTAssertNil(document["fingerprint_comparison"])
         XCTAssertFalse(String(decoding: try report.json(), as: UTF8.self).contains(url.path))
+
+        let otherDigest = String(repeating: "a", count: 64)
+        for (reference, expectedResult) in [(" \(digest.uppercased())\n", "match"), (otherDigest, "mismatch")] {
+            guard case .compared(let comparison) = MediaFingerprintComparison.check(expected: reference, actual: digest) else {
+                return XCTFail("Expected a valid comparison")
+            }
+            let compared = try XCTUnwrap(JSONSerialization.jsonObject(with: report.json(comparison: comparison)) as? [String: Any])
+            let record = try XCTUnwrap(compared["fingerprint_comparison"] as? [String: String])
+            XCTAssertEqual(record["expected_sha256"], reference.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+            XCTAssertEqual(record["result"], expectedResult)
+            XCTAssertEqual(compared["credentials"] as? NSDictionary, credentials as NSDictionary)
+        }
+    }
+
+    func testFingerprintComparisonRequiresSixtyFourASCIIHexadecimalCharacters() {
+        let digest = String(repeating: "a", count: 64)
+        XCTAssertEqual(MediaFingerprintComparison.check(expected: " \n ", actual: digest), .empty)
+        for invalid in [String(digest.dropLast()), digest + "a", digest + "  filename.wav",
+                        String(repeating: "Ａ", count: 64), "g" + digest.dropFirst()] {
+            XCTAssertEqual(MediaFingerprintComparison.check(expected: invalid, actual: digest), .invalid)
+        }
+    }
+
+    @MainActor
+    func testReplacingFileClearsExpectedFingerprintAndPreviousExport() async throws {
+        let fixtures = Bundle(for: Self.self)
+        let url = try XCTUnwrap(fixtures.url(forResource: "signed-sample", withExtension: "wav", subdirectory: "v4.0.0-beta.1"))
+        let workspace = VerificationWorkspace()
+        workspace.verify(url)
+        defer { workspace.cancel() }
+        for _ in 0..<100 {
+            if !workspace.working { break }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        workspace.expectedFingerprint = try XCTUnwrap(workspace.report?.asset.sha256)
+        let compared = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(workspace.export?.contents)) as? [String: Any])
+        XCTAssertNotNil(compared["fingerprint_comparison"])
+        workspace.expectedFingerprint = "invalid"
+        let invalid = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(workspace.export?.contents)) as? [String: Any])
+        XCTAssertNil(invalid["fingerprint_comparison"])
+        workspace.verify(url)
+        XCTAssertTrue(workspace.expectedFingerprint.isEmpty)
+        XCTAssertNil(workspace.report)
+        XCTAssertNil(workspace.export)
     }
 
     func testAnalysisStopsAtThirtySecondsAndMeasuresNativeChannels() async throws {

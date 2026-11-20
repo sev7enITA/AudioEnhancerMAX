@@ -146,7 +146,7 @@
         if (!discard) await flush();
         else if (saving) await saving.catch(() => {});
         clearPreview();
-        const loaded = await request(`${path}/${id}`);
+        const loaded = await request(`${path}/${encodeURIComponent(id)}`);
         if (transition !== projectTransition) return;
         project = loaded;
         pending = null;
@@ -172,7 +172,7 @@
         tell(missing ? `${missing} source files need to be relinked.` : `Opened · revision ${project.revision}`);
     }
 
-    async function initialize() {
+    async function initialize(preferredProject) {
         const loaded = await request(path);
         isolationAvailable = loaded.isolation_available;
         const isolate = panel.querySelector('[data-studio-action=isolate-voice]');
@@ -181,7 +181,8 @@
             isolate.title = isolationAvailable ? 'Create a separate voice asset' : 'Requires a local Demucs runtime and model';
         }
         select.replaceChildren(new Option('Choose a project', ''), ...loaded.projects.map(entry => new Option(entry.name, entry.id)));
-        if (loaded.projects.length) await showProject(loaded.projects[0].id);
+        const requested = preferredProject || loaded.projects[0]?.id;
+        if (requested) await showProject(requested);
     }
 
     function refresh() {
@@ -917,26 +918,34 @@
         }
     }, 3500);
     let initialized = false;
-    function activateStudio() {
-        if (!panel.classList.contains('active')) return;
+    let initializing;
+    async function loadStudio(preferredProject) {
+        if (initializing) await initializing;
         if (initialized) {
-            if (project) refresh();
+            if (preferredProject && preferredProject !== project?.id) await showProject(preferredProject);
+            else if (project) refresh();
             return;
         }
-        initialized = true;
         studio.dataset.loading = 'true';
         tell('Loading projects…');
-        perform(async () => {
-            try {
-                await initialize();
-                if (!project) tell('Ready.');
-            } catch (error) {
-                initialized = false;
-                throw error;
-            } finally {
-                delete studio.dataset.loading;
-            }
+        initializing = initialize(preferredProject).then(() => {
+            initialized = true;
+            if (!project) tell('Ready.');
+        }).finally(() => {
+            initializing = null;
+            delete studio.dataset.loading;
         });
+        await initializing;
+    }
+    window.aemStudioProjects = {
+        open: loadStudio,
+        async openSample() {
+            await loadStudio();
+            await startWithFile();
+        },
+    };
+    function activateStudio() {
+        if (panel.classList.contains('active')) perform(() => loadStudio());
     }
     new MutationObserver(activateStudio).observe(panel, {attributes:true, attributeFilter:['class']});
     activateStudio();
