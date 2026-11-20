@@ -42,6 +42,7 @@ class AudioDocumentContract:ActivityResultContracts.OpenDocument() {
 class MainActivity:ComponentActivity() {
     private lateinit var model:CompanionViewModel
     private lateinit var verification: MediaVerificationViewModel
+    private lateinit var updates: CompanionUpdateViewModel
     private val importer=registerForActivityResult(AudioDocumentContract()){uri ->
         if(uri!=null){
             val name=runCatching{contentResolver.query(uri,arrayOf(OpenableColumns.DISPLAY_NAME),null,null,null)?.use{if(it.moveToFirst())it.getString(0) else "Imported audio"}}.getOrNull() ?: "Imported audio"
@@ -54,10 +55,11 @@ class MainActivity:ComponentActivity() {
         enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         model=ViewModelProvider(this)[CompanionViewModel::class.java]
         verification = ViewModelProvider(this)[MediaVerificationViewModel::class.java]
+        updates = ViewModelProvider(this)[CompanionUpdateViewModel::class.java]
         if (savedInstanceState == null) verification.acceptShareIntent(intent)
         setContent {
             LaunchedEffect(model.workerRunning){if(model.workerRunning)window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)}
-            CompanionScreen(model, verification,
+            CompanionScreen(model, verification, updates,
                 {filter->model.setImportFormat(filter);importer.launch(filter.mimeTypes)},
                 {briefImporter.launch(arrayOf("application/json"))}, ::share)
         }
@@ -100,12 +102,14 @@ class MainActivity:ComponentActivity() {
 internal fun CompanionScreen(
     vm: CompanionViewModel,
     verification: MediaVerificationViewModel,
+    updates: CompanionUpdateViewModel,
     importAudio: (AudioImportPolicy.Filter) -> Unit,
     importBrief: () -> Unit,
     share: (File) -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var aboutOpen by rememberSaveable { mutableStateOf(false) }
+    var updatesOpen by rememberSaveable { mutableStateOf(false) }
     var handledShare by rememberSaveable { mutableIntStateOf(0) }
 
     LaunchedEffect(verification.navigationRequest) {
@@ -116,7 +120,7 @@ internal fun CompanionScreen(
         }
     }
 
-    if (tab == 1 && !aboutOpen) {
+    if (tab == 1 && !aboutOpen && !updatesOpen) {
         DisposableEffect(vm) { onDispose { vm.cancelNearbyPairing() } }
     }
 
@@ -177,7 +181,14 @@ internal fun CompanionScreen(
             }
         }
 
-        if (aboutOpen) AboutDialog(onDismiss = { aboutOpen = false })
+        if (aboutOpen) AboutDialog(onDismiss = { aboutOpen = false }, onUpdates = {
+            aboutOpen = false
+            updatesOpen = true
+        })
+        if (updatesOpen) {
+            LaunchedEffect(updates) { updates.opened() }
+            UpdatesDialog(updates, onDismiss = { updatesOpen = false })
+        }
         vm.error?.let { message ->
             AlertDialog(
                 onDismissRequest = { vm.error = null },

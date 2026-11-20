@@ -88,8 +88,16 @@ private struct CompanionAboutView: View {
                 }
                 LabeledContent("Version", value: version)
                 LabeledContent("Build", value: build)
-                LabeledContent("Channel", value: "BETA")
+                LabeledContent("Channel", value: CompanionDistribution.appStore ? "App Store" : "Developer BETA")
                 LabeledContent("Developer", value: "Fabrizio Degni")
+            }
+            Section {
+                NavigationLink {
+                    CompanionUpdatesView()
+                } label: {
+                    Label("Updates", systemImage: "arrow.down.circle")
+                }
+                .accessibilityIdentifier("companion-updates")
             }
             Section("Support and privacy") {
                 Link(destination: URL(string: "https://www.fabriziodegni.com/AudioEnhancerMAX/support.html")!) {
@@ -99,11 +107,13 @@ private struct CompanionAboutView: View {
                     Label("Privacy policy", systemImage: "hand.raised")
                 }
             }
+            #if !AEMAX_APP_STORE
             Section("Project") {
                 Link(destination: URL(string: "https://github.com/sev7enITA/AudioEnhancerMAX")!) {
                     Label("Source code and license", systemImage: "curlybraces")
                 }
             }
+            #endif
         }
         .navigationTitle("About")
     }

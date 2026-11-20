@@ -47,3 +47,29 @@
 .aem4-mobile-shots figure{margin:0;flex:0 1 12rem}
 .aem4-mobile-shots img{display:block;width:100%;height:auto;border:1px solid #2e3741;border-radius:.875rem}
 .aem4-mobile-shots figcaption{margin-block-start:.5rem}
+
+.cp-update-packages {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 1rem 0;
+}
+.cp-update-packages > div {
+    display: grid;
+    align-content: start;
+    gap: .55em;
+    min-width: 0;
+    padding: .95rem;
+    border: 1px solid #334751;
+    border-radius: 9px;
+    background: #101d25;
+}
+.cp-update-packages dd { margin: 0; }
+.cp-update-packages .cp-update-links a {
+    display: inline-block;
+    padding: .3em .1em;
+    color: #83e1e4;
+}
+@media (max-width: 700px) {
+    .cp-update-packages { grid-template-columns: 1fr; }
+}

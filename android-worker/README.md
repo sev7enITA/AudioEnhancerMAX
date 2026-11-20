@@ -1,4 +1,4 @@
-# AudioEnhancerMAX Android Companion 4.1.0 (16)
+# AudioEnhancerMAX Android Companion 4.1.1 (17)
 
 Native Compose companion, Android 8/API 26 or later, target API 35. Build 15 is the mobile workstation candidate. Its direct QA APK is built in release mode and uses the existing QA signing key. The package ID is `com.audioenhancermax.worker`.
 
@@ -17,6 +17,7 @@ Native Compose companion, Android 8/API 26 or later, target API 35. Build 15 is 
 - **Music brief** offers five editable starting points, duration matching from the active recording, structured preview, copy, TXT/JSON sharing, JSON import and separate lyrics.
 - The connection dashboard reports accepted Voice EQ chunks, audio seconds, compute time, measured local throughput and the Mac round-trip time. Counters update after the Mac accepts each chunk.
 - **About** shows the installed version and build, developer, project site, support, privacy policy and project licence.
+- **About → Updates** hands marketplace installations back to their store. A direct installation remembers the selected GitHub or SourceForge repository because the same APK can come from either. Check the signed feed, then download from the selected source. The app verifies the package size, SHA-256, package ID, newer build and signing certificate. Save the verified APK through Android Files and open it there when you are ready to install.
 
 Credentials use Android Keystore AES-GCM, backups are disabled, redirects/cleartext are disabled. Stopping/restarting the Mac session requires a new pairing. No audio is sent until explicitly requested.
 
@@ -33,6 +34,6 @@ The custom native instrumentation runner checks codecs, MIME intent extras, sele
 
 The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Before distributing an artifact, verify its compiled manifest, signing identity and SHA-256. Validate file providers, hotspot pairing and playback on physical devices before promoting the preview.
 
-For a Google Play submission, target API 36 and sign the Android App Bundle with the Play Console upload key. Review the current [target API requirements](https://support.google.com/googleplay/android-developer/answer/11926878).
+For a Google Play submission, run `./gradlew -Paemax.playStoreOnly=true :app:bundleRelease` and sign the Android App Bundle with the Play Console upload key. This setting targets API 36 and locks the app to the official Google Play listing regardless of installer attribution. It leaves the direct repository chooser and downloader unavailable. Review the current [target API requirements](https://support.google.com/googleplay/android-developer/answer/11926878).
 
 The launcher and About artwork are rendered from [the original vector](../packaging/macos/AudioEnhancerMAX.svg). The adaptive foreground is centred within the Android masking safe area. [The Google Play listing artwork](branding/google-play-icon.png) is a separate 512 × 512 PNG with transparent margins.

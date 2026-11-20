@@ -9,6 +9,8 @@ import android.media.MediaFormat
 import androidx.core.content.FileProvider
 import com.google.gson.JsonParser
 import java.io.File
+import java.io.OutputStream
+import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -69,6 +71,28 @@ class MediaInstrumentation: Instrumentation() {
                 val longMeasure = AudioImporter.measure(fixture("phone90.m4a"), AudioImportPolicy.Kind.MP4) {}
                 check(!longMeasure.complete && longMeasure.analyzedSeconds == 30.0)
                 report.putString("verification", "PASS: exact original bytes/hash, native audio metrics with time window, safe share rejection, versioned FileProvider report")
+                val updateManifestFile = File(targetContext.cacheDir, "qa-update-feed.json")
+                val updateArtifact = File(targetContext.cacheDir, "qa-update-artifact.apk")
+                if (updateManifestFile.isFile && updateArtifact.isFile) {
+                    try {
+                        val key = targetContext.assets.open("companion-update-public.pem").bufferedReader()
+                            .use { readUpdatePublicKey(it.readText()) }
+                        val release = verifyUpdateFeed(updateManifestFile.readBytes(), key, Instant.now().epochSecond).release
+                        val sink = object : OutputStream() {
+                            override fun write(value: Int) = Unit
+                            override fun write(bytes: ByteArray, offset: Int, length: Int) = Unit
+                        }
+                        updateArtifact.inputStream().use { copyVerifiedUpdate(it, sink, release) {} }
+                        val installed = installedApkIdentity(targetContext)
+                        check(installed.build >= release.build && installed.signerSha256 == setOf(release.signerSha256))
+                        check(runCatching { verifyUpdateArchive(targetContext, updateArtifact, installed, release) }.isFailure)
+                        verifyUpdateArchive(targetContext, updateArtifact, installed.copy(build = release.build - 1), release)
+                        report.putString("updater", "PASS: bundled trust key, signed real feed, exact APK SHA/size, Android package/version/cert, installed downgrade rejection")
+                    } finally {
+                        updateManifestFile.delete()
+                        updateArtifact.delete()
+                    }
+                }
                 for(name in listOf("phone.m4a","phone.aac","phone.flac","phone.ogg","phone24.wav")) {
                     val file=fixture(name);val hash=sha256(file.readBytes())
                     val decoded=AudioImporter.decode(targetContext,Uri.fromFile(file))

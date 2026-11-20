@@ -14,6 +14,7 @@
 		11A23CA2DF58DA22F354E814 /* StudioEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E55A4B8EC8B35E6432D6296 /* StudioEditing.swift */; };
 		18641AB37FB19D51C1583528 /* phone.flac in Resources */ = {isa = PBXBuildFile; fileRef = B1AD0823A1A8CFB8F98C7676 /* phone.flac */; };
 		1B675D774289A1904B857F34 /* PairingScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C639109FD085185274D79441 /* PairingScanner.swift */; };
+		1D4C5F992A4130694C6E4098 /* companion-update-public.pem in Resources */ = {isa = PBXBuildFile; fileRef = 8258BAD6ABD7C89F0C4D1B6D /* companion-update-public.pem */; };
 		1FAA5D052FD5D775AD782BB1 /* CompanionClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67132548602C30F31D9590C3 /* CompanionClient.swift */; };
 		1FD309C80D2524BCCCD4930E /* MediaVerification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F87DFADB209F87821E474488 /* MediaVerification.swift */; };
 		21D3AEC0CF7C6474FE49BD97 /* phone.caf in Resources */ = {isa = PBXBuildFile; fileRef = F397A392B55310B83C1F807F /* phone.caf */; };
@@ -22,6 +23,7 @@
 		31A4D92356DD7E22363BBE80 /* phone24.wav in Resources */ = {isa = PBXBuildFile; fileRef = 09C9018B6FB314004461E1E8 /* phone24.wav */; };
 		332D332D9B93C951B423D9A6 /* NearbyPairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5448DF93409101681875DCB1 /* NearbyPairing.swift */; };
 		3CCD2FA349E362743D2CE14C /* MusicBriefView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D8C1BB261A63310FF6BDFC /* MusicBriefView.swift */; };
+		4674EC07F5B018F852276F6E /* CompanionUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B662CE803957B8709B9BD59 /* CompanionUpdates.swift */; };
 		4F2BCC40985FDA83E607386E /* phone.aac in Resources */ = {isa = PBXBuildFile; fileRef = 714BB212D5A9A7435751783C /* phone.aac */; };
 		50E1ED1777D990F1482CD2CC /* VerifyContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A61633D1186139936BC302 /* VerifyContentView.swift */; };
 		52AFD63C5488BFE3814616B8 /* CompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA909689CEB2927CC20D59F9 /* CompanionApp.swift */; };
@@ -49,6 +51,7 @@
 		D06371A12C7B893E41656D5F /* NearbyPhoneVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842717F5B7EBECD45B66653B /* NearbyPhoneVisibility.swift */; };
 		DA88E576913710A69CB33697 /* PROVENANCE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9889FFD4652F202820E85FB5 /* PROVENANCE.txt */; };
 		DB3134728389EE5B5C9E941E /* phone.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 40BA850782FEB89555B6B8EB /* phone.aiff */; };
+		DEF19DE30C222E4C140F510A /* CompanionUpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1C11A60E3C99B756A74DA8 /* CompanionUpdatesView.swift */; };
 		E31C21C67B1E020FBEE7AEEF /* phone-alac.m4a in Resources */ = {isa = PBXBuildFile; fileRef = C535FE13019E2A4D1898DE96 /* phone-alac.m4a */; };
 		E6CE1D741A73637F04FF7545 /* short.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB7D6438A2C6CCD05EA1C36D /* short.mp4 */; };
 		F9397709551D3E2139B331A7 /* StudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA683D8A2E2D00F4D8E5410 /* StudioView.swift */; };
@@ -56,6 +59,7 @@
 		FCB1819CF4D135ABDB3E27AA /* short.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0D5310E960F996097493FDF2 /* short.mp3 */; };
 		FF3128FF2A23DE8E25F0A1A3 /* NearbyMacSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 601844D39F0AE79C411DE495 /* NearbyMacSheet.swift */; };
 		FF621B1D14892D2626B7A817 /* phone.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 06805E67E569542169AC86D1 /* phone.ogg */; };
+		FF86437DF7FE30637134BF66 /* CompanionUpdatesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D22E8890F9785E7F3C91FC /* CompanionUpdatesTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +78,7 @@
 		09C9018B6FB314004461E1E8 /* phone24.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = phone24.wav; sourceTree = "<group>"; };
 		0D5310E960F996097493FDF2 /* short.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = short.mp3; sourceTree = "<group>"; };
 		19676C183AB3D2B483EE0DD4 /* CompanionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionModel.swift; sourceTree = "<group>"; };
+		1B662CE803957B8709B9BD59 /* CompanionUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionUpdates.swift; sourceTree = "<group>"; };
 		1FC2179EFAFDA421331924E8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2C15F752527FE168B5214431 /* AudioAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioAnalysis.swift; sourceTree = "<group>"; };
 		3924E6F19BB9AB9F4D6DDD58 /* ContentCredentialsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentCredentialsCard.swift; sourceTree = "<group>"; };
@@ -93,6 +98,7 @@
 		755EDBD1E832EBB2B41B7D9A /* pairing-fixture.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pairing-fixture.png"; sourceTree = "<group>"; };
 		77CF011950FEF3D9FA4DF367 /* MediaVerificationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaVerificationTests.swift; sourceTree = "<group>"; };
 		7A6C9C7A5111EF8E9F60F18B /* pairing-fixture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "pairing-fixture.json"; sourceTree = "<group>"; };
+		8258BAD6ABD7C89F0C4D1B6D /* companion-update-public.pem */ = {isa = PBXFileReference; path = "companion-update-public.pem"; sourceTree = "<group>"; };
 		842717F5B7EBECD45B66653B /* NearbyPhoneVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NearbyPhoneVisibility.swift; sourceTree = "<group>"; };
 		9184BFFDB98E8F38DE3BFADD /* CompanionTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CompanionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		96D8C1BB261A63310FF6BDFC /* MusicBriefView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBriefView.swift; sourceTree = "<group>"; };
@@ -106,6 +112,7 @@
 		C535FE13019E2A4D1898DE96 /* phone-alac.m4a */ = {isa = PBXFileReference; path = "phone-alac.m4a"; sourceTree = "<group>"; };
 		C639109FD085185274D79441 /* PairingScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingScanner.swift; sourceTree = "<group>"; };
 		C679271F9F36D6B9B8CD6BA6 /* MediaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaTests.swift; sourceTree = "<group>"; };
+		C7D22E8890F9785E7F3C91FC /* CompanionUpdatesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionUpdatesTests.swift; sourceTree = "<group>"; };
 		CB2EF2F9044EF5998C2BAB8B /* ConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionView.swift; sourceTree = "<group>"; };
 		CD977CB9AD06456E64C1E4DF /* C2PA-TRUST-LIST.pem */ = {isa = PBXFileReference; path = "C2PA-TRUST-LIST.pem"; sourceTree = "<group>"; };
 		D4DB43E383C1C15886891620 /* phone.m4a */ = {isa = PBXFileReference; path = phone.m4a; sourceTree = "<group>"; };
@@ -115,6 +122,7 @@
 		E00EA6745E594E73A68BB420 /* v4.0.0-beta.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = "v4.0.0-beta.1"; sourceTree = "<group>"; };
 		E7A61633D1186139936BC302 /* VerifyContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerifyContentView.swift; sourceTree = "<group>"; };
 		EC47CAAAE679B195E1659749 /* IntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationTests.swift; sourceTree = "<group>"; };
+		EE1C11A60E3C99B756A74DA8 /* CompanionUpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionUpdatesView.swift; sourceTree = "<group>"; };
 		F07F1CC04330495C0DF4D81E /* AudioEnhancerCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AudioEnhancerCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F397A392B55310B83C1F807F /* phone.caf */ = {isa = PBXFileReference; path = phone.caf; sourceTree = "<group>"; };
 		F87DFADB209F87821E474488 /* MediaVerification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaVerification.swift; sourceTree = "<group>"; };
@@ -211,6 +219,8 @@
 				BA909689CEB2927CC20D59F9 /* CompanionApp.swift */,
 				67132548602C30F31D9590C3 /* CompanionClient.swift */,
 				19676C183AB3D2B483EE0DD4 /* CompanionModel.swift */,
+				1B662CE803957B8709B9BD59 /* CompanionUpdates.swift */,
+				EE1C11A60E3C99B756A74DA8 /* CompanionUpdatesView.swift */,
 				CB2EF2F9044EF5998C2BAB8B /* ConnectionView.swift */,
 				3924E6F19BB9AB9F4D6DDD58 /* ContentCredentialsCard.swift */,
 				B1C3C81FE32868F11AEED9F0 /* DeviceAssessment.swift */,
@@ -232,6 +242,7 @@
 		B214721AD8F07221076A549C /* mobile */ = {
 			isa = PBXGroup;
 			children = (
+				8258BAD6ABD7C89F0C4D1B6D /* companion-update-public.pem */,
 				DDE7D11F674DB6555F2BE76F /* music-brief-presets.json */,
 			);
 			name = mobile;
@@ -241,6 +252,7 @@
 		BD8A779EB3309E255CC29743 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				C7D22E8890F9785E7F3C91FC /* CompanionUpdatesTests.swift */,
 				D83E1401C478C106CD4AC3DF /* ContentCredentialsTests.swift */,
 				471F85E647A01E11DDBF63F6 /* CoreTests.swift */,
 				EC47CAAAE679B195E1659749 /* IntegrationTests.swift */,
@@ -372,6 +384,7 @@
 				67AD3E0DEBAEA99FF91714E5 /* C2PA-TRUST-LIST.pem in Resources */,
 				8F4396146A7BE320957A01E2 /* C2PA-TSA-TRUST-LIST.pem in Resources */,
 				DA88E576913710A69CB33697 /* PROVENANCE.txt in Resources */,
+				1D4C5F992A4130694C6E4098 /* companion-update-public.pem in Resources */,
 				6CCE7168CC8C35F6743C1231 /* music-brief-presets.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -388,6 +401,8 @@
 				52AFD63C5488BFE3814616B8 /* CompanionApp.swift in Sources */,
 				1FAA5D052FD5D775AD782BB1 /* CompanionClient.swift in Sources */,
 				6924999E215DBC97985B964D /* CompanionModel.swift in Sources */,
+				4674EC07F5B018F852276F6E /* CompanionUpdates.swift in Sources */,
+				DEF19DE30C222E4C140F510A /* CompanionUpdatesView.swift in Sources */,
 				836E975B3DDFFED8A2867647 /* ConnectionView.swift in Sources */,
 				FA38388722B76668CB661D36 /* ContentCredentialsCard.swift in Sources */,
 				2F4C3F5FE8442F6BD01E966C /* DeviceAssessment.swift in Sources */,
@@ -409,6 +424,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FF86437DF7FE30637134BF66 /* CompanionUpdatesTests.swift in Sources */,
 				B8406E63B0DC470CEBE43A6E /* ContentCredentialsTests.swift in Sources */,
 				53B882D2A2873E918FE0828A /* CoreTests.swift in Sources */,
 				6EAD3FF2987A7F70808CB203 /* IntegrationTests.swift in Sources */,
@@ -447,6 +463,39 @@
 			};
 			name = Debug;
 		};
+		40F2B5256A717B140FB9F904 /* Store */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AudioEnhancer;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fabriziodegni.audioenhancermax.companion;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Store;
+		};
+		4A9A77CD8876F41D2F74B99C /* Store */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fabriziodegni.audioenhancermax.CompanionTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AudioEnhancerCompanion.app/AudioEnhancerCompanion";
+			};
+			name = Store;
+		};
 		7EAB296DF7E71DAF2DFFA923 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -467,6 +516,7 @@
 		9C1A5A3E7D9147D5769EC716 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				AEMAX_IOS_APP_STORE_ID = "";
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -500,7 +550,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -518,7 +568,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 4.1.0;
+				MARKETING_VERSION = 4.1.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -549,6 +599,7 @@
 		D04CAC350E877662AC693717 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				AEMAX_IOS_APP_STORE_ID = "";
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -582,7 +633,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -606,7 +657,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 4.1.0;
+				MARKETING_VERSION = 4.1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -618,6 +669,74 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
+		};
+		E61FA9F0B74FAD58370BBFEE /* Store */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				AEMAX_IOS_APP_STORE_ID = "";
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_ALLOWED = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 13;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Scan the private pairing QR code displayed by AudioEnhancerMAX on your Mac. Images stay on this device and are not saved.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Pair with your Mac, transfer audio, retrieve results, or contribute processing while this app is open.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 4.1.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) AEMAX_APP_STORE";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Store;
 		};
 		F34D5B473BAF4DBC9326A861 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -644,6 +763,7 @@
 			buildConfigurations = (
 				075D166F900C903BB12CE3AA /* Debug */,
 				9ED5D8B9BED5D3861F01AA68 /* Release */,
+				4A9A77CD8876F41D2F74B99C /* Store */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -653,6 +773,7 @@
 			buildConfigurations = (
 				F34D5B473BAF4DBC9326A861 /* Debug */,
 				7EAB296DF7E71DAF2DFFA923 /* Release */,
+				40F2B5256A717B140FB9F904 /* Store */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -662,6 +783,7 @@
 			buildConfigurations = (
 				D04CAC350E877662AC693717 /* Debug */,
 				9C1A5A3E7D9147D5769EC716 /* Release */,
+				E61FA9F0B74FAD58370BBFEE /* Store */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

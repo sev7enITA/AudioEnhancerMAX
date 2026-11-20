@@ -2,6 +2,23 @@
   "updated_on": "2026-11-20",
   "resources": [
     {
+      "id": "mobile-beta-4-1-1",
+      "name": "AudioEnhancerMAX Companion 4.1.1 BETA",
+      "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.1-mobile-beta.1",
+      "group": "official",
+      "status": "published",
+      "language": "English",
+      "verified_on": "2026-11-20",
+      "type": {
+        "en": "Mobile BETA updates",
+        "it": "Aggiornamenti BETA mobile"
+      },
+      "description": {
+        "en": "Android signed APK build 17 and iOS developer archive build 13. Direct update sources are GitHub and SourceForge.",
+        "it": "APK firmato Android build 17 e archivio iOS build 13. GitHub e SourceForge sono le fonti dirette."
+      }
+    },
+    {
       "id": "beta-4-1-0",
       "name": "AudioEnhancerMAX 4.1 BETA",
       "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1",

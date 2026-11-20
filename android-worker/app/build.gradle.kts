@@ -4,6 +4,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val playStoreOnly = providers.gradleProperty("aemax.playStoreOnly").orElse("false").map { value ->
+    require(value in setOf("true", "false")) { "aemax.playStoreOnly must be true or false" }
+    value.toBoolean()
+}.get()
+
 android {
     namespace = "com.audioenhancermax.worker"
     compileSdk = 36
@@ -12,9 +17,10 @@ android {
         applicationId = "com.audioenhancermax.worker"
         minSdk = 26
         testInstrumentationRunner = "com.audioenhancermax.worker.MediaInstrumentation"
-        targetSdk = 35
-        versionCode = 16
-        versionName = "4.1.0"
+        targetSdk = if (playStoreOnly) 36 else 35
+        versionCode = 17
+        versionName = "4.1.1"
+        buildConfigField("boolean", "PLAY_STORE_ONLY", playStoreOnly.toString())
     }
 
     buildTypes {
@@ -38,6 +44,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     sourceSets.getByName("main").assets.srcDir("../../app/resources/c2pa")

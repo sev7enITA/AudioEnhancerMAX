@@ -27,7 +27,7 @@ private const val WEBSITE = "https://www.fabriziodegni.com/AudioEnhancerMAX/"
 private const val SOURCE_LICENSE = "https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/LICENSE"
 
 @Composable
-internal fun AboutDialog(onDismiss: () -> Unit) {
+internal fun AboutDialog(onDismiss: () -> Unit, onUpdates: () -> Unit) {
     val context = LocalContext.current
     val info = remember(context) { context.packageManager.getPackageInfo(context.packageName, 0) }
     val uriHandler = LocalUriHandler.current
@@ -62,6 +62,7 @@ internal fun AboutDialog(onDismiss: () -> Unit) {
                     ),
                 )
                 Text(stringResource(R.string.about_developer))
+                TextButton(onClick = onUpdates) { Text("Updates") }
                 links.forEach { (label, url) ->
                     TextButton(onClick = {
                         couldNotOpen = runCatching { uriHandler.openUri(url) }.isFailure

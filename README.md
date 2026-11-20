@@ -9,6 +9,8 @@
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
 **Native Apple Silicon app · local DSP · reviewable speech edits · Android and iOS companions**
 
+**[Companion 4.1.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.1-mobile-beta.1)** adds About → Updates and verified direct downloads. [Mobile download channels](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates) · [Update verification](docs/companion-updates.md).
+
 **[4.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)** adds local verification of received media on Mac, Android and iOS, with offline C2PA, SHA-256, audio measurements and a JSON report. [Release notes](releases/RELEASE_NOTES_v4.1.0-beta.1.md) · [Verification guide](docs/media-verification.md).
 
 **[4.0 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1)** adds a new editing workspace, bidirectional local Wi-Fi pairing, and C2PA Content Credentials linked to the exact processing report. [4.0 BETA release notes](releases/RELEASE_NOTES_v4.0.0-beta.1.md) · [Companion guide](https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html).

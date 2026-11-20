@@ -1,4 +1,4 @@
-# AudioEnhancerMAX iOS Companion 4.1.0 (12)
+# AudioEnhancerMAX iOS Companion 4.1.1 (13)
 
 Native SwiftUI companion for iOS 17+. This preview is validated with the simulator and an unsigned device archive; it is not a TestFlight or App Store release. Installing on an iPhone requires development signing and provisioning.
 
@@ -17,6 +17,12 @@ Native SwiftUI companion for iOS 17+. This preview is validated with the simulat
 - The verifier lists the signer, issuer and action declarations bound to a validated manifest. It reports signer trust and RFC 3161 timestamp trust independently. Audio measurements use the first audio track for up to 30 seconds at the native rate and channels, at most stereo and 96 kHz. Sample peak and RMS are in dBFS. Near-full-scale percentage uses a 0.999 amplitude threshold. Silence has no finite dBFS value.
 - **Export JSON report** shares `audioenhancermax.media-verification.v1` with the asset fingerprint, credential verdict and audio measurements. The report excludes source paths and file contents. The snapshot is removed on completion or cancellation.
 - **About** shows the installed version and build, the BETA channel, the developer and links to support, privacy, source code and the MIT license.
+
+## Updates and distribution
+
+Open **About → Updates** in the developer build. Choose GitHub or SourceForge, then check the signed release feed. The app remembers your choice. Download the unsigned Xcode archive and share it with your Mac after the size and SHA-256 pass validation. Xcode handles signing and deployment to registered devices.
+
+Use the `AudioEnhancerCompanionStore` scheme to archive the `Store` configuration for Apple's distribution channel. Its Updates screen uses App Store updates. Set `AEMAX_IOS_APP_STORE_ID` only to the verified iOS companion listing ID to enable its direct listing link. The App Store scheme excludes the repository downloader at compile time. Development IPA files are limited to their provisioned devices.
 
 Pairing lives in Keychain with ThisDeviceOnly protection. Restarting the Mac session requires a new pairing. Local files persist in the app until replaced or removed. No audio upload is implicit.
 

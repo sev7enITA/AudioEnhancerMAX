@@ -2,6 +2,14 @@
 
 > Free, open-source local audio editing for Apple Silicon Macs. Created by Fabrizio Degni. Canonical product website: https://www.fabriziodegni.com/AudioEnhancerMAX/
 
+## Companion 4.1.1 BETA
+
+About → Updates checks direct releases using signed metadata. GitHub and SourceForge are the approved direct repositories. Android build 17 is a signed BETA APK. iOS build 13 is an unsigned development archive. Store builds use their store.
+
+- [Mobile downloads and update policies](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates)
+- [Mobile BETA on GitHub](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.1-mobile-beta.1)
+- [Mobile BETA on SourceForge](https://sourceforge.net/projects/audioenhancermax/files/v4.1.1-mobile-beta.1/)
+
 ## 4.1 BETA
 
 Verify content brings offline C2PA, a SHA-256 fingerprint and bounded audio measurements into one workspace on Mac, iOS and Android. Mac 4.1.0 is a signed and notarized Apple Silicon download. Android build 16 is a signed BETA APK. iOS build 12 is an unsigned developer archive with source. Mobile store availability and physical phone testing are pending.
