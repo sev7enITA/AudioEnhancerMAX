@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
+import android.os.SystemClock
 import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,8 +23,11 @@ private data class ResultReceipt(
     val sourceSha: String,
     val resultSha: String,
     val comparison: AudioComparison?,
-    val reportSha: String? = null
+    val reportSha: String? = null,
+    val edit: WorkspaceEdit? = null,
 )
+
+private data class WorkspaceRevision(val receipt: ResultReceipt?, val edit: WorkspaceEdit)
 
 internal data class NearbyComparison(val name: String, val code: String, val awaitingMac: Boolean = false)
 
@@ -55,14 +59,16 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
     var busy by mutableStateOf(false);private set
     var macState by mutableStateOf("Not connected");private set
     var connected by mutableStateOf(false);private set
-    var macName by mutableStateOf("Saved Mac");private set
+    var macName by mutableStateOf(prefs.getString("macName", "Saved Mac") ?: "Saved Mac");private set
     var macEndpoint by mutableStateOf("");private set
     var latencyMs by mutableStateOf<Long?>(null);private set
+    internal var macAcceptsWorker by mutableStateOf<Boolean?>(null);private set
     internal var nearbyMacs by mutableStateOf<List<NearbyMac>>(emptyList());private set
     internal var nearbySearching by mutableStateOf(false);private set
     internal var nearbyMessage by mutableStateOf<String?>(null);private set
     internal var nearbyComparison by mutableStateOf<NearbyComparison?>(null);private set
     internal var phoneDiscoverable by mutableStateOf(false);private set
+    internal var phoneVisibleUntil by mutableStateOf<Long?>(null);private set
     internal var phoneAdvertised by mutableStateOf(false);private set
     internal var phoneInvitations by mutableStateOf<List<NearbyMac>>(emptyList());private set
     private val discovery by lazy { NearbyMacDiscovery(app) }
@@ -83,7 +89,10 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         latencyMs=latency
         DeviceAssessment.roundTripMs=latency
         assessmentText=DeviceAssessment.summary(getApplication<Application>())
-        macName=state.get("mac_name")?.asString ?: "AudioEnhancerMAX Mac"
+        val name = state.get("mac_name")?.asString?.take(120) ?: "AudioEnhancerMAX Mac"
+        if (name != macName) prefs.edit().putString("macName", name).apply()
+        macName=name
+        macAcceptsWorker = state.get("trusted_lan_processing")?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isBoolean }?.asBoolean
         macEndpoint=api.pairing.endpoint;connected=true
     }
     private suspend fun checkConnection(api:CompanionClient) {
@@ -97,13 +106,13 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
                 val api=client
                 if(api!=null && !busy) try {checkConnection(api)} catch(e:Exception) {
                     if(e is CancellationException)throw e
-                    connected=false;latencyMs=null
+                    connected=false;latencyMs=null;macAcceptsWorker=null
                 }
                 delay(5000)
             }
         }
     }
-    fun stopPresence(){presence?.cancel();presence=null;connected=false;latencyMs=null}
+    fun stopPresence(){presence?.cancel();presence=null;connected=false;latencyMs=null;macAcceptsWorker=null}
     var assessmentText by mutableStateOf(DeviceAssessment.summary(app));private set
     fun assessDevice()=action {
         stopWorker()
@@ -114,7 +123,8 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
     var paired by mutableStateOf(false);private set
     var workerRunning by mutableStateOf(false);private set
     var workerState by mutableStateOf("Stopped");private set
-    var completions by mutableIntStateOf(0);private set
+    internal var workerUsage by mutableStateOf(WorkerUsage());private set
+    internal var workerNotice by mutableStateOf<String?>(null);private set
     var playbackState by mutableStateOf("Stopped");private set
     var playhead by mutableFloatStateOf(0f);private set
     var comparison by mutableStateOf<AudioComparison?>(null);private set
@@ -127,6 +137,14 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
     var start by mutableStateOf("0");var end by mutableStateOf("1");var gain by mutableFloatStateOf(0f)
     var sendResult by mutableStateOf(false)
     var normalize by mutableStateOf(true);var voice by mutableStateOf(false)
+    var fadeIn by mutableFloatStateOf(0f)
+    var fadeOut by mutableFloatStateOf(0f)
+    var loopPlayback by mutableStateOf(false)
+    private val undoRevisions = mutableStateListOf<WorkspaceRevision>()
+    private val redoRevisions = mutableStateListOf<WorkspaceRevision>()
+    private var resultReceipt: ResultReceipt? = null
+    val canUndoEdit: Boolean get() = undoRevisions.isNotEmpty()
+    val canRedoEdit: Boolean get() = redoRevisions.isNotEmpty()
     var music by mutableStateOf(MusicDraft());private set
     var report by mutableStateOf<File?>(null);private set
     private var client:CompanionClient?=null
@@ -137,6 +155,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
     private var playbackTracking: Job? = null
     private var playingOriginal = true
     private var playerReady = false
+    private var playbackWindow: ClosedFloatingPointRange<Double>? = null
     private var sourceSha = ""
     init {
         viewModelScope.launch {withContext(Dispatchers.Default){runCatching{DeviceAssessment.benchmark()}};assessmentText=DeviceAssessment.summary(app)}
@@ -149,7 +168,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
                 sourceRevision=sourceSha.take(8)
                 wave=restored
                 end=restored.duration.toString()
-                waveformPeaks=restored.overview()
+                waveformPeaks=restored.overview(320)
             }
         }
         val videoName=prefs.getString("videoSource",null)
@@ -178,6 +197,8 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
             val resultSha=sha256(audio.readBytes())
             if (receipt != null && (receipt.sourceSha != sourceSha || receipt.resultSha != resultSha)) return
             if (receipt == null && prefs.getBoolean("versionedWorkspace",false)) return
+            resultReceipt=receipt
+            receipt?.edit?.let(::restoreEdit)
             result=audio
             resultRevision=resultSha.take(8)
             comparison=receipt?.comparison
@@ -201,20 +222,81 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         val managed=Regex("(result-[0-9a-f]{64}\\.wav|mac-report-[0-9a-f]{64}\\.json)")
         exports.listFiles()?.filter{it !in keep && managed.matches(it.name)}?.forEach{it.delete()}
     }
-    private fun setResult(resultSha: String, alignment: AudioComparison?, reportSha: String? = null) {
-        val file=resultFile(resultSha)
-        val metadata=reportSha?.let(::reportFile)
-        val keep=setOf(result,report,file,metadata)
+    private fun draftEdit() = WorkspaceEdit(start, end, gain, normalize, voice, fadeIn, fadeOut)
+
+    fun currentSelection(): ClosedFloatingPointRange<Double>? = wave?.let { draftEdit().selection(it.duration) }
+
+    private fun fullEdit() = WorkspaceEdit("0", (wave?.duration ?: 1.0).toString(), 0f, false, false)
+
+    fun setStudioRange(from: Float, to: Float) {
+        if (from >= to) return
+        start = from.toDouble().toString()
+        end = if (to >= (wave?.duration ?: 1.0).toFloat()) {
+            (wave?.duration ?: 1.0).toString()
+        } else to.toDouble().toString()
+    }
+
+    fun resetStudioRange() {
+        start = "0"
+        end = (wave?.duration ?: 1.0).toString()
+    }
+
+    private fun restoreEdit(edit: WorkspaceEdit) {
+        start=edit.start;end=edit.end;gain=edit.gain;normalize=edit.normalize;voice=edit.voice
+        fadeIn=edit.fadeIn;fadeOut=edit.fadeOut
+    }
+
+    private fun trimHistory(history: MutableList<WorkspaceRevision>) {
+        if (history.size > 3) history.removeAt(0)
+    }
+
+    private fun savedRevision() = WorkspaceRevision(resultReceipt, resultReceipt?.edit ?: fullEdit())
+
+    private fun moveRevision(from: MutableList<WorkspaceRevision>, to: MutableList<WorkspaceRevision>) {
+        if (busy || from.isEmpty()) return
+        to.add(savedRevision())
+        trimHistory(to)
+        showRevision(from.removeAt(from.lastIndex), restoreControls = true)
+    }
+
+    fun undoEdit() = moveRevision(undoRevisions, redoRevisions)
+    fun redoEdit() = moveRevision(redoRevisions, undoRevisions)
+
+    private fun showRevision(revision: WorkspaceRevision, restoreControls: Boolean) {
+        val receipt = revision.receipt
         stopPlayback()
-        prefs.edit().putString("resultReceipt",gson.toJson(ResultReceipt(sourceSha,resultSha,alignment,reportSha))).apply()
-        result=file
-        resultRevision=resultSha.take(8)
-        comparison=alignment
-        playhead=(alignment?.sourceStart ?: 0.0).toFloat()
+        val target = receipt?.resultSha?.let(::resultFile)
+        val metadata = receipt?.reportSha?.let(::reportFile)
+        val recentShare = setOf(result, report)
+        val editor = prefs.edit().putBoolean("versionedWorkspace", true)
+        if (receipt == null) editor.remove("resultReceipt") else editor.putString("resultReceipt", gson.toJson(receipt))
+        editor.apply()
+        resultReceipt=receipt
+        result=target
+        resultRevision=receipt?.resultSha?.take(8).orEmpty()
+        comparison=receipt?.comparison
+        playhead=(comparison?.sourceStart ?: 0.0).toFloat()
         report=metadata
-        sendResult=true
+        sendResult=target!=null
         invalidateVideoExport()
-        pruneResultFiles(keep)
+        if (restoreControls) restoreEdit(revision.edit)
+        val retained = (undoRevisions + redoRevisions).flatMap { item ->
+            listOf(item.receipt?.resultSha?.let(::resultFile), item.receipt?.reportSha?.let(::reportFile))
+        }.toSet()
+        pruneResultFiles(retained + recentShare + setOf(target, metadata))
+    }
+
+    private fun setResult(
+        resultSha: String,
+        alignment: AudioComparison?,
+        reportSha: String? = null,
+        edit: WorkspaceEdit? = null,
+    ) {
+        undoRevisions.add(savedRevision())
+        trimHistory(undoRevisions)
+        redoRevisions.clear()
+        showRevision(WorkspaceRevision(ResultReceipt(sourceSha,resultSha,alignment,reportSha,edit), edit ?: draftEdit()),
+            restoreControls = false)
     }
     private fun clearPendingJob() {
         hasPendingJob=false
@@ -238,27 +320,28 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         previousVideo?.delete()
         importAnalysis=analysis;prefs.edit().putString("importAnalysis",analysis).apply()
         withContext(Dispatchers.IO){File(exports,"result.wav").delete();File(exports,"mac-report.json").delete()}
-        stopPlayback();wave=parsed;waveformPeaks=imported.overview;name=label;start="0";end=parsed.duration.toString();gain=0f;result=null;report=null;sendResult=false
+        stopPlayback();wave=parsed;waveformPeaks=imported.overview;name=label;result=null;report=null;sendResult=false
+        restoreEdit(fullEdit());resultReceipt=null;undoRevisions.clear();redoRevisions.clear()
         sourceSha=digest;sourceRevision=digest.take(8);resultRevision="";comparison=null;playhead=0f
         prefs.edit().putString("name",label).putBoolean("versionedWorkspace",true).remove("resultReceipt").apply()
         clearPendingJob()
         withContext(Dispatchers.IO){pruneResultFiles(emptySet())}
     }
-    fun edit() = action {
+    fun edit() = renderEdit(silence = false)
+    fun silenceSelection() = renderEdit(silence = true)
+
+    private fun renderEdit(silence: Boolean) = action {
         stopWorker();val source=requireNotNull(wave){"Import audio first"}
-        val s=start.toDoubleOrNull() ?: throw IllegalArgumentException("Invalid start time")
-        val e=end.toDoubleOrNull() ?: throw IllegalArgumentException("Invalid end time")
-        val g=gain.toDouble();val n=normalize;val v=voice
+        val edit=draftEdit().copy(silence = silence)
         val (digest,alignment)=withContext(Dispatchers.IO) {
-            val edited=source.edit(s,e,g,n,v)
-            val offset=minOf(source.frames-1,(s*source.rate).toInt()).toDouble()/source.rate
+            val (edited, comparison)=edit.process(source)
             val bytes=edited.encode()
             val digest=sha256(bytes)
             write(resultFile(digest),bytes)
             File(exports,"mac-report.json").delete()
-            digest to AudioComparison.match(source,edited,offset)
+            digest to comparison
         }
-        setResult(digest,alignment)
+        setResult(digest,alignment,edit=edit)
     }
     private fun invalidateVideoExport(){videoResult?.delete();videoResult=null}
     fun exportVideo()=action {
@@ -303,6 +386,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         nearbyMacs = emptyList()
         nearbyMessage = null
         phoneDiscoverable = true
+        phoneVisibleUntil = SystemClock.elapsedRealtime() + 90_000
         val announcement = PhonePairingAdvertisement(getApplication<Application>())
         phoneAdvertisement = announcement
         phoneWindow = viewModelScope.launch {
@@ -328,6 +412,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
                     phoneAdvertisement = null
                     phoneWindow = null
                     phoneDiscoverable = false
+                    phoneVisibleUntil = null
                     phoneAdvertised = false
                     phoneInvitations = emptyList()
                 }
@@ -342,6 +427,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         phoneWindow = null
         announcement?.close()
         phoneDiscoverable = false
+        phoneVisibleUntil = null
         phoneAdvertised = false
         phoneInvitations = emptyList()
     }
@@ -460,6 +546,8 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         currentCoroutineContext().ensureActive()
         secure.save(pairing)
         clearPendingJob()
+        workerUsage=WorkerUsage()
+        workerNotice=null
         client=next;paired=true;macState="Connected · encrypted"
         updateConnection(next,state,latency)
     }
@@ -483,7 +571,13 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         macState="Connecting…"
         try {checkConnection(requireNotNull(client));macState="Connected · encrypted"}catch(e:Exception){connected=false;macState="Mac unavailable";throw e}
     }
-    fun disconnect(){stopWorker();connected=false;macEndpoint="";latencyMs=null;client=null;paired=false;secure.clear();macState="Not connected";clearPendingJob()}
+    fun disconnect(){
+        stopWorker()
+        connected=false;macEndpoint="";latencyMs=null;macAcceptsWorker=null;client=null;paired=false
+        secure.clear();prefs.edit().remove("macName").apply();macName="Saved Mac";macState="Not connected"
+        workerUsage=WorkerUsage();workerNotice=null
+        clearPendingJob()
+    }
     fun processOnMac(profile:String) = action {
         stopWorker();val api=requireNotNull(client){"Pair with a Mac first"};val selected=if(sendResult)requireNotNull(result){"Improve audio first"} else original;require(selected.exists()){"Import audio first"}
         try {
@@ -550,7 +644,7 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         if(busy || workerRunning)return
         val api=client ?: run{error="Pair with your Mac first";return}
         workerEpoch++;val epoch=workerEpoch;val previousStop=stopJob
-        workerRunning=true;workerState="Waiting for Mac"
+        workerRunning=true;workerState="Checking Mac";workerNotice=null
         worker=viewModelScope.launch {
             var stoppedState="Stopped"
             try {
@@ -564,12 +658,30 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
                     response.taskID?.let{id ->
                         require(response.filter=="auto_eq" && response.bytes.size<=2*1024*1024){"Unsupported worker task"}
                         workerState="Processing · Voice EQ"
-                        val bytes=withContext(Dispatchers.Default){Wave.decode(response.bytes).autoEQ().encode()}
-                        ensureActive();api.request("/v1/worker/result/$id","POST",bytes);ensureActive();completions++
+                        val (bytes, stats) = withContext(Dispatchers.Default) {
+                            val source = Wave.decode(response.bytes)
+                            val began = SystemClock.elapsedRealtimeNanos()
+                            val processed = source.autoEQ()
+                            val elapsed = (SystemClock.elapsedRealtimeNanos() - began) / 1e6
+                            processed.encode() to (source.duration to elapsed)
+                        }
+                        ensureActive()
+                        workerState="Returning chunk"
+                        api.request("/v1/worker/result/$id","POST",bytes)
+                        ensureActive()
+                        workerUsage=workerUsage.add(stats.first, stats.second)
                     }
                     workerState="Waiting for Mac";delay(2000)
                 }
-            }catch(e:Exception){if(e !is CancellationException){error=e.message;stoppedState="Error · reconnect or retry"}}finally{if(epoch==workerEpoch)stopWorker(stoppedState)}
+            } catch (e: Exception) {
+                if (e !is CancellationException && epoch == workerEpoch) {
+                    workerNotice = if (e is IOException) "The connection dropped. Keep both apps open on the same Wi-Fi."
+                        else e.message ?: "Reconnect to the Mac and try again."
+                    stoppedState = "Paused"
+                }
+            } finally {
+                if(epoch==workerEpoch)stopWorker(stoppedState)
+            }
         }
     }
     fun stopWorker(state:String="Stopped"){
@@ -592,23 +704,38 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         applyListeningLevel()
     }
     fun seekPlayback(position: Float) {
+        val pending = playbackWindow
+        if (pending != null && position.toDouble() !in pending) stopPlayback()
         playhead=position
         val current=player ?: return
         if (!playerReady) return
         val target=((position-playingOffset())*1000).roundToInt().coerceIn(0,maxOf(0,current.duration-1))
         current.seekTo(target.toLong(),MediaPlayer.SEEK_CLOSEST)
     }
-    fun play(originalAudio:Boolean){
+    fun play(originalAudio: Boolean) = startPlayback(originalAudio)
+
+    fun playSelection() {
+        val selected = currentSelection() ?: return
+        startPlayback(true, selected)
+    }
+
+    private fun startPlayback(
+        originalAudio: Boolean,
+        selected: ClosedFloatingPointRange<Double>? = null,
+        restart: Boolean = false,
+    ) {
         val file=if(originalAudio)original.takeIf{it.isFile} else result
         if (file == null) return
         val differentTrack=originalAudio!=playingOriginal
         stopPlayback()
         val span=comparison
-        if (span != null && differentTrack && !span.contains(playhead.toDouble())) {
-            playhead=span.sourceStart.toFloat()
-        } else if (span==null && differentTrack) {
+        val bounds=selected ?: span?.let { it.sourceStart..(it.sourceStart+it.duration) }
+        if (bounds != null && (restart || playhead < bounds.start || playhead >= bounds.endInclusive)) {
+            playhead=bounds.start.toFloat()
+        } else if (bounds==null && (differentTrack || restart)) {
             playhead=0f
         }
+        playbackWindow=bounds
         playingOriginal=originalAudio
         val next=MediaPlayer()
         player=next
@@ -622,16 +749,23 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
                 fun startPlayer() {
                     if(player!==ready)return
                     ready.start()
-                    playbackState=if(originalAudio)"A · Original" else "B · Result"
+                    playbackState=when {
+                        selected!=null -> "Selection"
+                        originalAudio -> "A · Original"
+                        else -> "B · Result"
+                    }
                     playbackTracking=viewModelScope.launch {
                         while(isActive && player===ready) {
                             updatePlayhead()
-                            if (originalAudio && span!=null && playhead>=span.sourceStart+span.duration) {
-                                stopPlayback()
-                                playhead=span.sourceStart.toFloat()
+                            if (originalAudio && bounds!=null && playhead>=bounds.endInclusive) {
+                                if (loopPlayback) startPlayback(originalAudio, selected, restart = true)
+                                else {
+                                    stopPlayback()
+                                    playhead=bounds.start.toFloat()
+                                }
                                 break
                             }
-                            delay(120)
+                            delay(60)
                         }
                     }
                 }
@@ -646,7 +780,10 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
                 true
             }
             next.setOnCompletionListener { completed ->
-                if(player===completed){stopPlayback();playhead=(comparison?.sourceStart ?: 0.0).toFloat()}
+                if(player===completed) {
+                    if (loopPlayback) startPlayback(originalAudio, selected, restart = true)
+                    else { stopPlayback();playhead=(bounds?.start ?: 0.0).toFloat() }
+                }
             }
             next.prepareAsync()
         }.onFailure { stopPlayback();error=it.message;playbackState="Playback error" }
@@ -658,10 +795,15 @@ class CompanionViewModel(app:Application):AndroidViewModel(app) {
         player?.release()
         player=null
         playerReady=false
+        playbackWindow=null
         playbackState="Stopped"
     }
     fun updateMusic(value:MusicDraft){music=value;prefs.edit().putString("music",gson.toJson(value)).apply()}
     fun buildBrief(){runCatching{updateMusic(music.build())}.onFailure{error=it.message}}
+    fun exportBriefText(): File? = runCatching {
+        require(music.canExport) { "Update the brief before sharing" }
+        File(exports, "music-brief.txt").also { write(it, music.prompt.toByteArray()) }
+    }.onFailure { error = it.message }.getOrNull()
     fun exportBrief():File?=runCatching{require(music.canExport){"Rebuild after changing directions"};File(exports,"music-brief.json").also{val bytes=gson.toJson(music).toByteArray();require(bytes.size<=65536){"Shorten the brief before exporting"};write(it,bytes)}}.onFailure{error=it.message}.getOrNull()
     fun importBrief(uri:Uri)=action{val text=withContext(Dispatchers.IO){getApplication<Application>().contentResolver.openInputStream(uri)!!.use{String(it.readBytesBounded(65536))}};updateMusic(parseMusic(text))}
     private fun parseMusic(text:String):MusicDraft {

@@ -13,7 +13,7 @@ import kotlinx.coroutines.ensureActive
 
 /** Offline import. The source document is never modified, and temporary copies are always removed. */
 object AudioImporter {
-    data class Imported(val wave: Wave, val video: File?, val analysis:String,val overview:FloatArray=wave.overview())
+    data class Imported(val wave: Wave, val video: File?, val analysis:String,val overview:FloatArray=wave.overview(320))
     suspend fun decode(context: Context, uri: Uri, filter:AudioImportPolicy.Filter=AudioImportPolicy.Filter.ALL): Imported {
         val cancellation = currentCoroutineContext()
         val copy = File.createTempFile("media-import-", ".bin", context.filesDir)

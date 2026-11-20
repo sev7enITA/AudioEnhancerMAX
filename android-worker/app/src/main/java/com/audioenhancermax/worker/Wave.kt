@@ -33,14 +33,48 @@ data class Wave(val samples: FloatArray, val rate: Int, val channels: Int) {
         }
         return Wave(output,rate,channels)
     }
-    fun edit(start: Double, end: Double, gain: Double, normalize: Boolean, voice: Boolean): Wave {
-        require(start.isFinite() && end.isFinite() && gain.isFinite() && start >= 0 && end <= duration + 0.000001 && end > start && gain in -24.0..12.0) { "Choose a valid time range and gain" }
-        val lo = min(frames-1,(start*rate).toInt());val hi = min(frames,(end*rate).roundToInt())
-        require(hi > lo) { "Selected range is empty" }
+    fun silence(start: Double, end: Double): Wave {
+        val (first, last) = selectionFrames(start, end)
+        val output = samples.copyOf()
+        output.fill(0f, first * channels, last * channels)
+        return Wave(output, rate, channels)
+    }
+
+    private fun selectionFrames(start: Double, end: Double): Pair<Int, Int> {
+        require(start.isFinite() && end.isFinite() && start >= 0 && end <= duration + 0.000001 && end > start) {
+            "Choose a valid time range"
+        }
+        val first = min(frames - 1, (start * rate).toInt())
+        val last = min(frames, (end * rate).roundToInt())
+        require(last > first) { "Selected range is empty" }
+        return first to last
+    }
+
+    fun edit(
+        start: Double,
+        end: Double,
+        gain: Double,
+        normalize: Boolean,
+        voice: Boolean,
+        fadeIn: Double = 0.0,
+        fadeOut: Double = 0.0,
+    ): Wave {
+        require(gain in -24.0..12.0) { "Choose a gain between −24 and +12 dB" }
+        require(fadeIn in 0.0..5.0 && fadeOut in 0.0..5.0) { "Choose fades between 0 and 5 seconds" }
+        val (lo, hi) = selectionFrames(start, end)
         var w = Wave(samples.copyOfRange(lo*channels,hi*channels),rate,channels)
         if (voice) w = w.autoEQ()
         val factor = 10.0.pow(gain/20).toFloat()
-        var output = FloatArray(w.samples.size) { w.samples[it]*factor }
+        val inFrames = (fadeIn * rate).roundToInt().coerceAtMost(w.frames)
+        val outFrames = (fadeOut * rate).roundToInt().coerceAtMost(w.frames)
+        val output = w.samples
+        for (frame in 0 until w.frames) {
+            val incoming = if (frame < inFrames) frame.toFloat() / max(1, inFrames - 1) else 1f
+            val remaining = w.frames - 1 - frame
+            val outgoing = if (remaining < outFrames) remaining.toFloat() / max(1, outFrames - 1) else 1f
+            val amplitude = factor * incoming * outgoing
+            for (channel in 0 until channels) output[frame * channels + channel] *= amplitude
+        }
         val peak = output.maxOf { abs(it) }
         if (normalize && peak>0) { val scale = 10.0.pow(-1.0/20).toFloat()/peak;for (i in output.indices) output[i] *= scale }
         for (i in output.indices) output[i] = output[i].coerceIn(-1f,1f)
@@ -117,14 +151,5 @@ data class AudioComparison(
             val resultGain = if (sourceEnergy > floor && resultEnergy > sourceEnergy) sqrt(sourceEnergy / resultEnergy) else 1.0
             return AudioComparison(firstFrame.toDouble() / source.rate, result.duration, originalGain.toFloat(), resultGain.toFloat())
         }
-    }
-}
-
-data class MusicDraft(var description:String="",var style:String="Ambient",var instruments:String="Piano, soft strings",var exclusions:String="",var vocals:String="Instrumental",var duration:String="30",var bpm:String="90",var lyrics:String="",var arrangement:String="Opening; development; ending",var prompt:String="",var builtSource:String="") {
-    val source get() = listOf(description,style,instruments,exclusions,vocals,duration,bpm,lyrics,arrangement).joinToString("\u001F")
-    val canExport get() = prompt.isNotEmpty() && builtSource==source && source.toByteArray().size<=12000 && prompt.toByteArray().size<=12000
-    fun build(): MusicDraft {
-        require(source.toByteArray().size<=12000 && description.isNotBlank() && duration.toIntOrNull() in 5..600 && bpm.toIntOrNull() in 30..240) { "Add a description, duration 5–600 s and tempo 30–240 BPM" }
-        return copy(prompt="GLOBAL METADATA\n$description\nStyle: $style\nInstruments: $instruments\nAvoid: $exclusions\nTarget: $duration seconds, $bpm BPM\n\nVOCAL DETAILS\n$vocals\n\nARRANGEMENT\n$arrangement",builtSource=source)
     }
 }

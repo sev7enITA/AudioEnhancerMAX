@@ -88,17 +88,8 @@ struct Wave: Sendable {
         word(16);word(3,2);word(UInt32(channels),2);word(UInt32(rate));word(UInt32(rate*channels*4));word(UInt32(channels*4),2);word(32,2)
         data.append(contentsOf:"data".utf8);word(UInt32(samples.count*4));for v in samples { word(v.bitPattern) };return data
     }
-    func edited(start:Double,end:Double,gain:Double,normalize:Bool,voice:Bool) throws -> Wave {
-        guard start.isFinite,end.isFinite,gain.isFinite,start>=0,end<=duration+0.000001,end>start,(-24...12).contains(gain) else {throw CompanionError.message("Choose a valid time range and gain.")}
-        let lo=min(frames-1,Int(start*Double(rate))), hi=min(frames,Int((end*Double(rate)).rounded()))
-        guard hi>lo else {throw CompanionError.message("The selected range is empty.")}
-        var wave=try Wave(samples:Array(samples[lo*channels..<hi*channels]),rate:rate,channels:channels)
-        if voice { wave=try wave.autoEQ() }
-        let factor=Float(pow(10,gain/20));wave.samples=wave.samples.map{$0*factor}
-        guard wave.samples.allSatisfy({$0.isFinite}) else{throw CompanionError.message("Audio level is outside the supported range.")}
-        let peak=wave.samples.map{abs($0)}.max() ?? 0
-        if normalize && peak>0 { let scale=Float(pow(10,-1.0/20))/peak;wave.samples=wave.samples.map{$0*scale} }
-        wave.samples=wave.samples.map{min(1,max(-1,$0))};return try Wave(samples:wave.samples,rate:rate,channels:channels)
+    func edited(start: Double, end: Double, gain: Double, normalize: Bool, voice: Bool) throws -> Wave {
+        try render(StudioEdit(start: start, end: end, gain: gain, normalize: normalize, voice: voice)).wave
     }
     func autoEQ() throws -> Wave {
         var values=samples
@@ -155,20 +146,5 @@ struct AudioComparison: Codable, Sendable {
         let resultGain = sourceEnergy > floor && resultEnergy > sourceEnergy ? sqrt(sourceEnergy / resultEnergy) : 1
         return Self(sourceStart: Double(firstFrame) / Double(source.rate), duration: result.duration,
                     originalGain: Float(originalGain), resultGain: Float(resultGain))
-    }
-}
-
-struct MusicDraft: Codable, Equatable {
-    var description="", style="Ambient", instruments="Piano, soft strings", exclusions="", vocals="Instrumental", duration="30", bpm="90", lyrics="", arrangement="Opening; development; ending"
-    var prompt="", builtSource=""
-    var source:String { [description,style,instruments,exclusions,vocals,duration,bpm,lyrics,arrangement].joined(separator:"\u{001F}") }
-    var canExport:Bool { !prompt.isEmpty && builtSource==source && source.utf8.count<=12000 && prompt.utf8.count<=12000 }
-    mutating func build() throws {
-        guard source.utf8.count<=12000,!description.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,
-              let seconds=Int(duration),(5...600).contains(seconds), let tempo=Int(bpm),(30...240).contains(tempo) else {
-            throw CompanionError.message("Add a description, duration 5–600 s and tempo 30–240 BPM.")
-        }
-        prompt="GLOBAL METADATA\n\(description)\nStyle: \(style)\nInstruments: \(instruments)\nAvoid: \(exclusions)\nTarget: \(duration) seconds, \(bpm) BPM\n\nVOCAL DETAILS\n\(vocals)\n\nARRANGEMENT\n\(arrangement)"
-        builtSource=source
     }
 }

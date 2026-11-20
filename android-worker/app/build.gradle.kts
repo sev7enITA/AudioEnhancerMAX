@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "com.audioenhancermax.worker"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.audioenhancermax.worker"
         minSdk = 26
         testInstrumentationRunner = "com.audioenhancermax.worker.MediaInstrumentation"
         targetSdk = 35
-        versionCode = 14
+        versionCode = 15
         versionName = "4.0.0"
     }
 
@@ -39,6 +39,10 @@ android {
     buildFeatures {
         compose = true
     }
+
+    sourceSets.getByName("main").assets.srcDir("../../app/resources/c2pa")
+    sourceSets.getByName("main").assets.srcDir("../../app/resources/mobile")
+    sourceSets.getByName("androidTest").assets.srcDir("../../web/c2pa/v4.0.0-beta.1")
 }
 
 dependencies {
@@ -71,4 +75,5 @@ dependencies {
 
     // JSON
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.github.contentauth:c2pa-android:0.1.1")
 }

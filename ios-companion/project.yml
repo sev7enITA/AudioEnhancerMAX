@@ -7,7 +7,7 @@ settings:
   base:
     SWIFT_VERSION: '5.0'
     MARKETING_VERSION: '4.0.0'
-    CURRENT_PROJECT_VERSION: '10'
+    CURRENT_PROJECT_VERSION: '11'
     TARGETED_DEVICE_FAMILY: '1,2'
     GENERATE_INFOPLIST_FILE: YES
     INFOPLIST_KEY_NSCameraUsageDescription: 'Scan the private pairing QR code displayed by AudioEnhancerMAX on your Mac. Images stay on this device and are not saved.'
@@ -16,11 +16,23 @@ settings:
     INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
     CODE_SIGNING_ALLOWED: YES
     "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
+packages:
+  C2PA:
+    url: https://github.com/contentauth/c2pa-swift.git
+    exactVersion: 0.1.0
 targets:
   AudioEnhancerCompanion:
     type: application
     platform: iOS
-    sources: [Sources, Resources]
+    sources:
+      - Sources
+      - Resources
+      - path: ../app/resources/c2pa
+        buildPhase: resources
+      - path: ../app/resources/mobile
+        buildPhase: resources
+    dependencies:
+      - package: C2PA
     info:
       path: Config/Info.plist
       properties:
@@ -34,7 +46,10 @@ targets:
   CompanionTests:
     type: bundle.unit-test
     platform: iOS
-    sources: [Tests]
+    sources:
+      - Tests
+      - path: ../web/c2pa/v4.0.0-beta.1
+        buildPhase: resources
     dependencies:
       - target: AudioEnhancerCompanion
 schemes:

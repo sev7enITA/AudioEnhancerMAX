@@ -8,6 +8,7 @@ private struct ResultReceipt: Codable {
     let resultSha: String
     let comparison: AudioComparison?
     let reportSha: String?
+    let edit: StudioEdit?
 }
 
 @MainActor final class CompanionModel: ObservableObject {
@@ -34,6 +35,7 @@ private struct ResultReceipt: Codable {
     @Published var connected=false
     @Published var macName="Saved Mac"
     @Published var macEndpoint=""
+    @Published private(set) var macBuild = ""
     @Published var latencyMs:Int?
     func suspendPresence(){connected=false;latencyMs=nil}
     private func checkConnection(_ api:CompanionClient,acceptNew:Bool=false) async throws {
@@ -44,6 +46,11 @@ private struct ResultReceipt: Codable {
         latencyMs=Int(Date().timeIntervalSince(began)*1000)
         DeviceAssessment.roundTripMs=latencyMs;assessmentText=DeviceAssessment.summary()
         macName=status["mac_name"] as? String ?? "AudioEnhancerMAX Mac"
+        if let version = status["version"] as? String, version != "unknown" {
+            macBuild = [version, status["build"] as? String].compactMap { $0 }.joined(separator: " · ")
+        } else {
+            macBuild = ""
+        }
         macEndpoint=api.pairing.endpoint;connected=true
     }
     func refreshConnection() async {
@@ -63,12 +70,29 @@ private struct ResultReceipt: Codable {
     var transferSelection: String {
         sendResult ? "Current result · \(resultRevision)" : "Imported audio · \(sourceRevision)"
     }
-    @Published var completedChunks=0
-    @Published var start=0.0
-    @Published var end=1.0
-    @Published var gain=0.0
-    @Published var normalize=true
-    @Published var voice=false
+    @Published private(set) var workUsage = WorkerUsage()
+    @Published private(set) var editHistory = StudioEditHistory()
+    @Published private(set) var renderedEdit: StudioEdit?
+    @Published private(set) var playbackIsOriginal = true
+    @Published var loopSelection = false
+    var studioEdit: StudioEdit { editHistory.current }
+    var start: Double {
+        get { studioEdit.start }
+        set { changeEdit { $0.start = min(newValue, $0.end - samplePeriod) } }
+    }
+    var end: Double {
+        get { studioEdit.end }
+        set { changeEdit { $0.end = max(newValue, $0.start + samplePeriod) } }
+    }
+    private var samplePeriod: Double { 1 / Double(source?.rate ?? 48_000) }
+    var hasUnrenderedEdit: Bool { renderedEdit.map { $0 != studioEdit } ?? false }
+    var canLoopSelection: Bool {
+        if playbackIsOriginal { return studioEdit.end - studioEdit.start >= 0.025 }
+        guard let comparison else { return false }
+        let lower = max(comparison.sourceStart, studioEdit.start)
+        let upper = min(comparison.sourceStart + comparison.duration, studioEdit.end)
+        return upper - lower >= 0.025
+    }
     @Published var remoteProfile="voice"
     @Published var sendResult=false
     @Published var music=MusicDraft() {didSet {if let data=try? JSONEncoder().encode(music){UserDefaults.standard.set(data,forKey:"musicDraft")}}}
@@ -79,7 +103,6 @@ private struct ResultReceipt: Codable {
     private var player:AVAudioPlayer?
     private var playbackObserver:PlaybackObserver?
     private var playbackTracking:Task<Void,Never>?
-    private var playingOriginal=true
     private var sourceSha=""
     private let folder:URL
     let device:String
@@ -94,7 +117,8 @@ private struct ResultReceipt: Codable {
         if let pairing=PairingStore.load(){client=CompanionClient(pairing,device:device);macEndpoint=pairing.endpoint;macState="Paired · reconnect to check"}
         let original=folder.appendingPathComponent("original.wav")
         if let data=try? Data(contentsOf:original),let wave=try? Wave(data:data){
-            source=wave;waveformPeaks=wave.overview();originalURL=original;name=defaults.string(forKey:"audioName") ?? "Saved audio";end=wave.duration
+            source=wave;waveformPeaks=wave.overview();originalURL=original;name=defaults.string(forKey:"audioName") ?? "Saved audio"
+            editHistory = StudioEditHistory(current: StudioEdit(end: wave.duration))
             sourceSha=Self.sha256(data);sourceRevision=String(sourceSha.prefix(8))
         }
         if let videoName=defaults.string(forKey:"videoSource"),videoName.hasPrefix("source-"),!videoName.contains("/"),
@@ -131,6 +155,10 @@ private struct ResultReceipt: Codable {
             guard receipt.sourceSha == sourceSha, receipt.resultSha == resultSha else { return }
             comparison=receipt.comparison
             playhead=receipt.comparison?.sourceStart ?? 0
+            if let edit = receipt.edit {
+                editHistory = StudioEditHistory(current: edit)
+                renderedEdit = edit
+            }
         }
         resultURL=result
         resultRevision=String(resultSha.prefix(8))
@@ -162,16 +190,17 @@ private struct ResultReceipt: Codable {
             }
         }
     }
-    private func setResult(digest:String,alignment:AudioComparison?,reportSha:String?=nil) {
+    private func setResult(digest:String,alignment:AudioComparison?,reportSha:String?=nil,edit:StudioEdit?=nil) {
         let url=Self.resultFile(digest,in:folder)
         let metadata=reportSha.map { Self.reportFile($0,in:folder) }
         let keep=[resultURL,reportURL,url,metadata]
         stopPlayback()
-        let receipt=ResultReceipt(sourceSha:sourceSha,resultSha:digest,comparison:alignment,reportSha:reportSha)
+        let receipt=ResultReceipt(sourceSha:sourceSha,resultSha:digest,comparison:alignment,reportSha:reportSha,edit:edit)
         UserDefaults.standard.set(try? JSONEncoder().encode(receipt),forKey:"resultReceipt")
         resultURL=url
         resultRevision=String(digest.prefix(8))
         comparison=alignment
+        renderedEdit=edit
         playhead=alignment?.sourceStart ?? 0
         reportURL=metadata
         sendResult=true
@@ -214,7 +243,10 @@ private struct ResultReceipt: Codable {
             clearPendingJob()
             pruneResultFiles(keeping:[])
             source=wave;waveformPeaks=imported.overview;originalURL=target;sendResult=false
-            name=url.lastPathComponent;UserDefaults.standard.set(name,forKey:"audioName");start=0;end=wave.duration;gain=0
+            name=url.lastPathComponent;UserDefaults.standard.set(name,forKey:"audioName")
+            editHistory = StudioEditHistory(current: StudioEdit(end: wave.duration))
+            renderedEdit = nil
+            playbackIsOriginal = true
             stopPlayback()
             sourceSha=digest;sourceRevision=String(digest.prefix(8));resultRevision=""
             comparison=nil;playhead=0
@@ -222,19 +254,18 @@ private struct ResultReceipt: Codable {
     }
     func edit() async {
         guard !busy,let source else{return};stopWorker();busy=true;defer{busy=false}
-        let s=start,e=end,g=gain,n=normalize,v=voice
+        let edit = studioEdit
         do {
             let folder=self.folder
             let receipt=try await Task.detached(priority:.userInitiated){
-                let wave=try source.edited(start:s,end:e,gain:g,normalize:n,voice:v)
-                let offset=Double(min(source.frames-1,Int(s*Double(source.rate))))/Double(source.rate)
+                let (wave, offset) = try source.render(edit)
                 let bytes=wave.encoded()
                 let digest=Self.sha256(bytes)
                 try bytes.write(to:Self.resultFile(digest,in:folder),options:.atomic)
                 return (digest,AudioComparison.match(source:source,result:wave,sourceStart:offset))
             }.value
             try? FileManager.default.removeItem(at:folder.appendingPathComponent("mac-report.json"))
-            setResult(digest:receipt.0,alignment:receipt.1)
+            setResult(digest:receipt.0,alignment:receipt.1,edit:edit)
         }catch{self.error=error.localizedDescription}
     }
     private func invalidateVideoExport(){
@@ -250,60 +281,135 @@ private struct ResultReceipt: Codable {
             invalidateVideoExport();videoResultURL=output
         }catch{try? FileManager.default.removeItem(at:output);self.error=error.localizedDescription}
     }
-    private var playingOffset:Double { playingOriginal ? 0 : comparison?.sourceStart ?? 0 }
+    func changeEdit(_ change: (inout StudioEdit) -> Void) {
+        guard let source, !busy else { return }
+        var updated = studioEdit
+        change(&updated)
+        guard updated.start.isFinite, updated.end.isFinite else { return }
+        let rate = Double(source.rate)
+        let first = (min(source.duration, max(0, updated.start)) * rate).rounded()
+        let last = (min(source.duration, max(0, updated.end)) * rate).rounded()
+        updated.start = min(first, Double(source.frames - 1)) / rate
+        updated.end = min(Double(source.frames), max(first + 1, last)) / rate
+        editHistory.replace(with: updated)
+    }
+
+    func undoEdit() {
+        guard !busy else { return }
+        editHistory.undo()
+    }
+
+    func redoEdit() {
+        guard !busy else { return }
+        editHistory.redo()
+    }
+
+    private var playingOffset: Double { playbackIsOriginal ? 0 : comparison?.sourceStart ?? 0 }
+
     private func applyListeningLevel() {
-        player?.volume = matchListeningLevels ? (playingOriginal ? comparison?.originalGain : comparison?.resultGain) ?? 1 : 1
+        player?.volume = matchListeningLevels ? (playbackIsOriginal ? comparison?.originalGain : comparison?.resultGain) ?? 1 : 1
     }
-    func seekPlayback(_ time:Double) {
-        playhead=time
-        if let player { player.currentTime=max(0,min(player.duration-0.001,time-playingOffset)) }
+
+    func seekPlayback(_ time: Double) {
+        guard time.isFinite else { return }
+        playhead = time
+        if let player { player.currentTime = max(0, min(player.duration - 0.001, time - playingOffset)) }
     }
-    func play(_ url:URL?) {
-        guard let url else{return}
-        let original=url==originalURL
-        let differentTrack=original != playingOriginal
+
+    func togglePlayback() {
+        if player != nil { stopPlayback() }
+        else { play(playbackIsOriginal ? originalURL : resultURL) }
+    }
+
+    func selectPlayback(original: Bool) {
+        guard original != playbackIsOriginal else { return }
+        let wasPlaying = player != nil
         stopPlayback()
-        if differentTrack {
-            if let comparison {
-                if !comparison.contains(playhead) { playhead=comparison.sourceStart }
-            } else { playhead=0 }
+        playbackIsOriginal = original
+        if let comparison {
+            if !comparison.contains(playhead) { playhead = comparison.sourceStart }
+        } else {
+            playhead = 0
         }
-        playingOriginal=original
+        if wasPlaying { play(original ? originalURL : resultURL) }
+    }
+
+    private func playbackBounds(for player: AVAudioPlayer) -> ClosedRange<Double>? {
+        let offset = playingOffset
+        if loopSelection, canLoopSelection {
+            let lower = max(0, studioEdit.start - offset)
+            let upper = min(player.duration, studioEdit.end - offset)
+            if upper - lower >= 0.025 { return lower...upper }
+        }
+        if playbackIsOriginal, let comparison {
+            return comparison.sourceStart...(comparison.sourceStart + comparison.duration)
+        }
+        return nil
+    }
+
+    func play(_ url: URL?) {
+        guard let url else { return }
+        let original = url == originalURL
+        stopPlayback()
+        selectPlayback(original: original)
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback);try AVAudioSession.sharedInstance().setActive(true)
-            let next=try AVAudioPlayer(contentsOf:url)
-            player=next
-            playbackObserver=PlaybackObserver{[weak self,weak next] in
-                guard let self,let next,self.player===next else{return}
+            try AVAudioSession.sharedInstance().setCategory(.playback)
+            try AVAudioSession.sharedInstance().setActive(true)
+            let next = try AVAudioPlayer(contentsOf: url)
+            player = next
+            playbackObserver = PlaybackObserver { [weak self, weak next] in
+                guard let self, let next, self.player === next else { return }
+                if self.loopSelection, self.canLoopSelection, let span = self.playbackBounds(for: next) {
+                    next.currentTime = span.lowerBound
+                    if next.play() { return }
+                }
                 self.stopPlayback()
-                self.playhead=self.comparison?.sourceStart ?? 0
+                self.playhead = self.comparison?.sourceStart ?? 0
             }
-            next.delegate=playbackObserver
-            let desired=max(0,playhead-playingOffset)
-            next.currentTime=max(0,min(next.duration-0.001,desired))
+            next.delegate = playbackObserver
+            let desired = max(0, playhead - playingOffset)
+            if let span = playbackBounds(for: next), desired < span.lowerBound || desired >= span.upperBound {
+                next.currentTime = span.lowerBound
+            } else {
+                next.currentTime = max(0, min(next.duration - 0.001, desired))
+            }
             applyListeningLevel()
-            guard next.play() else{throw CompanionError.message("This audio could not be played.")}
-            playbackState=original ? "A · Original":"B · Result"
-            playbackTracking=Task{[weak self,weak next] in
-                while !Task.isCancelled, let self, let next, self.player===next {
-                    self.playhead=self.playingOffset+next.currentTime
-                    if original,let span=self.comparison,self.playhead>=span.sourceStart+span.duration {
-                        self.stopPlayback()
-                        self.playhead=span.sourceStart
-                        break
+            guard next.play() else { throw CompanionError.message("This audio could not be played.") }
+            playbackState = original ? "A · Original" : "B · Result"
+            playbackTracking = Task { [weak self, weak next] in
+                while !Task.isCancelled, let self, let next, self.player === next {
+                    let offset = self.playingOffset
+                    self.playhead = offset + next.currentTime
+                    if let span = self.playbackBounds(for: next),
+                       next.currentTime >= span.upperBound || (self.loopSelection && self.canLoopSelection && next.currentTime < span.lowerBound) {
+                        if self.loopSelection, self.canLoopSelection {
+                            next.currentTime = span.lowerBound
+                        } else {
+                            self.stopPlayback()
+                            self.playhead = offset + span.lowerBound
+                            break
+                        }
                     }
-                    try? await Task.sleep(for:.milliseconds(120))
+                    try? await Task.sleep(for: .milliseconds(25))
                 }
             }
-        } catch{stopPlayback();self.error=error.localizedDescription;playbackState="Playback error"}
+        } catch {
+            stopPlayback()
+            self.error = error.localizedDescription
+            playbackState = "Playback error"
+        }
     }
-    func stopPlayback(){
-        if let player { playhead=playingOffset+player.currentTime;player.stop() }
+
+    func stopPlayback() {
+        if let player {
+            playhead = playingOffset + player.currentTime
+            player.stop()
+        }
         playbackTracking?.cancel()
-        playbackTracking=nil
-        player=nil
-        playbackObserver=nil
-        playbackState="Stopped"
+        playbackTracking = nil
+        player = nil
+        playbackObserver = nil
+        playbackState = "Stopped"
     }
     func connect(_ code:String) async {
         guard !busy else { return }
@@ -331,6 +437,7 @@ private struct ResultReceipt: Codable {
             clearPendingJob()
             client?.invalidate()
             client = next
+            workUsage = WorkerUsage()
             macState = "Connected · encrypted"
             return true
         } catch {
@@ -344,7 +451,7 @@ private struct ResultReceipt: Codable {
         guard let client,!busy else{return};busy=true;defer{busy=false};macState="Connecting…"
         do{try await checkConnection(client);macState="Connected · encrypted"}catch{connected=false;macState="Mac unavailable";self.error=error.localizedDescription}
     }
-    func disconnect(){stopWorker();connected=false;macEndpoint="";latencyMs=nil;client?.invalidate();client=nil;PairingStore.clear();clearPendingJob();macState="Not connected"}
+    func disconnect(){stopWorker();connected=false;macEndpoint="";macBuild="";latencyMs=nil;client?.invalidate();client=nil;PairingStore.clear();clearPendingJob();macState="Not connected";workUsage = WorkerUsage()}
     func processOnMac() async {
         guard !busy,let client,let selectedURL=(sendResult ? resultURL:originalURL) else{return};stopWorker();busy=true;defer{busy=false}
         let profile=remoteProfile
@@ -427,7 +534,7 @@ private struct ResultReceipt: Codable {
         throw CompanionError.message("Still working on the Mac. Use Recover job later.")
     }
     func startWorker(){
-        guard !busy,!workerRunning,let client else{return}
+        guard !busy,!workerRunning,connected,let client else{return}
         workerEpoch+=1;let epoch=workerEpoch;let previousStop=stopTask
         workerRunning=true;workerState="Waiting for Mac";UIApplication.shared.isIdleTimerDisabled=true
         workerTask=Task {
@@ -442,10 +549,17 @@ private struct ResultReceipt: Codable {
                     if let id=response.value(forHTTPHeaderField:"X-Task-ID") {
                         guard response.value(forHTTPHeaderField:"X-Filter")=="auto_eq",data.count<=2*1024*1024 else{throw CompanionError.message("Unsupported worker task.")}
                         workerState="Processing · Voice EQ"
-                        let result=try await Task.detached(priority:.utility){try Wave(data:data).autoEQ().encoded()}.value
+                        let (result, duration, dspSeconds) = try await Task.detached(priority: .utility) {
+                            let wave = try Wave(data: data)
+                            let began = ProcessInfo.processInfo.systemUptime
+                            let revised = try wave.autoEQ()
+                            let dspSeconds = ProcessInfo.processInfo.systemUptime - began
+                            return (revised.encoded(), wave.duration, dspSeconds)
+                        }.value
                         try Task.checkCancellation()
                         _ = try await client.request("/v1/worker/result/\(id)",method:"POST",body:result)
-                        try Task.checkCancellation();completedChunks+=1
+                        try Task.checkCancellation()
+                        workUsage.record(audioSeconds: duration, dspSeconds: dspSeconds)
                     }
                     workerState="Waiting for Mac";try await Task.sleep(for:.seconds(2))
                 }
@@ -464,6 +578,13 @@ private struct ResultReceipt: Codable {
         let data=try JSONEncoder().encode(music)
         guard data.count<=65536 else{throw CompanionError.message("Shorten the brief before exporting.")}
         let url=folder.appendingPathComponent("music-brief.json");try data.write(to:url,options:.atomic);return url
+    }
+
+    func briefTextExport() throws -> URL {
+        guard music.canExport else { throw CompanionError.message("Update the brief before sharing.") }
+        let url = folder.appendingPathComponent("music-brief.txt")
+        try music.prompt.write(to: url, atomically: true, encoding: .utf8)
+        return url
     }
 
 }

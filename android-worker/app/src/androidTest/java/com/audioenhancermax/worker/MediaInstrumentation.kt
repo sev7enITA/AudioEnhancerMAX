@@ -24,6 +24,16 @@ class MediaInstrumentation: Instrumentation() {
                 }
                 val folder=File(targetContext.cacheDir,"media-regression").apply{mkdirs()}
                 fun fixture(name:String)=File(folder,name).also { f -> context.assets.open(name).use{input->f.outputStream().use{input.copyTo(it)}} }
+                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    val signed = inspectCredentialFile(targetContext, fixture("signed-sample.wav"), "audio/wav")
+                    val altered = inspectCredentialFile(targetContext, fixture("altered-sample.wav"), "audio/wav")
+                    val unsigned = inspectCredentialFile(targetContext, fixture("phone24.wav"), "audio/wav")
+                    check(signed.outcome == "Integrity verified" && signed.signerTrust != "Recognized") { signed.toString() }
+                    check(signed.reportFingerprint == sha256(fixture("processing-report.json").readBytes())) { signed.toString() }
+                    check(altered.outcome == "Integrity check failed") { altered.toString() }
+                    check(unsigned.outcome == "No embedded credentials") { unsigned.toString() }
+                    report.putString("c2pa", "PASS: original signed, altered and unsigned WAVs, signer trust and exact report fingerprint")
+                }
                 for(name in listOf("phone.m4a","phone.aac","phone.flac","phone.ogg","phone24.wav")) {
                     val file=fixture(name);val hash=sha256(file.readBytes())
                     val decoded=AudioImporter.decode(targetContext,Uri.fromFile(file))

@@ -30,78 +30,52 @@ struct NearbyMacSheet: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                switch stage {
-                case .searching:
-                    Section {
-                        Text("On the Mac, open Nearby pairing in Mobile devices and transfers. Keep both devices on the same Wi-Fi or hotspot.")
-                            .foregroundStyle(.secondary)
-                    }
-                    Section("Nearby Macs") {
-                        if discovery.matches.isEmpty {
-                            Text(discovery.message).foregroundStyle(.secondary)
-                        }
-                        ForEach(discovery.matches) { mac in
-                            invitationButton(mac)
-                        }
-                        Button("Refresh search") { discovery.start() }
-                    }
-                case .discoverable:
-                    Section {
-                        Text("On the Mac, open Mobile devices and transfers, then search for nearby phones. Both devices need the same Wi-Fi or hotspot.")
-                            .foregroundStyle(.secondary)
-                        Text(visibility.message).accessibilityIdentifier("phone-discovery-status")
-                        if !visibility.active {
-                            Button(mode.retryTitle) { reset() }
-                        }
-                    }
-                    if !visibility.invitations.isEmpty {
-                        Section("Pairing invitations") {
-                            ForEach(visibility.invitations) { mac in
-                                invitationButton(mac)
+            ScrollView {
+                VStack(spacing: 14) {
+                    switch stage {
+                    case .searching:
+                        pairingStep("Search over Wi-Fi", symbol: "wifi",
+                                    message: "Open Nearby pairing under Mobile devices and transfers on the Mac. Both devices need the same Wi-Fi or hotspot.")
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Nearby Macs").font(.headline)
+                            if discovery.matches.isEmpty {
+                                Label(discovery.message, systemImage: "antenna.radiowaves.left.and.right")
+                                    .foregroundStyle(WorkspaceColor.muted)
                             }
-                        }
-                    }
-                case .requesting(let mac):
-                    ProgressView("Requesting a confirmation code from \(mac.name)…")
-                case .comparing(let mac, let challenge):
-                    Section {
-                        Text("Compare the eight digits below with the code on \(mac.name). Confirm on both devices when they match.")
-                        Text(challenge.code)
-                            .font(.largeTitle.monospacedDigit().weight(.semibold))
-                            .accessibilityLabel("Confirmation code \(challenge.code.map { String($0) }.joined(separator: " "))")
-                            .accessibilityIdentifier("nearby-confirmation-code")
-                    }
-                    Section {
-                        Button("Codes match") { finish(challenge) }
-                            .buttonStyle(.borderedProminent)
-                            .accessibilityIdentifier("nearby-confirm-codes")
-                        Button("Codes do not match", role: .destructive) {
-                            cancel()
-                            stage = .failed("Pairing cancelled. Decline this request on your Mac before trying again.")
-                        }
-                    }
-                case .waiting:
-                    ProgressView("Waiting for confirmation on the Mac…")
-                case .failed(let message):
-                    Section {
-                        Text(message).foregroundStyle(.secondary)
-                        Button(mode.retryTitle) { reset() }
+                            ForEach(discovery.matches) { mac in invitationButton(mac) }
+                            Button("Refresh search", systemImage: "arrow.clockwise") { discovery.start() }
+                        }.workspaceCard()
+                    case .discoverable:
+                        pairingStep("Find this device from your Mac", symbol: "iphone.radiowaves.left.and.right",
+                                    message: "Open Mobile devices and transfers on the Mac, then search for nearby phones.")
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label(visibility.message, systemImage: visibility.active ? "dot.radiowaves.left.and.right" : "wifi.slash")
+                                .foregroundStyle(visibility.active ? WorkspaceColor.mint : WorkspaceColor.muted)
+                                .accessibilityIdentifier("phone-discovery-status")
+                            if !visibility.active { Button(mode.retryTitle) { reset() } }
+                            ForEach(visibility.invitations) { mac in invitationButton(mac) }
+                        }.workspaceCard()
+                    case .requesting(let mac):
+                        ProgressView("Requesting a code from \(mac.name)…").workspaceCard(padding: 22)
+                    case .comparing(let mac, let challenge):
+                        codeCard(mac, challenge: challenge)
+                    case .waiting:
+                        ProgressView("Waiting for confirmation on the Mac…").workspaceCard(padding: 22)
+                    case .failed(let message):
+                        pairingStep("Pairing needs attention", symbol: "exclamationmark.triangle", message: message)
+                        Button(mode.retryTitle, systemImage: "arrow.clockwise") { reset() }.buttonStyle(.borderedProminent)
                     }
                 }
-                Section {
-                    Text("You can also scan the QR code shown on your Mac from the Connection tab.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
+                .padding(16)
+                .frame(maxWidth: 620)
+                .frame(maxWidth: .infinity)
             }
+            .background(WorkspaceColor.background)
             .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        cancel()
-                        dismiss()
-                    }
+                    Button("Cancel") { cancel(); dismiss() }
                 }
             }
         }
@@ -115,17 +89,58 @@ struct NearbyMacSheet: View {
         }
     }
 
+    private func pairingStep(_ title: String, symbol: String, message: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: symbol).font(.title2).foregroundStyle(WorkspaceColor.mint).accessibilityHidden(true)
+            Text(title).font(.title2.bold())
+            Text(message).font(.subheadline).foregroundStyle(WorkspaceColor.muted)
+        }.workspaceCard(padding: 20)
+    }
+
+    private func codeCard(_ mac: NearbyMac, challenge: NearbyChallenge) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Compare the code").font(.title2.bold())
+            Text("Check the eight digits on \(mac.name) and confirm on both devices.")
+                .font(.subheadline).foregroundStyle(WorkspaceColor.muted)
+            Text("\(challenge.code.prefix(4)) \(challenge.code.suffix(4))")
+                .font(.system(.largeTitle, design: .monospaced, weight: .bold))
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(WorkspaceColor.mint)
+                .frame(maxWidth: .infinity, minHeight: 64)
+                .background(WorkspaceColor.background, in: RoundedRectangle(cornerRadius: 12))
+                .accessibilityLabel("Confirmation code \(challenge.code.map { String($0) }.joined(separator: " "))")
+                .accessibilityIdentifier("nearby-confirmation-code")
+            Button { finish(challenge) } label: {
+                Label("Codes match", systemImage: "checkmark.shield")
+                    .frame(maxWidth: .infinity, minHeight: 28)
+            }
+            .buttonStyle(.borderedProminent)
+            .foregroundStyle(WorkspaceColor.background)
+            .accessibilityIdentifier("nearby-confirm-codes")
+            Button("Codes do not match", role: .destructive) {
+                cancel()
+                stage = .failed("Pairing cancelled. Decline this request on your Mac before trying again.")
+            }
+        }.workspaceCard(padding: 20)
+    }
+
     private func invitationButton(_ mac: NearbyMac) -> some View {
         Button { begin(mac) } label: {
-            Label {
-                VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "desktopcomputer").font(.title2).foregroundStyle(WorkspaceColor.mint).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
                     Text(mode == .discoverable ? "Accept invitation from \(mac.name)" : mac.name)
+                        .font(.subheadline.weight(.semibold))
                     if let host = mac.endpoint.host {
-                        Text(host).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        Text(host).font(.caption.monospacedDigit()).foregroundStyle(WorkspaceColor.muted)
                     }
                 }
-            } icon: { Image(systemName: "desktopcomputer") }
-        }
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).accessibilityHidden(true)
+            }
+            .padding(12)
+            .background(WorkspaceColor.background, in: RoundedRectangle(cornerRadius: 12))
+        }.buttonStyle(.plain)
     }
 
     private func reset() {
