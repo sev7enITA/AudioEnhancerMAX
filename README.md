@@ -2,7 +2,9 @@
 
 # AudioEnhancerMAX
 
-#**[4.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)** brings offline C2PA, SHA-256 and audio measurements to Mac, Android and iOS. [Downloads and verification examples](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-0).
+#**[Companion 4.1.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.1-mobile-beta.1)** adds channel-specific update checks and verified downloads. [Mobile update channels](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates).
+
+**[4.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)** brings offline C2PA, SHA-256 and audio measurements to Mac, Android and iOS. [Downloads and verification examples](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-0).
 
 ## The open-source AI audio media center
 
