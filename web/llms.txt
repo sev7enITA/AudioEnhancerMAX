@@ -2,7 +2,14 @@
 
 > Free, open-source local audio editing for Apple Silicon Macs. Created by Fabrizio Degni. Canonical product website: https://www.fabriziodegni.com/AudioEnhancerMAX/
 
-## Mac 4.0.0 BETA · build 4.0.5
+## 4.1 BETA
+
+Verify content brings offline C2PA, a SHA-256 fingerprint and bounded audio measurements into one workspace on Mac, iOS and Android. Mac 4.1.0 is a signed and notarized Apple Silicon download. Android build 16 is a signed BETA APK. iOS build 12 is an unsigned developer archive with source. Mobile store availability and physical phone testing are pending.
+
+- [4.1 BETA releases and checksums](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)
+- [Verify content examples](https://www.fabriziodegni.com/AudioEnhancerMAX/#verify-content-4-1-0)
+
+## Earlier Mac 4.0 BETA · build 4.0.5
 
 Clean up audio. Compare the difference. Export with a report linked to the revision.
 
@@ -23,7 +30,7 @@ Supported workflows include speech cleanup, reviewed transcript-based cuts and m
 
 Music brief in stable 3.9.0 prepares editable structured text prompts from six presets, with separate lyrics and JSON export. It does not generate music. Optional local Ollama suggestions require permission and review. Drafts are session-only. Earlier Experimental 1 remains a separate preview installation.
 
-## Mobile companion 4.0 BETA
+## Earlier mobile companion 4.0 BETA
 
 Android 4.0.0 build 14 is available as an APK for testing. iOS 4.0.0 build 10 is being tested and its source is public. Availability on Google Play, TestFlight and the iOS App Store is pending. Use the direct Mac 4.0 BETA for the local connection. Real-device and file-provider testing continues.
 
@@ -36,18 +43,11 @@ Discover the Mac from the phone, or make the phone discoverable for 90 seconds a
 - [Earlier mobile preview and checksums](https://sourceforge.net/projects/audioenhancermax/files/mobile-preview-2026-11-06/)
 - [English 3:30 overview](https://www.youtube.com/watch?v=y63FdPvqxVI), recorded 5 November on an earlier build.
 
-## 4.1 BETA
-
-Verify content brings offline C2PA, a SHA-256 fingerprint and bounded audio measurements into one workspace on Mac, iOS and Android. Mac 4.1.0 is a signed and notarized Apple Silicon download. Android build 16 is a signed BETA APK. iOS build 12 is an unsigned developer archive with source. Mobile store availability and physical phone testing are pending.
-
-- [4.1 BETA releases and checksums](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)
-- [Verify content examples](https://www.fabriziodegni.com/AudioEnhancerMAX/#verify-content-4-1-0)
-
 ## Official pages
 
 - [AudioEnhancerMAX | Free Local Audio Editor for Mac](https://www.fabriziodegni.com/AudioEnhancerMAX/): Free, open-source audio editor for Apple Silicon Mac. Clean speech, review transcript edits and export audio with local processing and clear privacy controls.
 - [Mobile companion preview: iOS and Android](https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html): Real screenshots, three workflows, feature comparison, guided pairing and truthful platform availability.
-- [Download AudioEnhancerMAX for Mac | Requirements & FAQ](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html): Choose direct 4.0 BETA or stable 3.9.0 for Apple Silicon and macOS 13+. Check the free MIT license, model setup, privacy boundaries and direct-release evidence.
+- [Download AudioEnhancerMAX for Mac | Requirements & FAQ](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html): Choose direct 4.1 BETA or stable 3.9.0 for Apple Silicon and macOS 13+. Check the free MIT license, model setup, privacy boundaries and direct-release evidence.
 - [Clean Up Podcast Audio on Mac | AudioEnhancerMAX Guide](https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html): Clean spoken audio locally on Mac: review noise reduction, transcript edits, loudness checks and export evidence with this practical AudioEnhancerMAX guide.
 - [Pulire audio e podcast su Mac | Guida AudioEnhancerMAX](https://www.fabriziodegni.com/AudioEnhancerMAX/pulire-audio-podcast-mac.html): Una guida per pulire il parlato su Mac: riduzione del rumore, tagli dalla trascrizione, controlli del volume ed esportazione con AudioEnhancerMAX.
 - [AudioEnhancerMAX Release Status & Verification Evidence](https://www.fabriziodegni.com/AudioEnhancerMAX/status.html): Review AudioEnhancerMAX release evidence, packaged-app checks, runtime dependencies and known limits. Separate shipped features from development work.
@@ -60,7 +60,7 @@ Verify content brings offline C2PA, a SHA-256 fingerprint and bounded audio meas
 - [AudioEnhancerMAX in rete | Pubblicazioni e risorse](https://www.fabriziodegni.com/AudioEnhancerMAX/risorse.html): Scopri schede, discussioni, video e risorse ufficiali su AudioEnhancerMAX, con fonti dirette e una distinzione chiara tra pubblicazioni e anteprime.
 - [Chi decide cosa cambia in una voce? | AudioEnhancerMAX](https://www.fabriziodegni.com/AudioEnhancerMAX/governance-it.html): Rischi documentati dell’AI audio e scelte di AudioEnhancerMAX: modifiche rivedibili, originali preservati, controlli privacy e limiti dichiarati.
 
-- [Press kit EN / IT](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html): 4.0 BETA facts, screenshots and English and Italian copy, with archived stable 3.9.0 materials.
+- [Press kit EN / IT](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html): 4.1 BETA facts, screenshots and English and Italian copy, with archived stable 3.9.0 materials.
 
 ## Release and source evidence
 
