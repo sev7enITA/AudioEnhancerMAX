@@ -4,11 +4,11 @@
 
 ## Companion 4.1.1 BETA
 
-About → Updates checks direct releases using signed metadata. GitHub and SourceForge are the approved direct repositories. Android build 17 is a signed BETA APK. iOS build 13 is an unsigned development archive. Store builds use their store.
+About → Updates checks direct releases using signed metadata. GitHub and SourceForge are the approved direct repositories. Android build 18 is a signed BETA APK. iOS build 13 is an unsigned development archive. Store builds use their store.
 
 - [Mobile downloads and update policies](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates)
-- [Mobile BETA on GitHub](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.1-mobile-beta.1)
-- [Mobile BETA on SourceForge](https://sourceforge.net/projects/audioenhancermax/files/v4.1.1-mobile-beta.1/)
+- [Mobile BETA on GitHub](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.1-mobile-beta.2)
+- [Mobile BETA on SourceForge](https://sourceforge.net/projects/audioenhancermax/files/v4.1.1-mobile-beta.2/)
 
 ## 4.1 BETA
 

@@ -165,7 +165,7 @@ internal class CompanionUpdateClient(private val context: Context) {
     suspend fun download(feed: SignedAndroidFeed, source: DirectUpdateSource, progress: (Long) -> Unit): VerifiedUpdate {
         var verifiedFile: File? = null
         try {
-            return withTimeout(300_000) { withContext(Dispatchers.IO) {
+            return withTimeout(900_000) { withContext(Dispatchers.IO) {
                 requireDirect()
                 requireUpdate(feed.isCurrent(Instant.now().epochSecond), "The signed update feed has expired. Check again.")
                 val release = feed.release

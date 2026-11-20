@@ -18,7 +18,7 @@ android {
         minSdk = 26
         testInstrumentationRunner = "com.audioenhancermax.worker.MediaInstrumentation"
         targetSdk = if (playStoreOnly) 36 else 35
-        versionCode = 17
+        versionCode = 18
         versionName = "4.1.1"
         buildConfigField("boolean", "PLAY_STORE_ONLY", playStoreOnly.toString())
     }
