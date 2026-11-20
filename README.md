@@ -7,6 +7,8 @@
 **Professional audio enhancement, transcription, TTS, monitoring, and edge processing.**<br>
 **16+ processing modules · native Apple Silicon app · deterministic local Smart Enhance · reviewable speech editing · local-first core · v3.9.0**
 
+**[AudioEnhancerMAX 4.0 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1)** is available for Apple Silicon Mac and Android. It adds a redesigned audio workspace, two-way Wi-Fi pairing and C2PA credentials linked to the exact processing report. [See the BETA source and notes](https://github.com/sev7enITA/AudioEnhancerMAX/tree/v4.0.0-beta.1). The direct stable channel is 3.9.0.
+
 Version 3.9.0 adds a local Music brief assistant: six original presets, editable structured prompts, separate lyrics and JSON export, with optional reviewed Ollama suggestions. [Release notes](releases/RELEASE_NOTES_v3.9.0.md) · [Music brief guide](docs/music-brief-assistant.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-7c3aed.svg)](LICENSE)
