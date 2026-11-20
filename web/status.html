@@ -17,7 +17,7 @@
 <meta property="og:url" content="https://www.fabriziodegni.com/AudioEnhancerMAX/status.html">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://www.fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
-<meta property="og:image:alt" content="AudioEnhancerMAX local audio production workspace">
+<meta property="og:image:alt" content="AudioEnhancerMAX original waveform logo">
 <meta property="og:locale" content="en_GB">
 <meta property="og:site_name" content="AudioEnhancerMAX">
 <meta name="twitter:card" content="summary_large_image">
@@ -40,6 +40,7 @@
 }
 </script>
 <!-- discovery:end -->
+<link rel="stylesheet" href="css/release-4.0.css">
 </head>
 <body>
     <a class="skip-link" href="#main-content">Skip to project status</a>
@@ -52,6 +53,7 @@
             <ul class="nav-links">
                 <li><a href="./">Overview</a></li>
                 <li><a href="status.html" aria-current="page">Status</a></li>
+                <li><a href="companion.html">Companion</a></li>
                 <li><a href="roadmap.html">Roadmap</a></li>
                 <li><a href="privacy.html">Privacy</a></li>
                 <li><a href="support.html">Support</a></li>
@@ -61,16 +63,32 @@
 
     <header class="hero">
         <span class="eyebrow">Verified project status</span>
-        <h1>AudioEnhancerMAX 3.9: release evidence.</h1>
+        <h1>AudioEnhancerMAX release evidence.</h1>
         <p class="hero-copy">Verified processing revisions, exact-format delivery evidence, and an explicit macOS distribution status.</p>
         <div class="hero-meta">
             <span><span class="meta-label">Audited</span> <strong>October 27, 2026</strong></span>
-            <span><span class="meta-label">Public release</span> <strong>3.9.0 source</strong></span>
+            <span><span class="meta-label">Direct downloads</span> <strong>4.0 BETA and stable 3.9.0</strong></span>
             <span><span class="meta-label">Signed package</span> <strong>3.9.0 / build 3.9.2 notarized</strong></span>
         </div>
     </header>
 
     <main id="main-content" class="container">
+        <section class="aem4-release " id="beta-4-0-0" aria-labelledby="beta-4-0-0-heading"><h2 id="beta-4-0-0-heading">Mac 4.0.0 BETA · build 4.0.5</h2>
+<ul>
+<li>A waveform-centred workspace for import and cleanup, listening and editing, then export.</li>
+<li>Same-excerpt spectral cleanup preview, local analysis, suggested settings, and recent files.</li>
+<li>Original/revision A/B with playhead mapping for speech-editor cuts, and optional listening-only level matching.</li>
+<li>Transcript-linked selection and reviewable cut or mute proposals, with undo and redo.</li>
+<li>Format-specific delivery checks, processing report and Project Capsule tied to the completed result.</li>
+</ul>
+
+<p>Apple Silicon (arm64), macOS 13 or later. Developer ID signed, Apple notarized and stapled.</p>
+<p>Quit AudioEnhancerMAX before replacing the app. Keep the earlier stable DMG available if you need to return to 3.9.0.</p>
+<p>Playhead mapping covers speech-editor cuts. Other Enhance operations that change duration may use independent playheads. Speech analysis requires the local model. See the exact scope in the <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.0.0-beta.1/RELEASE-VERIFICATION.json">build verification record</a>.</p><p><a href="./#c2pa-4-0-0">Check the test-signed audio and report</a></p><p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1">GitHub release and notes</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.0.0-beta.1/RELEASE-VERIFICATION.json">Build verification record</a></p></section>
+<section class="content-section" id="mobile-companion"><span class="section-index">Updated / November 20, 2026</span><h2>Native iOS and Android companion BETA</h2>
+<p>Android 4.0.0 build 14 is available as an APK for testing. iOS 4.0.0 build 10 is being tested and its source is public. Availability on Google Play, TestFlight and the iOS App Store is pending. Use the direct Mac 4.0 BETA for the local connection. Real-device and file-provider testing continues.</p><p>Studio provides format selection with validation, trim, gain, Voice EQ, peak normalisation, A/B and separate exports. The companion and Mac can each start discovery on the local Wi-Fi network. Pairing compares a code on both devices before sending audio.</p>
+<p>The Mac and iOS simulator completed nearby pairing. Android emulator tests covered phone discovery and receipt of an invitation. The packaged Mac flow was also checked through secure audio transfer. Physical phone, battery, file-provider and listening tests remain open.</p>
+<p><a href="https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.0.0-beta.1/AudioEnhancerMAX-Companion-v4.0.0-build-14-Android-QA.apk">Android BETA APK</a> · <a href="https://github.com/sev7enITA/AudioEnhancerMAX/tree/v4.0.0-beta.1/ios-companion">iOS source</a> · <a href="companion.html#pairing">Pairing guide</a> · <a href="https://sourceforge.net/projects/audioenhancermax/files/mobile-preview-2026-11-06/">Earlier mobile preview</a>.</p></section>
         <section class="content-section" id="release">
             <span class="section-index">01 / Distribution</span><h2>Source release and notarized macOS package</h2>
             <p>The latest stable direct release is 3.9.0/build 3.9.2, Developer ID signed, Apple notarized and stapled. Music brief moves into stable with six original presets, editable text prompts and JSON export. Updated dependencies accompany the existing audio workflow. <a href="download.html">Downloads and requirements</a>.</p><p>Stable preserves the existing stable data folder. Earlier Experimental 1 remains a separate installation; no automatic experimental-data migration occurs. Previous stable 3.8.3 is retained for rollback. This direct release does not establish Mac App Store approval.</p>

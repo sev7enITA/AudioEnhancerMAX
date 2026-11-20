@@ -22,7 +22,7 @@
 <meta property="og:url" content="https://www.fabriziodegni.com/AudioEnhancerMAX/governance.html">
 <meta property="og:type" content="article">
 <meta property="og:image" content="https://www.fabriziodegni.com/AudioEnhancerMAX/img/social-preview.png">
-<meta property="og:image:alt" content="AudioEnhancerMAX local audio production workspace">
+<meta property="og:image:alt" content="AudioEnhancerMAX original waveform logo">
 <meta property="og:locale" content="en_GB">
 <meta property="og:site_name" content="AudioEnhancerMAX">
 <meta name="twitter:card" content="summary_large_image">
@@ -53,6 +53,7 @@
 }
 </script>
 <!-- discovery:end -->
+<link rel="stylesheet" href="css/release-4.0.css">
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -169,6 +170,10 @@
 </figure>
 <p class="provenance"><a href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/9efa8d8719b81bc7361c9c2c3a287a6e52b1579f/releases/app-review/screenshots-3.8.2-build-3.8.3/manifest.json">Image provenance and hashes</a></p>
 </section>
+<section class="aem4-release " id="beta-4-0-0" aria-labelledby="beta-4-0-0-heading"><h2 id="beta-4-0-0-heading">Export provenance and integrity with C2PA</h2>
+<p>With a configured signing identity, the app can embed C2PA Content Credentials in a copy of a WAV, MP3 or FLAC export. The manifest records the revision and the SHA-256 of its downloadable processing report. Audio watermarking is a separate action that changes the audio samples.</p>
+<p>The direct Mac build supports a non-exportable Keychain signing key and RFC 3161 timestamping with a configured service. Apple's Developer ID and notarization apply to the app package. A C2PA validator assesses the audio signature and trust for the media separately.</p>
+<p>The samples use a test signer. Consent, accuracy and rights have their own evidence. <a href="./#c2pa-4-0-0">Verify the C2PA samples</a>.</p></section>
 <section class="content-section" id="limits"><span class="section-index">04 / The limits</span>
 <h2>What still needs checking</h2>
 <p>AudioEnhancerMAX is not an autonomous agent. This page does not claim ethical, security or accuracy certification for the product. The described controls have a scope and need maintenance.</p>

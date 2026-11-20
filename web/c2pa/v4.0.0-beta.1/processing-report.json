@@ -1,0 +1,239 @@
+{
+  "schema_version": 2,
+  "product": "AudioEnhancerMAX",
+  "app_version": "4.0.0",
+  "app_build": "4.0.2",
+  "file_id": "354a5667-7ea",
+  "created_at": "2026-11-19T18:27:58.365699+00:00",
+  "privacy": {
+    "audio_transmitted": false,
+    "analysis_engine": "audio-intelligence-v1",
+    "processing_location": "local",
+    "distributed_steps": [],
+    "external_services_allowed": false,
+    "ollama_editorial_allowed": false,
+    "trusted_lan_processing_allowed": false,
+    "external_service_used_by_this_job": false
+  },
+  "input": {
+    "quality_score": 77,
+    "quality_grade": "good",
+    "metrics": {
+      "duration_seconds": 8.0,
+      "analyzed_seconds": 8.0,
+      "sample_rate": 48000,
+      "rms_dbfs": -22.96,
+      "peak_dbfs": -14.89,
+      "crest_factor_db": 8.07,
+      "dynamic_range_db": 4.66,
+      "estimated_snr_db": 3.88,
+      "noise_floor_dbfs": -25.27,
+      "silence_ratio": 0.0,
+      "clipping_ratio": 0.0,
+      "dc_offset": 8e-06,
+      "zero_crossing_rate": 0.06902,
+      "spectral_centroid_hz": 573.0,
+      "spectral_rolloff_95_hz": 439.5,
+      "spectral_flatness": 0.028868,
+      "high_frequency_ratio": 0.016665,
+      "low_frequency_ratio": 9.5e-05,
+      "hum_50_ratio": 5e-05,
+      "hum_60_ratio": 6.3e-05
+    },
+    "issues": [
+      {
+        "id": "background_noise",
+        "label": "Background noise",
+        "severity": "high",
+        "confidence": 0.96,
+        "evidence": "Estimated signal-to-noise ratio is 3.9 dB.",
+        "recommendation": "Apply noise reduction before EQ and loudness normalization."
+      },
+      {
+        "id": "limited_bandwidth",
+        "label": "Limited high-frequency bandwidth",
+        "severity": "low",
+        "confidence": 0.66,
+        "evidence": "95% spectral roll-off is 440 Hz.",
+        "recommendation": "Prefer gentle EQ; synthetic frequency restoration should remain optional."
+      }
+    ]
+  },
+  "output": {
+    "quality_score": 77,
+    "quality_grade": "good",
+    "metrics": {
+      "duration_seconds": 8.0,
+      "analyzed_seconds": 8.0,
+      "sample_rate": 48000,
+      "rms_dbfs": -22.96,
+      "peak_dbfs": -14.89,
+      "crest_factor_db": 8.07,
+      "dynamic_range_db": 4.66,
+      "estimated_snr_db": 3.88,
+      "noise_floor_dbfs": -25.27,
+      "silence_ratio": 0.0,
+      "clipping_ratio": 0.0,
+      "dc_offset": 8e-06,
+      "zero_crossing_rate": 0.06902,
+      "spectral_centroid_hz": 573.0,
+      "spectral_rolloff_95_hz": 439.5,
+      "spectral_flatness": 0.028868,
+      "high_frequency_ratio": 0.016665,
+      "low_frequency_ratio": 9.5e-05,
+      "hum_50_ratio": 5e-05,
+      "hum_60_ratio": 6.3e-05
+    },
+    "issues": [
+      {
+        "id": "background_noise",
+        "label": "Background noise",
+        "severity": "high",
+        "confidence": 0.96,
+        "evidence": "Estimated signal-to-noise ratio is 3.9 dB.",
+        "recommendation": "Apply noise reduction before EQ and loudness normalization."
+      },
+      {
+        "id": "limited_bandwidth",
+        "label": "Limited high-frequency bandwidth",
+        "severity": "low",
+        "confidence": 0.66,
+        "evidence": "95% spectral roll-off is 440 Hz.",
+        "recommendation": "Prefer gentle EQ; synthetic frequency restoration should remain optional."
+      }
+    ]
+  },
+  "pipeline": [
+    {
+      "step": "audio_watermark",
+      "id": "pcm24-revision-watermark",
+      "label": "PCM revision watermark",
+      "available": true,
+      "mode": "deterministic-local",
+      "version": "1",
+      "fallback": null,
+      "detail": "An audio identifier embedded in the lossless review and export."
+    }
+  ],
+  "options": {
+    "remove_noise": false,
+    "noise_reduction_strength": 0.7,
+    "remove_long_silences": false,
+    "silence_threshold_db": -40.0,
+    "min_silence_duration_ms": 1000,
+    "mute_segments": false,
+    "remove_mouth_sounds": false,
+    "mouth_sound_sensitivity": 0.5,
+    "eliminate_hesitations": false,
+    "remove_stuttering": false,
+    "remove_filler_words": false,
+    "custom_filler_words": null,
+    "remove_breaths": false,
+    "breath_reduction_strength": 0.8,
+    "studio_sound": false,
+    "auto_eq": false,
+    "normalize": false,
+    "target_loudness_lufs": -16.0,
+    "keep_music": false,
+    "wind_noise_remover": false,
+    "buzzing_noise_remover": false,
+    "buzz_frequency_hz": 50.0,
+    "static_noise_remover": false,
+    "reverb_echo_remover": false,
+    "frequency_restoration": false,
+    "target_sample_rate": 48000,
+    "smart_mode": false,
+    "content_type": null,
+    "output_format": "wav",
+    "output_profile": null,
+    "output_profile_overrides": {},
+    "watermark_identifier": "BETA-4-QA"
+  },
+  "elapsed_seconds": 0.083,
+  "warnings": [],
+  "interpretation": "Quality scores are comparative signal-derived indicators. They are not a guarantee of perceptual quality or intelligibility.",
+  "provenance": {
+    "hash_algorithm": "SHA-256",
+    "source": {
+      "name": "354a5667-7ea.wav",
+      "sha256": "1dfcb6ad14edd31d29990074612cd4b8f4831597486b7127df0e77361e735610"
+    },
+    "processed_output": {
+      "name": "354a5667-7ea_processed_7662136ed6b54f3bb498efdfe26c0224.wav",
+      "sha256": "756319b6e68be66ffe745bb74ecf31884a7c7cd15280c1fb3d2ba66fc53893c8"
+    }
+  },
+  "delivery_compliance": {
+    "schema_version": 1,
+    "target_id": "podcast",
+    "target_label": "Podcast",
+    "status": "fail",
+    "summary": {
+      "pass": 3,
+      "warn": 0,
+      "fail": 1
+    },
+    "measurements": {
+      "integrated_loudness_lufs": -23.72,
+      "estimated_true_peak_dbtp": -14.89,
+      "sample_peak_dbfs": -14.89,
+      "clipped_sample_count": 0,
+      "sample_rate_hz": 48000,
+      "channels": 1,
+      "duration_seconds": 8.0,
+      "true_peak_method": "4x polyphase oversampling estimate"
+    },
+    "rules": [
+      {
+        "id": "integrated-loudness",
+        "label": "Integrated loudness",
+        "status": "fail",
+        "measured": -23.72,
+        "unit": "LUFS",
+        "target": -16.0,
+        "tolerance": 1.0,
+        "detail": "Delta -7.72 LU."
+      },
+      {
+        "id": "estimated-true-peak",
+        "label": "Estimated true peak",
+        "status": "pass",
+        "measured": -14.89,
+        "unit": "dBTP",
+        "ceiling": -1.0,
+        "detail": "4x polyphase oversampling estimate"
+      },
+      {
+        "id": "sample-clipping",
+        "label": "Digital clipping",
+        "status": "pass",
+        "measured": 0,
+        "unit": "samples",
+        "ceiling": 0,
+        "detail": "Counts samples at or beyond full scale."
+      },
+      {
+        "id": "sample-rate",
+        "label": "Sample rate",
+        "status": "pass",
+        "measured": 48000,
+        "unit": "Hz",
+        "floor": 44100,
+        "detail": "44.1 kHz or higher is recommended for delivery masters."
+      }
+    ],
+    "reference": "ITU-R BS.1770-5; EBU R128 v5 for the broadcast-r128 preset",
+    "disclaimer": "Local workflow guidance only; this result is not a regulatory or third-party certification.",
+    "artifact": "354a5667-7ea_processed_7662136ed6b54f3bb498efdfe26c0224.wav",
+    "artifact_sha256": "756319b6e68be66ffe745bb74ecf31884a7c7cd15280c1fb3d2ba66fc53893c8",
+    "format": "wav",
+    "size_bytes": 1152044,
+    "revision": "7662136ed6b54f3bb498efdfe26c0224"
+  },
+  "artifact_revision": "7662136ed6b54f3bb498efdfe26c0224",
+  "checkpoint": {
+    "identity": "706f3852e0a6e38209601ae44830fe4a48af5b24e22fd7c952cd775fe62a0aa8",
+    "enabled": true,
+    "resumed_steps": []
+  }
+}

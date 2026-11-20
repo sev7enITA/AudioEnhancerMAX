@@ -1,0 +1,171 @@
+{
+  "active_manifest": "urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c",
+  "manifests": {
+    "urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c": {
+      "assertions": [
+        {
+          "created": true,
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.opened",
+                "parameters": {
+                  "ingredients": [
+                    {
+                      "hash": "b64'c6Efcdpf5/t15vB5U2YTQwmESG7EDXKVcl3aWOvQZu0='",
+                      "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "label": "c2pa.actions.v2"
+        },
+        {
+          "data": {
+            "artifact_revision": "7662136ed6b54f3bb498efdfe26c0224",
+            "operation": "processed",
+            "processing_report_sha256": "dc3cd2312f32291b64601b12646f0062178abe393f7342ed9eaa2ebcc0101d73",
+            "schema_version": 1,
+            "unsigned_export_sha256": "756319b6e68be66ffe745bb74ecf31884a7c7cd15280c1fb3d2ba66fc53893c8"
+          },
+          "label": "com.fabriziodegni.audioenhancermax.processing"
+        },
+        {
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.modified"
+              }
+            ]
+          },
+          "instance": 1,
+          "label": "c2pa.actions.v2"
+        }
+      ],
+      "claim_generator_info": [
+        {
+          "name": "AudioEnhancerMAX",
+          "org.contentauth.c2pa_rs": "0.92.0",
+          "version": "4.0.0"
+        }
+      ],
+      "claim_version": 2,
+      "ingredients": [
+        {
+          "format": "audio/wav",
+          "instance_id": "xmp.iid:73028ff9-d108-4d61-910e-5a33f07f7b4e",
+          "label": "c2pa.ingredient.v3",
+          "relationship": "parentOf",
+          "title": "Source media"
+        }
+      ],
+      "instance_id": "xmp.iid:a27209c8-4e12-492b-9908-9e21c4d05e0f",
+      "label": "urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c",
+      "signature_info": {
+        "alg": "Es256",
+        "cert_serial_number": "500400386341690373778387230373279234123747276948",
+        "common_name": "AudioEnhancerMAX 4.0 BETA test signer",
+        "issuer": "AudioEnhancerMAX test only",
+        "time": "2026-11-19T18:28:05+00:00"
+      },
+      "title": "AudioEnhancerMAX export"
+    }
+  },
+  "validation_results": {
+    "activeManifest": {
+      "failure": [
+        {
+          "code": "signingCredential.untrusted",
+          "explanation": "signing certificate untrusted",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.signature"
+        }
+      ],
+      "informational": [
+        {
+          "code": "signingCredential.ocsp.skipped",
+          "explanation": "OCSP fetching skipped",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.signature"
+        },
+        {
+          "code": "timeStamp.untrusted",
+          "explanation": "timestamp cert untrusted: SSLcom C2PA Timestamping Unit 2026 R1",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.signature"
+        }
+      ],
+      "success": [
+        {
+          "code": "timeStamp.validated",
+          "explanation": "timestamp message digest matched: SSLcom C2PA Timestamping Unit 2026 R1",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.signature"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "explanation": "claim signature valid",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.signature"
+        },
+        {
+          "code": "claimSignature.validated",
+          "explanation": "claim signature valid",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.signature"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/c2pa.ingredient.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.fabriziodegni.audioenhancermax.processing",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/com.fabriziodegni.audioenhancermax.processing"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2__1",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/c2pa.actions.v2__1"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "explanation": "data hash valid",
+          "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/c2pa.hash.data"
+        }
+      ]
+    },
+    "ingredientDeltas": [
+      {
+        "ingredientAssertionURI": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/c2pa.ingredient.v3",
+        "validationDeltas": {
+          "failure": [],
+          "informational": [
+            {
+              "code": "ingredient.unknownProvenance",
+              "explanation": "Source media: ingredient does not have provenance",
+              "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.assertions/c2pa.ingredient.v3"
+            }
+          ],
+          "success": []
+        }
+      }
+    ],
+    "specVersion": "2.4.0"
+  },
+  "validation_state": "Valid",
+  "validation_status": [
+    {
+      "code": "signingCredential.untrusted",
+      "explanation": "signing certificate untrusted",
+      "url": "self#jumbf=/c2pa/urn:c2pa:7afd269c-cfe5-44ba-8fa7-72d23c56194c/c2pa.signature"
+    }
+  ]
+}

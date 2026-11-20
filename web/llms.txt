@@ -2,6 +2,17 @@
 
 > Free, open-source local audio editing for Apple Silicon Macs. Created by Fabrizio Degni. Canonical product website: https://www.fabriziodegni.com/AudioEnhancerMAX/
 
+## Mac 4.0.0 BETA · build 4.0.5
+
+Clean up audio. Compare the difference. Export with a report linked to the revision.
+
+The direct 4.0 BETA targets Apple Silicon with macOS 13 or later. Developer ID signed, Apple notarized and stapled. The 3.9.0 direct stable and the App Store edition have separate records. Workspace steps are Import & clean, Listen & edit and Export. Features include same-excerpt spectral preview, playback-only level matching, speech cut timeline mapping, revision-bound processing reports and C2PA credentials with a configured signer. Verification samples use a test signer. Android APK build 14 is available for testing. iOS build 10 is in device testing and its source is public.
+
+- [Mac 4.0 BETA download](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-0-0)
+- [GitHub release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1)
+- [C2PA verification samples](https://www.fabriziodegni.com/AudioEnhancerMAX/#c2pa-4-0-0)
+- [Build verification record](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.0.0-beta.1/RELEASE-VERIFICATION.json)
+- [4.0 BETA press kit EN / IT](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html)
 ## Product facts
 
 Reviewed 2026-10-27. Direct release 3.9.0, build 3.9.2, targets Apple Silicon (arm64) and macOS 13 or later. Free download; MIT license. The direct DMG is Developer ID signed, Apple notarized and stapled. This does not establish Mac App Store approval.
@@ -12,10 +23,24 @@ Supported workflows include speech cleanup, reviewed transcript-based cuts and m
 
 Music brief in stable 3.9.0 prepares editable structured text prompts from six presets, with separate lyrics and JSON export. It does not generate music. Optional local Ollama suggestions require permission and review. Drafts are session-only. Earlier Experimental 1 remains a separate preview installation.
 
+## Mobile companion 4.0 BETA
+
+Android 4.0.0 build 14 is available as an APK for testing. iOS 4.0.0 build 10 is being tested and its source is public. Availability on Google Play, TestFlight and the iOS App Store is pending. Use the direct Mac 4.0 BETA for the local connection. Real-device and file-provider testing continues.
+
+Studio includes trim, gain, Voice EQ, peak normalisation, A/B and separate WAV export. Import filters are saved and mismatched media is rejected before replacing the current recording. Both apps decode supported WAV, MP3, M4A/AAC and FLAC. Android offers Ogg/Opus and AMR, and iOS offers CAF/AIFF. The device and codec determine compatibility. Supported video can be exported to a new MP4 if the replacement audio retains the same frame count, rate and channels.
+
+Discover the Mac from the phone, or make the phone discoverable for 90 seconds and send the invitation from the Mac. Compare the eight-digit code on both devices. QR pairing is also available. Transfer and optional foreground Voice EQ worker mode use the paired local connection. Video stays on the phone when only the audio is sent. Studio and Music brief use no cloud upload, account or analytics. About links to support and privacy and identifies the build.
+
+- [Android 4.0 BETA APK](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v4.0.0-beta.1/AudioEnhancerMAX-Companion-v4.0.0-build-14-Android-QA.apk)
+- [iOS 4.0 source](https://github.com/sev7enITA/AudioEnhancerMAX/tree/v4.0.0-beta.1/ios-companion)
+- [Earlier mobile preview and checksums](https://sourceforge.net/projects/audioenhancermax/files/mobile-preview-2026-11-06/)
+- [English 3:30 overview](https://www.youtube.com/watch?v=y63FdPvqxVI), recorded 5 November on an earlier build.
+
 ## Official pages
 
 - [AudioEnhancerMAX | Free Local Audio Editor for Mac](https://www.fabriziodegni.com/AudioEnhancerMAX/): Free, open-source audio editor for Apple Silicon Mac. Clean speech, review transcript edits and export audio with local processing and clear privacy controls.
-- [Download AudioEnhancerMAX for Mac | Requirements & FAQ](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html): Download AudioEnhancerMAX 3.9.0 for Apple Silicon and macOS 13+. Check the free MIT license, model setup, privacy boundaries and direct-release evidence.
+- [Mobile companion preview: iOS and Android](https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html): Real screenshots, three workflows, feature comparison, guided pairing and truthful platform availability.
+- [Download AudioEnhancerMAX for Mac | Requirements & FAQ](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html): Choose direct 4.0 BETA or stable 3.9.0 for Apple Silicon and macOS 13+. Check the free MIT license, model setup, privacy boundaries and direct-release evidence.
 - [Clean Up Podcast Audio on Mac | AudioEnhancerMAX Guide](https://www.fabriziodegni.com/AudioEnhancerMAX/podcast-cleanup-mac.html): Clean spoken audio locally on Mac: review noise reduction, transcript edits, loudness checks and export evidence with this practical AudioEnhancerMAX guide.
 - [Pulire audio e podcast su Mac | Guida AudioEnhancerMAX](https://www.fabriziodegni.com/AudioEnhancerMAX/pulire-audio-podcast-mac.html): Una guida per pulire il parlato su Mac: riduzione del rumore, tagli dalla trascrizione, controlli del volume ed esportazione con AudioEnhancerMAX.
 - [AudioEnhancerMAX Release Status & Verification Evidence](https://www.fabriziodegni.com/AudioEnhancerMAX/status.html): Review AudioEnhancerMAX release evidence, packaged-app checks, runtime dependencies and known limits. Separate shipped features from development work.
@@ -28,11 +53,11 @@ Music brief in stable 3.9.0 prepares editable structured text prompts from six p
 - [AudioEnhancerMAX in rete | Pubblicazioni e risorse](https://www.fabriziodegni.com/AudioEnhancerMAX/risorse.html): Scopri schede, discussioni, video e risorse ufficiali su AudioEnhancerMAX, con fonti dirette e una distinzione chiara tra pubblicazioni e anteprime.
 - [Chi decide cosa cambia in una voce? | AudioEnhancerMAX](https://www.fabriziodegni.com/AudioEnhancerMAX/governance-it.html): Rischi documentati dell’AI audio e scelte di AudioEnhancerMAX: modifiche rivedibili, originali preservati, controlli privacy e limiti dichiarati.
 
-- [Press kit EN / IT](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html): stable 3.9.0 facts, reviewer steps, screenshots and announcement text.
+- [Press kit EN / IT](https://www.fabriziodegni.com/AudioEnhancerMAX/press.html): 4.0 BETA facts, screenshots and English and Italian copy, with archived stable 3.9.0 materials.
 
 ## Release and source evidence
 
-- [Current direct release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0): version, channels, changes and verification limits.
+- [Current stable direct release](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v3.9.0): version, channels, changes and verification limits.
 - [Exact packaged-build evidence](https://github.com/sev7enITA/AudioEnhancerMAX/releases/download/v3.9.0/DIRECT_BUILD_3.9.2.md): checks for build 3.9.2.
 - [Source code](https://github.com/sev7enITA/AudioEnhancerMAX): MIT-licensed project.
 - [SourceForge mirror](https://sourceforge.net/projects/audioenhancermax/): alternative download channel.

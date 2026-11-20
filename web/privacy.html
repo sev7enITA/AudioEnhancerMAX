@@ -65,7 +65,7 @@
         <h1>Know where your audio goes</h1>
         <p class="hero-copy">AudioEnhancerMAX is local-first, not absolutely offline. Core processing is local, while clearly identified optional features can contact local-network devices or external services.</p>
         <div class="hero-meta">
-            <span><span class="meta-label">Effective</span> <strong>November 5, 2026</strong></span>
+            <span><span class="meta-label">Effective</span> <strong>November 20, 2026</strong></span>
             <span><span class="meta-label">Notice version</span> <strong>1.2</strong></span>
             <span><span class="meta-label">Controller</span> <strong>Fabrizio Degni</strong></span>
         </div>
@@ -83,6 +83,7 @@
                 <li><a href="#rights">Choices and rights</a></li>
                 <li><a href="#security">Security and changes</a></li>
                 <li><a href="#contact">Contact</a></li>
+                <li><a href="#mobile-companion">Mobile companion</a></li>
             </ol>
         </aside>
 
@@ -90,7 +91,7 @@
             <section id="scope" class="content-section">
                 <span class="section-index">01 / Scope</span>
                 <h2>What this notice covers</h2>
-                <p>This notice applies to the AudioEnhancerMAX macOS application, source distribution, Android edge worker and official project pages hosted at <strong>fabriziodegni.com/AudioEnhancerMAX</strong>. It explains processing performed by the software and separate processing that can occur through optional integrations or public project services.</p>
+                <p>This notice applies to the AudioEnhancerMAX macOS application, source distribution, legacy Android edge worker, iOS and Android companions and official project pages hosted at <strong>fabriziodegni.com/AudioEnhancerMAX</strong>. It explains processing performed by the software and separate processing that can occur through optional integrations or public project services.</p>
                 <div class="notice aqua">
                     <strong>Core position</strong>
                     <p>The maintainer does not operate an AudioEnhancerMAX account service, advertising network or behavioral analytics service. The application does not automatically send recordings, outputs or diagnostic telemetry to the maintainer.</p>
@@ -211,7 +212,7 @@
                 <span class="section-index">07 / Security</span>
                 <h2>Safeguards, limitations and policy changes</h2>
                 <p>The desktop service is designed to bind to the loopback interface <code>127.0.0.1</code>. The project validates key storage identifiers and documents that the FastAPI service must not be exposed directly to the public internet without authentication, rate limits and an appropriate reverse-proxy policy.</p>
-                <p>No software or transmission method is risk-free. Users remain responsible for device access controls, backups, network trust, lawful consent to use a voice, and review of sensitive outputs. Trusted LAN processing should be enabled only on networks and devices the user controls. The Android worker path is currently treated as experimental while pairing, authentication, revocation, and workload limits are strengthened.</p>
+                <p>No software or transmission method is risk-free. Users remain responsible for device access controls, backups, network trust, lawful consent to use a voice, and review of sensitive outputs. Trusted LAN processing should be enabled only on networks and devices the user controls. Legacy Android workers remain experimental. The separate new mobile companion preview implements explicit encrypted pairing, session revocation and workload limits; physical-device and release qualification are still pending.</p>
                 <p>This notice will be updated when a release materially changes data flows. The effective date and notice version at the top identify the current text. Earlier behavior can also be reviewed through the open-source version history.</p>
             </section>
 
@@ -225,12 +226,20 @@
                     <a class="btn" href="support.html">Visit support</a>
                 </div>
             </section>
+<section class="content-section" id="mobile-companion">
+<h2>Privacy in the iOS and Android companions</h2>
+<p>The mobile app edits selected files and saves Music brief drafts on the phone. It needs access to a recording you choose and can create a private working copy for compatible video. Your source file remains in its original location. App-managed copies and drafts stay on the phone until replaced, cleared or the app is removed. Exported copies stay wherever you save them. The companion itself uses no account, cloud upload or analytics. If you open a file from a third-party provider or share an export, that provider handles the file under its own policy.</p>
+<p>Local discovery uses your Wi-Fi network. Selecting the option to make your phone discoverable publishes its displayed device name and connection information on the local network for up to 90 seconds or until you leave the screen or app. The Mac publishes its pairing service while the session is active. For nearby pairing, both devices display an eight-digit code to compare before the app stores the connection credential. QR pairing uses the camera only when you choose to scan. Discovery and camera access do not upload recordings.</p>
+<p>When you choose to send a Mac job, the companion transfers selected audio to the paired Mac over an encrypted connection. Video stays on the phone. When you turn on worker mode while the app is open, the paired Mac sends bounded Voice EQ work and receives the processed chunks. The partner device can verify output hashes. Only that session’s mobile imports and jobs are exposed to the paired device.</p>
+<p>The credential is stored in iOS Keychain or encrypted using Android Keystore. Choose the phone’s forget or disconnect control to clear the pairing credential. Choose <strong>Stop and revoke</strong> on the Mac to end access. Audio sent to the Mac can remain in its local work area; remove those copies on the Mac if you no longer need them. Use the <a href="companion.html#pairing">pairing guide</a> or the <a href="#contact">privacy contact</a> for help.</p>
+</section>
         </div>
-    </main>
+
+</main>
 
     <footer>
         <div class="footer-inner">
-            <div>AudioEnhancerMAX Privacy Notice 1.2 | Effective November 5, 2026</div>
+            <div>AudioEnhancerMAX Privacy Notice 1.4 | Effective November 20, 2026</div>
             <ul class="footer-links">
                 <li><a href="./">Overview</a></li>
                 <li><a href="status.html">Status</a></li>

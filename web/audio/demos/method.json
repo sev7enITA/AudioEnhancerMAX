@@ -1,0 +1,92 @@
+{
+  "date": "2026-11-06",
+  "product": "AudioEnhancerMAX Mac",
+  "version": "3.9.0 stable",
+  "processing_scope": "Direct invocation of app DSP functions, verified byte-identical to stable v3.9.0 tag. Not a packaged GUI recording.",
+  "voice": "Synthetic Kokoro-82M bf_emma voice from the project demonstration; no personal voice clone or customer recording.",
+  "text": "A quieter recording starts with careful listening. Keep the original, compare the result, and choose the changes that serve your story.",
+  "source_sha256": "9163de2dd13dc16764d624afb93ec310790eb1010fdd8ed1dfcdcf4cb7a3b00d",
+  "noise": "Deterministic generated test contamination, numpy seed 20261106.",
+  "comparison": "Same full passage, no time edits, no background music. Constant-gain loudness matching to -20 LUFS; compare residual noise and voice character. Controlled examples, not a real-world benchmark or a guarantee.",
+  "sample_rate": 24000,
+  "examples": [
+    {
+      "id": "hiss",
+      "function": "remove_noise_spectral",
+      "settings": {
+        "strength": 0.85
+      },
+      "duration": 9.025,
+      "samples": 216600,
+      "files": {
+        "before": {
+          "url": "hiss-before.wav",
+          "sha256": "a55670f07315485aad421bba56cae1b0071222ac89ba333d4a135df3033d587f",
+          "gain_db": 3.1000000000000014,
+          "lufs": -20.0,
+          "true_peak_dbtp": -3.0
+        },
+        "after": {
+          "url": "hiss-after.wav",
+          "sha256": "1729048fb4819b728bdb508c5e67ed83254b21829b4249fab0b3d1741d797d20",
+          "gain_db": 8.2,
+          "lufs": -20.0,
+          "true_peak_dbtp": -2.0
+        }
+      }
+    },
+    {
+      "id": "hum",
+      "function": "remove_buzzing_noise",
+      "settings": {
+        "base_freq_hz": 50.0,
+        "num_harmonics": 5,
+        "q_factor": 30.0
+      },
+      "duration": 9.025,
+      "samples": 216600,
+      "files": {
+        "before": {
+          "url": "hum-before.wav",
+          "sha256": "1ac8c9acce784114df1d987fdcc700c52360208c9f3f6ac29951e64a3ce974a1",
+          "gain_db": 3.1000000000000014,
+          "lufs": -20.0,
+          "true_peak_dbtp": -2.7
+        },
+        "after": {
+          "url": "hum-after.wav",
+          "sha256": "dab92ef320cd3bf80b812955b53037bee2cd96c4a0c0ec2cbef8c99e0c401203",
+          "gain_db": 4.100000000000001,
+          "lufs": -20.0,
+          "true_peak_dbtp": -0.8
+        }
+      }
+    },
+    {
+      "id": "rumble",
+      "function": "remove_wind_noise",
+      "settings": {
+        "cutoff_hz": 200.0,
+        "strength": 0.85
+      },
+      "duration": 9.025,
+      "samples": 216600,
+      "files": {
+        "before": {
+          "url": "rumble-before.wav",
+          "sha256": "63c976889b06c8bc74fcbe5637afca5236b8a54b12f9a12cbae483bf53946b6a",
+          "gain_db": 3.3000000000000007,
+          "lufs": -20.0,
+          "true_peak_dbtp": -3.0
+        },
+        "after": {
+          "url": "rumble-after.wav",
+          "sha256": "5c168afe58f55bf431fc8c526757b4203dbbf75e8db2266330a3e537bbe8809e",
+          "gain_db": 5.100000000000001,
+          "lufs": -20.0,
+          "true_peak_dbtp": -1.1
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+.aem4-release {
+    --aem4-fg: #e9f4f6;
+    --aem4-muted: #b9cdd2;
+    --aem4-accent: #83e1e4;
+    box-sizing: border-box;
+    margin: 24px 0;
+    padding: clamp(18px, 3.2vw, 34px);
+    border: 1px solid #344953;
+    border-left: 3px solid #62b9c2;
+    border-radius: 15px;
+    background: #101d25;
+    color: var(--aem4-fg);
+    text-align: start;
+    line-height: 1.6;
+}
+
+.aem4-release h2, .aem4-release h3 { color: var(--aem4-fg); }
+.aem4-release h2 { margin: 0 0 .5em; line-height: 1.18; }
+.aem4-release p { color: var(--aem4-muted); }
+.aem4-release a { color: var(--aem4-accent); text-underline-offset: .17em; }
+.aem4-release a.button, .aem4-release a.btn-primary { color: #101d25; background: var(--aem4-accent); }
+.aem4-release code { overflow-wrap: anywhere; color: #d0e7ec; }
+.aem4-release li { margin-block: .22em; }
+.aem4-release ul { padding-inline-start: 21px; }
+.aem4-release a:focus-visible { outline: 2px solid #efc991; outline-offset: 4px; }
+.aem4-release figure, .aem4-home figure { min-width: 0; margin: 0; }
+.aem4-release figure img, .aem4-home figure img { display: block; width: 100%; height: auto; border-radius: 9px; border: 1px solid #334751; }
+.aem4-release figcaption, .aem4-home figcaption { color: #b9cdd2; padding: .36em .06em; font-size: .86em; }
+.aem4-release .aem4-secondary { display: inline-block; margin: .4em 0 .4em .6em; }
+.aem4-home { box-sizing: border-box; width: min(1180px, calc(100% - 36px)); margin: 56px auto; }
+.aem4-home-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(12px, 2vw, 30px); align-items: center; }
+.aem4-home .aem4-release { margin: 0; }
+.aem4-release.container, .aem4-release.cp-wrap { width: min(1100px, calc(100% - 36px)); margin: 28px auto; }
+.aem4-shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; }
+.aem4-press-archive { margin-block: 30px; }
+.aem4-press-archive summary { cursor: pointer; font-weight: 650; }
+@media (max-width: 760px) {
+    .aem4-home-grid, .aem4-shots { grid-template-columns: 1fr; }
+    .aem4-home { margin-block: 32px; }
+}
+.aem4-cta-entry { margin: 0 auto 15px; text-align: center; }
+.aem4-cta-entry a { color: #83e1e4; text-underline-offset: .17em; }
+
+.aem4-brand-asset{margin:1.5rem 0}.aem4-brand-asset img{display:block;width:7.5rem;height:7.5rem;object-fit:contain}.aem4-brand-asset figcaption{margin-top:.5rem}
+
+.aem4-mobile-shots{display:flex;flex-flow:row wrap;align-items:flex-start;gap:1.25rem;margin-block-start:1.5rem}
+.aem4-mobile-shots figure{margin:0;flex:0 1 12rem}
+.aem4-mobile-shots img{display:block;width:100%;height:auto;border:1px solid #2e3741;border-radius:.875rem}
+.aem4-mobile-shots figcaption{margin-block-start:.5rem}

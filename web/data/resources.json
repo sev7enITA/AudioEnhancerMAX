@@ -1,6 +1,23 @@
 {
-  "updated_on": "2026-10-27",
+  "updated_on": "2026-11-20",
   "resources": [
+    {
+      "id": "mac-beta-4-0-0",
+      "name": "AudioEnhancerMAX 4.0 BETA",
+      "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1",
+      "group": "official",
+      "type": {
+        "en": "Mac BETA release",
+        "it": "Release BETA per Mac"
+      },
+      "description": {
+        "en": "Direct Mac build 4.0.5, release notes, package verification and C2PA samples.",
+        "it": "Build Mac diretta 4.0.5, note di rilascio, verifica del pacchetto e campioni C2PA."
+      },
+      "language": "English",
+      "verified_on": "2026-11-20",
+      "status": "published"
+    },
     {
       "id": "product-hunt",
       "name": "Product Hunt",
