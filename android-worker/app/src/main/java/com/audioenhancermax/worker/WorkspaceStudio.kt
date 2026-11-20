@@ -35,6 +35,7 @@ internal fun StudioScreen(
     importAudio: (AudioImportPolicy.Filter) -> Unit,
     share: (File) -> Unit,
     openConnection: () -> Unit,
+    openVerification: () -> Unit,
 ) {
     WorkspaceTitle("Studio", if (vm.wave == null) "Edit a recording on this device." else null)
     if (vm.wave == null) {
@@ -56,7 +57,11 @@ internal fun StudioScreen(
             }
         }
     }
-    ContentCredentialsCard()
+    OutlinedButton(onClick = openVerification, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Icon(Icons.Default.VerifiedUser, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Verify an original file")
+    }
     if (vm.busy) LinearProgressIndicator(Modifier.fillMaxWidth().semantics { contentDescription = "Working on audio" })
 }
 

@@ -698,11 +698,22 @@
             </div>
         </div>
         <details class="card studio-verifier" id="credentials-inspector" hidden>
-            <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt="" aria-hidden="true"> Verify C2PA Content Credentials</summary>
-            <p class="text-sm text-muted">Inspect a WAV, MP3, FLAC, M4A, MP4 or MOV file on this device.</p>
+            <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt="" aria-hidden="true"> Verify content</summary>
+            <p class="text-sm text-muted">Check C2PA and audio measurements for the file received. Supports WAV, MP3, FLAC, M4A, MP4 and MOV. Verification runs on this Mac.</p>
+            <label class="text-sm"><input type="checkbox" id="media-verification-audioseal"> Include the experimental AudioSeal signal measurement</label>
+            <p class="text-sm text-muted">Requires the optional local detector package.</p>
             <label for="credentials-file">Media to verify</label>
             <input type="file" id="credentials-file" accept=".wav,.mp3,.flac,.m4a,.mp4,.mov">
             <p id="credentials-inspection" class="text-sm" role="status"></p>
+            <div id="media-verification-evidence" hidden>
+                <p class="text-sm">File received SHA-256<br><code id="media-verification-fingerprint" style="overflow-wrap:anywhere"></code></p>
+                <p id="media-verification-processing-report" class="text-sm" style="overflow-wrap:anywhere" hidden></p>
+                <p id="media-verification-audio" class="text-sm"></p>
+                <p id="media-verification-watermark" class="text-sm" hidden></p>
+                <svg id="media-verification-waveform" viewBox="0 0 256 48" class="text-muted" width="256" height="48" role="img" aria-label="Peak envelope of the analyzed audio"></svg>
+                <p class="text-sm text-muted">Use these signals to guide a review. The downloaded summary contains the received file’s fingerprint and is unsigned.</p>
+                <button id="media-verification-download" class="btn btn-secondary" type="button">Download verification report</button>
+            </div>
         </details>
 
 

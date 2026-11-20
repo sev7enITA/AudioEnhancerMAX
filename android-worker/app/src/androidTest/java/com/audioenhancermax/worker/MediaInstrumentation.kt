@@ -1,10 +1,13 @@
 package com.audioenhancermax.worker
 
 import android.app.Instrumentation
+import android.content.Intent
 import android.os.Bundle
 import android.net.Uri
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import androidx.core.content.FileProvider
+import com.google.gson.JsonParser
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
@@ -28,12 +31,44 @@ class MediaInstrumentation: Instrumentation() {
                     val signed = inspectCredentialFile(targetContext, fixture("signed-sample.wav"), "audio/wav")
                     val altered = inspectCredentialFile(targetContext, fixture("altered-sample.wav"), "audio/wav")
                     val unsigned = inspectCredentialFile(targetContext, fixture("phone24.wav"), "audio/wav")
-                    check(signed.outcome == "Integrity verified" && signed.signerTrust != "Recognized") { signed.toString() }
+                    check(signed.outcome == "Integrity verified" && signed.signerTrust != "recognized") { signed.toString() }
                     check(signed.reportFingerprint == sha256(fixture("processing-report.json").readBytes())) { signed.toString() }
-                    check(altered.outcome == "Integrity check failed") { altered.toString() }
+                    check(altered.outcome == "Integrity inconclusive" && "assertion.dataHash.mismatch" in altered.failureCodes) { altered.toString() }
                     check(unsigned.outcome == "No embedded credentials") { unsigned.toString() }
-                    report.putString("c2pa", "PASS: original signed, altered and unsigned WAVs, signer trust and exact report fingerprint")
+                    report.putString("c2pa", "PASS: signed and unsigned WAVs, conservative mismatch for altered WAV, manifest actions, signer trust and exact report fingerprint")
                 }
+                val originalProofFile = fixture("signed-sample.wav")
+                val originalProof = originalProofFile.inputStream().use {
+                    copyAndHash(it, java.io.ByteArrayOutputStream(), VerifyFileLimit) {}
+                }
+                val checked = verifyCopiedMedia(targetContext, originalProofFile, originalProof) {}
+                check(checked.asset.digest == sha256(originalProofFile.readBytes()) && checked.asset.sizeBytes == originalProofFile.length())
+                check(checked.audioStatus == "measured" && requireNotNull(checked.audio).analyzedSamples > 0)
+                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    check(checked.credentials.actions.any { it.action == "c2pa.opened" })
+                    check(checked.credentials.actions.any { it.action == "c2pa.modified" })
+                }
+                val reportFile = saveVerificationReport(targetContext, checked)
+                val reportUri = FileProvider.getUriForFile(targetContext, "${targetContext.packageName}.files", reportFile)
+                check(reportUri.scheme == "content" && !isExternalMediaUri(targetContext, reportUri))
+                val exported = targetContext.contentResolver.openInputStream(reportUri)!!.use {
+                    JsonParser.parseString(String(it.readBytes())).asJsonObject
+                }
+                check(exported["schema"].asString == MediaVerificationSchema)
+                check(exported.getAsJsonObject("asset")["sha256"].asString == checked.asset.digest)
+                check(exported.getAsJsonObject("credentials")["status"].asString == checked.credentials.status)
+                val unsafeShare = Intent(Intent.ACTION_SEND).setType("audio/wav")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).putExtra(Intent.EXTRA_STREAM, Uri.fromFile(originalProofFile))
+                check(singleSharedContent(targetContext, unsafeShare) == null)
+                val ungrantedShare = Intent(Intent.ACTION_SEND).setType("audio/wav")
+                    .putExtra(Intent.EXTRA_STREAM, Uri.parse("content://verification.example/document/x"))
+                check(singleSharedContent(targetContext, ungrantedShare) == null)
+                val compressed = fixture("phone.m4a")
+                val measured = AudioImporter.measure(compressed, AudioImportPolicy.Kind.MP4) {}
+                check(abs(measured.analyzedSeconds - 2) < .12 && measured.complete && measured.sampleRate == 48000)
+                val longMeasure = AudioImporter.measure(fixture("phone90.m4a"), AudioImportPolicy.Kind.MP4) {}
+                check(!longMeasure.complete && longMeasure.analyzedSeconds == 30.0)
+                report.putString("verification", "PASS: exact original bytes/hash, native audio metrics with time window, safe share rejection, versioned FileProvider report")
                 for(name in listOf("phone.m4a","phone.aac","phone.flac","phone.ogg","phone24.wav")) {
                     val file=fixture(name);val hash=sha256(file.readBytes())
                     val decoded=AudioImporter.decode(targetContext,Uri.fromFile(file))

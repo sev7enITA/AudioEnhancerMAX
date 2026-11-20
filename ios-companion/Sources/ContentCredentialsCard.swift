@@ -1,36 +1,77 @@
 import C2PA
-import SwiftUI
-import UniformTypeIdentifiers
+import Foundation
 
-private let credentialFormats = [
-    "wav": "audio/wav", "mp3": "audio/mpeg", "flac": "audio/flac",
-    "m4a": "audio/mp4", "mp4": "video/mp4", "mov": "video/quicktime",
-]
+struct CredentialSummary: Codable, Sendable {
+    struct Action: Codable, Sendable {
+        let action: String
+        let when: String?
+        let whenStart: String?
+        let whenEnd: String?
+    }
 
-struct CredentialSummary: Sendable {
-    let outcome: String
+    let status: String
     let detail: String
+    var embedded: Bool?
     var signer: String?
+    var issuer: String?
     var signerTrust: String?
-    var timestamp: String?
-    var reportFingerprint: String?
+    var timestampStatus: String?
+    var timestampTrusted: Bool?
+    var processingReportSha256: String?
+    var trustSnapshotExpired: Bool?
+    var actionTimeline: [Action] = []
+    var actions: [String] = []
+    var failureCodes: [String] = []
+
+    var reportFingerprint: String? { processingReportSha256 }
+    var outcome: String {
+        switch status {
+        case "valid", "trusted": "Integrity verified"
+        case "invalid": "Integrity check failed"
+        case "unsigned": "No embedded credentials"
+        case "remote_reference": "Remote reference"
+        case "unsupported": "Unsupported format"
+        case "format_mismatch": "File format mismatch"
+        case "indeterminate": "Integrity not established"
+        case "validator_unavailable": "Trust data unavailable"
+        default: "Could not verify"
+        }
+    }
+
+    var signerTrustLabel: String? {
+        switch signerTrust {
+        case "recognized": "Recognized"
+        case "unrecognized": "Unrecognized signer"
+        case "not_established": "Not established"
+        case "trust_list_expired": "Trust list expired"
+        default: nil
+        }
+    }
+
+    var timestampLabel: String? {
+        switch timestampStatus {
+        case "trusted": "Trusted RFC 3161"
+        case "validated_untrusted": "Present, trust not established"
+        case "not_established": "Not established"
+        case "trust_list_expired": "Trust list expired"
+        default: nil
+        }
+    }
 }
 
 enum MobileContentCredentials {
     private static let trustExpiry = ISO8601DateFormatter().date(from: "2027-02-02T17:24:49Z")!
 
     static func inspect(_ url: URL, bundle: Bundle = .main) -> CredentialSummary {
-        guard let format = credentialFormats[url.pathExtension.lowercased()] else {
-            return CredentialSummary(outcome: "Unsupported format", detail: "Choose WAV, MP3, FLAC, M4A, MP4 or MOV.")
+        guard let format = VerificationFormat(rawValue: url.pathExtension.lowercased()) else {
+            return CredentialSummary(status: "unsupported", detail: "Choose WAV, MP3, FLAC, M4A, MP4 or MOV.")
         }
         let granted = url.startAccessingSecurityScopedResource()
         defer { if granted { url.stopAccessingSecurityScopedResource() } }
         do {
-            guard let count = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize else {
-                throw CocoaError(.fileReadUnknown)
-            }
-            guard count <= 500 * 1024 * 1024 else {
-                return CredentialSummary(outcome: "File too large", detail: "Choose a file up to 500 MB.")
+            let count = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+            guard count > 0, count <= MobileMediaVerification.maximumBytes else {
+                return CredentialSummary(status: "unreadable", detail: "Choose a nonempty file of up to 500 MiB.")
             }
             let expired = Date() >= trustExpiry
             let anchors: [[String: String]] = try expired ? [] : [
@@ -56,125 +97,115 @@ enum MobileContentCredentials {
                 httpResolver: { _ in throw URLError(.notConnectedToInternet) }
             )
             let stream = try Stream(readFrom: url)
-            let reader = try Reader(context: context, format: format, stream: stream)
+            let reader = try Reader(context: context, format: format.mimeType, stream: stream)
             let object = try JSONSerialization.jsonObject(with: Data(try reader.json().utf8))
             return summarize(object as? [String: Any] ?? [:], embedded: reader.isEmbedded(), expired: expired)
+        } catch let error as CocoaError where error.code == .fileNoSuchFile {
+            return CredentialSummary(status: "validator_unavailable", detail: "The bundled trust data could not be read.")
         } catch {
             let reason = error.localizedDescription.lowercased()
             if reason.contains("remote manifest") || reason.contains("remotemanifest") {
-                return CredentialSummary(outcome: "Remote reference",
-                                         detail: "This file points to an online manifest. The check stays offline.")
+                return CredentialSummary(status: "remote_reference",
+                                         detail: "The file points to an online manifest. This verification stays offline.",
+                                         embedded: false)
             }
             if reason.contains("manifestnotfound") || reason.contains("manifest not found") ||
                 reason.contains("no manifest") || reason.contains("jumbfnotfound") {
-                return CredentialSummary(outcome: "No embedded credentials",
-                                         detail: "The selected file contains no readable embedded C2PA manifest.")
+                return CredentialSummary(status: "unsigned",
+                                         detail: "The reader found no readable embedded C2PA manifest.",
+                                         embedded: false)
             }
-            return CredentialSummary(outcome: "Could not verify", detail: "Check that the file opens and has a supported format.")
+            return CredentialSummary(status: "unreadable", detail: "Check that the file opens and has a supported format.")
         }
     }
 
     static func summarize(_ document: [String: Any], embedded: Bool, expired: Bool) -> CredentialSummary {
         guard embedded else {
-            return CredentialSummary(outcome: "Remote reference", detail: "This check reads only embedded manifests.")
+            return CredentialSummary(status: "remote_reference", detail: "This check reads only embedded manifests.",
+                                     embedded: false)
         }
         guard let id = document["active_manifest"] as? String,
               let manifests = document["manifests"] as? [String: [String: Any]], let manifest = manifests[id] else {
-            return CredentialSummary(outcome: "Could not verify", detail: "The active manifest could not be read.")
+            return CredentialSummary(status: "unreadable", detail: "The active manifest could not be read.", embedded: true)
         }
         let validation = (document["validation_results"] as? [String: Any])?["activeManifest"] as? [String: Any]
         let successes = validation?["success"] as? [[String: Any]] ?? []
+        let failures = validation?["failure"] as? [[String: Any]] ?? []
         let codes = Set(successes.compactMap { $0["code"] as? String })
+        let failedCodes = Array(failures.compactMap { code($0["code"]) }.prefix(32))
         let assertions = manifest["assertions"] as? [[String: Any]] ?? []
-        let report = assertions.compactMap { assertion -> String? in
-            guard assertion["label"] as? String == "com.fabriziodegni.audioenhancermax.processing" else { return nil }
-            return (assertion["data"] as? [String: Any])?["processing_report_sha256"] as? String
-        }.first { $0.range(of: "^[a-fA-F0-9]{64}$", options: .regularExpression) != nil }
-        let integrity: (outcome: String, detail: String)
+        let integrity: (status: String, detail: String)
         switch document["validation_state"] as? String {
-        case "Valid", "Trusted":
-            integrity = ("Integrity verified", "The asset matches its signed manifest.")
+        case "Trusted":
+            integrity = (expired ? "valid" : "trusted", "The asset matches its signed manifest.")
+        case "Valid":
+            integrity = ("valid", "The asset matches its signed manifest.")
         case "Invalid":
-            integrity = ("Integrity check failed", "The signature or a verification check failed.")
+            integrity = ("invalid", "The signature or an integrity check failed.")
         default:
-            integrity = ("Integrity not established", "The reader did not report a usable integrity result.")
+            integrity = ("indeterminate", "The reader did not establish the asset’s integrity.")
         }
-        let signerTrust = expired ? "Trust list expired" :
-            (codes.contains("signingCredential.trusted") ? "Recognized" : "Not established")
-        let timestamp: String
-        if expired {
-            timestamp = "Trust list expired"
-        } else if codes.contains("timeStamp.validated"), codes.contains("timeStamp.trusted") {
-            timestamp = "Trusted RFC 3161"
-        } else if codes.contains("timeStamp.validated") {
-            timestamp = "Present, trust not established"
-        } else {
-            timestamp = "Not established"
-        }
-        let issuer = (manifest["signature_info"] as? [String: Any])?["issuer"] as? String
-        return CredentialSummary(outcome: integrity.outcome, detail: integrity.detail,
-                                 signer: issuer.map { String($0.prefix(160)) }, signerTrust: signerTrust,
-                                 timestamp: timestamp, reportFingerprint: report)
-    }
-}
-
-struct ContentCredentialsCard: View {
-    @State private var picker = false
-    @State private var selection: URL?
-    @State private var summary: CredentialSummary?
-    @State private var working = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("Content Credentials", systemImage: "checkmark.shield")
-                .font(.headline)
-            Text("Inspect C2PA in the original file. Verification runs on this phone without uploading the file.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Button { picker = true } label: {
-                Label(working ? "Checking credentials…" : "Check a file", systemImage: "doc.text.magnifyingglass")
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(working)
-            if working { ProgressView() }
-            if let summary = summary {
-                Divider()
-                Text(summary.outcome).font(.headline)
-                Text(summary.detail).font(.subheadline)
-                if let signer = summary.signer { LabeledContent("Signer", value: signer) }
-                if let trust = summary.signerTrust { LabeledContent("Signer trust", value: trust) }
-                if let timestamp = summary.timestamp { LabeledContent("Timestamp", value: timestamp) }
-                if let report = summary.reportFingerprint {
-                    Text("Processing report SHA-256").font(.caption)
-                    Text(report).font(.footnote.monospaced()).textSelection(.enabled)
+        let verified = integrity.status == "valid" || integrity.status == "trusted"
+        let matched = Set(successes.compactMap { entry -> String? in
+            guard entry["code"] as? String == "assertion.hashedURI.match" else { return nil }
+            return (entry["url"] as? String)?.split(separator: "/").last.map(String.init)
+        })
+        var timeline: [CredentialSummary.Action] = []
+        if verified {
+            for assertion in assertions {
+                guard let label = assertion["label"] as? String,
+                      ["c2pa.actions", "c2pa.actions.v2"].contains(label) else { continue }
+                let instance = assertion["instance"] as? Int ?? 0
+                let identifier = instance > 0 ? "\(label)__\(instance)" : label
+                guard matched.contains(identifier),
+                      let entries = (assertion["data"] as? [String: Any])?["actions"] as? [[String: Any]] else { continue }
+                for entry in entries.prefix(max(0, 32 - timeline.count)) {
+                    guard let action = code(entry["action"]) else { continue }
+                    timeline.append(.init(action: action, when: stamp(entry["when"]),
+                                          whenStart: stamp(entry["whenStart"]), whenEnd: stamp(entry["whenEnd"])))
                 }
+                if timeline.count == 32 { break }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .fileImporter(isPresented: $picker, allowedContentTypes: [.audio, .movie, .data]) { result in
-            switch result {
-            case .success(let url):
-                summary = nil
-                selection = nil
-                selection = url
-            case .failure:
-                summary = CredentialSummary(outcome: "Could not open the file", detail: "Try selecting it again.")
-            }
-        }
-        .task(id: selection) {
-            guard let url = selection else { return }
-            working = true
-            let operation = Task.detached(priority: .userInitiated) { MobileContentCredentials.inspect(url) }
-            let result = await withTaskCancellationHandler {
-                await operation.value
-            } onCancel: {
-                operation.cancel()
-            }
-            if !Task.isCancelled {
-                summary = result
-                working = false
-                selection = nil
-            }
-        }
+        let processingLabel = "com.fabriziodegni.audioenhancermax.processing"
+        let report = verified && matched.contains(processingLabel) ? assertions.lazy.compactMap { assertion -> String? in
+            guard assertion["label"] as? String == processingLabel else { return nil }
+            return (assertion["data"] as? [String: Any])?["processing_report_sha256"] as? String
+        }.first { $0.range(of: "^[a-fA-F0-9]{64}$", options: .regularExpression) != nil } : nil
+        let signerTrust = expired ? "trust_list_expired" : (codes.contains("signingCredential.trusted") ? "recognized" :
+            (failedCodes.contains("signingCredential.untrusted") ? "unrecognized" : "not_established"))
+        let timestamp: String
+        if expired { timestamp = "trust_list_expired" }
+        else if codes.contains("timeStamp.validated"), codes.contains("timeStamp.trusted") { timestamp = "trusted" }
+        else if codes.contains("timeStamp.validated") { timestamp = "validated_untrusted" }
+        else { timestamp = "not_established" }
+        let signature = manifest["signature_info"] as? [String: Any]
+        return CredentialSummary(
+            status: integrity.status, detail: integrity.detail, embedded: true, signer: safeName(signature?["common_name"]),
+            issuer: safeName(signature?["issuer"]), signerTrust: signerTrust, timestampStatus: timestamp,
+            timestampTrusted: timestamp == "trusted", processingReportSha256: report?.lowercased(),
+            trustSnapshotExpired: expired, actionTimeline: timeline, actions: timeline.map(\.action),
+            failureCodes: failedCodes
+        )
+    }
+
+    private static func code(_ value: Any?) -> String? {
+        guard let value = value as? String,
+              value.range(of: "^[A-Za-z0-9_.-]{1,100}$", options: .regularExpression) != nil else { return nil }
+        return value
+    }
+
+    private static func safeName(_ value: Any?) -> String? {
+        guard let value = value as? String else { return nil }
+        let cleaned = String(value.prefix(160).unicodeScalars.filter {
+            !CharacterSet.controlCharacters.contains($0) && $0.properties.generalCategory != .format
+        })
+        return cleaned.isEmpty ? nil : cleaned
+    }
+
+    private static func stamp(_ value: Any?) -> String? {
+        guard let value = value as? String, value.utf8.count <= 48,
+              value.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+Z?$", options: .regularExpression) != nil else { return nil }
+        return value
     }
 }

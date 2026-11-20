@@ -9,8 +9,14 @@
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application android:allowBackup="false" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/Theme.AudioEnhancerWorker" android:usesCleartextTraffic="false">
         <activity android:name=".PairingCaptureActivity" android:screenOrientation="portrait" android:exported="false" android:theme="@style/zxing_CaptureTheme"/>
-        <activity android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.AudioEnhancerWorker">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:theme="@style/Theme.AudioEnhancerWorker">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="audio/*"/>
+                <data android:mimeType="video/*"/>
+            </intent-filter>
         </activity>
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/shared_files" />

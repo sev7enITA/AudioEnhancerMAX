@@ -25,19 +25,30 @@ private struct CompanionView: View {
     @EnvironmentObject private var model: CompanionModel
     @Environment(\.scenePhase) private var phase
     @State private var tab = Page.studio
+    @StateObject private var verification = VerificationWorkspace()
 
-    private enum Page { case studio, connection, music, about }
+    private enum Page { case studio, verify, connection, music, about }
 
     var body: some View {
         TabView(selection: $tab) {
-            NavigationStack { StudioView { tab = .connection } }
+            NavigationStack { StudioView(openConnection: { tab = .connection }, openVerification: { tab = .verify }) }
                 .tabItem { Label("Studio", systemImage: "waveform") }.tag(Page.studio)
+            NavigationStack { VerifyContentView(workspace: verification) }
+                .tabItem { Label("Verify", systemImage: "checkmark.shield") }.tag(Page.verify)
             NavigationStack { ConnectionView { tab = .studio } }
                 .tabItem { Label("Connection", systemImage: "desktopcomputer") }.tag(Page.connection)
             NavigationStack { MusicBriefView(model: model) }
                 .tabItem { Label("Music brief", systemImage: "music.note.list") }.tag(Page.music)
             NavigationStack { CompanionAboutView() }
                 .tabItem { Label("About", systemImage: "info.circle") }.tag(Page.about)
+        }
+        .onOpenURL { url in
+            guard url.isFileURL else { return }
+            tab = .verify
+            verification.verify(url)
+        }
+        .onChange(of: phase) { _, next in
+            if next == .background { verification.cancel() }
         }
         .task(id: phase) {
             while phase == .active && !Task.isCancelled {

@@ -36,6 +36,13 @@ Discover the Mac from the phone, or make the phone discoverable for 90 seconds a
 - [Earlier mobile preview and checksums](https://sourceforge.net/projects/audioenhancermax/files/mobile-preview-2026-11-06/)
 - [English 3:30 overview](https://www.youtube.com/watch?v=y63FdPvqxVI), recorded 5 November on an earlier build.
 
+## 4.1 BETA
+
+Verify content brings offline C2PA, a SHA-256 fingerprint and bounded audio measurements into one workspace on Mac, iOS and Android. Mac 4.1.0 is a signed and notarized Apple Silicon download. Android build 16 is a signed BETA APK. iOS build 12 is an unsigned developer archive with source. Mobile store availability and physical phone testing are pending.
+
+- [4.1 BETA releases and checksums](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)
+- [Verify content examples](https://www.fabriziodegni.com/AudioEnhancerMAX/#verify-content-4-1-0)
+
 ## Official pages
 
 - [AudioEnhancerMAX | Free Local Audio Editor for Mac](https://www.fabriziodegni.com/AudioEnhancerMAX/): Free, open-source audio editor for Apple Silicon Mac. Clean speech, review transcript edits and export audio with local processing and clear privacy controls.

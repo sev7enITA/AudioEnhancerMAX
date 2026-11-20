@@ -21,6 +21,7 @@ extension View {
 struct StudioView: View {
     @EnvironmentObject private var model: CompanionModel
     let openConnection: () -> Void
+    let openVerification: () -> Void
     @State private var importing = false
 
     var body: some View {
@@ -33,7 +34,13 @@ struct StudioView: View {
                 } else {
                     importHero
                 }
-                ContentCredentialsCard().workspaceCard()
+                Button(action: openVerification) {
+                    Label("Verify C2PA Content Credentials", systemImage: "checkmark.shield")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(WorkspaceColor.mint)
+                .workspaceCard()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)

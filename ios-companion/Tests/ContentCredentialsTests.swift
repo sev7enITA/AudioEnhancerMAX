@@ -14,7 +14,7 @@ final class ContentCredentialsTests: XCTestCase {
 
         let verified = MobileContentCredentials.inspect(signed)
         XCTAssertEqual(verified.outcome, "Integrity verified", verified.detail)
-        XCTAssertNotEqual(verified.signerTrust, "Recognized")
+        XCTAssertEqual(verified.signerTrust, "unrecognized")
         XCTAssertEqual(verified.reportFingerprint, digest)
         XCTAssertEqual(MobileContentCredentials.inspect(altered).outcome, "Integrity check failed")
         XCTAssertEqual(MobileContentCredentials.inspect(unsigned).outcome, "No embedded credentials")

@@ -1,0 +1,44 @@
+{
+  "schema": "audioenhancermax.media-verification.v1",
+  "generated_at_utc": "2026-11-20T04:31:05.694704+00:00",
+  "application": {
+    "version": "4.1.0",
+    "build": "4.1.0",
+    "platform": "macos"
+  },
+  "asset": {
+    "sha256": "12b6b8c174f01f1a425afb4ffdadb175c41b323267fc0cfbaa02cf6c09bdcddf",
+    "size_bytes": 1165650,
+    "media_type": "audio/wav"
+  },
+  "credentials": {
+    "status": "invalid",
+    "embedded": true,
+    "signer": "AudioEnhancerMAX test only",
+    "actions": [
+      "c2pa.opened",
+      "c2pa.modified"
+    ],
+    "ingredient_count": 1,
+    "processing_report_sha256": "dc3cd2312f32291b64601b12646f0062178abe393f7342ed9eaa2ebcc0101d73",
+    "failure_codes": [
+      "signingCredential.untrusted",
+      "assertion.dataHash.mismatch"
+    ],
+    "timestamp_trusted": true,
+    "trust_snapshot_expired": false
+  },
+  "audio": {
+    "source_codec": "pcm_s24le",
+    "source_sample_rate_hz": 48000,
+    "source_channels": 1,
+    "status": "measured",
+    "method": "first_audio_track_mono_prefix_v1",
+    "sample_rate_hz": 48000,
+    "analyzed_seconds": 8,
+    "preview_limit_seconds": 30,
+    "peak_dbfs": -14.89,
+    "rms_dbfs": -22.96,
+    "near_full_scale_percent": 0
+  }
+}

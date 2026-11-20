@@ -5,6 +5,9 @@ Optimized for Apple Silicon M3 MAX.
 """
 import os
 import asyncio
+import hashlib
+import tempfile
+import threading
 import logging
 import mimetypes
 import re
@@ -19,6 +22,7 @@ from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
 
 from app.config import (
     APP_STORE_MODE, UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
@@ -2046,6 +2050,50 @@ def inspect_content_credentials(request: Request, file: UploadFile = File(...)):
         raise HTTPException(503, str(exc)) from exc
     except CredentialsError as exc:
         raise HTTPException(422, str(exc)) from exc
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
+
+_media_verification_slot = threading.BoundedSemaphore(1)
+
+
+@app.post("/api/media-verification")
+async def verify_received_media(
+    request: Request, extension: str = Query(..., max_length=5), audioseal: bool = False,
+):
+    _require_local_credentials_request(request)
+    from app.services.content_credentials import MEDIA_TYPES
+    from app.services.media_verification import verify_media
+
+    suffix = "." + extension.lower()
+    if suffix not in MEDIA_TYPES:
+        raise HTTPException(415, "Choose WAV, MP3, FLAC, M4A, MP4 or MOV")
+    if request.headers.get("content-type") != "application/octet-stream":
+        raise HTTPException(415, "Send the original file as binary data")
+    if not _media_verification_slot.acquire(blocking=False):
+        raise HTTPException(429, "Wait for the current verification to finish")
+    limit = MAX_FILE_SIZE_MB * 1024 * 1024
+    try:
+        with tempfile.TemporaryFile() as snapshot:
+            size = 0
+            digest = hashlib.sha256()
+            try:
+                async with asyncio.timeout(180):
+                    async for chunk in request.stream():
+                        size += len(chunk)
+                        if size > limit:
+                            raise HTTPException(413, f"Select a file up to {MAX_FILE_SIZE_MB} MB")
+                        digest.update(chunk)
+                        await run_in_threadpool(snapshot.write, chunk)
+            except TimeoutError as exc:
+                raise HTTPException(408, "The file transfer timed out") from exc
+            if size == 0:
+                raise HTTPException(422, "Choose a nonempty file")
+            await run_in_threadpool(snapshot.seek, 0)
+            result = await run_in_threadpool(verify_media, snapshot, suffix, digest.hexdigest(), size, audioseal)
+    except OSError as exc:
+        raise HTTPException(507, "Could not open or write the temporary verification copy") from exc
+    finally:
+        _media_verification_slot.release()
     return JSONResponse(result, headers={"Cache-Control": "no-store"})
 
 

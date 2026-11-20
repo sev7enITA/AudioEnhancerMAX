@@ -1,4 +1,4 @@
-# AudioEnhancerMAX iOS Companion 4.0.0 (11)
+# AudioEnhancerMAX iOS Companion 4.1.0 (12)
 
 Native SwiftUI companion for iOS 17+. This preview is validated with the simulator and an unsigned device archive; it is not a TestFlight or App Store release. Installing on an iPhone requires development signing and provisioning.
 
@@ -13,6 +13,9 @@ Native SwiftUI companion for iOS 17+. This preview is validated with the simulat
 - The **Mac acceleration** card shows accepted chunks, audio seconds, last Voice EQ compute time, and the measured local DSP rate. The rate compares audio duration to compute time. Round-trip latency is displayed in the connection card. Foreground contribution runs Voice EQ (`auto_eq`), up to 2 MiB per chunk. Backgrounding, heat, editing, transfer, or an explicit stop can pause contribution.
 - **Content Credentials** checks an original WAV, MP3, FLAC, M4A, MP4 or MOV file on the phone. The offline reader reports embedded manifest integrity, signer trust and timestamp trust individually. AudioEnhancerMAX processing-report fingerprints are displayed when present.
 - **Music brief** offers five editable starting points, duration matching from the active recording, structured preview, copy, TXT/JSON sharing, JSON import and separate lyrics.
+- **Verify Content** opens WAV, MP3, FLAC, M4A, MP4 and MOV from Files. The app is also registered as an alternate viewer for these formats so users can open a selected file from another app. Verification takes a temporary private snapshot up to 500 MiB and uses the same bytes for SHA-256, byte count, C2PA and audio measurements.
+- The verifier lists the signer, issuer and action declarations bound to a validated manifest. It reports signer trust and RFC 3161 timestamp trust independently. Audio measurements use the first audio track for up to 30 seconds at the native rate and channels, at most stereo and 96 kHz. Sample peak and RMS are in dBFS. Near-full-scale percentage uses a 0.999 amplitude threshold. Silence has no finite dBFS value.
+- **Export JSON report** shares `audioenhancermax.media-verification.v1` with the asset fingerprint, credential verdict and audio measurements. The report excludes source paths and file contents. The snapshot is removed on completion or cancellation.
 - **About** shows the installed version and build, the BETA channel, the developer and links to support, privacy, source code and the MIT license.
 
 Pairing lives in Keychain with ThisDeviceOnly protection. Restarting the Mac session requires a new pairing. Local files persist in the app until replaced or removed. No audio upload is implicit.

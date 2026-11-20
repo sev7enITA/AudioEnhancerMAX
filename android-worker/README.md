@@ -1,4 +1,4 @@
-# AudioEnhancerMAX Android Companion 4.0.0 (15)
+# AudioEnhancerMAX Android Companion 4.1.0 (16)
 
 Native Compose companion, Android 8/API 26 or later, target API 35. Build 15 is the mobile workstation candidate. Its direct QA APK is built in release mode and uses the existing QA signing key. The package ID is `com.audioenhancermax.worker`.
 
@@ -12,7 +12,8 @@ Native Compose companion, Android 8/API 26 or later, target API 35. Build 15 is 
 - **Make this phone discoverable** lets the Mac find the phone and invite it. Choose the invitation to compare the same eight-digit number. Opening this mode publishes a temporary phone name and request ID on the local network. It ends when you leave Connection, tap Stop, accept an invitation, or wait 90 seconds.
 - Before sending, the app shows the destination and source or result fingerprint. Mac transfer is limited to 20 MiB decoded WAV. The app shows upload, processing, verification and completion. Completed audio and report are associated using SHA-256. Device information, Voice EQ benchmark and round-trip latency are available.
 - The worker only accepts `auto_eq`, at most 2 MiB per chunk. It stops on backgrounding, heat, local editing, upload or explicit stop; the Mac can fall back locally. No phone HTTP server, continuous background processing or second pairing is required.
-- **Content Credentials** verifies embedded C2PA on the original file on Android 9 or later. Choose WAV, MP3, FLAC, M4A, MP4 or MOV. The reader works offline and reports file integrity, signer trust and timestamp trust individually. AudioEnhancerMAX processing-report fingerprints are displayed when present.
+- **Verify Content** opens WAV, MP3, FLAC, M4A, MP4 or MOV from Files or from a single Android share with read access. It computes the size and SHA-256 of the original bytes, checks embedded C2PA on Android 9 or later, and reports certificate issuer, signer and timestamp trust, validated actions and linked processing report hashes. A hash-only reader mismatch stays inconclusive. The temporary copy is removed after checking.
+- Verification accepts files up to 100 MiB. Large media may exceed the device’s C2PA reader budget while the original byte digest remains available. Audio measurements describe peak, RMS and near-full-scale samples in up to the first 30 decoded seconds. Choose **Share JSON report** to export the versioned local report.
 - **Music brief** offers five editable starting points, duration matching from the active recording, structured preview, copy, TXT/JSON sharing, JSON import and separate lyrics.
 - The connection dashboard reports accepted Voice EQ chunks, audio seconds, compute time, measured local throughput and the Mac round-trip time. Counters update after the Mac accepts each chunk.
 - **About** shows the installed version and build, developer, project site, support, privacy policy and project licence.

@@ -97,7 +97,7 @@ enum MediaImport {
         let track=tracks[0]
         let wave:Wave
         if kind == .wav,let pcm=try? Wave(data:Data(contentsOf:url)){wave=pcm}
-        else{wave=try await readVideoAudio(asset,track:track)}
+        else{wave=try await readAudio(asset,track:track)}
         let format=try await track.load(.formatDescriptions).first
         let subtype=format.map{CMFormatDescriptionGetMediaSubType($0)} ?? 0
         let codec=String(bytes:[UInt8((subtype>>24)&255),UInt8((subtype>>16)&255),UInt8((subtype>>8)&255),UInt8(subtype&255)],encoding:.ascii) ?? "unknown"
@@ -124,17 +124,24 @@ enum MediaImport {
         }
         return (video[0],audio[0])
     }
-    private static func readVideoAudio(_ asset: AVAsset, track: AVAssetTrack) async throws -> Wave {
+    static func readAudio(_ asset: AVAsset, track: AVAssetTrack, maximumSeconds: Double? = nil) async throws -> Wave {
         let descriptions = try await track.load(.formatDescriptions)
         guard let format = descriptions.first, let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(format) else {throw CompanionError.message("Missing audio format.")}
         let channels = Int(asbd.pointee.mChannelsPerFrame), rate = Int(asbd.pointee.mSampleRate)
         guard (1...2).contains(channels), (8000...96000).contains(rate) else {throw CompanionError.message("Use mono/stereo audio at 8–96 kHz.")}
-        let range = try await track.load(.timeRange)
+        let fullRange = try await track.load(.timeRange)
+        let range: CMTimeRange
+        if let maximumSeconds, fullRange.duration.seconds > maximumSeconds {
+            range = CMTimeRange(start: fullRange.start, duration: CMTime(seconds: maximumSeconds, preferredTimescale: 96_000))
+        } else {
+            range = fullRange
+        }
         let frameLength = range.duration.seconds * Double(rate)
         guard range.start.seconds.isFinite, frameLength.isFinite, frameLength > 0,
               frameLength <= Double((Wave.maxBytes-44)/(4*channels)) else {throw CompanionError.message("Decoded audio exceeds 64 MiB (about 3 minutes of stereo at 48 kHz or 17 minutes of mono at 16 kHz). Choose a shorter recording.")}
         let frameCount = Int(frameLength.rounded())
         let reader = try AVAssetReader(asset:asset)
+        if maximumSeconds != nil { reader.timeRange = range }
         let output = AVAssetReaderTrackOutput(track:track,outputSettings:[AVFormatIDKey:kAudioFormatLinearPCM,AVLinearPCMBitDepthKey:32,AVLinearPCMIsFloatKey:true,AVLinearPCMIsBigEndianKey:false,AVLinearPCMIsNonInterleaved:false])
         guard reader.canAdd(output) else {throw CompanionError.message("Cannot decode this audio track.")}
         reader.add(output)

@@ -200,12 +200,21 @@ def inspect_stream(stream: BinaryIO, suffix: str) -> dict:
                     for action in assertion.get("data", {}).get("actions", [])
                     if isinstance(action.get("action"), str)
                 ]
+                processing_digest = next((
+                    value
+                    for assertion in (manifest.get("assertions") or [])
+                    if assertion.get("label") == ASSERTION_LABEL
+                    if isinstance(data := assertion.get("data"), dict)
+                    if isinstance(value := data.get("processing_report_sha256"), str)
+                    and len(value) == 64 and all(char in "0123456789abcdefABCDEF" for char in value)
+                ), None)
                 return {
                     "status": {"Trusted": "trusted", "Valid": "valid"}.get(state, "invalid"),
                     "embedded": reader.is_embedded(),
                     "signer": signature.get("issuer"),
                     "actions": actions,
                     "ingredient_count": len(manifest.get("ingredients", [])),
+                    "processing_report_sha256": processing_digest,
                     "failure_codes": [item["code"] for item in failures if "code" in item],
                     "timestamp_trusted": {"timeStamp.trusted", "timeStamp.validated"} <= successes,
                     "trust_snapshot_expired": _trust_snapshot_expired(),

@@ -8,6 +8,7 @@ import android.media.MediaFormat
 import android.net.Uri
 import android.os.SystemClock
 import java.io.File
+import java.nio.ByteBuffer
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 
@@ -70,12 +71,49 @@ object AudioImporter {
     }
 
     private data class Decoded(val wave:Wave,val codec:String,val remux:Boolean)
+    private data class DecodedFormat(val rate: Int, val channels: Int, val codec: String, val remux: Boolean, val complete: Boolean)
+
     private fun decodeCompressed(file: File, kind:AudioImportPolicy.Kind, filter:AudioImportPolicy.Filter, checkActive: () -> Unit): Decoded {
+        val pcm = ImportedPcm()
+        val decoded = readPcm(file, kind, filter, 180_000, checkActive) { bytes, float32, _, channels ->
+            pcm.append(bytes, float32, channels)
+            true
+        }
+        return Decoded(pcm.finish(decoded.rate, decoded.channels), decoded.codec, decoded.remux)
+    }
+
+    /** Uses the same native decoder without retaining a waveform or allocating a second file copy. */
+    internal fun measure(file: File, kind: AudioImportPolicy.Kind, checkActive: () -> Unit): AudioMeasurements {
+        val meters = AudioMeter()
+        if (kind == AudioImportPolicy.Kind.WAV && file.length() <= 12L * 1024 * 1024) {
+            val wave = try { Wave.decode(file.readBytes()) } catch (_: IllegalArgumentException) { null }
+            if (wave != null) {
+                val maxSamples = minOf(wave.samples.size, wave.rate * wave.channels * AudioMeter.MaxSeconds)
+                for (index in 0 until maxSamples) {
+                    if (index % 16384 == 0) checkActive()
+                    meters.add(wave.samples[index])
+                }
+                return meters.result(wave.rate, wave.channels, "PCM / WAV", maxSamples == wave.samples.size)
+            }
+        }
+        val decoded = readPcm(file, kind, AudioImportPolicy.Filter.ALL, 15_000, checkActive, meters::read)
+        return meters.result(decoded.rate, decoded.channels, decoded.codec, decoded.complete)
+    }
+
+    private fun readPcm(
+        file: File,
+        kind: AudioImportPolicy.Kind,
+        filter: AudioImportPolicy.Filter,
+        timeoutMs: Long,
+        checkActive: () -> Unit,
+        consume: (ByteBuffer, Boolean, Int, Int) -> Boolean,
+    ): DecodedFormat {
         val extractor = MediaExtractor()
         var codec: MediaCodec? = null
         var started = false
         try {
-            extractor.setDataSource(file.path)
+            file.inputStream().use { extractor.setDataSource(it.fd) }
+            require(extractor.trackCount in 1..32) { "The file has an unsupported number of tracks" }
             val hasVideo=(0 until extractor.trackCount).any{extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("video/")==true}
             filter.validate(kind,hasVideo)
             val tracks=(0 until extractor.trackCount).filter{extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("audio/")==true}
@@ -96,15 +134,15 @@ object AudioImporter {
             format.setInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
             decoder.configure(format, null, null, 0)
             decoder.start(); started = true
-            val pcm = ImportedPcm()
             val info = MediaCodec.BufferInfo()
             var inputEnded = false
             var outputEnded = false
             var receivedPcm = false
             var expectedPcmTime: Long? = null
             var encoding = AudioFormat.ENCODING_PCM_16BIT
-            val deadline = SystemClock.elapsedRealtime() + 180000
-            while (!outputEnded) {
+            var stoppedByConsumer = false
+            val deadline = SystemClock.elapsedRealtime() + timeoutMs
+            while (!outputEnded && !stoppedByConsumer) {
                 checkActive()
                 check(SystemClock.elapsedRealtime() < deadline) { "Audio decoding timed out. Try a shorter clip." }
                 if (!inputEnded) {
@@ -142,14 +180,15 @@ object AudioImporter {
                                 val width = if (encoding == AudioFormat.ENCODING_PCM_FLOAT) 4 else 2
                                 expectedPcmTime = info.presentationTimeUs + (info.size/(width*channels)).toLong()*1000000/rate
                             }
-                            pcm.append(output, encoding == AudioFormat.ENCODING_PCM_FLOAT, channels)
+                            stoppedByConsumer = !consume(output, encoding == AudioFormat.ENCODING_PCM_FLOAT, rate, channels)
                             receivedPcm = true
                         }
                         outputEnded = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
                     } finally { decoder.releaseOutputBuffer(index, false) }
                 }
             }
-            return Decoded(pcm.finish(rate, channels),mime+(bitrate?.let{" · ${it/1000} kbps declared"} ?: " · bitrate not declared"),remux)
+            return DecodedFormat(rate, channels, mime+(bitrate?.let{" · ${it/1000} kbps declared"} ?: " · bitrate not declared"),
+                remux, outputEnded && !stoppedByConsumer)
         } finally {
             if (started) runCatching { codec?.stop() }
             runCatching { codec?.release() }

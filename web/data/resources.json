@@ -2,6 +2,23 @@
   "updated_on": "2026-11-20",
   "resources": [
     {
+      "id": "beta-4-1-0",
+      "name": "AudioEnhancerMAX 4.1 BETA",
+      "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1",
+      "group": "official",
+      "type": {
+        "en": "Mac, Android and iOS BETA release",
+        "it": "Release BETA per Mac, Android e iOS"
+      },
+      "description": {
+        "en": "Verify content brings offline C2PA, a SHA-256 fingerprint and bounded audio measurements into one workspace on Mac, iOS and Android.",
+        "it": "Verifica C2PA offline, impronta SHA-256 e misure audio in un report locale."
+      },
+      "language": "English",
+      "verified_on": "2026-11-20",
+      "status": "published"
+    },
+    {
       "id": "mac-beta-4-0-0",
       "name": "AudioEnhancerMAX 4.0 BETA",
       "url": "https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.0.0-beta.1",
