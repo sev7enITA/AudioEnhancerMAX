@@ -2,9 +2,13 @@
 
 # AudioEnhancerMAX
 
-**[Mac 4.1.2 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-beta.1)** refreshes the workspace and detects acceleration on the Mac running it. [Downloads](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-2) · [C2PA test samples](https://www.fabriziodegni.com/AudioEnhancerMAX/#verify-content-4-1-2).
+**Current public BETA: 4.1.6.** [Mac build 4.1.10](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-beta.1) is a notarised Apple Silicon DMG. The [Companion BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-mobile-beta.1) includes the signed Android APK, build 20, and an iOS Xcode developer archive, build 15.
 
-**[Companion 4.1.2 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-mobile-beta.1)** adds audio and video metadata, eligible artwork EXIF and format guidance. Android build 19 is a signed QA APK. iOS build 14 is an unsigned developer archive. [Mobile downloads](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates).
+[Release guide](https://www.fabriziodegni.com/AudioEnhancerMAX/release-4.html) · [Downloads and checksums](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html) · [Release evidence](https://www.fabriziodegni.com/AudioEnhancerMAX/status.html)
+
+**Earlier release:** **[Mac 4.1.2 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-beta.1)** refreshes the workspace and detects acceleration on the Mac running it. [Downloads](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-2) · [C2PA test samples](https://www.fabriziodegni.com/AudioEnhancerMAX/#verify-content-4-1-2).
+
+**Earlier release:** **[Companion 4.1.2 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.2-mobile-beta.1)** adds audio and video metadata, eligible artwork EXIF and format guidance. Android build 19 is a signed QA APK. iOS build 14 is an unsigned developer archive. [Mobile downloads](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#mobile-updates).
 
 **[4.1 BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.0-beta.1)** brings offline C2PA, SHA-256 and audio measurements to Mac, Android and iOS. [Downloads and verification examples](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html#beta-4-1-0).
 
