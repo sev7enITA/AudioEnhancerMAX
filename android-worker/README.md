@@ -34,7 +34,7 @@ Use JDK 17 or 21 with the installed Android SDK (JDK 25 is incompatible with thi
 
 The custom native instrumentation runner checks codecs, MIME intent extras, selected-format rejection, video replacement and preservation of original fixtures. JVM tests cover content signatures, PCM limits, stereo DSP, waveform tail coverage, pairing and text briefs. The optional Mac integration test skips without an isolated QA pairing fixture. Never commit session credentials.
 
-The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Before distributing an artifact, verify its compiled manifest, signing identity and SHA-256. Validate file providers, hotspot pairing and playback on physical devices before promoting the preview.
+The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. For direct distribution, run `./gradlew :app:assembleRelease`, verify 16 KiB ZIP alignment, and sign the release APK with the dedicated production key. Verify the compiled manifest, signature and SHA-256. Keep private keys outside the source tree. See [Companion updates](../docs/companion-updates.md) for distribution and the one-time migration from the QA signer. Validate file providers, hotspot pairing and playback on physical devices before promoting the preview.
 
 For a Google Play submission, run `./gradlew -Paemax.playStoreOnly=true :app:bundleRelease` and sign the Android App Bundle with the Play Console upload key. This setting targets API 36 and locks the app to the official Google Play listing regardless of installer attribution. It leaves the direct repository chooser and downloader unavailable. Review the current [target API requirements](https://support.google.com/googleplay/android-developer/answer/11926878).
 

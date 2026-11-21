@@ -14,7 +14,7 @@ import java.util.Base64
 import java.util.Locale
 
 internal const val CompanionPackageId = "com.audioenhancermax.worker"
-internal const val UpdateFeedUrl = "https://www.fabriziodegni.com/AudioEnhancerMAX/updates/companion-v1.json"
+internal const val UpdateFeedUrl = "https://www.fabriziodegni.com/AudioEnhancerMAX/updates/android-v1.json"
 internal const val MaxFeedBytes = 32 * 1024
 internal const val MaxUpdateBytes = 200L * 1024 * 1024
 private const val MaxPayloadBytes = 16 * 1024
@@ -88,7 +88,7 @@ internal fun verifyUpdateFeed(envelope: ByteArray, key: PublicKey, nowEpochSecon
     val signer = release.string("signer_sha256")
     requireUpdate(
         VersionPattern.matches(version) && build in 1..2_100_000_000 &&
-            filename == "AudioEnhancerMAX-Companion-v$version-build-$build-Android-QA.apk" &&
+            filename == "AudioEnhancerMAX-Companion-v$version-build-$build-Android.apk" &&
             Regex("v${Regex.escape(version)}-mobile-beta\\.[1-9][0-9]{0,2}").matches(tag) &&
             packageId == CompanionPackageId && size in 1..MaxUpdateBytes &&
             DigestPattern.matches(digest) && DigestPattern.matches(signer),

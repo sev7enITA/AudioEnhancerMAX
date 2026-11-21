@@ -54,7 +54,8 @@ class CompanionUpdateTest {
     @Test fun requiresCanonicalAndroidReleaseEvenWhenSigned() {
         val base = payload()
         val damaged = listOf(
-            base.replace("-Android-QA.apk", "/../../anything.apk"),
+            base.replace("-Android.apk", "/../../anything.apk"),
+            base.replace("-Android.apk", "-Android-QA.apk"),
             base.replace("-mobile-beta.1", "-preview.1"),
             base.replace(CompanionPackageId, "example.unrelated.app"),
             base.replace("\"size_bytes\":12", "\"size_bytes\":209715201"),
@@ -161,6 +162,6 @@ class CompanionUpdateTest {
     private fun payload(issued: Long = clock, expires: Long = clock + 60 * 60): String =
         """{"schema":"audioenhancermax.mobile-updates.v1","issued_at":$issued,"expires_at":$expires,
             "releases":{"android":{"version":"4.1.1","build":17,"package_id":"$CompanionPackageId",
-            "filename":"AudioEnhancerMAX-Companion-v4.1.1-build-17-Android-QA.apk",
+            "filename":"AudioEnhancerMAX-Companion-v4.1.1-build-17-Android.apk",
             "sha256":"${"ab".repeat(32)}","signer_sha256":"${"cd".repeat(32)}","size_bytes":12,"tag":"v4.1.1-mobile-beta.1"}}}"""
 }

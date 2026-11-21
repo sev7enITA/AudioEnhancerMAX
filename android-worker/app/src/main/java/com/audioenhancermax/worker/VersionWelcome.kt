@@ -35,6 +35,10 @@ internal fun readInstalledBuild(context: Context): InstalledBuild {
 private data class BuildHighlight(val icon: ImageVector, val title: String, val description: String)
 
 private fun highlights(build: Long): List<BuildHighlight> = when (build) {
+    21L -> listOf(
+        BuildHighlight(Icons.Default.Fingerprint, "New release signature", "This BETA is signed with the AudioEnhancerMAX release key. Direct updates verify the signature and file fingerprint before saving."),
+        BuildHighlight(Icons.Default.PhotoCamera, "Inspect media offline", "Use Verify for codec and track metadata, embedded Content Credentials, and available cover artwork EXIF."),
+    )
     20L -> listOf(
         BuildHighlight(Icons.Default.Fingerprint, "Compare file fingerprints", "Paste an expected SHA-256 in Verify Content and see whether it matches the inspected file. Include the comparison in the local JSON report."),
     )

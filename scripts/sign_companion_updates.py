@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify two companion artifacts and sign the mobile update feed."""
+"""Verify companion artifacts and sign their direct update feed."""
 import argparse
 import base64
 import hashlib
@@ -82,24 +82,32 @@ def release(args):
         raise ValueError("Use a three-part numeric version.")
     if not re.fullmatch(r"v" + re.escape(args.version) + r"-mobile-beta\.[1-9][0-9]{0,2}", args.tag):
         raise ValueError("Tag must use v<version>-mobile-beta.<sequence>.")
-    for build in (args.android_build, args.ios_build):
-        if not 0 < build <= 2_100_000_000:
-            raise ValueError("Build numbers must be positive integers.")
-    if args.android.name != f"AudioEnhancerMAX-Companion-v{args.version}-build-{args.android_build}-Android-QA.apk":
+    if not 0 < args.android_build <= 2_100_000_000:
+        raise ValueError("Android build number must be a positive integer.")
+    if args.android_only:
+        if args.ios is not None or args.ios_build is not None:
+            raise ValueError("An Android-only feed cannot include an iOS archive.")
+    else:
+        if args.ios is None or args.ios_build is None or not 0 < args.ios_build <= 2_100_000_000:
+            raise ValueError("Provide the iOS archive and a positive iOS build number.")
+        if args.ios.name != f"AudioEnhancerCompanion-{args.version}-build-{args.ios_build}-unsigned-xcarchive.zip":
+            raise ValueError("Unexpected iOS artifact filename.")
+    apk_suffix = "-Android.apk" if args.android_only else "-Android-QA.apk"
+    if args.android.name != f"AudioEnhancerMAX-Companion-v{args.version}-build-{args.android_build}{apk_suffix}":
         raise ValueError("Unexpected Android artifact filename.")
-    if args.ios.name != f"AudioEnhancerCompanion-{args.version}-build-{args.ios_build}-unsigned-xcarchive.zip":
-        raise ValueError("Unexpected iOS developer archive filename.")
 
     bundle, version, build, signer = android_identity(args.android, args.build_tools)
     if (bundle, version, build) != (ANDROID_ID, args.version, args.android_build):
         raise ValueError("Android package identity does not match the release.")
     if signer != args.android_signer.lower():
         raise ValueError("Android signer differs from the established direct channel.")
-    if ios_identity(args.ios) != (IOS_ID, args.version, args.ios_build):
-        raise ValueError("iOS archive identity does not match the release.")
     android = asset(args.android, ANDROID_ID, args.version, args.android_build, args.tag)
-    ios = asset(args.ios, IOS_ID, args.version, args.ios_build, args.tag)
-    return {"android": {**android, "signer_sha256": signer}, "ios": ios}
+    releases = {"android": {**android, "signer_sha256": signer}}
+    if not args.android_only:
+        if ios_identity(args.ios) != (IOS_ID, args.version, args.ios_build):
+            raise ValueError("iOS archive identity does not match the release.")
+        releases["ios"] = asset(args.ios, IOS_ID, args.version, args.ios_build, args.tag)
+    return releases
 
 
 def generate(args):
@@ -141,12 +149,14 @@ def generate(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for key in ("private-key", "build-tools", "android", "ios", "output"):
+    for key in ("private-key", "build-tools", "android", "output"):
         parser.add_argument("--" + key, required=True, type=Path)
     for key in ("version", "tag", "android-signer"):
         parser.add_argument("--" + key, required=True)
-    for key in ("android-build", "ios-build"):
-        parser.add_argument("--" + key, required=True, type=int)
+    parser.add_argument("--android-build", required=True, type=int)
+    parser.add_argument("--android-only", action="store_true")
+    parser.add_argument("--ios", type=Path)
+    parser.add_argument("--ios-build", type=int)
     parser.add_argument("--valid-days", type=int, default=90)
     args = parser.parse_args()
     try:
