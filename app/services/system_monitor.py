@@ -1,19 +1,20 @@
 """
 AudioEnhancerMAX by Fd - System Monitor Service v2
-Real-time CPU/GPU/ANE/RAM monitoring for Apple Silicon M3 MAX.
-Uses psutil (CPU/RAM) + macmon pipe (GPU/ANE/Power/Thermal).
+Real-time CPU and memory metrics, with optional Apple Silicon sensors from macmon.
 
 Architecture:
   - psutil thread: collects CPU/RAM/disk/net every 2s
-  - macmon thread: reads pipe continuously, updates atomic buffer
-  - get_stats(): returns merged snapshot (lock-free dict copy)
+  - macmon thread: reads pipe continuously, updates a separate sensor buffer
+  - get_stats(): returns merged snapshot (protected by the snapshot lock)
 """
 import json
 import logging
+import math
 import os
 import platform
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from collections import deque
@@ -21,10 +22,21 @@ from typing import Optional
 
 import psutil
 
+from app.services.apple_acceleration import detect_host_chip
+
 logger = logging.getLogger(__name__)
 
-# Rolling history (60 seconds at 1-second intervals)
+# Rolling history at the two-second snapshot cadence.
 _HISTORY_SIZE = 60
+_MACMON_MAX_SAMPLE_AGE = 5.0
+_OPTIONAL_SENSOR_FIELDS = dict.fromkeys((
+    "soc_cpu_percent", "gpu_percent", "gpu_freq_ghz", "ane_percent",
+    "ane_power_watts", "power_watts", "cpu_temp_c", "gpu_temp_c", "thermal_pressure",
+))
+
+
+def _is_measurement(value, *, minimum=0, maximum=math.inf):
+    return type(value) in (int, float) and math.isfinite(value) and minimum <= value <= maximum
 
 
 class SystemMonitor:
@@ -40,15 +52,16 @@ class SystemMonitor:
         # Separate data stores for each source - merged on read
         self._psutil_data = {}
         self._macmon_data = {}
+        self._macmon_sample_time = None
 
         # Static info
-        self._chip = self._detect_chip()
+        self._chip = detect_host_chip()
         self._platform = platform.machine()
 
         # Current snapshot (merged)
         self._current = {
             "cpu_percent": 0.0,
-            "soc_cpu_percent": 0.0,
+            **_OPTIONAL_SENSOR_FIELDS,
             "app_cpu_percent": 0.0,
             "app_cpu_core_percent": 0.0,
             "app_ram_mb": 0.0,
@@ -56,15 +69,8 @@ class SystemMonitor:
             "ram_percent": 0.0,
             "ram_used_gb": 0.0,
             "ram_total_gb": 0.0,
-            "gpu_percent": 0.0,
-            "ane_percent": 0.0,
-            "power_watts": 0.0,
-            "thermal_pressure": "nominal",
-            "cpu_freq_ghz": 0.0,
-            "gpu_freq_ghz": 0.0,
+            "cpu_freq_ghz": None,
             "swap_used_gb": 0.0,
-            "cpu_temp_c": 0,
-            "gpu_temp_c": 0,
             "disk_read_mb_s": 0.0,
             "disk_write_mb_s": 0.0,
             "net_sent_mb_s": 0.0,
@@ -81,6 +87,7 @@ class SystemMonitor:
             "cpu_percent": deque(maxlen=_HISTORY_SIZE),
             "gpu_percent": deque(maxlen=_HISTORY_SIZE),
             "ane_percent": deque(maxlen=_HISTORY_SIZE),
+            "ane_power_watts": deque(maxlen=_HISTORY_SIZE),
             "ram_percent": deque(maxlen=_HISTORY_SIZE),
             "power_watts": deque(maxlen=_HISTORY_SIZE),
             "timestamps": deque(maxlen=_HISTORY_SIZE),
@@ -99,25 +106,14 @@ class SystemMonitor:
         self._process.cpu_percent(interval=None)
         self._tracked_children: dict[int, psutil.Process] = {}
 
-    @staticmethod
-    def _detect_chip() -> str:
-        """Detect Apple Silicon chip name."""
-        try:
-            result = subprocess.run(
-                ["sysctl", "-n", "machdep.cpu.brand_string"],
-                capture_output=True, text=True, timeout=5
-            )
-            return result.stdout.strip()
-        except Exception:
-            return platform.processor() or "Unknown"
-
     def _find_macmon(self) -> Optional[str]:
-        """Find macmon binary."""
-        for p in ["/opt/homebrew/bin/macmon", "/usr/local/bin/macmon"]:
-            if os.path.isfile(p):
-                return p
-        found = shutil.which("macmon")
-        return found
+        """Find an executable macmon on compatible hosts."""
+        if sys.platform != "darwin" or self._platform not in {"arm64", "aarch64"}:
+            return None
+        for path in ("/opt/homebrew/bin/macmon", "/usr/local/bin/macmon"):
+            if os.path.isfile(path) and os.access(path, os.X_OK):
+                return path
+        return shutil.which("macmon")
 
     def start(self):
         """Start the monitoring background threads."""
@@ -140,7 +136,7 @@ class SystemMonitor:
             )
             self._macmon_thread.start()
         else:
-            logger.info("macmon not found - GPU/ANE metrics unavailable, using psutil only")
+            logger.info("Optional macmon sensors unavailable; using psutil metrics")
 
         logger.info(f"System monitor started (chip: {self._chip})")
 
@@ -218,7 +214,7 @@ class SystemMonitor:
         disk = psutil.disk_io_counters()
         disk_read = 0.0
         disk_write = 0.0
-        if self._prev_disk and dt > 0:
+        if disk and self._prev_disk and dt > 0:
             disk_read = (disk.read_bytes - self._prev_disk.read_bytes) / dt / 1024 / 1024
             disk_write = (disk.write_bytes - self._prev_disk.write_bytes) / dt / 1024 / 1024
         self._prev_disk = disk
@@ -227,7 +223,7 @@ class SystemMonitor:
         net = psutil.net_io_counters()
         net_sent = 0.0
         net_recv = 0.0
-        if self._prev_net and dt > 0:
+        if net and self._prev_net and dt > 0:
             net_sent = (net.bytes_sent - self._prev_net.bytes_sent) / dt / 1024 / 1024
             net_recv = (net.bytes_recv - self._prev_net.bytes_recv) / dt / 1024 / 1024
         self._prev_net = net
@@ -239,7 +235,7 @@ class SystemMonitor:
             "app_cpu_core_percent": round(process_cpu, 1),
             "app_ram_mb": round(process_ram / 1024**2, 1),
             "cpu_per_core": [round(c, 1) for c in cpu_per_core],
-            "cpu_freq_ghz": round(cpu_freq.current / 1000, 2) if cpu_freq else 0,
+            "cpu_freq_ghz": round(cpu_freq.current / 1000, 2) if cpu_freq and cpu_freq.current > 0 else None,
             "ram_percent": round(mem.percent, 1),
             "ram_used_gb": round(mem.used / 1024**3, 2),
             "ram_total_gb": round(mem.total / 1024**3, 2),
@@ -263,9 +259,6 @@ class SystemMonitor:
             )
             logger.info(f"macmon pipe started: {macmon_path}")
 
-            with self._lock:
-                self._current["macmon_available"] = True
-
             while self._running and self._macmon_proc.poll() is None:
                 line = self._macmon_proc.stdout.readline()
                 if not line:
@@ -280,6 +273,9 @@ class SystemMonitor:
                     self._macmon_proc.terminate()
                 except Exception:
                     pass
+            with self._lock:
+                self._macmon_sample_time = None
+                self._macmon_data = {}
             logger.info("macmon pipe stopped")
 
     def _parse_macmon_line(self, line: str):
@@ -289,104 +285,80 @@ class SystemMonitor:
         except json.JSONDecodeError:
             return
 
+        if not isinstance(data, dict):
+            return
+
         result = {}
+        # Cluster residency differs from the whole-system CPU reading.
+        cpu_fraction = data.get("cpu_usage_pct")
+        if _is_measurement(cpu_fraction, maximum=1):
+            result["soc_cpu_percent"] = round(cpu_fraction * 100, 1)
 
-        # macmon's cpu_usage_pct is a SoC/cluster residency signal, not the
-        # same whole-machine percentage psutil reports. Keep it separately so
-        # it cannot overwrite the dashboard's System CPU value.
-        cpu_pct = data.get("cpu_usage_pct", 0)
-        if isinstance(cpu_pct, (int, float)) and cpu_pct > 0:
-            result["soc_cpu_percent"] = round(cpu_pct * 100, 1)
+        gpu = data.get("gpu_usage")
+        if isinstance(gpu, list) and len(gpu) >= 2:
+            freq_mhz, fraction = gpu[:2]
+            if _is_measurement(fraction, maximum=1):
+                result["gpu_percent"] = round(fraction * 100, 1)
+            if _is_measurement(freq_mhz) and freq_mhz > 0:
+                result["gpu_freq_ghz"] = round(freq_mhz / 1000, 2)
+        elif _is_measurement(gpu, maximum=100):
+            result["gpu_percent"] = round(gpu * 100 if gpu <= 1 else gpu, 1)
 
-        # GPU usage - macmon gives [freq_mhz, usage_fraction]
-        gpu_data = data.get("gpu_usage")
-        if isinstance(gpu_data, list) and len(gpu_data) >= 2:
-            gpu_freq_mhz = gpu_data[0]
-            gpu_pct = gpu_data[1]  # 0.0 to 1.0
-            result["gpu_percent"] = round(gpu_pct * 100, 1)
-            if gpu_freq_mhz > 0:
-                result["gpu_freq_ghz"] = round(gpu_freq_mhz / 1000, 2)
-        elif isinstance(gpu_data, (int, float)):
-            result["gpu_percent"] = round(gpu_data * 100 if gpu_data <= 1 else gpu_data, 1)
+        # The sampler reports ANE power in watts, without a utilization ratio.
+        ane_power = data.get("ane_power")
+        if _is_measurement(ane_power):
+            result["ane_power_watts"] = round(ane_power, 2)
+        system_power = data.get("sys_power")
+        if _is_measurement(system_power):
+            result["power_watts"] = round(system_power, 1)
 
-        # ANE power -> proxy for ANE usage (max ~8W on M3 Max)
-        ane_power = data.get("ane_power", 0)
-        if isinstance(ane_power, (int, float)) and ane_power > 0:
-            result["ane_percent"] = round(min(100, ane_power / 8.0 * 100), 1)
+        temperatures = data.get("temp")
+        if isinstance(temperatures, dict):
+            for component in ("cpu", "gpu"):
+                temperature = temperatures.get(f"{component}_temp_avg")
+                if _is_measurement(temperature) and temperature > 0:
+                    result[f"{component}_temp_c"] = round(temperature, 1)
 
-        # Total system power
-        sys_power = data.get("sys_power", data.get("all_power", 0))
-        if isinstance(sys_power, (int, float)) and sys_power > 0:
-            result["power_watts"] = round(sys_power, 1)
+        # Thermal pressure is a separate system measurement from temperature.
+        thermal = data.get("thermal_pressure")
+        if thermal in ("nominal", "fair", "serious", "critical"):
+            result["thermal_pressure"] = thermal
 
-        # Memory from macmon (unified memory - more accurate than psutil)
-        mem_data = data.get("memory", {})
-        if isinstance(mem_data, dict):
-            ram_total = mem_data.get("ram_total", 0)
-            ram_usage = mem_data.get("ram_usage", 0)
-            if ram_total > 0:
-                result["ram_total_gb"] = round(ram_total / 1024**3, 2)
-                result["ram_used_gb"] = round(ram_usage / 1024**3, 2)
-                result["ram_percent"] = round(ram_usage / ram_total * 100, 1)
-            swap_usage = mem_data.get("swap_usage", 0)
-            if swap_usage > 0:
-                result["swap_used_gb"] = round(swap_usage / 1024**3, 2)
-
-        # Temperature
-        temp_data = data.get("temp", {})
-        if isinstance(temp_data, dict):
-            cpu_temp = temp_data.get("cpu_temp_avg", 0)
-            gpu_temp = temp_data.get("gpu_temp_avg", 0)
-            if cpu_temp:
-                result["cpu_temp_c"] = round(cpu_temp, 1)
-            if gpu_temp:
-                result["gpu_temp_c"] = round(gpu_temp, 1)
-            # Thermal pressure from temperature
-            if cpu_temp > 95:
-                result["thermal_pressure"] = "critical"
-            elif cpu_temp > 85:
-                result["thermal_pressure"] = "serious"
-            elif cpu_temp > 75:
-                result["thermal_pressure"] = "moderate"
-            else:
-                result["thermal_pressure"] = "nominal"
-
-        # Store atomically
-        self._macmon_data = result
+        with self._lock:
+            self._macmon_data = result
+            self._macmon_sample_time = time.monotonic() if result else None
 
     # ── Snapshot merging ──────────────────────────────────
 
+    def _sensor_snapshot(self):
+        sample_time = self._macmon_sample_time
+        fresh = sample_time is not None and time.monotonic() - sample_time <= _MACMON_MAX_SAMPLE_AGE
+        sensors = dict(_OPTIONAL_SENSOR_FIELDS)
+        if fresh:
+            sensors.update(self._macmon_data)
+        sensors["macmon_available"] = fresh
+        return sensors
+
     def _update_snapshot_and_history(self):
-        """Merge psutil + macmon data into current snapshot and update history."""
+        """Update the psutil snapshot and keep missing sensor samples as gaps."""
         with self._lock:
             now = time.time()
-
-            # Start with psutil data as base
             self._current.update(self._psutil_data)
-
-            # Overlay macmon data (overwrites psutil for shared keys like ram_percent)
-            if self._macmon_data:
-                self._current.update(self._macmon_data)
-
+            sample = {**self._current, **self._sensor_snapshot()}
             self._current["timestamp"] = now
 
-            # Update history
-            self._history["cpu_percent"].append(self._current["cpu_percent"])
-            self._history["gpu_percent"].append(self._current["gpu_percent"])
-            self._history["ane_percent"].append(self._current["ane_percent"])
-            self._history["ram_percent"].append(self._current["ram_percent"])
-            self._history["power_watts"].append(self._current["power_watts"])
-            self._history["timestamps"].append(now)
+            for key, history in self._history.items():
+                history.append(now if key == "timestamps" else sample[key])
 
     # ── Public API ────────────────────────────────────────
 
     def get_stats(self) -> dict:
         """Get current system stats snapshot."""
         with self._lock:
-            return dict(self._current)
+            return {**self._current, **self._sensor_snapshot()}
 
     def get_history(self) -> dict:
-        """Get last 60 seconds of metrics history."""
+        """Get the most recent samples at the snapshot cadence."""
         with self._lock:
             return {
                 k: list(v) for k, v in self._history.items()

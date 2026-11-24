@@ -87,12 +87,14 @@ class ProcessingOptions(BaseModel):
     output_format: OutputFormat = OutputFormat.WAV
     output_profile: Optional[str] = Field(default=None, max_length=64)
     output_profile_overrides: Dict[str, Any] = Field(default_factory=dict)
+    watermark_identifier: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,32}$")
 
 
 class ProcessingRequest(BaseModel):
     """Request to process an uploaded audio file."""
     file_id: str
     options: ProcessingOptions
+    preserve_channels: bool = False
 
 
 # ── Transcription ──────────────────────────────────
@@ -160,6 +162,23 @@ class RuntimePrivacySettingsRequest(BaseModel):
     trusted_lan_processing_allowed: bool = Field(strict=True)
 
 
+WorkspaceTool = Literal[
+    "upload-panel", "presets-panel", "batch-panel", "stt-panel",
+    "speech-editor-panel", "tts-panel", "music-panel", "diarize-panel",
+    "smart-panel", "watermark-panel", "cluster-panel", "verify-content",
+]
+
+
+class SavedWorkspace(BaseModel):
+    name: str = Field(min_length=1, max_length=48)
+    tools: list[WorkspaceTool] = Field(min_length=1, max_length=12)
+
+
+class SavedWorkspaces(BaseModel):
+    workspaces: list[SavedWorkspace] = Field(max_length=12)
+    active_workspace: str | None = Field(default=None, max_length=48)
+
+
 class ProjectCapsuleRequest(BaseModel):
     output_version: Literal["processed", "speech_edit"] = "processed"
     revision: Optional[str] = Field(default=None, max_length=64)
@@ -198,7 +217,7 @@ class TTSRequest(BaseModel):
     clone_voice_file_id: Optional[str] = None  # Deprecated one-shot upload hook
     voice_profile_id: Optional[str] = None  # Persistent personal voice profile
     expressive: bool = False  # Use Gemma to rewrite text for natural delivery
-    engine: str = "auto"  # "edge", "kokoro", "voice-clone", or "auto"
+    engine: str = "auto"  # "macos", "qwen3-voice-design", "voice-clone", or "auto"
 
 
 class VoiceProfileSettings(BaseModel):

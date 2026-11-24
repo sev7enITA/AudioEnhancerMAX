@@ -7,6 +7,7 @@ from typing import Optional, List
 from pathlib import Path
 import tempfile
 import logging
+import os
 import json
 import soundfile as sf
 
@@ -30,13 +31,12 @@ def _init_model(model_size: str = "medium"):
             from app.config import whisper_model_source
 
             model_source, local_only = whisper_model_source(model_size)
-            # CTranslate2 doesn't support MPS, but ARM NEON on M3 MAX
-            # makes CPU inference very fast with int8 quantization
+            # The packaged CTranslate2 runtime uses the validated ARM64 CPU path.
             _model = WhisperModel(
                 model_source,
                 device="cpu",
                 compute_type="int8",
-                num_workers=4,  # M3 MAX has plenty of cores
+                num_workers=max(1, min(4, (os.cpu_count() or 1) // 4)),
                 local_files_only=local_only,
             )
             logger.info("faster-whisper model '%s' loaded (local_only=%s)", model_source, local_only)

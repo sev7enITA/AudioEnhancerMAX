@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; media-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta name="color-scheme" content="dark">
+    <title>Review Desk · AudioEnhancerMAX</title>
+    <link rel="stylesheet" href="review.css">
+    <script defer src="engine.js"></script>
+    <script defer src="review.js"></script>
+</head>
+<body>
+    <main>
+        <header class="masthead">
+            <h1>Review Desk</h1>
+            <p>Check captions, audition two versions, and prepare a publishing handoff. Files are processed on this device.</p>
+        </header>
+        <div class="desk">
+            <div class="stack">
+                <section aria-labelledby="qc-title">
+                    <h2 id="qc-title">Caption check</h2>
+                    <label class="field">Choose SRT or WebVTT
+                        <input id="captions" type="file" accept=".srt,.vtt,text/vtt,text/plain,application/x-subrip">
+                    </label>
+                    <p class="status" id="caption-status" role="status">Timing, overlap, reading speed and line length.</p>
+                    <ul id="issues" class="results"></ul>
+                </section>
+                <section aria-labelledby="chapter-title">
+                    <h2 id="chapter-title">Chapters</h2>
+                    <div class="actions">
+                        <button id="suggest" disabled>Suggest from captions</button>
+                        <button id="add-chapter">Add chapter</button>
+                        <button id="export-chapters" disabled>Export TXT</button>
+                    </div>
+                    <div id="chapter-list"></div>
+                    <p id="chapter-status" class="status" role="status"></p>
+                </section>
+                <section aria-labelledby="clip-title">
+                    <h2 id="clip-title">Captioned clip</h2>
+                    <label class="field">Audio source (PCM WAV, optional)
+                        <input id="clip-audio" type="file" accept=".wav,audio/wav,audio/x-wav">
+                    </label>
+                    <div class="range">
+                        <label>In (seconds)<input id="clip-in" type="number" value="0" min="0" max="86400" step="0.001" inputmode="decimal"></label>
+                        <label>Out (seconds)<input id="clip-out" type="number" min="0" max="86400" step="0.001" inputmode="decimal"></label>
+                    </div>
+                    <p class="status" id="clip-status" role="status">WAV and SRT use the same range. The excerpt’s subtitles start at zero.</p>
+                    <div class="actions">
+                        <button id="export-clip" disabled>Export clip SRT</button>
+                        <button id="export-wav" disabled>Export clip WAV</button>
+                    </div>
+                </section>
+            </div>
+            <div class="stack">
+                <section aria-labelledby="blind-title">
+                    <h2 id="blind-title">Blind A/B</h2>
+                    <p class="status">Choose two audio files together. The desk hides their names and shuffles their order. Playback uses the source levels.</p>
+                    <label class="field">Choose two versions
+                        <input id="listen-files" type="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.opus" multiple>
+                    </label>
+                    <div class="actions playback">
+                        <button id="play-a" disabled>Play A</button>
+                        <button id="play-b" disabled>Play B</button>
+                        <button id="stop" disabled>Stop</button>
+                    </div>
+                    <audio id="listener" preload="none"></audio>
+                    <p class="status" id="listen-status" role="status">Listen to both to unlock the decision.</p>
+                    <div class="actions">
+                        <button id="pick-a" disabled>Prefer A</button>
+                        <button id="pick-b" disabled>Prefer B</button>
+                        <button id="pick-tie" disabled>No preference</button>
+                    </div>
+                    <p id="reveal" class="reveal" hidden></p>
+                </section>
+                <section aria-labelledby="publish-title">
+                    <h2 id="publish-title">Publishing pack</h2>
+                    <label>Title<input id="publish-name" type="text" maxlength="160" placeholder="Episode or project title"></label>
+                    <label>Publishing notes<textarea id="publish-notes" maxlength="4000" rows="3" placeholder="Description, handoff or accessibility notes"></textarea></label>
+                    <button id="export-pack">Export JSON pack</button>
+                    <p id="export-status" class="status" role="status">Includes reviewed captions, chapters, clip timing, and any completed listening decision with SHA-256 evidence.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

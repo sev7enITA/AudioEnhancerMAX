@@ -1,131 +1,102 @@
-"""
-AudioEnhancerMAX by Fd - Text-to-Speech Service v2.0
-Engines:
-  1. Edge Neural TTS - Microsoft neural voices, 400+ voices, 100+ languages
-  2. Kokoro TTS - Local 82M-param model, very expressive (English)
-  3. Personal voices - Named reusable profiles through the MakeMyVoice adapter
-
-Expressive Mode:
-  Uses a local Ollama LLM, preferably a Gemma-family model, to rewrite text in natural spoken style
-  before passing it to the TTS engine. Adds pauses, filler words, emphasis,
-  and conversational rhythm for human-like delivery.
-"""
-import asyncio
+"""Local macOS speech synthesis and optional local expressive editing."""
+import hashlib
+import http.client
 import json
-import os
-import numpy as np
-import urllib.request
-import urllib.error
-from typing import Optional, List
-from pathlib import Path
-import tempfile
 import logging
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+from typing import Optional
+
+import numpy as np
 import soundfile as sf
 
 from app.config import APP_STORE_MODE
+from app.services import expressive_voice
 
 logger = logging.getLogger(__name__)
+_SAY = Path("/usr/bin/say")
+_VOICE_ROW = re.compile(r"^(.+?)\s+([a-z]{2,3}(?:[_-][A-Za-z0-9]+)+)\s+#", re.MULTILINE)
 
-# ══════════════════════════════════════════════════════════
-# Voice Registry
-# ══════════════════════════════════════════════════════════
-
-VOICE_MAP = {
-    # Italian
-    "it_giuseppe":  "it-IT-GiuseppeMultilingualNeural",
-    "it_diego":     "it-IT-DiegoNeural",
-    "it_isabella":  "it-IT-IsabellaNeural",
-    "it_elsa":      "it-IT-ElsaNeural",
-    # English
-    "en_aria":      "en-US-AriaNeural",
-    "en_guy":       "en-US-GuyNeural",
-    "en_jenny":     "en-US-JennyNeural",
-    "en_davis":     "en-US-DavisNeural",
-    "en_sonia":     "en-GB-SoniaNeural",
-    # Spanish
-    "es_elena":     "es-AR-ElenaNeural",
-    "es_tomas":     "es-AR-TomasNeural",
-    # French
-    "fr_denise":    "fr-FR-DeniseNeural",
-    "fr_henri":     "fr-FR-HenriNeural",
-    # German
-    "de_katja":     "de-DE-KatjaNeural",
-    "de_conrad":    "de-DE-ConradNeural",
-}
-
-LANG_DEFAULTS = {
-    "it": "it-IT-GiuseppeMultilingualNeural",
-    "en": "en-US-AriaNeural",
-    "es": "es-AR-ElenaNeural",
-    "fr": "fr-FR-DeniseNeural",
-    "de": "de-DE-KatjaNeural",
-    "pt": "pt-BR-FranciscaNeural",
-    "ja": "ja-JP-NanamiNeural",
-    "zh": "zh-CN-XiaoxiaoNeural",
-    "ko": "ko-KR-SunHiNeural",
-    "ru": "ru-RU-SvetlanaNeural",
-    "ar": "ar-SA-ZariyahNeural",
-    "hi": "hi-IN-SwaraNeural",
-}
-
-# Kokoro voice presets
-KOKORO_VOICES = {
-    "kokoro_heart":    {"id": "af_heart",   "name": "Heart",        "lang": "a", "gender": "female"},
-    "kokoro_bella":    {"id": "af_bella",   "name": "Bella",          "lang": "a", "gender": "female"},
-    "kokoro_adam":     {"id": "am_adam",     "name": "Adam",           "lang": "a", "gender": "male"},
-    "kokoro_michael":  {"id": "am_michael", "name": "Michael",        "lang": "a", "gender": "male"},
-    "kokoro_emma":     {"id": "bf_emma",    "name": "Emma",       "lang": "b", "gender": "female"},
-    "kokoro_george":   {"id": "bm_george",  "name": "George",     "lang": "b", "gender": "male"},
-}
-
-PRESET_VOICES = [
-    # Edge Neural - Italian
-    {"id": "it_giuseppe", "name": "Giuseppe", "language": "it", "gender": "male",
-     "engine": "edge", "description": "Natural Italian multilingual voice - warm and expressive"},
-    {"id": "it_isabella", "name": "Isabella", "language": "it", "gender": "female",
-     "engine": "edge", "description": "Clear Italian female voice - professional tone"},
-    {"id": "it_diego", "name": "Diego", "language": "it", "gender": "male",
-     "engine": "edge", "description": "Deep Italian male voice - authoritative"},
-    # Edge Neural - English
-    {"id": "en_aria", "name": "Aria", "language": "en", "gender": "female",
-     "engine": "edge", "description": "Expressive American female - versatile and natural"},
-    {"id": "en_guy", "name": "Guy", "language": "en", "gender": "male",
-     "engine": "edge", "description": "Clear American male - podcast-quality narration"},
-    {"id": "en_davis", "name": "Davis", "language": "en", "gender": "male",
-     "engine": "edge", "description": "Deep American male - warm and conversational"},
-    {"id": "en_sonia", "name": "Sonia", "language": "en", "gender": "female",
-     "engine": "edge", "description": "British female - elegant and articulate"},
-    # Edge Neural - Other
-    {"id": "es_elena", "name": "Elena", "language": "es", "gender": "female",
-     "engine": "edge", "description": "Natural Spanish female voice"},
-    {"id": "fr_denise", "name": "Denise", "language": "fr", "gender": "female",
-     "engine": "edge", "description": "Warm French female voice"},
-    {"id": "de_katja", "name": "Katja", "language": "de", "gender": "female",
-     "engine": "edge", "description": "Professional German female voice"},
-    # Kokoro Local - English
-    {"id": "kokoro_heart", "name": "Heart (Local)", "language": "en", "gender": "female",
-     "engine": "kokoro", "description": "Very expressive local voice - warm and emotional"},
-    {"id": "kokoro_bella", "name": "Bella (Local)", "language": "en", "gender": "female",
-     "engine": "kokoro", "description": "Natural local female - clear and articulate"},
-    {"id": "kokoro_adam", "name": "Adam (Local)", "language": "en", "gender": "male",
-     "engine": "kokoro", "description": "Deep local male - authoritative narration"},
-    {"id": "kokoro_emma", "name": "Emma (Local)", "language": "en", "gender": "female",
-     "engine": "kokoro", "description": "British female - sophisticated and warm"},
-]
+class LocalSpeechUnavailable(RuntimeError):
+    """An actionable issue with an installed system voice."""
 
 
-def get_available_voices() -> List[dict]:
-    """Get list of available voices."""
-    if APP_STORE_MODE:
-        return [voice for voice in PRESET_VOICES if voice["engine"] == "edge"]
-    return PRESET_VOICES
+def macos_tts_available() -> bool:
+    return sys.platform == "darwin" and _SAY.is_file()
 
 
-# ══════════════════════════════════════════════════════════
-# Gemma Expressive Rewrite
-# ══════════════════════════════════════════════════════════
+def get_available_voices() -> list[dict]:
+    if not macos_tts_available():
+        return []
+    try:
+        result = subprocess.run(
+            [str(_SAY), "-v", "?"], capture_output=True, encoding="utf-8", errors="replace",
+            timeout=8, check=True,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    voices = {}
+    for name, locale in _VOICE_ROW.findall(result.stdout):
+        name = name.strip()
+        language = locale.replace("_", "-")
+        key = hashlib.sha256(f"{name}|{language}".encode("utf-8")).hexdigest()[:20]
+        voice_id = f"macos_{key}"
+        voices[voice_id] = {"id": voice_id, "name": name, "language": language, "engine": "macos"}
+    return list(voices.values())
 
-OLLAMA_BASE_URL = "http://localhost:11434"
+
+def _resolve_macos_voice(voice_id: str, language: str) -> dict:
+    voices = get_available_voices()
+    if not voices:
+        raise LocalSpeechUnavailable("No macOS speech voices were found. Add a voice in macOS Accessibility settings, then refresh the voice list.")
+    if voice_id not in ("", "default"):
+        for voice in voices:
+            if voice["id"] == voice_id:
+                return voice
+        raise ValueError("Select an installed macOS voice in Text to Speech.")
+    language = language.lower().replace("_", "-")
+    matching = [voice for voice in voices if voice["language"].lower().split("-")[0] == language.split("-")[0]]
+    if not matching:
+        raise ValueError("Select an installed macOS voice for the requested language.")
+    preferred = {"it": "Alice", "en": "Samantha"}.get(language.split("-")[0])
+    return next((voice for voice in matching if voice["name"].split(" (")[0] == preferred), matching[0])
+
+
+def _synthesize_macos(text: str, voice: str, speed: float) -> tuple:
+    with tempfile.TemporaryDirectory(prefix="aemax-speech-") as directory:
+        source = Path(directory) / "script.txt"
+        output = Path(directory) / "speech.wav"
+        source.write_text(text, encoding="utf-8")
+        command = [
+            str(_SAY), "-v", voice, "-r", str(round(175 * speed)), "-f", str(source),
+            "--file-format=WAVE", "--data-format=LEI16@22050", "-o", str(output),
+        ]
+        try:
+            subprocess.run(command, check=True, timeout=180, capture_output=True)
+            return sf.read(output, dtype="float32")
+        except subprocess.TimeoutExpired as exc:
+            raise LocalSpeechUnavailable("Local speech synthesis timed out. Try a shorter script.") from exc
+        except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
+            raise LocalSpeechUnavailable("macOS could not generate speech with this voice. Try another installed voice.") from exc
+
+
+def _ollama_request(path: str, timeout: float, payload: dict | None = None) -> dict:
+    connection = http.client.HTTPConnection("127.0.0.1", 11434, timeout=timeout)
+    try:
+        if payload is None:
+            connection.request("GET", path)
+        else:
+            connection.request("POST", path, json.dumps(payload), {"Content-Type": "application/json"})
+        response = connection.getresponse()
+        if response.status != 200:
+            raise RuntimeError(f"Local Ollama returned HTTP {response.status}")
+        return json.load(response)
+    finally:
+        connection.close()
+
 
 REWRITE_PROMPTS = {
     "it": """Riscrivi questo testo come se fosse letto ad alta voce da un conduttore di podcast coinvolgente e naturale.
@@ -170,7 +141,7 @@ def rewrite_expressive(text: str, language: str = "en", style: str = "neutral") 
     Use Gemma (local Ollama) to rewrite text in natural spoken style.
     Returns the rewritten text, or original if Gemma is unavailable.
     """
-    model = _find_ollama_model()
+    model = find_local_ollama_model()
     if not model:
         logger.warning("No Ollama model available - returning original text")
         return text
@@ -199,155 +170,35 @@ def rewrite_expressive(text: str, language: str = "en", style: str = "neutral") 
             "options": {"temperature": 0.7, "num_predict": 2000},
         }
 
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            f"{OLLAMA_BASE_URL}/api/chat",
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read().decode("utf-8"))
-            rewritten = result.get("message", {}).get("content", "").strip()
-
-            # Clean up markdown artifacts
-            rewritten = rewritten.strip('"\'`')
-            if rewritten.startswith("```"):
-                rewritten = rewritten.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-
-            if rewritten and len(rewritten) > 10:
-                logger.info(f" Gemma rewrite ({model}): {len(text)} -> {len(rewritten)} chars")
-                return rewritten
-            else:
-                logger.warning("Gemma returned empty/short response - using original")
-                return text
+        result = _ollama_request("/api/chat", timeout=60, payload=payload)
+        rewritten = result.get("message", {}).get("content", "").strip().strip('"\'`')
+        if rewritten.startswith("```"):
+            rewritten = rewritten.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        return rewritten if len(rewritten) > 10 else text
 
     except Exception as e:
         logger.warning(f"Gemma rewrite failed: {e} - using original text")
         return text
 
 
-_ollama_model_cache = None
-
-def _find_ollama_model() -> str:
-    """Find a working Gemma/LLM model in Ollama."""
-    global _ollama_model_cache
-    if _ollama_model_cache:
-        return _ollama_model_cache
-
-    preferred = ["gemma3:4b", "gemma4:e2b", "gemma4:e4b", "gemma4:latest", "qwen2.5:7b", "llama3.2:latest", "mistral:7b"]
-
+def find_local_ollama_model(timeout: float = 5) -> str:
+    """Select an installed model without a remote Ollama endpoint."""
     try:
-        req = urllib.request.Request(f"{OLLAMA_BASE_URL}/api/tags")
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            available = [m.get("name", "") for m in data.get("models", [])]
+        models = _ollama_request("/api/tags", timeout=timeout).get("models", [])
+        available = [
+            model["name"] for model in models
+            if model.get("name") and model.get("size", 0) > 0
+            and not model.get("remote_model") and not model.get("remote_host")
+            and not model["name"].lower().endswith(("-cloud", ":cloud"))
+        ]
+        for prefix in ("gemma", "qwen", "llama", "mistral"):
+            preferred = next((name for name in available if name.startswith(prefix)), "")
+            if preferred:
+                return preferred
+        return available[0] if available else ""
+    except (OSError, ValueError, TypeError, RuntimeError, http.client.HTTPException):
+        return ""
 
-            for pref in preferred:
-                for avail in available:
-                    if pref == avail or avail.startswith(pref.split(":")[0]):
-                        _ollama_model_cache = avail
-                        logger.info(f" Ollama model for TTS rewrite: {avail}")
-                        return avail
-
-            # Any model
-            if available:
-                _ollama_model_cache = available[0]
-                logger.info(f" Using first available model: {available[0]}")
-                return available[0]
-    except Exception as e:
-        logger.warning(f"Ollama not reachable: {e}")
-
-    return ""
-
-
-# ══════════════════════════════════════════════════════════
-# TTS Engines
-# ══════════════════════════════════════════════════════════
-
-def _resolve_voice(voice_id: str, language: str) -> str:
-    """Resolve voice ID to edge-tts voice name."""
-    if voice_id in VOICE_MAP:
-        return VOICE_MAP[voice_id]
-    lang_code = language[:2].lower() if language else "en"
-    return LANG_DEFAULTS.get(lang_code, "en-US-AriaNeural")
-
-
-def _style_to_rate_pitch(style: str, speed: float, pitch: float):
-    """Convert style + speed + pitch to edge-tts rate/pitch strings."""
-    rate_pct = int((speed - 1.0) * 100)
-    pitch_hz = int((pitch - 1.0) * 50)
-
-    if style == "energetic":
-        rate_pct += 10
-        pitch_hz += 5
-    elif style == "calm":
-        rate_pct -= 10
-        pitch_hz -= 3
-    elif style == "expressive":
-        rate_pct += 5
-        pitch_hz += 8
-
-    rate_str = f"+{rate_pct}%" if rate_pct >= 0 else f"{rate_pct}%"
-    pitch_str = f"+{pitch_hz}Hz" if pitch_hz >= 0 else f"{pitch_hz}Hz"
-    return rate_str, pitch_str
-
-
-async def _synthesize_edge_async(text: str, voice: str, rate: str, pitch: str, output_path: str):
-    """Generate speech using edge-tts (async)."""
-    import edge_tts
-    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
-    await communicate.save(output_path)
-
-
-def _synthesize_edge(text: str, voice: str, rate: str, pitch: str) -> tuple:
-    """Synchronous wrapper for edge-tts."""
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
-        temp_path = tmp.name
-    try:
-        loop = asyncio.new_event_loop()
-        try:
-            loop.run_until_complete(_synthesize_edge_async(text, voice, rate, pitch, temp_path))
-        finally:
-            loop.close()
-
-        audio, sr = sf.read(temp_path)
-        Path(temp_path).unlink(missing_ok=True)
-        return audio, sr
-    except Exception:
-        Path(temp_path).unlink(missing_ok=True)
-        raise
-
-
-def _synthesize_kokoro(text: str, voice_id: str = "af_heart", lang_code: str = "a", speed: float = 1.0) -> tuple:
-    """Local TTS with Kokoro - 82M params, very expressive."""
-    try:
-        # espeak-ng data path for Homebrew installation
-        os.environ.setdefault("ESPEAK_DATA_PATH", "/opt/homebrew/Cellar/espeak-ng/1.52.0/share")
-        from kokoro import KPipeline
-
-        pipeline = KPipeline(lang_code=lang_code)
-        segments = []
-        for _, _, audio_chunk in pipeline(text, voice=voice_id, speed=speed):
-            segments.append(audio_chunk)
-
-        if not segments:
-            raise RuntimeError("Kokoro produced no audio")
-
-        full_audio = np.concatenate(segments)
-        logger.info(f" Kokoro TTS: {voice_id} - {len(full_audio)/24000:.1f}s generated")
-        return full_audio, 24000
-
-    except ImportError:
-        raise RuntimeError("Kokoro TTS not installed. Run: pip install kokoro")
-    except Exception as e:
-        raise RuntimeError(f"Kokoro synthesis failed: {e}")
-
-
-# ══════════════════════════════════════════════════════════
-# Main Synthesis Function
-# ══════════════════════════════════════════════════════════
 
 def synthesize_speech(
     text: str,
@@ -362,78 +213,42 @@ def synthesize_speech(
     expressive: bool = False,
     engine: str = "auto",
 ) -> tuple:
-    """
-    Generate speech from text.
+    """Generate speech with an installed on-device voice."""
+    if engine not in ("auto", "macos", "voice-clone", expressive_voice.ENGINE):
+        raise ValueError("This app generates speech locally. Select an installed voice.")
 
-    Args:
-        expressive: If True, uses Gemma to rewrite text for natural spoken delivery
-        engine: "edge", "kokoro", "voice-clone", or "auto"
+    is_voice_clone = bool(voice_profile_id) or engine == "voice-clone"
+    if clone_voice_path and not voice_profile_id:
+        raise RuntimeError("A raw voice sample is not a clone profile. Create or select a named personal voice.")
+    if is_voice_clone and APP_STORE_MODE:
+        raise RuntimeError("Personal voice cloning is not included in the Mac App Store build.")
+    if is_voice_clone and not voice_profile_id:
+        raise ValueError("No personal voice profile was selected")
 
-    Returns (audio_array, sample_rate, metadata_dict)
-    """
-    original_text = text
-    rewritten_text = None
-
-    # ── Step 1: Expressive rewrite with Gemma ──
-    if expressive:
-        rewritten_text = rewrite_expressive(text, language, style)
+    is_expressive_voice = not is_voice_clone and (engine == expressive_voice.ENGINE or (voice_id or "").startswith("qwen3_"))
+    voice = None if is_voice_clone or is_expressive_voice else _resolve_macos_voice(voice_id or "default", language)
+    rewritten_text = rewrite_expressive(text, language, style) if expressive else None
+    if rewritten_text is not None:
         text = rewritten_text
 
-    # ── Step 2: Determine engine ──
-    is_voice_clone = bool(voice_profile_id) or engine == "voice-clone"
-    is_kokoro = voice_id.startswith("kokoro_") or engine == "kokoro"
-
-    if clone_voice_path and not voice_profile_id:
-        raise RuntimeError(
-            "A raw voice sample is not a clone profile. Create or select a named personal voice."
-        )
-
-    if APP_STORE_MODE and is_kokoro:
-        raise RuntimeError("Kokoro is not included in the Mac App Store build.")
-    if APP_STORE_MODE and is_voice_clone:
-        raise RuntimeError("Personal voice cloning is not included in the Mac App Store build.")
-
+    delivery_speed = max(0.5, min(2.0, speed * {"energetic": 1.10, "calm": 0.90, "expressive": 1.05}.get(style, 1.0)))
     clone_metadata = {}
     if is_voice_clone:
-        if not voice_profile_id:
-            raise RuntimeError("No personal voice profile was selected")
         from app.services.voice_profiles import synthesize_voice_profile
-
-        clone_speed = speed
-        if style == "energetic":
-            clone_speed *= 1.10
-        elif style == "calm":
-            clone_speed *= 0.90
-        elif style == "expressive":
-            clone_speed *= 1.05
-        audio, sr, clone_metadata = synthesize_voice_profile(
-            text, voice_profile_id, speed=max(0.5, min(2.0, clone_speed))
-        )
-        audio = _apply_pitch(audio, sr, pitch)
+        audio, sr, clone_metadata = synthesize_voice_profile(text, voice_profile_id, speed=delivery_speed)
         engine_used = clone_metadata.get("engine", "makemyvoice")
-        logger.info(
-            " Personal voice TTS: %s via %s - %.1fs generated",
-            clone_metadata.get("voice_profile_name", voice_profile_id),
-            engine_used,
-            len(audio) / sr,
-        )
-    elif is_kokoro:
-        # Kokoro local engine
-        kokoro_info = KOKORO_VOICES.get(voice_id, KOKORO_VOICES["kokoro_heart"])
-        audio, sr = _synthesize_kokoro(
-            text,
-            voice_id=kokoro_info["id"],
-            lang_code=kokoro_info["lang"],
-            speed=speed,
-        )
-        engine_used = "kokoro"
+    elif is_expressive_voice:
+        if not expressive_voice.is_available(voice_id or ""):
+            if voice_id == expressive_voice.PAOLA_ID:
+                raise LocalSpeechUnavailable("Eve requires the local Qwen3 Base model and voice runtime.")
+            raise LocalSpeechUnavailable("The Qwen3 voice runtime or model is missing. Install the local voice pack, then refresh voices.")
+        audio, sr, clone_metadata = expressive_voice.synthesize(text, voice_id or "", style, speed)
+        engine_used = expressive_voice.ENGINE
     else:
-        # Edge Neural TTS
-        voice = _resolve_voice(voice_id, language)
-        rate_str, pitch_str = _style_to_rate_pitch(style, speed, pitch)
-        audio, sr = _synthesize_edge(text, voice, rate_str, pitch_str)
-        engine_used = "edge"
-        logger.info(f" Edge TTS: {voice} - {len(audio)/sr:.1f}s generated")
+        audio, sr = _synthesize_macos(text, voice["name"], delivery_speed)
+        engine_used = "macos"
+        voice_id = voice["id"]
+    audio = _apply_pitch(audio, sr, pitch)
 
     # ── Step 3: Post-processing ──
     audio = _apply_warmth(audio, sr, warmth, style)
@@ -443,7 +258,8 @@ def synthesize_speech(
         "expressive": expressive,
         "rewritten_text": rewritten_text,
         "voice_id": voice_id,
-        "execution": "external-network" if engine_used == "edge" else "local-cpu",
+        "execution": "local-cpu",
+        "voice_name": voice["name"] if voice else None,
         **clone_metadata,
     }
 

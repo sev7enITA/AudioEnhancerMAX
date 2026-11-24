@@ -11,12 +11,15 @@ const state = {
     fileName: null,
     duration: 0,
     sampleRate: 0,
+    isImporting: false,
+    sourceRequestId: 0,
     isProcessing: false,
     hasProcessed: false,
     processedUrl: null,
     cloneVoiceFileId: null,
     voiceProfiles: [],
     voiceCloneAdapter: null,
+    ttsEngines: undefined,
     batchFiles: [],
     smartSuggestions: null,
     smartProfile: 'balanced',
@@ -41,6 +44,10 @@ const state = {
     complianceTargetId: 'podcast',
     complianceRequestId: 0,
     blindAB: null,
+    workspacePresets: [],
+    workspacePreset: null,
+    workspaceRun: { phase: 'ready' },
+    renderedRecipe: null,
 };
 
 const options = {
@@ -75,6 +82,7 @@ const options = {
     output_profile: null,
     output_profile_overrides: {},
 };
+const defaultProcessingOptions = Object.freeze({...options});
 
 const ICON_BASE = '/static/img/icons';
 let reportReturnFocus = null;
@@ -96,12 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initBatchUpload();
     initCapabilities();
     initPreflight();
+    initVoicePackSetup();
     checkSystemHealth();
     loadPresets();
     initSettingsPanel();
     loadOutputProfiles();
-    loadRuntimePrivacySettings();
-    loadVoiceProfiles();
+    Promise.allSettled([loadRuntimePrivacySettings(), loadVoiceProfiles()]).then(loadTTSEngines);
     initAboutPanel();
     initReviewDeck();
     if (typeof initMusicAssistant === 'function') initMusicAssistant();
@@ -140,12 +148,6 @@ async function initCapabilities() {
             if (diarizationDescription) {
                 diarizationDescription.textContent = 'Approximate local speaker-change detection. Neural diarization is not packaged in this build.';
             }
-        }
-        if (!systemCapabilities.kokoro_local_tts) {
-            const kokoroVoices = document.getElementById('tts-kokoro-voices');
-            if (kokoroVoices) kokoroVoices.remove();
-            const description = document.getElementById('tts-engine-description');
-            if (description) description.textContent = 'Generate speech with Microsoft Edge Neural TTS. Text is sent to Microsoft only when you start synthesis.';
         }
         const whisperSelect = document.getElementById('setting-whisper-model');
         if (whisperSelect && systemCapabilities.transcription_bundled) {
@@ -221,6 +223,80 @@ function openSystemReadiness() {
     initPreflight(true);
 }
 
+function initVoicePackSetup() {
+    const template = document.getElementById('voice-pack-template');
+    const panels = [...document.querySelectorAll('[data-voice-pack]')];
+    let installing = false;
+
+    function render(pack) {
+        const active = pack.state === 'installing';
+        const ready = pack.state === 'ready';
+        const unsupported = pack.state === 'unsupported';
+        for (const panel of panels) {
+            const status = panel.querySelector('[data-voice-pack-status]');
+            const progress = panel.querySelector('[data-voice-pack-progress]');
+            panel.hidden = ready;
+            panel.querySelector('[data-voice-pack-actions]').hidden = active || unsupported;
+            progress.hidden = !active;
+            if (active && pack.completed < pack.total) {
+                progress.max = pack.total;
+                progress.value = pack.completed;
+            } else {
+                progress.removeAttribute('value');
+            }
+            const gb = (pack.download_bytes / 1e9).toFixed(1);
+            status.textContent = active ? 'Verifying and installing the local voice components. Keep AudioEnhancerMAX open.'
+                : (pack.detail || `The optional ${gb} GB download requests public components only.`);
+        }
+        if (ready && installing) {
+            document.getElementById('tts-voice').value = '';
+            loadTTSEngines();
+            initPreflight();
+            showToast('success', 'English and Italian expressive voices are ready.');
+        }
+        installing = active;
+    }
+
+    async function refresh() {
+        try {
+            const response = await fetch('/api/tts/voice-pack', {cache: 'no-store'});
+            if (!response.ok) throw new Error();
+            const pack = await response.json();
+            render(pack);
+            if (pack.state === 'installing') window.setTimeout(refresh, 1400);
+        } catch (_) {
+            if (installing) window.setTimeout(refresh, 2800);
+        }
+    }
+
+    async function start(mode, folder) {
+        try {
+            const response = await fetch('/api/tts/voice-pack', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode, folder}),
+            });
+            const pack = await response.json();
+            if (!response.ok) throw new Error(pack.detail || 'Could not start voice setup.');
+            render(pack);
+            if (pack.state === 'installing') window.setTimeout(refresh, 1400);
+        } catch (error) {
+            showToast('error', error.message);
+        }
+    }
+
+    for (const panel of panels) {
+        panel.append(template.content.cloneNode(true));
+        panel.querySelector('[data-voice-pack-download]').onclick = () => start('download');
+        const form = panel.querySelector('form');
+        form.onsubmit = event => {
+            event.preventDefault();
+            start('offline', form.querySelector('input').value.trim());
+        };
+    }
+    refresh();
+}
+
 async function configurePreflight() {
     const continueButton = document.getElementById('preflight-continue');
     continueButton.disabled = true;
@@ -240,35 +316,54 @@ async function configurePreflight() {
     }
 }
 
+function mpsAvailability(available) {
+    if (typeof available !== 'boolean') return 'Unknown';
+    return available ? 'Available' : 'Unavailable';
+}
+
 async function checkSystemHealth() {
+    const localModel = document.getElementById('local-model-status');
     try {
         const res = await fetch('/api/health');
+        if (!res.ok) throw new Error('Health check unavailable');
         const data = await res.json();
 
-        // Update compute label
-        document.getElementById('compute-label').textContent = data.compute || 'CPU';
+        if (data.version && data.build) {
+            const version = `v${data.version}`;
+            const label = data.release_label || data.release_channel;
+            const headerRelease = document.querySelector('[data-app-version]');
+            if (headerRelease) {
+                headerRelease.textContent = [version, `build ${data.build}`, label].filter(Boolean).join(' · ');
+            }
+            const aboutRelease = document.getElementById('about-release-identity');
+            if (aboutRelease) {
+                aboutRelease.textContent = [version, `build ${data.build}`, label].filter(Boolean).join(' · ');
+                aboutRelease.hidden = false;
+            }
+        }
 
-        // Update Gemma status
-        const dot = document.getElementById('gemma-dot');
-        const label = document.getElementById('gemma-label');
+        const compute = document.getElementById('compute-label');
+        compute.textContent = data.mps_available === true ? 'MPS available' : 'Local runtime';
+        compute.title = 'PyTorch Metal (MPS) availability. Processing engines select their own backend.';
 
-        const ollamaStatus = data.ollama_status || data.gemma4_status;
+        const chip = document.getElementById('connection-mac-chip');
+        const runtime = document.getElementById('connection-mac-runtime');
+        if (chip) chip.textContent = data.system?.chip || 'Chip not identified';
+        if (runtime) runtime.textContent = mpsAvailability(data.mps_available);
+
+        const ollamaStatus = data.ollama_status;
         const ollamaModel = data.ollama_model || data.gemma_model;
-
-        if (ollamaStatus === 'available') {
-            dot.className = 'status-dot';
-            const modelName = ollamaModel || 'Ollama/Gemma';
-            label.textContent = modelName + ' ready';
-        } else if (ollamaStatus === 'not_running') {
-            dot.className = 'status-dot warning';
-            label.textContent = 'Ollama/Gemma - Start Ollama';
-        } else {
-            dot.className = 'status-dot error';
-            label.textContent = 'Ollama/Gemma - Unavailable';
+        if (localModel) {
+            const status = {
+                available: `Model installed: ${ollamaModel}. Enable local Ollama assistance in Privacy & Offline to use it.`,
+                not_running: 'Ollama is not running on this Mac.',
+                model_missing: 'Ollama is running. Download a compatible local Gemma model to use writing suggestions.',
+            };
+            const message = status[ollamaStatus] || 'Could not check the local model.';
+            if (localModel.textContent !== message) localModel.textContent = message;
         }
     } catch (e) {
-        document.getElementById('gemma-dot').className = 'status-dot error';
-        document.getElementById('gemma-label').textContent = 'Backend offline';
+        if (localModel) localModel.textContent = 'Could not check the local model.';
     }
 }
 
@@ -277,11 +372,26 @@ async function checkSystemHealth() {
 // ==========================================================
 
 function switchPanel(panelId, navItem) {
+    const nextPanel = panelId === 'speech-editor-panel' ? 'upload-panel' : panelId;
+    const target = document.getElementById(nextPanel);
+    if (!target) return;
+    const changed = !target.classList.contains('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
-
-    document.getElementById(panelId).classList.add('active');
-    if (navItem) navItem.classList.add('active');
+    document.querySelectorAll('.sidebar-nav-item').forEach(n => {
+        n.classList.remove('active');
+        n.removeAttribute('aria-current');
+    });
+    target.classList.add('active');
+    if (nextPanel !== 'review-desk-panel') {
+        document.getElementById('review-desk-frame')?.contentDocument?.getElementById('listener')?.pause();
+    }
+    navItem = navItem || document.querySelector(`[data-panel="${nextPanel}"]`);
+    if (navItem) {
+        navItem.classList.add('active');
+        navItem.setAttribute('aria-current', 'page');
+    }
+    if (panelId === 'speech-editor-panel') window.aemWorkspace?.selectStage('review');
+    document.dispatchEvent(new CustomEvent('aem:panel', {detail:{panel:nextPanel, navItem, changed}}));
 }
 
 function switchTab(tabId, tabBtn) {
@@ -303,10 +413,14 @@ function initUploadZone() {
     const input = document.getElementById('file-input');
 
     zone.addEventListener('click', () => input.click());
+    document.getElementById('open-another-source').addEventListener('click', () => input.click());
+    document.getElementById('stt-open-audio').addEventListener('click', () => input.click());
 
     zone.addEventListener('dragover', (e) => {
+        if (!e.dataTransfer.types.includes('Files')) return;
         e.preventDefault();
-        zone.classList.add('drag-over');
+        e.dataTransfer.dropEffect = zone.disabled ? 'none' : 'copy';
+        zone.classList.toggle('drag-over', !zone.disabled);
     });
 
     zone.addEventListener('dragleave', () => {
@@ -316,24 +430,29 @@ function initUploadZone() {
     zone.addEventListener('drop', (e) => {
         e.preventDefault();
         zone.classList.remove('drag-over');
-        if (e.dataTransfer.files.length > 0) {
-            uploadFile(e.dataTransfer.files[0]);
-        }
+        const files = e.dataTransfer.files;
+        if (files.length === 1) uploadFile(files[0]);
+        if (files.length > 1) showToast('warning', 'Drop one file at a time');
     });
 
     input.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            uploadFile(e.target.files[0]);
-        }
+        const [file] = e.target.files;
+        e.target.value = '';
+        if (file) uploadFile(file);
     });
 }
 
 async function uploadFile(file) {
-    if (state.isProcessing) { showToast('warning', 'Wait for the current operation before replacing the source'); return; }
-    invalidateProcessedResult();
-    state.speechEdl = null;
-    const uploadRequestId = state.resultRequestId;
-    showLoading('Uploading ' + file.name + '...');
+    if (state.isProcessing || state.isImporting) {
+        showToast('warning', 'Wait for the current operation before replacing the source');
+        return;
+    }
+    const uploadRequestId = ++state.sourceRequestId;
+    state.isImporting = true;
+    clearWorkspaceProgress();
+    showLoading(`Importing original: ${file.name}`);
+    updateProcessButton();
+    window.aemWorkspace?.refreshSession();
 
     const formData = new FormData();
     formData.append('file', file);
@@ -346,52 +465,78 @@ async function uploadFile(file) {
         }
 
         const data = await res.json();
-        if (uploadRequestId !== state.resultRequestId) return;
-        state.fileId = data.file_id;
-        state.fileName = data.filename;
-        state.duration = data.duration_seconds;
-        state.sampleRate = data.sample_rate;
-
-        // Update UI
-        document.getElementById('file-info-bar').classList.add('visible');
-        document.getElementById('file-name').textContent = data.filename;
-        document.getElementById('file-duration').textContent = formatDuration(data.duration_seconds);
-        document.getElementById('file-samplerate').textContent = data.sample_rate + ' Hz';
-        document.getElementById('file-format').textContent = data.format.toUpperCase();
-        document.getElementById('file-size').textContent = formatFileSize(data.size_bytes);
-
-        // Show waveform
-        initWaveform(data.audio_url);
-
-        // Enable buttons
-        document.getElementById('btn-process').disabled = false;
-        document.getElementById('btn-transcribe').disabled = false;
-        document.getElementById('btn-speech-editor-analyze').disabled = false;
-        document.getElementById('btn-diarize').disabled = false;
-        document.getElementById('btn-smart-analyze').disabled = false;
-        document.getElementById('btn-watermark').disabled = false;
-        document.getElementById('btn-detect-watermark').disabled = false;
-
-        // Hide "upload first" notices
-        document.querySelectorAll('.requires-file-notice').forEach(el => el.style.display = 'none');
-
-        // Hide upload zone
-        document.getElementById('upload-zone').style.display = 'none';
-        setReviewWorkflowStage('process');
-
-        hideLoading();
-        showToast('success', `"${data.filename}" uploaded successfully`);
-
-    } catch (e) {
-        hideLoading();
-        showToast('error', e.message);
+        if (uploadRequestId !== state.sourceRequestId) return;
+        showImportedAudio(data);
+    } catch (error) {
+        if (uploadRequestId === state.sourceRequestId) showToast('error', error.message);
+    } finally {
+        if (uploadRequestId === state.sourceRequestId) {
+            state.isImporting = false;
+            hideLoading();
+            updateProcessButton();
+            window.aemWorkspace?.refreshSession();
+        }
     }
 }
 
+function showImportedAudio(data) {
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
+    invalidateProcessedResult();
+    if (state.wavesurferOriginal) {
+        state.wavesurferOriginal.destroy();
+        state.wavesurferOriginal = null;
+    }
+    state.fileId = data.file_id;
+    state.fileName = data.filename;
+    state.duration = data.duration_seconds;
+    state.sampleRate = data.sample_rate;
+    state.speechEdl = null;
+    state.smartSuggestions = null;
+    state.workspaceRun = { phase: 'ready' };
+    document.getElementById('file-info-bar').classList.add('visible');
+    document.getElementById('file-name').textContent = data.filename;
+    document.getElementById('file-duration').textContent = formatDuration(data.duration_seconds);
+    document.getElementById('file-samplerate').textContent = data.sample_rate + ' Hz';
+    document.getElementById('file-format').textContent = data.format.toUpperCase();
+    document.getElementById('file-size').textContent = formatFileSize(data.size_bytes);
+    initWaveform(data.audio_url);
+
+    for (const id of [
+        'btn-transcribe', 'btn-speech-editor-analyze',
+        'btn-diarize', 'btn-smart-analyze', 'btn-watermark', 'btn-detect-watermark',
+    ]) {
+        document.getElementById(id).disabled = false;
+    }
+    updateProcessButton();
+    document.querySelectorAll('.requires-file-notice').forEach(element => element.style.display = 'none');
+    document.getElementById('upload-zone').style.display = 'none';
+    setReviewWorkflowStage('process');
+    window.aemWorkspace?.sourceOpened(data);
+}
+
+function openCompanionImport(data) {
+    if (state.isProcessing || state.isImporting) {
+        showToast('warning', 'Wait for the current operation before opening another source');
+        return false;
+    }
+    state.sourceRequestId++;
+    showImportedAudio(data);
+    switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+    return true;
+}
+
 function removeFile() {
+    if (state.isProcessing || state.isImporting) return;
+    state.sourceRequestId++;
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
     invalidateProcessedResult();
     state.fileId = null;
     state.fileName = null;
+    state.duration = 0;
+    state.sampleRate = 0;
+    state.workspaceRun = { phase: 'ready' };
     state.hasProcessed = false;
     state.processedUrl = null;
     state.smartSuggestions = null;
@@ -431,6 +576,7 @@ function removeFile() {
 
     // Show "upload first" notices again
     document.querySelectorAll('.requires-file-notice').forEach(el => el.style.display = '');
+    window.aemWorkspace?.sourceClosed();
 }
 
 // ==========================================================
@@ -441,61 +587,52 @@ async function initWaveform(audioUrl) {
     const container = document.getElementById('waveform-container');
     container.classList.add('visible');
 
+    const fileId = state.fileId;
     const WaveSurfer = (await import('/static/vendor/wavesurfer/wavesurfer.esm.js')).default;
+    if (fileId !== state.fileId) return;
 
     // Destroy existing
     if (state.wavesurferOriginal) state.wavesurferOriginal.destroy();
 
     state.wavesurferOriginal = WaveSurfer.create({
         container: '#waveform-original',
-        waveColor: 'rgba(124, 58, 237, 0.4)',
-        progressColor: '#7c3aed',
-        cursorColor: '#a855f7',
-        barWidth: 2,
+        waveColor: '#81969f',
+        progressColor: '#ccdee3',
+        cursorColor: '#efc98a',
+        barWidth: 1,
         barGap: 1,
         barRadius: 2,
-        height: 100,
+        height: 180,
         normalize: true,
         url: audioUrl,
         backend: 'WebAudio',
     });
 
-    state.wavesurferOriginal.on('timeupdate', (time) => {
-        document.getElementById('time-current').textContent = formatDuration(time);
-    });
-
-    state.wavesurferOriginal.on('ready', () => {
-        const dur = state.wavesurferOriginal.getDuration();
-        document.getElementById('time-total').textContent = formatDuration(dur);
-    });
-
-    state.wavesurferOriginal.on('play', () => {
-        document.getElementById('btn-play').textContent = 'Pause';
-    });
-
-    state.wavesurferOriginal.on('pause', () => {
-        document.getElementById('btn-play').textContent = 'Play';
-    });
+    showWaveform('original');
+    window.aemWorkspace?.attachWaveform('original', state.wavesurferOriginal);
 }
 
 async function initProcessedWaveform(audioUrl) {
+    const revision = state.processedRevision;
     const WaveSurfer = (await import('/static/vendor/wavesurfer/wavesurfer.esm.js')).default;
+    if (revision !== state.processedRevision) return;
 
     if (state.wavesurferProcessed) state.wavesurferProcessed.destroy();
 
     state.wavesurferProcessed = WaveSurfer.create({
         container: '#waveform-processed',
-        waveColor: 'rgba(6, 182, 212, 0.4)',
-        progressColor: '#06b6d4',
-        cursorColor: '#22d3ee',
-        barWidth: 2,
+        waveColor: '#4aa6b3',
+        progressColor: '#78e6eb',
+        cursorColor: '#efc98a',
+        barWidth: 1,
         barGap: 1,
         barRadius: 2,
-        height: 100,
+        height: 180,
         normalize: true,
         url: audioUrl,
         backend: 'WebAudio',
     });
+    window.aemWorkspace?.attachWaveform('processed', state.wavesurferProcessed);
 }
 
 function showWaveform(which) {
@@ -517,12 +654,15 @@ function showWaveform(which) {
         btnProc.classList.add('active');
         state.currentWaveform = 'processed';
     }
+    btnOrig.setAttribute('aria-pressed', String(which === 'original'));
+    btnProc.setAttribute('aria-pressed', String(which === 'processed'));
+    window.aemWorkspace?.refreshTransport();
 }
 
 function togglePlayback() {
     const ws = state.currentWaveform === 'processed' && state.wavesurferProcessed
         ? state.wavesurferProcessed : state.wavesurferOriginal;
-    if (ws) ws.playPause();
+    if (ws) ws.playPause()?.catch(() => showToast('warning', 'Unable to play this audio'));
 }
 
 function stopPlayback() {
@@ -561,8 +701,8 @@ function toggleFeature(checkbox) {
         item.classList.remove('enabled');
     }
 
-    updateProcessButton();
     syncOutputProfileOverrides();
+    updateProcessButton();
 }
 
 function updateSliderValue(slider, unit = '%') {
@@ -584,6 +724,7 @@ function updateSliderValue(slider, unit = '%') {
         options[option] = parseFloat(val) / 100;
     }
     syncOutputProfileOverrides();
+    window.aemWorkspace?.refreshRecipe();
 }
 
 function updateOptions() {
@@ -593,28 +734,49 @@ function updateOptions() {
         options[option] = isNaN(val) ? val : parseInt(val);
     });
     syncOutputProfileOverrides();
+    updateProcessButton();
+}
+
+function workspaceProcessingOptions() {
+    return {...options, watermark_identifier: document.getElementById('opt-watermark-identifier')?.value?.trim() || null};
+}
+
+function hasProcessingChoices(selected) {
+    return Boolean(selected.output_profile || selected.watermark_identifier ||
+        Object.keys(FILTER_BENCHMARKS).some(key => selected[key] === true));
+}
+
+function workspaceSelectedRecipe(selected = workspaceProcessingOptions()) {
+    const signature = JSON.stringify(selected);
+    const preset = state.workspacePreset;
+    const label = preset
+        ? (preset.signature === signature ? preset.name : `${preset.name} · adjusted`)
+        : hasProcessingChoices(selected) ? 'Custom settings' : 'No processing preset';
+    return { label, signature };
 }
 
 function updateProcessButton() {
     const hasFile = !!state.fileId;
-    const hasOptions = !!options.output_profile || Object.keys(options).some(k => {
-        if (typeof options[k] === 'boolean') return options[k];
-        return false;
-    });
+    const hasOptions = hasProcessingChoices(workspaceProcessingOptions());
     const btn = document.getElementById('btn-process');
-    btn.disabled = !hasFile || !hasOptions;
+    btn.disabled = !hasFile || !hasOptions || state.isImporting || state.isProcessing;
+    window.aemWorkspace?.refreshRecipe();
+    if (state.isProcessing) {
+        btn.textContent = 'Processing audio…';
+        return;
+    }
 
     // Show estimated time on the button when filters are selected
     if (hasFile && hasOptions) {
         const audioDur = getAudioDuration();
         const estimate = estimateFilterSetETA(options, audioDur);
         if (estimate.totalSeconds > 0) {
-            btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio <span class="btn-eta-badge">${formatETA(estimate.totalSeconds)}</span>`;
+            btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio <span class="btn-eta-badge" title="Reference estimate">${formatETA(estimate.totalSeconds)}</span>`;
         } else {
-            btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
+            btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio`;
         }
     } else {
-        btn.innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
+        btn.innerHTML = `${buttonIcon('workspace-clean')}Process audio`;
     }
 }
 
@@ -674,7 +836,7 @@ function syncOutputProfileOverrides() {
     }
 }
 
-function setOptionsFromPreset(presetOptions) {
+function setOptionsFromPreset(presetOptions, { notify = true } = {}) {
     Object.keys(presetOptions).forEach(key => {
         if (key in options) {
             options[key] = presetOptions[key];
@@ -715,7 +877,30 @@ function setOptionsFromPreset(presetOptions) {
     });
 
     updateProcessButton();
-    showToast('info', 'Preset settings applied');
+    if (notify) showToast('info', 'Settings selected for the next run.');
+}
+
+function selectWorkspacePreset(preset) {
+    if (!preset || state.isProcessing || state.isImporting) return;
+    state.outputProfileBase = null;
+    setOptionsFromPreset({...defaultProcessingOptions, ...preset.options}, { notify: false });
+    const delivery = document.getElementById('output-profile-select');
+    if (delivery) delivery.value = options.output_profile || '';
+    const description = document.getElementById('output-profile-description');
+    const profile = state.outputProfiles.find(item => item.id === options.output_profile);
+    if (description) description.textContent = profile?.description || 'Custom controls are active; values will be recorded in the report.';
+    if (profile) {
+        state.outputProfileBase = Object.fromEntries(
+            ['output_format', 'normalize', 'target_loudness_lufs'].map(key => [
+                key, options.output_profile_overrides?.[key] === undefined ? options[key] : profile.values[key],
+            ])
+        );
+    }
+    state.workspacePreset = {
+        id: preset.id, name: preset.name, description: preset.description || '',
+        signature: JSON.stringify(workspaceProcessingOptions()),
+    };
+    updateProcessButton();
 }
 
 // ==========================================================
@@ -724,7 +909,7 @@ function setOptionsFromPreset(presetOptions) {
 
 /**
  * Per-filter benchmarks: estimated seconds to process 60 seconds of audio.
- * Calibrated on Apple Silicon M3 MAX.
+ * Reference estimates for the initial display, before observed processing timings.
  * Each filter has: secondsPer60s, firstLoadCost (one-time model init), group.
  * Filters sharing a 'group' (e.g. 'whisper') share the firstLoadCost.
  */
@@ -759,7 +944,7 @@ const FILTER_BENCHMARKS = {
 const OPERATION_BENCHMARKS = {
     'Speech-to-Text Transcription':        { rate: 2.5,  base: 12, reason: 'Bundled Whisper Medium model inference' },
     'Smart Mode - Ollama/Gemma Analysis':  { rate: 0.0,  base: 12, reason: 'Local Ollama/Gemma analysis + spectral features' },
-    'Speaker Diarization (MPS)':           { rate: 1.5,  base: 5,  reason: 'Energy-based speaker segmentation (MPS)' },
+    'Speaker Diarization':           { rate: 1.5,  base: 5,  reason: 'Speaker segmentation' },
     'Speech Synthesis (TTS)':              { rate: 0.0,  base: 15, reason: 'XTTS-v2 neural synthesis' },
 };
 
@@ -773,6 +958,7 @@ const activity = {
     active: false,
     startTime: null,
     timerInterval: null,
+    dismissTimer: null,
     currentOperation: '',
     completedSteps: 0,
     totalSteps: 0,
@@ -865,9 +1051,9 @@ function estimateFilterSetETA(filterOptions, audioDurationSec) {
     let reason;
     if (heavyFilters.length > 0) {
         const heavyNames = heavyFilters.map(h => h.label.split('(')[0].trim()).join(', ');
-        reason = `${activeFilters.length} filtri attivi - più costosi: ${heavyNames} - stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
+        reason = `${activeFilters.length} filtri attivi - più costosi: ${heavyNames} - stima indicativa per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
     } else {
-        reason = `${activeFilters.length} filtri DSP leggeri - stima per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
+        reason = `${activeFilters.length} filtri DSP leggeri - stima indicativa per ${formatElapsed(Math.round(audioDurationSec))} di audio`;
     }
 
     return { totalSeconds, breakdown, reason };
@@ -910,7 +1096,7 @@ function estimateInitialETA(operationName) {
     if (bench) {
         const estimated = bench.base + (audioDur * bench.rate);
         activity.etaSource = 'benchmark';
-        activity.etaReason = `${bench.reason} - stima per ${formatElapsed(Math.round(audioDur))} di audio`;
+        activity.etaReason = `${bench.reason} - stima indicativa per ${formatElapsed(Math.round(audioDur))} di audio`;
         return Math.max(3, Math.round(estimated));
     }
 
@@ -1055,6 +1241,8 @@ function saveOperationTiming(operationName, elapsedSeconds) {
 }
 
 function startActivity(operationName, totalSteps = 0, etaMode = 'auto', etaReason = '') {
+    clearTimeout(activity.dismissTimer);
+    activity.dismissTimer = null;
     activity.active = true;
     activity.startTime = Date.now();
     activity.currentOperation = operationName;
@@ -1236,8 +1424,10 @@ function stopActivity(success = true) {
     hideETAElements();
 
     // Hide after delay
-    setTimeout(() => {
+    clearTimeout(activity.dismissTimer);
+    activity.dismissTimer = setTimeout(() => {
         bar.classList.remove('visible');
+        activity.dismissTimer = null;
     }, success ? 3000 : 5000);
 
     // Hide loading overlay
@@ -1262,42 +1452,71 @@ function formatElapsed(seconds) {
 // Processing
 // ==========================================================
 
+function clearWorkspaceProgress() {
+    if (state.wsConnection) {
+        state.wsConnection.onmessage = null;
+        state.wsConnection.close();
+        state.wsConnection = null;
+    }
+    document.getElementById('progress-container')?.classList.remove('visible');
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-steps').innerHTML = '';
+    document.getElementById('progress-percent').textContent = '0%';
+    document.getElementById('progress-elapsed').textContent = '0:00';
+    document.getElementById('progress-current-step').textContent = '';
+    document.getElementById('progress-spinner').style.display = 'none';
+
+    if (!activity.active && ['Audio Processing', 'Rendering approved speech edits'].includes(activity.currentOperation)) {
+        clearTimeout(activity.dismissTimer);
+        activity.dismissTimer = null;
+        document.getElementById('activity-bar').classList.remove('visible');
+        document.getElementById('activity-bar-fill').style.width = '0%';
+        document.getElementById('activity-bar-text').textContent = '';
+        hideETAElements();
+    }
+}
+
 async function startProcessing() {
-    if (!state.fileId || state.isProcessing) return;
+    if (!state.fileId || state.isProcessing || state.isImporting) return;
+    const selected = workspaceProcessingOptions();
+    if (!hasProcessingChoices(selected)) return;
+    const watermarkIdentifier = selected.watermark_identifier;
+    if (watermarkIdentifier && !/^[A-Za-z0-9_-]{1,32}$/.test(watermarkIdentifier)) {
+        showToast('error', 'Use 1–32 letters, digits, hyphens or underscores for the watermark.');
+        return;
+    }
+    const recipe = workspaceSelectedRecipe(selected);
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
     state.isProcessing = true;
+    state.workspaceRun = { phase: 'running', label: recipe.label };
     const fileId = state.fileId;
     const requestId = invalidateProcessedResult();
     setReviewWorkflowStage('process');
 
     // Count processing steps
-    const stepCount = Object.keys(options).filter(k => typeof options[k] === 'boolean' && options[k]).length;
+    const stepCount = Object.keys(FILTER_BENCHMARKS).filter(key => selected[key] === true).length +
+        Number(Boolean(watermarkIdentifier));
 
     startActivity('Audio Processing', stepCount);
 
     const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
-    const progressSteps = document.getElementById('progress-steps');
     progressContainer.classList.add('visible');
-    progressBar.style.width = '0%';
-    progressSteps.innerHTML = '';
-    document.getElementById('progress-percent').textContent = '0%';
-    document.getElementById('progress-current-step').textContent = 'Starting pipeline...';
+    document.getElementById('progress-current-step').textContent = 'Starting processing…';
     const spinner = document.getElementById('progress-spinner');
     if (spinner) spinner.style.display = '';
 
-    document.getElementById('btn-process').disabled = true;
-    document.getElementById('btn-process').innerHTML = ' Processing...';
+    updateProcessButton();
 
-    // Connect WebSocket for progress
-    connectProgressWS(state.fileId);
+    connectProgressWS(fileId, requestId);
 
     try {
         const res = await fetch('/api/process', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                file_id: state.fileId,
-                options: options,
+                file_id: fileId,
+                options: selected,
             }),
         });
 
@@ -1314,15 +1533,23 @@ async function startProcessing() {
         state.processedUrl = result.output_url;
         state.processedVersion = 'processed';
         state.processingReportUrl = result.report_url || null;
+        state.renderedRecipe = {...recipe, revision: result.revision};
+        state.workspaceRun = { phase: 'completed' };
+        window.aemWorkspace?.resultOpened(result);
 
         // Show processed waveform
-        await initProcessedWaveform(result.output_url);
-        showWaveform('processed');
+        try {
+            await initProcessedWaveform(result.output_url);
+            if (fileId !== state.fileId || requestId !== state.resultRequestId) return;
+            showWaveform('processed');
+        } catch (error) {
+            console.warn('Revision waveform could not be initialized:', error);
+        }
 
         // Show download bar
         const dlBar = document.getElementById('download-bar');
         dlBar.classList.add('visible');
-        let downloadSummary = `Completed revision ${result.revision.slice(0, 8)} - ${formatDuration(result.duration_seconds)} - ${result.sample_rate}Hz - ${result.format.toUpperCase()}`;
+        let downloadSummary = `Revision ${result.revision.slice(0, 8)} · ${formatDuration(result.duration_seconds)} · Master ${result.format.toUpperCase()} at ${result.sample_rate} Hz`;
         if (result.report_summary) {
             downloadSummary += ` - Quality ${result.report_summary.input_quality_score} → ${result.report_summary.output_quality_score}`;
         }
@@ -1331,29 +1558,33 @@ async function startProcessing() {
         if (reportButton) reportButton.style.display = state.processingReportUrl ? '' : 'none';
         activateReviewDeck(result);
 
-        updateActivity('Complete!', 1.0);
-        addActivityStep('Processing complete - audio ready for download');
         stopActivity(true);
-        showToast('success', 'Processing complete! Download your enhanced audio.');
+        showToast('success', `Revision ${result.revision.slice(0, 8)} is ready to listen to or export.`);
 
-    } catch (e) {
-        addActivityStep(`Error: ${e.message}`, 'error');
+    } catch (error) {
+        if (fileId !== state.fileId || requestId !== state.resultRequestId) return;
+        const interrupted = ['AbortError', 'TypeError'].includes(error.name);
+        state.workspaceRun = { phase: interrupted ? 'interrupted' : 'failed', message: error.message };
         stopActivity(false);
-        showToast('error', e.message);
+        window.aemWorkspace?.refreshHistory();
     } finally {
         state.isProcessing = false;
-        document.getElementById('btn-process').disabled = false;
-        document.getElementById('btn-process').innerHTML = `${buttonIcon('aem-mark')}Process Audio`;
+        clearWorkspaceProgress();
+        updateProcessButton();
+        window.aemWorkspace?.refreshSession();
     }
 }
 
-function connectProgressWS(fileId) {
+function connectProgressWS(fileId, requestId) {
     try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(`${protocol}//${window.location.host}/ws/progress/${fileId}`);
 
         ws.onmessage = (event) => {
+            if (state.wsConnection !== ws || !state.isProcessing || state.fileId !== fileId ||
+                state.resultRequestId !== requestId || state.workspaceRun.phase !== 'running') return;
             const data = JSON.parse(event.data);
+            if (data.status === 'completed' || data.status === 'error') return;
 
             // -- Handle initial estimate from backend --
             if (data.status === 'estimate') {
@@ -1423,22 +1654,30 @@ function connectProgressWS(fileId) {
 // Smart Enhance 2.0 (deterministic local analysis)
 // ==========================================================
 
-async function runSmartMode(profile = null) {
+async function runSmartMode(profile = null, {quiet = false} = {}) {
     if (!state.fileId) return;
 
+    const {fileId, sourceRequestId} = state;
     const profileSelect = document.getElementById('smart-profile');
     state.smartProfile = profile || (profileSelect ? profileSelect.value : state.smartProfile) || 'balanced';
     if (profileSelect) profileSelect.value = state.smartProfile;
 
-    startActivity('Smart Enhance 2.0 - Local Analysis');
-    updateActivity('Measuring level, noise, clipping, silence and spectrum...', 0.1);
+    if (!quiet) {
+        startActivity('Smart Enhance 2.0 - Local Analysis');
+        updateActivity('Measuring level, noise, clipping, silence and spectrum...', 0.1);
+    }
 
     try {
-        const res = await fetch(`/api/smart-mode/${state.fileId}?profile=${encodeURIComponent(state.smartProfile)}`, { method: 'POST' });
+        const res = await fetch(`/api/smart-mode/${fileId}?profile=${encodeURIComponent(state.smartProfile)}`, { method: 'POST' });
         if (!res.ok) throw new Error('Smart mode analysis failed');
 
         const data = await res.json();
+        if (fileId !== state.fileId || sourceRequestId !== state.sourceRequestId) {
+            if (!quiet) stopActivity(false);
+            return;
+        }
         state.smartSuggestions = data;
+        window.aemWorkspace?.showSourceAnalysis(data);
 
         // Show banner
         const banner = document.getElementById('smart-mode-banner');
@@ -1495,20 +1734,31 @@ async function runSmartMode(profile = null) {
 
         document.getElementById('smart-analysis-content').innerHTML = html;
 
-        stopActivity(true);
-        showToast('success', `Smart Enhance: ${quality.quality_score}/100, ${data.selected_profile} profile ready`);
+        if (!quiet) {
+            stopActivity(true);
+            showToast('success', `Smart Enhance: ${quality.quality_score}/100, ${data.selected_profile} profile ready`);
+        }
+        return data;
 
     } catch (e) {
-        stopActivity(false);
-        showToast('error', e.message);
+        if (!quiet) {
+            stopActivity(false);
+            showToast('error', e.message);
+        }
     }
 }
 
 function applySmartPreset() {
     if (state.smartSuggestions && state.smartSuggestions.suggested_options) {
-        setOptionsFromPreset(state.smartSuggestions.suggested_options);
+        const data = state.smartSuggestions;
+        selectWorkspacePreset({
+            id: 'source-analysis',
+            name: data.profiles?.[data.selected_profile]?.name || 'Suggested settings',
+            description: data.description,
+            options: data.suggested_options,
+        });
         switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
-        showToast('success', `${state.smartProfile} Smart Enhance profile applied`);
+        window.aemWorkspace?.selectStage('clean');
     }
 }
 
@@ -1516,22 +1766,34 @@ function applySmartPreset() {
 // Precision Speech Editor (non-destructive EDL)
 // ==========================================================
 
+let speechAnalysisRequest = null;
+
+function clearSpeechAnalysis() {
+    speechAnalysisRequest?.controller.abort();
+    speechAnalysisRequest = null;
+    document.getElementById('speech-analysis-status').hidden = true;
+}
+
 async function runSpeechEditor() {
-    if (!state.fileId) return;
+    if (!state.fileId || speechAnalysisRequest || state.isProcessing) return;
+    const request = { fileId: state.fileId, controller: new AbortController() };
+    speechAnalysisRequest = request;
     const button = document.getElementById('btn-speech-editor-analyze');
+    const status = document.getElementById('speech-analysis-status');
     const language = document.getElementById('speech-editor-language').value || null;
     const fillers = document.getElementById('speech-editor-fillers').value
         .split(',').map(item => item.trim()).filter(Boolean);
     button.disabled = true;
-    startActivity('Precision Speech Editor');
-    updateActivity('Transcribing locally and locating review candidates...', 0.08);
+    status.textContent = 'Transcribing locally and looking for review candidates…';
+    status.hidden = false;
 
     try {
         const response = await fetch('/api/speech-editor/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: request.controller.signal,
             body: JSON.stringify({
-                file_id: state.fileId,
+                file_id: request.fileId,
                 language,
                 custom_filler_words: fillers.length ? fillers : null,
             }),
@@ -1540,16 +1802,20 @@ async function runSpeechEditor() {
             const error = await response.json();
             throw new Error(error.detail || 'Speech analysis failed');
         }
-        state.speechEdl = await response.json();
+        const edl = await response.json();
+        if (speechAnalysisRequest !== request || state.fileId !== request.fileId) return;
+        state.speechEdl = edl;
         state.transcriptSelection = [];
         renderSpeechEdl();
-        stopActivity(true);
         showToast('success', `${state.speechEdl.summary.total_candidates} review candidates found; no edit has been applied`);
     } catch (error) {
-        stopActivity(false);
+        if (speechAnalysisRequest !== request || state.fileId !== request.fileId) return;
         showToast('error', error.message);
     } finally {
-        button.disabled = false;
+        if (speechAnalysisRequest === request) {
+            clearSpeechAnalysis();
+            button.disabled = !state.fileId;
+        }
     }
 }
 
@@ -1624,12 +1890,15 @@ function renderTranscriptWords() {
     const selected = state.transcriptSelection.length === 2
         ? [Math.min(...state.transcriptSelection), Math.max(...state.transcriptSelection)]
         : state.transcriptSelection;
+    const focusedIndex = document.activeElement?.closest('#speech-transcript-words .speech-word')?.dataset.wordIndex;
+    const tabIndexWord = Number(focusedIndex ?? state.transcriptSelection.at(-1) ?? 0);
     container.innerHTML = words.slice(0, 1200).map((word, index) => {
         const isSelected = selected.length === 2
             ? index >= selected[0] && index <= selected[1]
             : selected[0] === index;
-        return `<button type="button" class="speech-word ${isSelected ? 'selected' : ''}" role="option" aria-selected="${isSelected}" onclick="selectTranscriptWord(${index})" title="${formatDuration(word.start)}">${escapeHtml(word.display_word || word.word)}</button>`;
+        return `<button type="button" class="speech-word ${isSelected ? 'selected' : ''}" role="option" aria-selected="${isSelected}" data-word-index="${index}" tabindex="${index === tabIndexWord ? '0' : '-1'}" onclick="selectTranscriptWord(${index})" title="${formatDuration(word.start)}">${escapeHtml(word.display_word || word.word)}</button>`;
     }).join('');
+    if (focusedIndex !== undefined) container.querySelector(`[data-word-index="${tabIndexWord}"]`)?.focus({preventScroll: true});
     updateTranscriptSelectionUi();
 }
 
@@ -1640,6 +1909,7 @@ function selectTranscriptWord(index) {
         state.transcriptSelection.push(index);
     }
     renderTranscriptWords();
+    window.aemWorkspace?.seekTranscriptWord(index);
 }
 
 function clearTranscriptSelection() {
@@ -1654,6 +1924,8 @@ function updateTranscriptSelectionUi() {
     const complete = state.transcriptSelection.length === 2;
     if (cutButton) cutButton.disabled = !complete;
     if (muteButton) muteButton.disabled = !complete;
+    const audition = document.getElementById('btn-audition-range');
+    if (audition) audition.disabled = !complete;
     if (!note) return;
     if (!state.transcriptSelection.length) {
         note.textContent = 'No transcript range selected.';
@@ -1669,16 +1941,17 @@ function updateTranscriptSelectionUi() {
 
 async function createTranscriptEdit(action) {
     if (!state.speechEdl || state.transcriptSelection.length !== 2) return;
+    const { fileId, speechEdl } = state;
     const [wordStart, wordEnd] = [Math.min(...state.transcriptSelection), Math.max(...state.transcriptSelection)];
     const words = state.speechEdl.source_words || [];
     if (!words[wordStart] || !words[wordEnd]) return;
     const text = words.slice(wordStart, wordEnd + 1).map(word => word.display_word || word.word).join(' ');
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}/manual-edit`, {
+        const response = await fetch(`/api/speech-editor/${fileId}/manual-edit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                revision: state.speechEdl.revision,
+                revision: speechEdl.revision,
                 start: words[wordStart].start,
                 end: words[wordEnd].end,
                 action,
@@ -1692,11 +1965,14 @@ async function createTranscriptEdit(action) {
             const error = await response.json();
             throw new Error(error.detail || 'Could not create transcript edit');
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         state.transcriptSelection = [];
         renderSpeechEdl();
         showToast('success', `${action === 'cut' ? 'Cut' : 'Mute'} proposal added for review`);
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1704,21 +1980,25 @@ async function createTranscriptEdit(action) {
 
 async function navigateSpeechHistory(direction) {
     if (!state.speechEdl) return;
+    const { fileId, speechEdl } = state;
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}/${direction}`, {
+        const response = await fetch(`/api/speech-editor/${fileId}/${direction}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ revision: state.speechEdl.revision }),
+            body: JSON.stringify({ revision: speechEdl.revision }),
         });
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || `Could not ${direction}`);
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         state.transcriptSelection = [];
         renderSpeechEdl();
         showToast('info', direction === 'undo' ? 'Last EDL change undone' : 'EDL change restored');
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1731,12 +2011,13 @@ function exportSpeechEdl(format) {
 
 async function setSpeechEditDecision(candidateId, decision) {
     if (!state.speechEdl) return;
+    const { fileId, speechEdl } = state;
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}`, {
+        const response = await fetch(`/api/speech-editor/${fileId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                revision: state.speechEdl.revision,
+                revision: speechEdl.revision,
                 decisions: [{ candidate_id: candidateId, decision }],
             }),
         });
@@ -1744,9 +2025,12 @@ async function setSpeechEditDecision(candidateId, decision) {
             const error = await response.json();
             throw new Error(error.detail || 'Could not save edit decision');
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         renderSpeechEdl();
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1754,23 +2038,27 @@ async function setSpeechEditDecision(candidateId, decision) {
 
 async function applySpeechEditBulk(mode) {
     if (!state.speechEdl) return;
+    const { fileId, speechEdl } = state;
     const decisions = state.speechEdl.candidates.map(candidate => ({
         candidate_id: candidate.id,
         decision: mode === 'high-confidence' && candidate.confidence >= 0.8 ? 'apply' : 'keep',
     }));
     try {
-        const response = await fetch(`/api/speech-editor/${state.fileId}`, {
+        const response = await fetch(`/api/speech-editor/${fileId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ revision: state.speechEdl.revision, decisions }),
+            body: JSON.stringify({ revision: speechEdl.revision, decisions }),
         });
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || 'Could not update edit decisions');
         }
-        state.speechEdl = await response.json();
+        const edited = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = edited;
         renderSpeechEdl();
     } catch (error) {
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
         showToast('error', error.message);
         await reloadSpeechEdl();
     }
@@ -1778,9 +2066,12 @@ async function applySpeechEditBulk(mode) {
 
 async function reloadSpeechEdl() {
     if (!state.fileId) return;
-    const response = await fetch(`/api/speech-editor/${state.fileId}`, { cache: 'no-store' });
+    const { fileId, speechEdl } = state;
+    const response = await fetch(`/api/speech-editor/${fileId}`, { cache: 'no-store' });
     if (response.ok) {
-        state.speechEdl = await response.json();
+        const updated = await response.json();
+        if (fileId !== state.fileId || speechEdl !== state.speechEdl) return;
+        state.speechEdl = updated;
         renderSpeechEdl();
     }
 }
@@ -1793,8 +2084,11 @@ function previewSpeechEdit(candidateId, mode) {
 }
 
 async function renderSpeechEditor() {
-    if (!state.fileId || !state.speechEdl || !state.speechEdl.summary.selected_candidates || state.isProcessing) return;
+    if (!state.fileId || !state.speechEdl || !state.speechEdl.summary.selected_candidates || state.isProcessing || state.isImporting) return;
+    clearWorkspaceProgress();
+    clearWorkspaceNotice();
     state.isProcessing = true;
+    state.workspaceRun = { phase: 'running', label: 'approved speech edits' };
     const fileId = state.fileId;
     const requestId = invalidateProcessedResult();
     const button = document.getElementById('btn-speech-editor-render');
@@ -1818,6 +2112,9 @@ async function renderSpeechEditor() {
         state.processedUrl = result.output_url;
         state.processedVersion = 'speech_edit';
         state.processingReportUrl = result.report_url || null;
+        state.renderedRecipe = {label: 'Approved speech edits', revision: result.revision};
+        state.workspaceRun = { phase: 'completed' };
+        window.aemWorkspace?.resultOpened(result);
         await initProcessedWaveform(result.output_url);
         showWaveform('processed');
         document.getElementById('download-bar').classList.add('visible');
@@ -1832,11 +2129,16 @@ async function renderSpeechEditor() {
         stopActivity(true);
         showToast('success', 'Approved speech edits rendered to a new file');
     } catch (error) {
+        if (fileId !== state.fileId || requestId !== state.resultRequestId) return;
+        state.workspaceRun = { phase: ['AbortError', 'TypeError'].includes(error.name) ? 'interrupted' : 'failed', message: error.message };
         stopActivity(false);
         showToast('error', error.message);
     } finally {
         state.isProcessing = false;
+        clearWorkspaceProgress();
         button.disabled = false;
+        updateProcessButton();
+        window.aemWorkspace?.refreshSession();
     }
 }
 
@@ -2172,6 +2474,84 @@ function downloadTranscript() {
 // Text-to-Speech
 // ==========================================================
 
+async function loadTTSEngines() {
+    const system = document.getElementById('tts-system-voices');
+    const expressive = document.getElementById('tts-expressive-voices');
+    const voiceSelect = document.getElementById('tts-voice');
+    const refresh = document.getElementById('tts-refresh-voices');
+    if (refresh.disabled) return;
+    refresh.disabled = true;
+    try {
+        const response = await fetch('/api/tts/voices', {cache: 'no-store'});
+        if (!response.ok) throw new Error('Voice availability unavailable');
+        const {voices} = await response.json();
+        if (!Array.isArray(voices)) throw new Error('Voice availability not reported');
+        const selected = voiceSelect.value;
+        for (const [group, engine] of [[expressive, 'qwen3-voice-design'], [system, 'macos']]) {
+            const options = voices.filter(voice => voice.engine === engine).map(voice => {
+                const option = new Option(voice.name, voice.id);
+                option.dataset.language = voice.language;
+                option.dataset.engine = engine;
+                return option;
+            });
+            group.replaceChildren(...options);
+            group.hidden = !options.length;
+        }
+        voiceSelect.value = selected;
+        state.ttsEngines = true;
+    } catch (_) {
+        system.replaceChildren();
+        expressive.replaceChildren();
+        expressive.hidden = true;
+        state.ttsEngines = null;
+    } finally {
+        refresh.disabled = false;
+        refreshTTSVoiceAvailability();
+    }
+}
+
+function refreshTTSVoiceAvailability() {
+    if (state.ttsEngines === undefined) return;
+    const voiceSelect = document.getElementById('tts-voice');
+    const previousSelection = voiceSelect.value;
+    const available = [...voiceSelect.options].filter(option => option.value && !option.disabled);
+    voiceSelect.disabled = !available.length;
+    if (!available.some(option => option.value === previousSelection)) {
+        const local = available.filter(option => option.dataset.language);
+        const locale = navigator.language || 'en-US';
+        const preferredLanguage = locale.split('-')[0];
+        const languageVoices = local.filter(option => option.dataset.language.split('-')[0] === preferredLanguage);
+        const preferredVoice = {it: 'Alice', en: 'Samantha'}[preferredLanguage];
+        const preferred = languageVoices.find(option => option.text === preferredVoice || option.text.startsWith(preferredVoice + ' ('));
+        const neural = languageVoices.filter(option => option.dataset.engine === 'qwen3-voice-design' && option.value !== 'qwen3_it_paola');
+        const natural = neural.find(option => option.dataset.language === locale) || neural[0];
+        voiceSelect.value = (natural || preferred || languageVoices[0] || local[0] || available[0])?.value || '';
+    }
+    if (voiceSelect.value !== previousSelection) handleTTSVoiceChange();
+    else renderTTSVoiceStatus();
+}
+
+function renderTTSVoiceStatus() {
+    const voice = document.getElementById('tts-voice').value;
+    const status = document.getElementById('tts-voice-status');
+    document.getElementById('btn-generate-speech').disabled = !voice;
+    if (voice.startsWith('personal_')) {
+        status.textContent = 'This personal voice is processed locally on your Mac.';
+    } else if (voice === 'qwen3_it_paola') {
+        status.textContent = 'Eve speaks Italian on your Mac. Questions are paced gently while keeping their intonation.';
+    } else if (voice.startsWith('qwen3_')) {
+        status.textContent = 'Qwen3 VoiceDesign generates this expressive voice on your Mac.';
+    } else if (voice) {
+        status.textContent = 'Speech is generated on your Mac with this installed voice.';
+    } else if (state.ttsEngines === undefined) {
+        status.textContent = 'Checking voice availability…';
+    } else if (state.ttsEngines === null) {
+        status.textContent = 'Could not load macOS voices. Use Refresh voices to retry.';
+    } else {
+        status.textContent = 'No installed voices were found. Check voice downloads in macOS Accessibility settings, then refresh.';
+    }
+}
+
 function selectedVoiceProfile() {
     const option = document.getElementById('tts-voice')?.selectedOptions?.[0];
     const profileId = option?.dataset?.profileId;
@@ -2179,9 +2559,9 @@ function selectedVoiceProfile() {
 }
 
 function currentVoiceSettings() {
-    const voiceId = document.getElementById('tts-voice')?.value || 'it_giuseppe';
+    const voice = document.getElementById('tts-voice')?.selectedOptions?.[0];
     return {
-        language: selectedVoiceProfile()?.settings?.language || (voiceId.startsWith('kokoro') ? 'en' : (voiceId.split('_')[0] || 'it')),
+        language: selectedVoiceProfile()?.settings?.language || voice?.dataset.language || 'it',
         style: document.getElementById('tts-style').value,
         speed: parseFloat(document.getElementById('tts-speed').value) / 100,
         pitch: parseFloat(document.getElementById('tts-pitch').value) / 100,
@@ -2228,7 +2608,6 @@ async function loadVoiceProfiles(selectProfileId = null) {
                 const option = document.createElement('option');
                 option.value = `personal_${profile.id}`;
                 option.dataset.profileId = profile.id;
-                option.dataset.localVoice = 'true';
                 option.disabled = !profile.available;
                 const progress = Math.round((profile.finetune_progress || 0) * 100);
                 const profileState = profile.finetune_workflow === 'makemyvoice-managed'
@@ -2251,10 +2630,11 @@ async function loadVoiceProfiles(selectProfileId = null) {
                 handleTTSVoiceChange();
             }
         }
-        applyRuntimePrivacyUi();
+        refreshTTSVoiceAvailability();
     } catch (error) {
         group.innerHTML = '<option value="" disabled>Personal voices unavailable</option>';
         if (engineStatus) engineStatus.textContent = error.message;
+        refreshTTSVoiceAvailability();
     }
 }
 
@@ -2280,6 +2660,7 @@ function handleTTSVoiceChange() {
         if (saveButton) saveButton.style.display = 'none';
         if (status) status.textContent = 'Create a named reusable voice, or select one above to improve it.';
     }
+    renderTTSVoiceStatus();
 }
 
 async function saveVoiceProfileSettings() {
@@ -2383,9 +2764,7 @@ async function previewRewrite() {
         return;
     }
 
-    const voiceId = document.getElementById('tts-voice').value;
-    const profile = selectedVoiceProfile();
-    const language = profile?.settings?.language || (voiceId.startsWith('kokoro') ? 'en' : (voiceId.split('_')[0] || 'en'));
+    const language = currentVoiceSettings().language;
     const style = document.getElementById('tts-style').value;
 
     const previewBtn = document.getElementById('btn-preview-rewrite');
@@ -2422,6 +2801,8 @@ async function previewRewrite() {
 }
 
 async function synthesizeSpeech() {
+    const voiceId = document.getElementById('tts-voice').value;
+    if (!voiceId) return;
     const isExpressive = document.getElementById('tts-expressive')?.checked || false;
 
     // If expressive mode is on and there's rewritten text in the preview, use it
@@ -2441,13 +2822,13 @@ async function synthesizeSpeech() {
         return;
     }
 
-    const voiceId = document.getElementById('tts-voice').value;
     const voiceProfile = selectedVoiceProfile();
-    const isKokoro = voiceId.startsWith('kokoro');
-    const language = voiceProfile?.settings?.language || (isKokoro ? 'en' : (voiceId.split('_')[0] || 'en'));
+    const language = currentVoiceSettings().language;
+    const engine = voiceProfile ? 'voice-clone' : (voiceId.startsWith('qwen3_') ? 'qwen3-voice-design' : 'macos');
     const engineLabel = voiceProfile
         ? `${voiceProfile.name} · ${voiceProfile.engine} (${voiceProfile.execution})`
-        : (isKokoro ? 'Kokoro Local CPU' : 'Edge Neural TTS · external service');
+        : (voiceId === 'qwen3_it_paola' ? 'Eve · Qwen3 Base · local'
+            : engine === 'qwen3-voice-design' ? 'Qwen3 VoiceDesign · local' : 'macOS system voice');
 
     const label = isExpressive ? `Expressive Speech (${engineLabel})` : `Speech Synthesis (${engineLabel})`;
     startActivity(
@@ -2456,9 +2837,7 @@ async function synthesizeSpeech() {
         'indeterminate',
         voiceProfile
             ? 'Local MakeMyVoice inference; elapsed time is shown because the backend does not expose fractional progress'
-            : (isKokoro
-                ? 'Local synthesis; elapsed time is shown because the engine does not expose fractional progress'
-                : 'Waiting for Microsoft Edge Neural TTS; CPU/GPU meters show this Mac, not the remote service')
+            : 'Speech synthesis runs on this Mac'
     );
 
     if (isExpressive && !rewrittenVisible) {
@@ -2480,7 +2859,7 @@ async function synthesizeSpeech() {
             voice_profile_id: voiceProfile?.id || null,
             // Only send expressive=true if we haven't already rewritten in the preview
             expressive: isExpressive && !rewrittenVisible,
-            engine: voiceProfile ? 'voice-clone' : (isKokoro ? 'kokoro' : 'edge'),
+            engine,
         };
 
         const res = await fetch('/api/tts/synthesize', {
@@ -2503,8 +2882,10 @@ async function synthesizeSpeech() {
         const badge = document.getElementById('tts-engine-badge');
         if (badge) {
             const parts = [];
-            if (data.voice_profile_name) parts.push(`Voice: ${data.voice_profile_name}`);
-            parts.push(`Engine: ${data.engine}`);
+            const name = data.voice_profile_name || data.voice_name;
+            if (name) parts.push(`Voice: ${name}`);
+            parts.push(`Engine: ${data.engine === 'macos' ? 'macOS' : voiceId === 'qwen3_it_paola' ? 'Qwen3 Base'
+                : data.engine === 'qwen3-voice-design' ? 'Qwen3 VoiceDesign' : data.engine}`);
             if (data.engine_version) parts.push(`v${data.engine_version}`);
             if (data.execution) parts.push(data.execution);
             if (data.voice_profile_name) parts.push(data.personal_model ? 'fine-tuned model' : 'zero-shot reference');
@@ -2538,7 +2919,7 @@ async function synthesizeSpeech() {
 async function startDiarization() {
     if (!state.fileId) return;
 
-    startActivity('Speaker Diarization (MPS)');
+    startActivity('Speaker Diarization');
     updateActivity('Analyzing speakers...', 0.1);
 
     try {
@@ -2643,8 +3024,8 @@ async function detectWatermark() {
         if (data.watermark && data.watermark.detected) {
             document.getElementById('watermark-result').innerHTML =
                 `<div class="card" style="border-color:var(--success)"><div class="card-title">${svgIcon('search', 'icon-img inline-icon')}Watermark Detected</div>
-                <p class="text-sm mt-12">Method: ${data.watermark.method}</p>
-                <p class="text-xs text-muted">Payload: ${data.watermark.payload}</p></div>`;
+                <p class="text-sm mt-12">Method: ${escapeHtml(String(data.watermark.method))}</p>
+                <p class="text-xs text-muted">Payload: ${escapeHtml(String(data.watermark.payload))}</p></div>`;
         } else {
             document.getElementById('watermark-result').innerHTML =
                 `<div class="card" style="border-color:var(--warning)"><div class="card-title">No Watermark Found</div></div>`;
@@ -2664,6 +3045,8 @@ async function loadPresets() {
         if (!res.ok) return;
 
         const data = await res.json();
+        state.workspacePresets = data.builtin || [];
+        window.aemWorkspace?.refreshPresets();
 
         // Render built-in presets
         const builtinGrid = document.getElementById('builtin-presets');
@@ -2675,7 +3058,7 @@ async function loadPresets() {
                 : '';
             const filterCount = Object.keys(p.options).filter(k => p.options[k] === true).length;
             return `
-            <div class="preset-card" onclick="applyPreset(${JSON.stringify(p.options).replace(/"/g, '&quot;')})">
+            <div class="preset-card" onclick="applyPreset(${JSON.stringify(p.options).replace(/"/g, '&quot;')}, '${p.id}')">
                 <div class="preset-card-name">${p.name}</div>
                 <div class="preset-card-desc">${p.description}</div>
                 <div class="preset-card-meta">
@@ -2703,9 +3086,12 @@ async function loadPresets() {
     }
 }
 
-function applyPreset(presetOptions) {
-    setOptionsFromPreset(presetOptions);
+function applyPreset(presetOptions, presetId) {
+    const preset = state.workspacePresets.find(item => item.id === presetId);
+    if (preset) selectWorkspacePreset(preset);
+    else setOptionsFromPreset(presetOptions);
     switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+    window.aemWorkspace?.selectStage('clean');
 }
 
 async function loadAndApplyPreset(presetId) {
@@ -2713,8 +3099,9 @@ async function loadAndApplyPreset(presetId) {
         const res = await fetch(`/api/presets/${presetId}`);
         if (!res.ok) throw new Error('Preset not found');
         const data = await res.json();
-        setOptionsFromPreset(data.options);
+        selectWorkspacePreset(data);
         switchPanel('upload-panel', document.querySelector('[data-panel="upload-panel"]'));
+        window.aemWorkspace?.selectStage('clean');
     } catch (e) {
         showToast('error', e.message);
     }
@@ -2856,21 +3243,13 @@ function initReviewDeck() {
     document.addEventListener('keydown', handleReportModalKeydown);
 }
 
-function setReviewWorkflowStage(stage, complete = false) {
-    const workflow = document.getElementById('review-workflow');
-    if (!workflow) return;
-    const stages = ['diagnose', 'process', 'review', 'deliver'];
-    const currentIndex = Math.max(0, stages.indexOf(stage));
-    workflow.dataset.current = stages[currentIndex];
-    workflow.querySelectorAll('[data-stage]').forEach((item) => {
-        const itemIndex = stages.indexOf(item.dataset.stage);
-        item.classList.toggle('is-current', itemIndex === currentIndex && !complete);
-        item.classList.toggle('is-complete', itemIndex < currentIndex || (complete && itemIndex <= currentIndex));
-        if (itemIndex > currentIndex) item.setAttribute('aria-disabled', 'true');
-        else item.removeAttribute('aria-disabled');
-        if (itemIndex === currentIndex && !complete) item.setAttribute('aria-current', 'step');
-        else item.removeAttribute('aria-current');
-    });
+function setReviewWorkflowStage(stage) {
+    window.aemWorkspace?.selectStage({
+        diagnose: 'clean',
+        process: 'clean',
+        review: 'review',
+        deliver: 'export',
+    }[stage]);
 }
 
 async function ensureComplianceTargets(showErrors = true) {
@@ -2933,6 +3312,9 @@ function invalidateProcessedResult() {
     state.processedRevision = null;
     state.processedUrl = null;
     state.processingReportUrl = null;
+    state.currentReport = null;
+    state.renderedRecipe = null;
+    closeProcessingReport(false);
     stopPlayback();
     if (state.wavesurferProcessed) {
         state.wavesurferProcessed.destroy();
@@ -2952,7 +3334,7 @@ function resetReviewDeck() {
     document.getElementById('download-bar')?.classList.remove('visible');
     document.getElementById('waveform-container')?.classList.remove('blind-review-active');
     const waveformLabel = document.querySelector('.waveform-label');
-    if (waveformLabel) waveformLabel.textContent = 'Waveform';
+    if (waveformLabel) waveformLabel.textContent = 'Signal';
     const target = document.getElementById('compliance-target');
     if (target && Array.from(target.options).some(option => option.value === 'podcast')) target.value = 'podcast';
     const includeSource = document.getElementById('capsule-include-source');
@@ -3156,7 +3538,7 @@ async function submitBlindDecision(slot) {
         stopPlayback();
         document.getElementById('waveform-container')?.classList.remove('blind-review-active');
         const waveformLabel = document.querySelector('.waveform-label');
-        if (waveformLabel) waveformLabel.textContent = 'Waveform';
+        if (waveformLabel) waveformLabel.textContent = 'Signal';
         showWaveform(selectedVersion === 'no_difference' ? 'processed' : selectedVersion);
 
         const selectedLabel = selectedVersion === 'no_difference'
@@ -3171,7 +3553,6 @@ async function submitBlindDecision(slot) {
         const startButton = document.getElementById('btn-start-ab');
         startButton.disabled = false;
         startButton.innerHTML = `${buttonIcon('repeat')}Start fresh round`;
-        setReviewWorkflowStage('deliver');
         showToast('success', 'Blind A/B decision saved and mapping revealed');
     } catch (error) {
         setBlindDecisionBusy(false);
@@ -3267,8 +3648,19 @@ async function readApiError(response, fallback) {
     }
 }
 
+function downloadOriginal() {
+    if (!state.fileId || state.isProcessing || state.isImporting) return;
+    const anchor = document.createElement('a');
+    anchor.href = `/api/download/${encodeURIComponent(state.fileId)}?version=original`;
+    anchor.download = state.fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.aemWorkspace?.refreshHistory({followDownload: true});
+}
+
 async function downloadFile(format) {
-    if (!state.fileId || !state.hasProcessed || state.isProcessing || !state.processedRevision) return;
+    if (!state.fileId || !state.hasProcessed || state.isProcessing || state.isImporting || !state.processedRevision) return;
     const fileId = state.fileId;
     const revision = state.processedRevision;
     state.deliveryFormat = format;
@@ -3281,6 +3673,7 @@ async function downloadFile(format) {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
+    window.aemWorkspace?.refreshHistory({followDownload: true});
 }
 
 function handleComplianceFormatChange(format) {
@@ -3291,48 +3684,56 @@ function handleComplianceFormatChange(format) {
 
 async function downloadProcessingReport() {
     if (!state.processingReportUrl || !state.fileId) return;
+    const reportUrl = state.processingReportUrl;
+    const fileId = state.fileId;
+    const isCurrent = () => reportUrl === state.processingReportUrl && fileId === state.fileId;
     try {
-        const response = await fetch(state.processingReportUrl, { cache: 'no-store' });
+        const response = await fetch(reportUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error('Quality report is unavailable');
-        const report = await response.json();
-        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const blob = await response.blob();
+        if (!isCurrent()) return;
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = `AudioEnhancerMAX-${state.fileId}-quality-report.json`;
+        anchor.download = `AudioEnhancerMAX-${fileId}-quality-report.json`;
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
         showToast('success', 'Local quality report downloaded');
     } catch (error) {
-        showToast('error', error.message);
+        if (isCurrent()) showToast('error', error.message);
     }
 }
 
 async function openProcessingReport() {
     if (!state.processingReportUrl || !state.fileId) return;
+    const reportUrl = state.processingReportUrl;
+    const fileId = state.fileId;
+    const isCurrent = () => reportUrl === state.processingReportUrl && fileId === state.fileId;
     try {
-        const response = await fetch(state.processingReportUrl, { cache: 'no-store' });
+        const response = await fetch(reportUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error('Quality report is unavailable');
-        state.currentReport = await response.json();
-        renderProcessingReport(state.currentReport);
+        const report = await response.json();
+        if (!isCurrent()) return;
+        state.currentReport = report;
+        renderProcessingReport(report);
         const modal = document.getElementById('report-modal');
-        reportReturnFocus = document.activeElement;
+        if (modal.hidden) reportReturnFocus = document.activeElement;
         modal.hidden = false;
         document.body.classList.add('report-open');
         modal.querySelector('button')?.focus();
     } catch (error) {
-        showToast('error', error.message);
+        if (isCurrent()) showToast('error', error.message);
     }
 }
 
-function closeProcessingReport() {
+function closeProcessingReport(restoreFocus = true) {
     const modal = document.getElementById('report-modal');
     if (!modal || modal.hidden) return;
     modal.hidden = true;
     document.body.classList.remove('report-open');
-    if (reportReturnFocus instanceof HTMLElement && document.contains(reportReturnFocus)) reportReturnFocus.focus();
+    if (restoreFocus && reportReturnFocus instanceof HTMLElement && document.contains(reportReturnFocus)) reportReturnFocus.focus();
     reportReturnFocus = null;
 }
 
@@ -3446,8 +3847,29 @@ function hideLoading() {
     }
 }
 
+let workspaceNoticeTimeout;
+
+function clearWorkspaceNotice() {
+    clearTimeout(workspaceNoticeTimeout);
+    const notice = document.getElementById('studio-session-notice');
+    if (notice) {
+        notice.hidden = true;
+        notice.textContent = '';
+    }
+}
+
 function showToast(type, message) {
+    const notice = document.getElementById('studio-session-notice');
+    if (notice && state.fileId && document.getElementById('upload-panel')?.classList.contains('active')) {
+        clearTimeout(workspaceNoticeTimeout);
+        notice.textContent = String(message || '');
+        notice.dataset.notice = type;
+        notice.hidden = false;
+        workspaceNoticeTimeout = setTimeout(() => { notice.hidden = true; }, 7000);
+        return;
+    }
     const container = document.getElementById('toast-container');
+    while (container.childElementCount >= 2) container.firstElementChild.remove();
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
 
@@ -3504,132 +3926,114 @@ async function pollClusterStatus() {
 }
 
 async function refreshCluster() {
+    const button = document.getElementById('cluster-enable-button');
+    const discoveryStatus = document.getElementById('cluster-discovery-status');
+    button.disabled = true;
     try {
         const enableRes = await fetch('/api/cluster/enable', { method: 'POST' });
-        if (!enableRes.ok) throw new Error('Discovery could not be enabled');
+        if (!enableRes.ok) throw new Error(await readApiError(enableRes, 'Discovery could not be enabled'));
         const res = await fetch('/api/cluster/health-check', { method: 'POST' });
-        if (!res.ok) throw new Error('Cluster refresh failed');
-        const data = await res.json();
-        updateClusterUI(data);
-        showToast('info', 'Local-network discovery enabled');
-    } catch (e) {
-        showToast('error', 'Failed to refresh cluster');
+        if (!res.ok) throw new Error(await readApiError(res, 'Worker refresh failed'));
+        updateClusterUI(await res.json());
+        showToast('info', 'Legacy worker discovery is active');
+    } catch (error) {
+        if (discoveryStatus) discoveryStatus.textContent = error.message;
+        showToast('error', error.message);
+    } finally {
+        button.disabled = false;
     }
 }
 
+let legacyWorkerSnapshot = null;
+
 function updateClusterUI(data) {
-    const { workers, online_workers, total_workers, orchestrator_ip } = data;
+    const { workers, online_workers } = data;
     const enableButton = document.getElementById('cluster-enable-button');
-    if (enableButton) {
+    const discoveryStatus = document.getElementById('cluster-discovery-status');
+    const discoveryText = data.enabled ? 'Discovery active' : 'Discovery off';
+    if (discoveryStatus && discoveryStatus.textContent !== discoveryText) {
+        discoveryStatus.textContent = discoveryText;
+    }
+    if (enableButton && enableButton.dataset.enabled !== String(data.enabled)) {
+        enableButton.dataset.enabled = String(data.enabled);
         enableButton.innerHTML = data.enabled
-            ? `${buttonIcon('refresh')}Refresh discovery`
-            : `${buttonIcon('power')}Enable &amp; discover`;
+            ? `${buttonIcon('refresh')}Refresh workers`
+            : `${buttonIcon('power')}Enable discovery`;
     }
 
-    // Update header badge
     const badge = document.getElementById('cluster-badge');
-    const dot = document.getElementById('cluster-dot');
     const label = document.getElementById('cluster-label');
     const sidebarBadge = document.getElementById('sidebar-cluster-count');
-
-    if (online_workers > 0) {
-        badge.style.display = '';
-        dot.className = 'status-dot';
-        label.textContent = `${online_workers} Worker${online_workers > 1 ? 's' : ''}`;
-        if (sidebarBadge) {
-            sidebarBadge.style.display = '';
-            sidebarBadge.textContent = online_workers;
-        }
-    } else {
-        badge.style.display = 'none';
-        if (sidebarBadge) sidebarBadge.style.display = 'none';
+    badge.style.display = online_workers > 0 ? '' : 'none';
+    label.textContent = `${online_workers} worker${online_workers === 1 ? '' : 's'}`;
+    if (sidebarBadge) {
+        sidebarBadge.style.display = online_workers > 0 ? '' : 'none';
+        sidebarBadge.textContent = online_workers;
     }
 
-    // Update master node
-    const masterChip = document.getElementById('master-chip');
-    const masterName = document.getElementById('master-node-name');
-    if (masterChip) masterChip.textContent = document.getElementById('compute-label')?.textContent || 'M3 MAX';
-    if (masterName) masterName.textContent = `Mac (${masterChip?.textContent || 'M3 MAX'})`;
+    // Paired mobile companions are shown in the pairing section.
+    const legacyWorkers = workers.filter(worker => !worker.mobile_id);
+    const legacyOnline = legacyWorkers.filter(worker => worker.status === 'online' || worker.status === 'busy').length;
+    document.getElementById('cluster-worker-count').textContent = `${legacyOnline} connected`;
 
-    // Update worker count text
-    const countEl = document.getElementById('cluster-worker-count');
-    if (countEl) countEl.textContent = `(${online_workers} connected)`;
-
-    // Render worker cards
+    const snapshot = JSON.stringify(legacyWorkers.map(({last_seen, ...worker}) => worker));
+    if (snapshot === legacyWorkerSnapshot) return;
+    legacyWorkerSnapshot = snapshot;
     const list = document.getElementById('cluster-workers-list');
     const empty = document.getElementById('cluster-empty');
-
-    if (workers.length === 0) {
-        if (empty) empty.style.display = '';
-        // Remove any worker cards but keep empty state
-        list.querySelectorAll('.cluster-node.worker-node').forEach(n => n.remove());
-        return;
-    }
-
-    if (empty) empty.style.display = 'none';
-
-    // Remove old worker cards
-    list.querySelectorAll('.cluster-node.worker-node').forEach(n => n.remove());
-
-    // Render new worker cards
-    workers.forEach(worker => {
-        const card = createWorkerCard(worker);
-        list.appendChild(card);
-    });
+    // Keep the empty state and avoid rebuilding unchanged cards on each poll.
+    empty.hidden = legacyWorkers.length > 0;
+    list.querySelectorAll('.cluster-node.worker-node').forEach(card => card.remove());
+    list.append(...legacyWorkers.map(createWorkerCard));
 }
 
 function createWorkerCard(worker) {
-    const card = document.createElement('div');
+    const card = document.createElement('article');
     card.className = 'cluster-node worker-node';
 
-    const isOnline = worker.status === 'online' || worker.status === 'busy';
-    const isBusy = worker.status === 'busy';
-    const statusClass = isBusy ? 'busy' : (isOnline ? 'online' : 'offline');
-    const statusText = isBusy ? 'Processing' : (isOnline ? 'Online' : 'Offline');
+    const header = document.createElement('div');
+    header.className = 'cluster-node-header';
+    const name = document.createElement('h4');
+    name.className = 'cluster-node-name';
+    name.textContent = worker.name || worker.device_model || 'Legacy worker';
+    const status = document.createElement('span');
+    status.className = 'cluster-node-role worker';
+    status.textContent = {online: 'Online', busy: 'Processing', offline: 'Offline'}[worker.status] || 'Status unknown';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-xs btn-ghost';
+    remove.textContent = 'Remove';
+    remove.setAttribute('aria-label', `Remove ${name.textContent}`);
+    remove.addEventListener('click', () => removeWorker(worker.ip, worker.port));
+    header.append(name, status, remove);
 
-    // Compute benchmark score: estimate relative power based on cores and RAM
-    const benchmarkScore = computeBenchmark(worker);
-    const benchmarkPct = Math.min(95, benchmarkScore); // Max 95% (master is 100%)
+    const stats = document.createElement('dl');
+    stats.className = 'cluster-node-stats';
+    const displayed = [
+        ['Address', `${worker.ip}:${worker.port}`],
+        ['Completed chunks', worker.tasks_completed ?? 0],
+    ];
+    if (worker.avg_speed > 0) {
+        displayed.push(['Mean time per chunk', `${worker.avg_speed} s`]);
+    }
+    if (worker.current_task) {
+        displayed.push(['Current task', worker.current_task]);
+    }
+    for (const [label, value] of displayed) {
+        const stat = document.createElement('div');
+        stat.className = 'cluster-stat';
+        const term = document.createElement('dt');
+        term.className = 'cluster-stat-label';
+        term.textContent = label;
+        const description = document.createElement('dd');
+        description.className = 'cluster-stat-value';
+        description.textContent = value;
+        stat.append(term, description);
+        stats.append(stat);
+    }
 
-    // Estimate power tier
-    const powerTier = benchmarkPct >= 70 ? 'High Performance' :
-                      benchmarkPct >= 40 ? 'Mid Range' : 'Light Compute';
-    const tierClass = benchmarkPct >= 70 ? 'high' : (benchmarkPct >= 40 ? 'mid' : 'low');
-
-    card.innerHTML = `
-        <div class="cluster-node-header">
-            <div class="cluster-node-status ${statusClass}"></div>
-            <div class="cluster-node-name">${escapeHtml(worker.name || worker.device_model || 'Unknown')}</div>
-            <span class="cluster-node-role worker">${statusText}</span>
-            <button class="btn btn-xs btn-ghost" onclick="removeWorker('${worker.ip}', ${worker.port})" title="Remove">Remove</button>
-        </div>
-        <div class="cluster-node-stats">
-            <div class="cluster-stat"><span class="cluster-stat-label">Model</span><span class="cluster-stat-value">${escapeHtml(worker.device_model || '-')}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">IP</span><span class="cluster-stat-value">${worker.ip}:${worker.port}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">CPU</span><span class="cluster-stat-value">${worker.cpu_cores || '?'} cores</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">RAM</span><span class="cluster-stat-value">${worker.ram_gb || '?'} GB</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">DSP Filters</span><span class="cluster-stat-value">${(worker.available_filters || []).length}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">Tasks Done</span><span class="cluster-stat-value">${worker.tasks_completed || 0}</span></div>
-            <div class="cluster-stat"><span class="cluster-stat-label">Avg Speed</span><span class="cluster-stat-value">${worker.avg_speed ? worker.avg_speed + 's' : '-'}</span></div>
-            ${worker.current_task ? `<div class="cluster-stat"><span class="cluster-stat-label">Current</span><span class="cluster-stat-value highlight">${escapeHtml(worker.current_task)}</span></div>` : ''}
-        </div>
-        <div class="cluster-benchmark">
-            <div class="cluster-benchmark-label">Benchmark Power - <span class="tier-${tierClass}">${powerTier}</span></div>
-            <div class="cluster-benchmark-bar"><div class="cluster-benchmark-fill ${tierClass}" style="width:${benchmarkPct}%"></div></div>
-            <span class="cluster-benchmark-value">${benchmarkPct}% - ${(worker.available_filters || []).length} DSP filters</span>
-        </div>
-    `;
-
+    card.append(header, stats);
     return card;
-}
-
-function computeBenchmark(worker) {
-    // Simple benchmark based on CPU cores, RAM, and number of filters
-    // Master M3 MAX ~baseline: 16 cores, 96GB RAM, 16 filters = 100%
-    const coreScore = Math.min(100, (worker.cpu_cores || 4) / 16 * 40); // up to 40pts
-    const ramScore = Math.min(30, (worker.ram_gb || 4) / 96 * 30);     // up to 30pts
-    const filterScore = Math.min(30, ((worker.available_filters || []).length / 16) * 30); // up to 30pts
-    return Math.round(coreScore + ramScore + filterScore);
 }
 
 async function addWorkerManually() {
@@ -3791,11 +4195,11 @@ function renderWorkerNodes() {
 
         const node = document.createElement('div');
         node.className = 'proc-node worker';
-        node.id = `proc-node-${w.ip.replace(/\./g, '-')}`;
+        node.id = `proc-node-${w.mobile_id || w.ip.replace(/\./g, '-')}`;
         node.innerHTML = `
             <div class="proc-node-head">
                 <span class="proc-node-dot ${w.status === 'busy' ? 'busy' : 'online'}"></span>
-                <span class="proc-node-label">${svgIcon('edge-device', 'icon-img inline-icon')}${w.device_model || w.name}</span>
+                <span class="proc-node-label">${svgIcon('edge-device', 'icon-img inline-icon')}${escapeHtml(w.device_model || w.name || 'Worker')}</span>
             </div>
             <div class="proc-node-chip">${w.cpu_cores} cores · ${w.ram_gb} GB RAM · ${(w.available_filters || []).length} DSP filters</div>
             <div class="proc-node-meters">
@@ -3834,37 +4238,31 @@ async function _pollHWMetrics() {
         const health = await fetch('/api/health', { signal: controller.signal }).then(r => r.json());
         clearTimeout(timeoutId);
         if (health.system) {
-            const cpu = health.system.cpu_percent || 0;
-            const gpu = health.system.gpu_percent || 0;
-            const ram = health.system.ram_percent || 0;
+            for (const [meter, metric] of [['cpu', 'cpu_percent'], ['gpu', 'gpu_percent'], ['ram', 'ram_percent']]) {
+                const reading = health.system[metric];
+                const measured = Number.isFinite(reading);
+                const fill = document.getElementById(`proc-master-${meter}`);
+                const label = document.getElementById(`proc-master-${meter}-val`);
+                if (fill) fill.style.width = measured ? `${Math.min(100, Math.max(0, reading))}%` : '0%';
+                if (label) {
+                    label.textContent = measured ? `${Math.round(reading)}%` : '—';
+                    label.title = measured ? '' : `System ${meter.toUpperCase()} reading unavailable`;
+                    label.setAttribute('aria-label', measured ? label.textContent : label.title);
+                }
+            }
 
-            const cpuFill = document.getElementById('proc-master-cpu');
-            const gpuFill = document.getElementById('proc-master-gpu');
-            const ramFill = document.getElementById('proc-master-ram');
-            const cpuVal = document.getElementById('proc-master-cpu-val');
-            const gpuVal = document.getElementById('proc-master-gpu-val');
-            const ramVal = document.getElementById('proc-master-ram-val');
-
-            if (cpuFill) cpuFill.style.width = cpu + '%';
-            if (gpuFill) gpuFill.style.width = gpu + '%';
-            if (ramFill) ramFill.style.width = ram + '%';
-            if (cpuVal) cpuVal.textContent = Math.round(cpu) + '%';
-            if (gpuVal) gpuVal.textContent = Math.round(gpu) + '%';
-            if (ramVal) ramVal.textContent = Math.round(ram) + '%';
-
-            // Update chip name
             const chipEl = document.getElementById('proc-master-chip');
-            if (chipEl && health.system.chip) chipEl.textContent = health.system.chip;
+            if (chipEl) chipEl.textContent = health.system.chip || 'Chip not detected';
 
             // Per-core CPU heatmap + extra metrics (power, benchmark)
             const extrasEl = document.getElementById('proc-master-extras');
             if (extrasEl) {
                 const cores = health.system.cpu_per_core || [];
-                const power = health.system.power_watts || 0;
-                const freq = health.system.cpu_freq_ghz || 0;
-                const bench = health.system.benchmark_score || 0;
-                const ane = health.system.ane_percent || 0;
-                const socCpu = health.system.soc_cpu_percent || 0;
+                const power = health.system.power_watts;
+                const freq = health.system.cpu_freq_ghz;
+                const bench = health.system.benchmark_score;
+                const anePower = health.system.ane_power_watts;
+                const socCpu = health.system.soc_cpu_percent;
                 const appCpu = health.system.app_cpu_percent || 0;
                 const appCoreCpu = health.system.app_cpu_core_percent || 0;
                 const appRam = health.system.app_ram_mb || 0;
@@ -3883,30 +4281,29 @@ async function _pollHWMetrics() {
                 let extrasHtml = coreHtml;
                 extrasHtml += `<div class="proc-extras-row">`;
                 extrasHtml += `<span class="proc-extra-chip bench" title="AudioEnhancerMAX backend and active model workers; normalized across all logical CPU cores">${svgIcon('activity-live', 'icon-img inline-icon')}App CPU ${appCpu.toFixed(1)}% (${appCoreCpu.toFixed(0)}% core)</span>`;
-                if (socCpu > 0) extrasHtml += `<span class="proc-extra-chip" title="Apple SoC CPU cluster residency reported by macmon; this differs from process and whole-system CPU usage">SoC CPU ${socCpu.toFixed(1)}%</span>`;
+                if (Number.isFinite(socCpu)) extrasHtml += `<span class="proc-extra-chip" title="Apple SoC CPU cluster residency reported by macmon; this differs from process and whole-system CPU usage">SoC CPU ${socCpu.toFixed(1)}%</span>`;
                 if (appRam > 0) extrasHtml += `<span class="proc-extra-chip" title="Resident memory used by AudioEnhancerMAX and active model workers">App ${appRam >= 1024 ? (appRam / 1024).toFixed(1) + ' GB' : appRam.toFixed(0) + ' MB'}</span>`;
-                if (power > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('power', 'icon-img inline-icon')}${power.toFixed(1)}W</span>`;
+                if (Number.isFinite(power)) extrasHtml += `<span class="proc-extra-chip" title="System power reported by macmon">${svgIcon('power', 'icon-img inline-icon')}${power.toFixed(1)} W</span>`;
                 if (freq > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('refresh', 'icon-img inline-icon')}${freq.toFixed(1)} GHz</span>`;
-                if (ane > 0) extrasHtml += `<span class="proc-extra-chip">${svgIcon('smart-ai', 'icon-img inline-icon')}ANE ${Math.round(ane)}%</span>`;
+                if (Number.isFinite(anePower)) extrasHtml += `<span class="proc-extra-chip" title="Apple Neural Engine power reported by macmon">${svgIcon('smart-ai', 'icon-img inline-icon')}ANE ${anePower.toFixed(2)} W</span>`;
                 if (bench > 0) extrasHtml += `<span class="proc-extra-chip bench">${svgIcon('benchmark', 'icon-img inline-icon')}${Math.round(bench)} ops/s</span>`;
 
                 // Temperature display
-                const cpuTemp = health.system.cpu_temp_c || 0;
-                const gpuTemp = health.system.gpu_temp_c || 0;
-                const thermal = health.system.thermal_pressure || 'nominal';
-                if (cpuTemp > 0) {
-                    const tempClass = cpuTemp > 90 ? 'critical' : cpuTemp > 80 ? 'warn' : '';
-                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">${svgIcon('monitor', 'icon-img inline-icon')}CPU ${Math.round(cpuTemp)} C</span>`;
+                const cpuTemp = health.system.cpu_temp_c;
+                const gpuTemp = health.system.gpu_temp_c;
+                const thermal = health.system.thermal_pressure;
+                if (Number.isFinite(cpuTemp)) {
+                    extrasHtml += `<span class="proc-extra-chip">${svgIcon('monitor', 'icon-img inline-icon')}CPU ${Math.round(cpuTemp)} °C</span>`;
                 }
-                if (gpuTemp > 0) {
-                    const tempClass = gpuTemp > 85 ? 'critical' : gpuTemp > 75 ? 'warn' : '';
-                    extrasHtml += `<span class="proc-extra-chip ${tempClass}">${svgIcon('monitor', 'icon-img inline-icon')}GPU ${Math.round(gpuTemp)} C</span>`;
+                if (Number.isFinite(gpuTemp)) {
+                    extrasHtml += `<span class="proc-extra-chip">${svgIcon('monitor', 'icon-img inline-icon')}GPU ${Math.round(gpuTemp)} °C</span>`;
                 }
-                if (thermal !== 'nominal') {
-                    extrasHtml += `<span class="proc-extra-chip ${thermal}">${svgIcon('warning', 'icon-img inline-icon')}${thermal.toUpperCase()}</span>`;
+                if (['fair', 'serious', 'critical'].includes(thermal)) {
+                    extrasHtml += `<span class="proc-extra-chip ${thermal}">${svgIcon('warning', 'icon-img inline-icon')}Thermal pressure ${thermal}</span>`;
                 }
 
-                extrasHtml += `</div>`;
+                if (!health.system.macmon_available) extrasHtml += '<span class="proc-extra-chip">Optional sensors unavailable</span>';
+                extrasHtml += '</div>';
 
                 extrasEl.innerHTML = extrasHtml;
             }
@@ -4054,6 +4451,7 @@ let _lastClusterData = null;
 // ==========================================================
 
 function initSettingsPanel() {
+    document.getElementById('local-model-refresh').addEventListener('click', checkSystemHealth);
     // LUFS slider live value
     const slider = document.getElementById('setting-loudness');
     const val = document.getElementById('setting-loudness-val');
@@ -4074,7 +4472,7 @@ async function loadRuntimePrivacySettings() {
         document.getElementById('setting-trusted-lan').checked = state.runtimePrivacy.trusted_lan_processing_allowed;
         applyRuntimePrivacyUi();
         document.getElementById('privacy-settings-status').textContent = state.runtimePrivacy.warning || 'Current boundaries loaded from this Mac.';
-        if (state.runtimePrivacy.status !== 'saved' && state.runtimePrivacy.warning) {
+        if (['invalid', 'unavailable'].includes(state.runtimePrivacy.status) && state.runtimePrivacy.warning) {
             showToast('warning', state.runtimePrivacy.warning);
         }
     } catch (error) {
@@ -4111,24 +4509,9 @@ async function saveRuntimePrivacySettings() {
 function applyRuntimePrivacyUi() {
     if (typeof refreshMusicAssistantPrivacy === 'function') refreshMusicAssistantPrivacy();
     if (!state.runtimePrivacy) return;
-    const allowExternal = state.runtimePrivacy.external_services_allowed;
+    refreshTTSVoiceAvailability();
     const allowOllama = state.runtimePrivacy.ollama_editorial_allowed;
     const allowLan = state.runtimePrivacy.trusted_lan_processing_allowed;
-    const voiceSelect = document.getElementById('tts-voice');
-    if (voiceSelect) {
-        voiceSelect.querySelectorAll('option').forEach(option => {
-            const isLocal = option.value.startsWith('kokoro_') || option.dataset.localVoice === 'true';
-            if (option.value && !option.dataset.profileId) option.disabled = !allowExternal && !isLocal;
-        });
-        if (voiceSelect.selectedOptions[0]?.disabled) {
-            const localVoice = [...voiceSelect.options].find(option =>
-                (option.value.startsWith('kokoro_') || option.dataset.localVoice === 'true') && !option.disabled
-            );
-            if (localVoice) voiceSelect.value = localVoice.value;
-        }
-    }
-    const description = document.getElementById('tts-engine-description');
-    if (description && !allowExternal) description.textContent = 'Offline boundary active: only packaged local TTS voices can be used.';
     const dynamicTuning = document.getElementById('setting-dynamic-tuning');
     if (dynamicTuning) {
         dynamicTuning.checked = allowOllama;
@@ -4152,11 +4535,8 @@ async function initAboutPanel() {
         const accelEl = document.getElementById('about-accel-list');
         if (accelEl && accel.accelerations) {
             accelEl.innerHTML = accel.accelerations.map(a =>
-                `<div class="about-accel-item">${a}</div>`
+                `<div class="about-accel-item">${escapeHtml(a)}</div>`
             ).join('');
-            if (accel.mps_available) {
-                accelEl.innerHTML += `<div class="about-accel-item">${svgIcon('check', 'icon-img inline-icon')}MPS Available</div>`;
-            }
         }
     } catch (e) {
         console.warn('Accel info unavailable:', e);
@@ -4170,24 +4550,22 @@ async function initAboutPanel() {
             const s = health.system;
             const items = [
                 ['Chip', s.chip || 'Unknown'],
-                ['CPU Cores', (s.cpu_per_core || []).length + ' cores'],
-                ['CPU Freq', (s.cpu_freq_ghz || 0) + ' GHz'],
-                ['RAM', (s.ram_used_gb || 0).toFixed(1) + ' / ' + (s.ram_total_gb || 0).toFixed(1) + ' GB'],
-                ['GPU', health.compute || 'N/A'],
-                ['MPS', health.mps_available ? 'Active' : 'Unavailable'],
-                ['Version', health.version || '3.9.0'],
-                ['Channel', health.release_label || 'Stable'],
-                ['Benchmark', (s.benchmark_score || 0) + ' ops/s'],
+                ['CPU Cores', s.cpu_per_core?.length ? `${s.cpu_per_core.length} cores` : 'Unmeasured'],
+                ['CPU Freq', Number.isFinite(s.cpu_freq_ghz) ? `${s.cpu_freq_ghz} GHz` : 'Unmeasured'],
+                ['RAM', s.ram_total_gb > 0 ? `${s.ram_used_gb.toFixed(1)} / ${s.ram_total_gb.toFixed(1)} GB` : 'Unmeasured'],
+                ['PyTorch MPS', mpsAvailability(health.mps_available)],
+                ['Version', health.version || 'Unavailable'],
+                ['Benchmark', s.benchmark_score > 0 ? `${s.benchmark_score} ops/s` : 'Not measured'],
             ];
             sysEl.innerHTML = items.map(([label, value]) =>
-                `<div class="about-sysinfo-item"><span class="label">${label}</span><span class="value">${value}</span></div>`
+                `<div class="about-sysinfo-item"><span class="label">${label}</span><span class="value">${escapeHtml(value)}</span></div>`
             ).join('');
         }
 
         // Update sidebar chip
         const sideChip = document.getElementById('sidebar-chip');
-        if (sideChip && health.system && health.system.chip) {
-            sideChip.textContent = health.system.chip.replace('Apple ', '');
+        if (sideChip) {
+            sideChip.textContent = health.system?.chip?.replace(/^Apple /, '') || 'Chip not detected';
         }
     } catch (e) {
         console.warn('System info unavailable:', e);
@@ -4206,14 +4584,10 @@ function injectFilterCapabilityBadges() {
         'remove_breaths': true, 'remove_long_silences': true, 'auto_eq': true,
         'studio_sound': true, 'normalize': true, 'frequency_restoration': true,
     };
-    // ML filters - local Whisper (ARM NEON optimized)
+    // Speech filters can use local Whisper.
     const mlLocal = {
         'remove_filler_words': true, 'eliminate_hesitations': true,
         'remove_stuttering': true,
-    };
-    // GPU Metal filters - PyTorch MPS
-    const gpuMetal = {
-        'keep_music': true,  // Demucs uses MPS
     };
 
     document.querySelectorAll('.feature-item input[data-option]').forEach(input => {
@@ -4225,11 +4599,11 @@ function injectFilterCapabilityBadges() {
         if (!nameEl || nameEl.querySelector('.feat-cap-badge')) return; // already injected
 
         let badge = null;
-        if (gpuMetal[key]) {
+        if (key === 'keep_music') {
             badge = document.createElement('span');
-            badge.className = 'feat-cap-badge gpu';
-            badge.textContent = 'Metal';
-            badge.title = 'GPU-accelerated via Apple Metal (MPS)';
+            badge.className = 'feat-cap-badge ml';
+            badge.textContent = 'ML';
+            badge.title = 'Optional local Demucs source separation';
         } else if (edgeCapable[key]) {
             badge = document.createElement('span');
             badge.className = 'feat-cap-badge edge';
@@ -4239,7 +4613,7 @@ function injectFilterCapabilityBadges() {
             badge = document.createElement('span');
             badge.className = 'feat-cap-badge ml';
             badge.textContent = 'ML';
-            badge.title = 'AI inference via ARM NEON (CTranslate2)';
+            badge.title = 'Can use the local Whisper engine';
         }
 
         if (badge) {

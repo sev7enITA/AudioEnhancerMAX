@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import logging
 import os
 import platform
 import shutil
 import tempfile
-import urllib.error
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -26,6 +25,7 @@ from app.config import (
     bundled_whisper_model_available,
 )
 
+logger = logging.getLogger(__name__)
 
 MIN_MACOS_MAJOR = 13
 MIN_MEMORY_GB = 8
@@ -47,7 +47,6 @@ OPTIONAL_ENGINES = {
     "TTS": "Coqui XTTS",
     "demucs": "Demucs",
     "df": "DeepFilterNet",
-    "kokoro": "Kokoro",
     "pyannote": "Pyannote diarization",
 }
 
@@ -324,78 +323,101 @@ def _speech_model_check() -> dict[str, Any]:
 
 
 def _mps_check() -> dict[str, Any]:
+    check_id = "metal_acceleration"
+    label = "PyTorch GPU acceleration"
     try:
         import torch
-
-        available = bool(torch.backends.mps.is_available())
-    except Exception:
-        if APP_STORE_MODE:
+    except ModuleNotFoundError as exc:
+        if exc.name == "torch":
             return _check(
-                "metal_acceleration",
-                "Apple silicon acceleration",
+                check_id,
+                label,
                 "pass",
                 False,
-                "Apple Accelerate and optimized arm64 DSP are available; optional PyTorch MPS engines are not part of this Store build.",
+                "This runtime does not include PyTorch or its optional MPS model engines.",
+                "The bundled audio editing and transcription engines remain available.",
             )
-        available = False
-    if available:
+        logger.warning("A PyTorch dependency is missing: %s", exc.name)
+    except Exception:
+        logger.warning("Could not load PyTorch for the MPS check", exc_info=True)
+    else:
+        try:
+            backend = getattr(torch.backends, "mps", None)
+            if backend is None or not backend.is_built():
+                return _check(
+                    check_id, label, "warning", False,
+                    "This PyTorch installation was built without the MPS backend.",
+                    "PyTorch models can use CPU processing.",
+                )
+            if backend.is_available():
+                return _check(
+                    check_id, label, "pass", False,
+                    "PyTorch can access the GPU via Metal (MPS).",
+                    "MPS is used by compatible PyTorch models that select it.",
+                )
+            return _check(
+                check_id, label, "warning", False,
+                "PyTorch includes MPS, but cannot access it in this session.",
+                "PyTorch models can use CPU processing.",
+            )
+        except Exception:
+            logger.warning("Could not query the PyTorch MPS backend", exc_info=True)
+            return _check(
+                check_id, label, "warning", False,
+                "PyTorch loaded, but its MPS check failed.",
+                "See the application log for details.",
+            )
+    return _check(
+        check_id, label, "warning", False,
+        "PyTorch or one of its dependencies could not be loaded.",
+        "See the application log for details. Bundled audio editing and transcription remain available.",
+    )
+
+
+def _local_tts_check() -> dict[str, Any]:
+    from app.services.tts import get_available_voices
+
+    voices = get_available_voices()
+    if voices:
+        italian = sum(voice["language"].split("-")[0] == "it" for voice in voices)
         return _check(
-            "metal_acceleration",
-            "Metal acceleration",
-            "pass",
-            False,
-            "PyTorch MPS acceleration is available.",
+            "local_tts", "Local Text to Speech", "pass", False,
+            f"{len(voices)} macOS voices detected on this Mac, including {italian} Italian voices.",
         )
     return _check(
-        "metal_acceleration",
-        "Metal acceleration",
-        "warning",
-        False,
-        "MPS acceleration is unavailable; compatible processing falls back to CPU.",
-        "No installation is required. Performance depends on the current hardware and model.",
+        "local_tts", "Local Text to Speech", "warning", False,
+        "No usable voice list was returned by the macOS speech service.",
+        "Check installed voices in macOS Accessibility settings, then use Refresh voices in Text to Speech.",
+    )
+
+
+def _expressive_voice_check() -> dict[str, Any]:
+    from app.services.expressive_setup import status
+
+    pack = status()
+    installed = pack["state"] == "ready"
+    if pack["state"] == "unsupported":
+        return _check("expressive_tts", "Offline expressive voices", "warning", False, pack["detail"])
+    return _check(
+        "expressive_tts", "Offline expressive voices", "pass" if installed else "warning", False,
+        "English and Italian Qwen3 voices are installed." if installed else "Set up English and Italian voices below or in Text to Speech.",
     )
 
 
 def _ollama_check() -> dict[str, Any]:
-    try:
-        request = urllib.request.Request("http://127.0.0.1:11434/api/tags")
-        with urllib.request.urlopen(request, timeout=0.75) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-        models = [item.get("name", "") for item in payload.get("models", [])]
-        gemma_models = [name for name in models if "gemma" in name.lower()]
-        if gemma_models:
-            return _check(
-                "local_ai",
-                "Optional local AI",
-                "pass",
-                False,
-                f"Local model available: {gemma_models[0]}.",
-            )
+    from app.services.tts import find_local_ollama_model
+
+    model = find_local_ollama_model(timeout=0.75)
+    if model:
         return _check(
-            "local_ai",
-            "Optional local AI",
-            "warning",
-            False,
-            "Ollama is running, but no compatible Gemma model was found.",
-            "Smart Mode uses deterministic local heuristics when no model is available.",
+            "local_ai", "Optional local AI", "pass", False,
+            f"Local Ollama model available for expressive rewriting: {model}.",
         )
-    except (OSError, ValueError, urllib.error.URLError):
-        if APP_STORE_MODE:
-            return _check(
-                "local_ai",
-                "Optional local AI",
-                "pass",
-                False,
-                "No local Ollama service is configured; deterministic local fallbacks remain active.",
-            )
-        return _check(
-            "local_ai",
-            "Optional local AI",
-            "warning",
-            False,
-            "No local Ollama service was detected.",
-            "Core audio processing remains available; Smart Mode uses deterministic local heuristics.",
-        )
+    return _check(
+        "local_ai", "Optional local AI", "pass" if APP_STORE_MODE else "warning", False,
+        "No installed local Ollama model was detected for expressive rewriting.",
+        "Text to Speech can use macOS voices without Ollama.",
+    )
 
 
 def _load_state() -> dict[str, Any]:
@@ -416,6 +438,8 @@ def run_preflight(app_version: str) -> dict[str, Any]:
         _optional_engines_check(),
         _media_tools_check(),
         _speech_model_check(),
+        _local_tts_check(),
+        _expressive_voice_check(),
         _mps_check(),
         _ollama_check(),
     ]

@@ -1,7 +1,7 @@
 """
 AudioEnhancerMAX by Fd - Speaker Diarization Service
 Identifies who speaks when in multi-speaker recordings.
-Optimized for Apple Silicon M3 MAX via MPS backend.
+Supports PyTorch Metal on compatible hosts and energy-based CPU fallback.
 """
 import numpy as np
 from typing import List, Optional
@@ -9,6 +9,7 @@ from pathlib import Path
 import tempfile
 import logging
 
+from app.services.apple_acceleration import is_mps_available
 from app.utils.signal_processing import mfcc as compute_mfcc, rms_frames
 import soundfile as sf
 
@@ -33,18 +34,24 @@ def _init_diarization():
         import torch
 
         # Use MPS (Apple Silicon Metal) if available
-        device = "mps" if torch.backends.mps.is_available() else "cpu"
+        device = "mps" if is_mps_available() else "cpu"
 
-        _diarization_pipeline = Pipeline.from_pretrained(
+        pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1",
             use_auth_token=None  # Will use cached model or local
         )
 
+        if pipeline is None:
+            return
         if device == "mps":
-            _diarization_pipeline.to(torch.device(device))
-            logger.info("Speaker diarization loaded on Apple Silicon (MPS)")
-        else:
-            logger.info("Speaker diarization loaded on CPU")
+            try:
+                pipeline.to(torch.device(device))
+            except (RuntimeError, NotImplementedError):
+                logger.info("Speaker diarization MPS setup failed; using CPU")
+                device = "cpu"
+                pipeline.to(torch.device(device))
+        _diarization_pipeline = pipeline
+        logger.info("Speaker diarization model loaded on %s", device)
 
     except ImportError:
         logger.warning(

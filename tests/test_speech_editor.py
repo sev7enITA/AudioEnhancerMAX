@@ -12,6 +12,7 @@ from app.services.speech_editor import (
     navigate_speech_edl_history,
     render_candidate_preview,
     render_speech_edl,
+    speech_edit_timeline,
     update_speech_edl,
 )
 
@@ -135,6 +136,24 @@ class SpeechEditorTests(unittest.TestCase):
 
         self.assertEqual(len(rendered), len(audio))
         self.assertEqual(float(rendered[300]), 0.0)
+
+    def test_timeline_matches_rendered_cut_and_fade_offsets(self):
+        sr = 1000
+        audio = np.arange(sr, dtype=np.float32) / sr
+        edl = {"candidates": [
+            {"start": 0.2, "end": 0.4, "action": "cut", "decision": "apply"},
+            {"start": 0.35, "end": 0.5, "action": "cut", "decision": "apply"},
+            {"start": 0.7, "end": 0.9, "action": "cut", "decision": "apply"},
+            {"start": 0.91, "end": 0.96, "action": "mute", "decision": "keep"},
+        ]}
+
+        timeline = speech_edit_timeline(len(audio), sr, edl)
+        rendered = render_speech_edl(audio, sr, edl, timeline=timeline)
+
+        self.assertEqual(timeline["cuts"], [(700, 900, 30), (200, 500, 30)])
+        self.assertEqual(timeline["output_samples"], len(rendered))
+        self.assertEqual(rendered[240], audio[570])
+        self.assertEqual(rendered[400], audio[960])
 
 
 if __name__ == "__main__":

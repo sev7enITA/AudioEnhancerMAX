@@ -16,7 +16,6 @@ pyloudnorm==0.1.1
 faster-whisper==1.1.0
 requests==2.34.2
 onnxruntime==1.19.2
-edge-tts==7.2.8
 aiofiles==24.1.0
 pydantic==2.10.4
 psutil==6.1.1

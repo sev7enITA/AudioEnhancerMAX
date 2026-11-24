@@ -527,7 +527,7 @@ def synthesize_voice_profile(text: str, profile_id: str, speed: float = 1.0) -> 
         completed = subprocess.run(
             command,
             cwd=root,
-            env=_worker_environment(root),
+            env={**_worker_environment(root), "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1"},
             capture_output=True,
             text=True,
             timeout=1800,

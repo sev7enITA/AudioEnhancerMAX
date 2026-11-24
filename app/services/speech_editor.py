@@ -453,32 +453,46 @@ def navigate_speech_edl_history(
         return current
 
 
-def _render_equal_power_cuts(
-    audio: np.ndarray,
-    ranges: list[tuple[int, int]],
-    crossfade_samples: int,
-) -> np.ndarray:
-    """Remove original-coordinate ranges with equal-power splice joins."""
-    if not ranges:
-        return audio
-    normalized = sorted(
-        (max(0, start), min(len(audio), end))
-        for start, end in ranges
-        if end > start
-    )
+def speech_edit_timeline(sample_count: int, sample_rate: int, edl: dict[str, Any]) -> dict[str, Any]:
+    """Describe the exact render cuts, including the overlaps at their joins."""
+    ranges = []
+    for item in edl.get("candidates", []):
+        if item.get("decision") != "apply" or item["action"] != "cut":
+            continue
+        start = max(0, int(float(item["start"]) * sample_rate))
+        end = min(sample_count, int(float(item["end"]) * sample_rate))
+        if end > start:
+            ranges.append((start, end))
     merged: list[tuple[int, int]] = []
-    for start, end in normalized:
+    for start, end in sorted(ranges):
         if merged and start <= merged[-1][1]:
             merged[-1] = (merged[-1][0], max(merged[-1][1], end))
         else:
             merged.append((start, end))
 
-    result = audio
+    cuts = []
+    output_count = sample_count
+    crossfade_samples = max(1, int(sample_rate * 0.03))
     for start, end in reversed(merged):
+        fade = min(crossfade_samples, start, output_count - end)
+        fade = fade if fade > 1 else 0
+        cuts.append((start, end, fade))
+        output_count -= end - start + fade
+    return {
+        "sample_rate": sample_rate,
+        "source_samples": sample_count,
+        "output_samples": output_count,
+        "cuts": cuts,
+    }
+
+
+def _render_equal_power_cuts(audio: np.ndarray, cuts: list[tuple[int, int, int]]) -> np.ndarray:
+    """Remove original-coordinate ranges with equal-power splice joins."""
+    result = audio
+    for start, end, fade in cuts:
         left = result[:start]
         right = result[end:]
-        fade = min(crossfade_samples, len(left), len(right))
-        if fade <= 1:
+        if not fade:
             result = np.concatenate((left, right))
             continue
         phase = np.linspace(0.0, np.pi / 2.0, fade, dtype=np.float32)
@@ -487,7 +501,13 @@ def _render_equal_power_cuts(
     return result.astype(np.float32, copy=False)
 
 
-def render_speech_edl(audio: np.ndarray, sr: int, edl: dict[str, Any]) -> np.ndarray:
+def render_speech_edl(
+    audio: np.ndarray,
+    sr: int,
+    edl: dict[str, Any],
+    *,
+    timeline: dict[str, Any] | None = None,
+) -> np.ndarray:
     """Render approved decisions while preserving the original source file."""
     result = np.asarray(audio, dtype=np.float32).copy()
     approved = [item for item in edl.get("candidates", []) if item.get("decision") == "apply"]
@@ -506,14 +526,9 @@ def render_speech_edl(audio: np.ndarray, sr: int, edl: dict[str, Any]) -> np.nda
                 envelope[-fade:] = np.linspace(0.0, 1.0, fade)
             result[start:end] *= envelope
 
-    cuts = [
-        (int(float(item["start"]) * sr), int(float(item["end"]) * sr))
-        for item in approved
-        if item["action"] == "cut"
-    ]
-    if cuts:
-        result = _render_equal_power_cuts(result, cuts, crossfade_samples=max(1, int(sr * 0.03)))
-    return result
+    if timeline is None:
+        timeline = speech_edit_timeline(len(result), sr, edl)
+    return _render_equal_power_cuts(result, timeline["cuts"])
 
 
 def render_candidate_preview(

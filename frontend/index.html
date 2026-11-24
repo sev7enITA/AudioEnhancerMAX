@@ -4,163 +4,221 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AudioEnhancerMAX by Fabrizio Degni - Local-first audio processing, transcription, monitoring and trusted-LAN edge workers.">
-    <title>AudioEnhancerMAX 3.9.0</title>
+    <title>AudioEnhancerMAX</title>
     <link rel="stylesheet" href="/static/css/style.css?v=3.9.0-stable2">
     <link rel="stylesheet" href="/static/css/music-assistant.css?v=1">
+    <link rel="stylesheet" href="/static/css/workspace.css">
+    <link rel="stylesheet" href="/static/css/tts-studio.css">
+    <link rel="stylesheet" href="/static/css/desktop-shell.css">
+    <link rel="stylesheet" href="/static/css/project-studio.css">
+    <link rel="stylesheet" href="/static/css/studio-timeline.css">
+    <link rel="stylesheet" href="/static/css/tool-panels.css">
+    <link rel="stylesheet" href="/static/css/glass-workspace.css">
+    <link rel="stylesheet" href="/static/css/workspace-dock.css">
     <link rel="icon" href="/static/img/audioenhancermax-logo.png" type="image/png">
 </head>
 <body>
+<a class="desktop-skip" href="#main-content">Skip to main content</a>
 
 <!-- =============== HEADER =============== -->
 <header class="app-header" id="app-header">
     <div class="app-logo">
         <div class="app-logo-icon"><img src="/static/img/audioenhancermax-logo.png" alt="" aria-hidden="true"></div>
         <span class="app-logo-text">AudioEnhancerMAX</span>
-        <span class="app-logo-badge" title="Stable release 3.9.0">STABLE</span>
     </div>
-    <button class="mobile-nav-toggle" id="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
-        <span></span><span></span><span></span>
-    </button>
-    <div class="header-actions">
-        <div class="header-status" id="gemma-status">
-            <span class="status-dot" id="gemma-dot"></span>
-            <span id="gemma-label">Checking Ollama/Gemma...</span>
-        </div>
+    <div id="studio-header-context" class="studio-header-context" hidden>
+        <span>Studio</span><span id="studio-header-project"></span>
+    </div>
+    <div id="studio-header-transport" class="studio-header-transport" role="group" aria-label="Studio playback" hidden></div>
+    <div id="workspace-general-slot" hidden></div>
+    <div class="header-actions" role="group" aria-label="Application status">
         <div class="header-status" id="system-status">
             <span class="status-dot"></span>
-            <span id="compute-label">M3 MAX</span>
+            <span id="compute-label">Checking compute…</span>
         </div>
         <button class="header-status cluster-badge" id="cluster-badge" type="button" style="display:none" onclick="switchPanel('cluster-panel', document.querySelector('[data-panel=cluster-panel]'))">
             <span class="status-dot" id="cluster-dot"></span>
             <span id="cluster-label">0 Workers</span>
         </button>
+        <button class="desktop-build" type="button" id="desktop-build" aria-label="About AudioEnhancerMAX" data-tip="View the installed version and build.">
+            <span data-app-version>AudioEnhancerMAX</span>
+        </button>
+        <span id="sidebar-chip" hidden></span>
     </div>
 </header>
 
-<!-- ═══════════════ SIDEBAR ═══════════════ -->
-<nav class="sidebar" id="sidebar">
-    <!-- Intent-based Dashboard Personalization Selector -->
-    <div class="sidebar-intent-selector">
-        <label class="sidebar-intent-label" for="user-intent-select">Dashboard Profile</label>
-        <select class="sidebar-intent-select" id="user-intent-select" onchange="applyIntentProfile(this.value)">
-            <option value="all">Full Suite (All Tools)</option>
-            <option value="podcast">Podcast &amp; Voice Cleanup</option>
-            <option value="analysis">Transcription &amp; AI Intelligence</option>
-            <option value="expert">Cluster &amp; DSP Engineering</option>
-            <option value="secure">Watermark &amp; Local Reports</option>
-        </select>
-        <div class="intent-indicator-badge" id="intent-badge">Full Mode</div>
+<section id="active-workspace-strip" class="active-workspace-strip" aria-label="Active workspace" hidden>
+    <div id="workspace-strip-slot">
+        <div id="workspace-switcher-control" class="active-workspace-controls">
+            <label class="sr-only" for="active-workspace-switcher">Switch workspace</label>
+            <img src="/static/img/icons/workspace-capsule.svg" alt="">
+            <select id="active-workspace-switcher" title="Switch workspace"></select>
+        </div>
     </div>
+    <nav id="active-workspace-tools" class="active-workspace-tools" aria-label="Pinned tools"></nav>
+    <button id="edit-active-workspace" class="active-workspace-edit" type="button" aria-label="Edit active workspace" title="Edit active workspace">
+        <img src="/static/img/icons/controls.svg" alt=""><span>Edit</span>
+    </button>
+</section>
 
+<nav id="workspace-dock" class="workspace-dock" aria-label="App navigation">
+    <div class="dock-navigation" role="group" aria-label="Main views">
+        <button class="dock-button sidebar-nav-item active" type="button" data-panel="upload-panel" data-tip="Open and review audio or check its Content Credentials." aria-current="page" onclick="switchPanel('upload-panel', this)">
+            <span class="dock-icon"><img src="/static/img/icons/folder-upload.svg" alt=""></span><span>Home</span>
+        </button>
+        <button class="dock-button sidebar-nav-item" type="button" data-panel="project-studio-panel" data-tip="Record, arrange and mix clips on a multitrack timeline." onclick="switchPanel('project-studio-panel', this)">
+            <span class="dock-icon"><img src="/static/img/icons/workspace-compare.svg" alt=""></span><span>Studio</span>
+        </button>
+        <button class="dock-button sidebar-nav-item" type="button" data-panel="workspaces-panel" data-tip="Activate or edit a workspace to keep its tools in view." onclick="switchPanel('workspaces-panel', this)">
+            <span class="dock-icon"><img src="/static/img/icons/workspace-capsule.svg" alt=""></span><span>Workspaces</span>
+        </button>
+        <button class="dock-button" id="dock-tools" type="button" aria-expanded="false" aria-controls="desktop-tool-tray" data-tip="Browse all tools. Press Command–K or Ctrl–K to search.">
+            <span class="dock-icon"><img src="/static/img/icons/advanced.svg" alt=""></span><span>Tools</span>
+        </button>
+    </div>
+    <div id="dock-context" class="dock-context" role="group" aria-label="Actions for this view"></div>
+    <section id="desktop-tool-tray" class="desktop-tool-tray studio-tools" aria-label="Tools" hidden>
+        <button class="dock-search" type="button" id="command-search-button" aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K">
+            <img src="/static/img/icons/search.svg" alt=""><span>Find a tool</span><kbd aria-hidden="true">⌘K</kbd>
+        </button>
+        <details id="desktop-tool-directory" class="dock-tool-directory" open>
+            <summary>All tools</summary>
+            <div class="dock-directory-groups">
     <div class="sidebar-section">
         <div class="sidebar-section-title">Main</div>
-        <button class="sidebar-nav-item active" type="button" data-panel="upload-panel" aria-current="page" onclick="switchPanel('upload-panel', this)">
-            <span class="icon"><img class="icon-img" src="/static/img/icons/folder-upload.svg" alt="" aria-hidden="true"></span> Upload & Process
-        </button>
-        <button class="sidebar-nav-item" type="button" data-panel="presets-panel" onclick="switchPanel('presets-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="presets-panel" data-tip="Choose a set of processing settings for your source, then review and adjust it." onclick="switchPanel('presets-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/presets.svg" alt="" aria-hidden="true"></span> Presets
         </button>
-        <button class="sidebar-nav-item" type="button" data-panel="batch-panel" onclick="switchPanel('batch-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="batch-panel" data-tip="Process several files with one set of settings." onclick="switchPanel('batch-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/package.svg" alt="" aria-hidden="true"></span> Batch Processing
+        </button>
+        <button class="sidebar-nav-item" type="button" data-panel="review-desk-panel" data-tip="Check captions, compare takes blindly, and prepare a publishing pack." onclick="switchPanel('review-desk-panel', this)">
+            <span class="icon"><img class="icon-img" src="/static/img/icons/file-report.svg" alt=""></span> Review Desk
         </button>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">AI Tools</div>
-        <button class="sidebar-nav-item" type="button" data-panel="stt-panel" onclick="switchPanel('stt-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="stt-panel" data-tip="Transcribe recorded speech and export the text with timestamps." onclick="switchPanel('stt-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true"></span> Speech to Text
         </button>
-        <button class="sidebar-nav-item" type="button" data-panel="speech-editor-panel" onclick="switchPanel('speech-editor-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="tts-panel" data-tip="Create spoken audio from text using an available voice." onclick="switchPanel('tts-panel', this)">
+            <span class="icon"><img class="icon-img" src="/static/img/icons/tts.svg" alt=""></span> Text to Speech
+        </button>
+        <button class="sidebar-nav-item" type="button" data-panel="speech-editor-panel" data-tip="Review a transcript and make reversible cuts or mutes." onclick="switchPanel('speech-editor-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/filler.svg" alt="" aria-hidden="true"></span> Precision Editor
-            <span class="badge">EDL</span>
         </button>
-        <button class="sidebar-nav-item" type="button" data-panel="tts-panel" onclick="switchPanel('tts-panel', this)">
-            <span class="icon"><img class="icon-img" src="/static/img/icons/tts.svg" alt="" aria-hidden="true"></span> Text to Speech
-        </button>
-        <button class="sidebar-nav-item" type="button" data-panel="music-panel" onclick="switchPanel('music-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="music-panel" data-tip="Turn an idea into a structured brief for a soundtrack or music cue." onclick="switchPanel('music-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/music.svg" alt="" aria-hidden="true"></span> Music brief
         </button>
-        <button class="sidebar-nav-item" type="button" data-panel="diarize-panel" onclick="switchPanel('diarize-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="diarize-panel" data-tip="Find speaker changes and see when each person is speaking." onclick="switchPanel('diarize-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/speakers.svg" alt="" aria-hidden="true"></span> Speaker Diarization
         </button>
-        <button class="sidebar-nav-item" type="button" data-panel="smart-panel" onclick="switchPanel('smart-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="smart-panel" data-tip="Analyze a recording and review suggested cleanup settings." onclick="switchPanel('smart-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></span> Smart Enhance
-            <span class="badge">Local</span>
         </button>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">Audio</div>
-        <button class="sidebar-nav-item" type="button" data-panel="watermark-panel" onclick="switchPanel('watermark-panel', this)">
-            <span class="icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></span> Watermarking
+        <button class="sidebar-nav-item" type="button" data-panel="watermark-panel" data-tip="Embed or inspect an audio watermark." onclick="switchPanel('watermark-panel', this)">
+            <span class="icon"><img class="icon-img" src="/static/img/icons/audio-watermark.svg" alt="" aria-hidden="true"></span> Audio watermark
         </button>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">Infrastructure</div>
-        <button class="sidebar-nav-item" type="button" data-panel="cluster-panel" onclick="switchPanel('cluster-panel', this)">
-            <span class="icon"><img class="icon-img" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true"></span> Edge Cluster
+        <button class="sidebar-nav-item" type="button" data-panel="cluster-panel" data-tip="Pair a companion device and manage local transfers and processing." onclick="switchPanel('cluster-panel', this)">
+            <span class="icon"><img class="icon-img" src="/static/img/icons/workspace-device.svg" alt="" aria-hidden="true"></span> Connections
             <span class="badge cluster-count-badge" id="sidebar-cluster-count" style="display:none">0</span>
         </button>
     </div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">System</div>
-        <button class="sidebar-nav-item" type="button" data-panel="settings-panel" onclick="switchPanel('settings-panel', this)">
+        <details class="desktop-tool-profile">
+            <summary data-tip="Filter the Tools menu to match the kind of work you do.">Tool profile</summary>
+            <div class="sidebar-intent-selector">
+                <label class="sr-only" for="user-intent-select">Tool profile</label>
+                <select class="sidebar-intent-select" id="user-intent-select" onchange="applyIntentProfile(this.value)">
+                    <option value="all">All tools</option>
+                    <option value="podcast">Podcast &amp; voice cleanup</option>
+                    <option value="analysis">Transcription &amp; analysis</option>
+                    <option value="expert">Cluster &amp; DSP engineering</option>
+                    <option value="secure">Watermark &amp; local reports</option>
+                </select>
+                <div class="intent-indicator-badge" id="intent-badge" hidden>Full Mode</div>
+            </div>
+        </details>
+    <div class="sidebar-section studio-system-nav">
+        <button class="sidebar-nav-item" type="button" data-panel="settings-panel" data-tip="Review privacy preferences, available engines, and system readiness." onclick="switchPanel('settings-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/settings.svg" alt="" aria-hidden="true"></span> Settings
         </button>
-        <button class="sidebar-nav-item" type="button" data-panel="about-panel" onclick="switchPanel('about-panel', this)">
+        <button class="sidebar-nav-item" type="button" data-panel="about-panel" data-tip="Find the installed version, build number, and official resources." onclick="switchPanel('about-panel', this)">
             <span class="icon"><img class="icon-img" src="/static/img/icons/info.svg" alt="" aria-hidden="true"></span> About
         </button>
     </div>
-
-    <div class="sidebar-version">
-        <span>v3.9.0</span> - <span id="sidebar-chip">M3 Max</span>
-    </div>
+            </div>
+        </details>
+    </section>
 </nav>
-<div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+<dialog class="studio-command-dialog" id="command-search-dialog" aria-labelledby="command-search-title">
+    <h2 id="command-search-title">Find a tool or workspace</h2>
+    <label class="sr-only" for="command-search-input">Tool or workspace name</label>
+    <input type="search" id="command-search-input" placeholder="Search tools or workspaces" autocomplete="off">
+    <div id="command-search-results"></div>
+    <p id="command-search-empty" role="status" hidden>No matching tools or workspaces</p>
+</dialog>
 
 <!-- =============== MAIN CONTENT =============== -->
-<main class="main-content" id="main-content">
+<main class="main-content" id="main-content" tabindex="-1">
 
-    <!-- --- UPLOAD & PROCESS PANEL --- -->
+    <!-- --- AUDIO WORKSPACE --- -->
     <div class="panel active" id="upload-panel">
-        <div class="workspace-heading">
-            <div>
-                <span class="workspace-kicker">Local processing workspace</span>
-                <h1>Upload and process</h1>
-                <p>Prepare, inspect and enhance audio on this Mac.</p>
-            </div>
-            <div class="workspace-mode" aria-label="Processing mode">
-                <span class="status-dot"></span>
-                <span>Local engine</span>
-            </div>
-        </div>
-        <nav class="review-workflow" id="review-workflow" aria-label="Audio delivery workflow" data-current="diagnose">
-            <ol>
-                <li class="is-current" data-stage="diagnose"><span>01</span><strong>Diagnose</strong></li>
-                <li data-stage="process" aria-disabled="true"><span>02</span><strong>Process</strong></li>
-                <li data-stage="review" aria-disabled="true"><span>03</span><strong>Review</strong></li>
-                <li data-stage="deliver" aria-disabled="true"><span>04</span><strong>Deliver</strong></li>
-            </ol>
-        </nav>
-        <!-- Upload Zone -->
-        <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload an audio or video file" aria-controls="file-input">
-            <div class="upload-zone-icon"><img class="icon-img" src="/static/img/icons/folder-upload.svg" alt="" aria-hidden="true"></div>
-            <div class="upload-zone-title">Drop your audio or video file here</div>
-            <div class="upload-zone-subtitle">or click to browse</div>
-            <div class="upload-zone-formats">
-                <span class="format-badge">MP3</span>
-                <span class="format-badge">MP4</span>
-                <span class="format-badge">WAV</span>
-                <span class="format-badge">FLAC</span>
-                <span class="format-badge">OGG</span>
-                <span class="format-badge">M4A</span>
-            </div>
-            <input type="file" id="file-input" accept=".mp3,.mp4,.wav,.flac,.ogg,.m4a,.aac,.wma" hidden>
-        </div>
-
-        <!-- File Info -->
+        <section class="studio-welcome" id="studio-welcome" aria-labelledby="studio-welcome-title">
+            <header class="studio-home-heading">
+                <h1 id="studio-welcome-title">Home</h1>
+                <button class="btn btn-secondary" id="home-verify-content" type="button" aria-controls="credentials-inspector" aria-expanded="false"
+                    data-tip="Check the C2PA Content Credentials, signature and provenance information available in the file." hidden>
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/content-credentials.svg" alt="">
+                    Verify C2PA
+                </button>
+            </header>
+            <section class="studio-home-import" aria-labelledby="studio-home-import-heading">
+                <h2 id="studio-home-import-heading">Open a recording</h2>
+                <p>Listen to the source, preview cleanup, and export a revision.</p>
+                <button class="studio-home-dropzone" id="upload-zone" type="button" aria-controls="file-input">
+                    <span class="studio-home-drop-icon"><img src="/static/img/icons/workspace-import.svg" alt=""></span>
+                    <span><strong>Choose a file</strong><small>or drag audio or video here</small></span>
+                </button>
+                <input type="file" id="file-input" accept=".mp3,.mp4,.wav,.flac,.ogg,.m4a,.aac,.wma" hidden>
+            </section>
+            <section class="studio-home-recent" id="studio-recent" aria-labelledby="studio-recent-heading">
+                <h2 id="studio-recent-heading">Recent projects</h2>
+                <ul id="studio-recent-projects"></ul>
+                <p id="studio-home-status" role="status">Loading projects…</p>
+                <button class="studio-home-action studio-home-sample" id="open-workspace-sample" type="button" hidden>
+                    <img src="/static/img/icons/workspace-compare.svg" alt="">
+                    <span><strong>Open sample</strong><small>Explore a ready-to-edit session with two tracks.</small></span>
+                    <span class="studio-home-chevron" aria-hidden="true"></span>
+                </button>
+                <button class="btn btn-sm btn-secondary" id="studio-recent-retry" type="button" hidden>Try again</button>
+            </section>
+            <section class="studio-home-workflows" aria-labelledby="studio-home-workflows-heading">
+                <h2 id="studio-home-workflows-heading">Start a workflow</h2>
+                <div class="studio-home-workflow-list">
+                    <button class="studio-home-action" id="studio-home-new-project" type="button">
+                        <img src="/static/img/icons/workspace-capsule.svg" alt="">
+                        <span><strong>New Studio project</strong><small>Record, arrange, or mix on multiple tracks.</small></span>
+                        <span class="studio-home-chevron" aria-hidden="true"></span>
+                    </button>
+                    <button class="studio-home-action" id="studio-home-transcribe" type="button">
+                        <img src="/static/img/icons/workspace-transcribe.svg" alt="">
+                        <span><strong>Transcribe speech</strong><small>Turn a recording into text with timestamps.</small></span>
+                        <span class="studio-home-chevron" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </section>
+        </section>
+        <div id="studio-session" class="studio-session" hidden>
         <div class="file-info-bar" id="file-info-bar">
             <span class="file-info-name" id="file-name">-</span>
             <div class="file-info-meta">
@@ -170,49 +228,170 @@
                 <div class="file-meta-item"><span class="label">Size:</span><span id="file-size">-</span></div>
             </div>
             <div class="file-info-actions">
-                <button class="btn btn-sm btn-ghost" onclick="removeFile()">Remove</button>
+                <span id="session-revision">Original</span>
+                <button class="btn btn-sm btn-secondary" id="workspace-history-button" type="button" aria-controls="workspace-history" aria-expanded="false">Actions history</button>
+                <button class="btn btn-sm btn-secondary" id="open-another-source" type="button">Open another</button>
+                <button class="btn btn-sm btn-ghost" id="close-studio-source" type="button" onclick="removeFile()">Close</button>
             </div>
         </div>
 
-        <!-- Waveform Visualizer -->
+
+            <nav class="studio-stages" id="review-workflow" aria-label="Session steps">
+                <button type="button" data-workspace-stage="clean" aria-current="step" data-tip="Review the source analysis, choose cleanup settings, and process the audio."><img src="/static/img/icons/workspace-clean.svg" alt="">Import &amp; clean</button>
+                <button type="button" data-workspace-stage="review" data-tip="Listen to the source and revision or edit speech with the transcript."><img src="/static/img/icons/workspace-compare.svg" alt="">Listen &amp; edit</button>
+                <button type="button" data-workspace-stage="export" data-tip="Download a processed revision and its report." disabled><img src="/static/img/icons/workspace-export.svg" alt="">Export</button>
+            </nav>
+            <section id="workspace-history" class="workspace-history card" aria-labelledby="workspace-history-title" hidden>
+                <h2 id="workspace-history-title">Actions history</h2>
+                <p id="workspace-history-status" role="status"></p>
+                <ol id="workspace-history-events"></ol>
+                <div class="workspace-history-controls">
+                    <button class="btn btn-sm btn-secondary" id="workspace-history-reload" type="button">Refresh history</button>
+                    <button class="btn btn-sm btn-secondary" id="workspace-history-older" type="button" hidden>Load older</button>
+                </div>
+            </section>
+            <p id="studio-session-notice" class="studio-session-notice" role="status" hidden></p>
+
+            <div class="studio-layout">
+                <div class="studio-center">
         <div class="waveform-container" id="waveform-container">
             <div class="waveform-header">
-                <span class="waveform-label">Waveform</span>
+                <span class="waveform-label">Signal</span>
                 <div class="waveform-toggle">
-                    <button class="waveform-toggle-btn active" id="btn-show-original" onclick="showWaveform('original')">Original</button>
-                    <button class="waveform-toggle-btn" id="btn-show-processed" onclick="showWaveform('processed')">Processed</button>
+                    <button class="waveform-toggle-btn active" id="btn-show-original" type="button" aria-pressed="true">Original</button>
+                    <button class="waveform-toggle-btn" id="btn-show-processed" type="button" aria-pressed="false" disabled>Revision</button>
                 </div>
             </div>
             <div id="waveform-original"></div>
             <div id="waveform-processed" style="display:none"></div>
+            <div id="signal-scrubber" class="signal-scrubber">
+                <label for="signal-position" class="sr-only">Playback position</label>
+                <input type="range" id="signal-position" min="0" max="0" step="0.01" value="0" disabled>
+            </div>
             <div class="waveform-controls">
                 <button class="btn btn-icon btn-secondary" id="btn-play" type="button" aria-label="Play or pause audio" title="Play or pause" onclick="togglePlayback()"><img class="icon-img control-icon-svg" src="/static/img/icons/play.svg" alt="" aria-hidden="true"></button>
                 <button class="btn btn-icon btn-secondary" type="button" aria-label="Stop audio playback" title="Stop" onclick="stopPlayback()"><img class="icon-img control-icon-svg" src="/static/img/icons/stop.svg" alt="" aria-hidden="true"></button>
                 <span class="waveform-time"><span id="time-current">0:00</span> / <span id="time-total">0:00</span></span>
-                <div style="flex:1"></div>
+                <div class="signal-transport-spacer"></div>
+                <label class="signal-level-match"><input id="signal-level-match" type="checkbox" disabled> Match listening levels</label>
                 <button class="btn btn-sm btn-secondary" onclick="zoomIn()"><img class="icon-img btn-icon-svg" src="/static/img/icons/zoom-in.svg" alt="" aria-hidden="true">Zoom in</button>
                 <button class="btn btn-sm btn-secondary" onclick="zoomOut()"><img class="icon-img btn-icon-svg" src="/static/img/icons/zoom-out.svg" alt="" aria-hidden="true">Zoom out</button>
             </div>
+            <p id="signal-alignment" class="signal-alignment" role="status" hidden></p>
         </div>
 
-        <!-- Post-processing Review Deck -->
+
+                    <div data-workspace-view="clean">
+        <div class="progress-container" id="progress-container">
+            <div class="card">
+                <div class="progress-header">
+                    <div class="progress-title">
+                        <div class="progress-title-spinner" id="progress-spinner"></div>
+                        <span id="progress-current-step">Initializing...</span>
+                    </div>
+                    <div class="progress-time-info">
+                        <span class="progress-elapsed" id="progress-elapsed">0:00</span>
+                        <div class="progress-eta" id="progress-eta" style="display:none">
+                            <span class="progress-eta-icon"><img class="icon-img" src="/static/img/icons/timer.svg" alt="" aria-hidden="true"></span>
+                            <span id="progress-eta-value">-</span> remaining
+                        </div>
+                        <div class="progress-eta-reason" id="progress-eta-reason" style="display:none"></div>
+                    </div>
+                </div>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="progress-percentage" id="progress-percent">0%</div>
+                <div class="progress-steps" id="progress-steps"></div>
+            </div>
+        </div>
+
+                    </div>
+                    <div data-workspace-view="review" hidden>
+        <div class="card studio-transcript">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/workspace-transcribe.svg" alt="" aria-hidden="true"></span> Transcript and speech edits</h2>
+                    <p class="text-sm text-muted">Review individual edits and render an approved revision. Your source stays intact.</p>
+                </div>
+            </div>
+            <div class="requires-file-notice" id="speech-editor-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Open an audio file in the workspace first.</div>
+            <div class="speech-editor-controls">
+                <div class="tts-control-group">
+                    <label for="speech-editor-language">Language</label>
+                    <select id="speech-editor-language">
+                        <option value="">Auto-detect</option>
+                        <option value="it">Italian</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="tts-control-group">
+                    <label for="speech-editor-fillers">Additional filler words</label>
+                    <input class="text-input" id="speech-editor-fillers" type="text" placeholder="comma-separated">
+                </div>
+            </div>
+            <button class="btn btn-primary w-full mb-16" id="btn-speech-editor-analyze" onclick="runSpeechEditor()" disabled>
+                <img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Analyze speech edits
+            </button>
+            <p id="speech-analysis-status" class="studio-helper" role="status" hidden></p>
+            <div id="speech-editor-results" style="display:none">
+                <div class="speech-editor-summary" id="speech-editor-summary"></div>
+                <div class="speech-editor-toolbar">
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="applySpeechEditBulk('high-confidence')">Apply high confidence</button>
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="applySpeechEditBulk('keep-all')">Keep all</button>
+                    <button class="btn btn-sm btn-ghost" id="btn-speech-undo" type="button" onclick="navigateSpeechHistory('undo')" disabled>Undo</button>
+                    <button class="btn btn-sm btn-ghost" id="btn-speech-redo" type="button" onclick="navigateSpeechHistory('redo')" disabled>Redo</button>
+                    <button class="btn btn-sm btn-ghost" type="button" onclick="exportSpeechEdl('json')">Export JSON</button>
+                    <button class="btn btn-sm btn-ghost" type="button" onclick="exportSpeechEdl('csv')">Export CSV</button>
+                    <span id="speech-editor-revision">Revision -</span>
+                </div>
+                <section class="speech-transcript-workbench" aria-labelledby="speech-transcript-heading">
+                    <div class="speech-transcript-heading">
+                        <div>
+                            <strong id="speech-transcript-heading">Transcript-linked edit</strong>
+                            <span>Select a first and last word. The range becomes a reviewable proposal.</span>
+                        </div>
+                        <button class="btn btn-sm btn-ghost" type="button" onclick="clearTranscriptSelection()">Clear selection</button>
+                    </div>
+                    <div class="speech-transcript-words" id="speech-transcript-words" role="listbox" aria-label="Transcript words" aria-multiselectable="true"></div>
+                    <div class="speech-transcript-selection">
+                        <span id="speech-transcript-selection-note">No transcript range selected.</span>
+                        <div>
+                            <button class="btn btn-sm btn-secondary" id="btn-audition-range" type="button" disabled>Listen to selection</button>
+                            <button class="btn btn-sm btn-secondary" id="btn-manual-cut" type="button" onclick="createTranscriptEdit('cut')" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/workspace-cut.svg" alt="">Propose cut</button>
+                            <button class="btn btn-sm btn-secondary" id="btn-manual-mute" type="button" onclick="createTranscriptEdit('mute')" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/workspace-mute.svg" alt="">Propose mute</button>
+                        </div>
+                    </div>
+                </section>
+                <audio id="speech-editor-preview" controls preload="none" class="speech-editor-preview"></audio>
+                <div class="speech-edit-list" id="speech-edit-list"></div>
+                <div class="speech-editor-render-row">
+                    <span id="speech-editor-render-note">Approve one or more candidates to render a new file.</span>
+                    <button class="btn btn-primary" id="btn-speech-editor-render" onclick="renderSpeechEditor()" disabled>
+                        <img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">Render approved edits
+                    </button>
+                </div>
+            </div>
+        </div>
+
+                    </div>
+                    <div data-workspace-view="export" hidden>
         <section class="download-bar review-deck" id="download-bar" aria-labelledby="review-deck-title">
             <header class="review-deck-header">
                 <div>
-                    <span class="review-deck-kicker">Evidence rail · local analysis</span>
-                    <h2 id="review-deck-title">Review Deck</h2>
+                    <h2 id="review-deck-title">Delivery evidence</h2>
                     <p id="download-info-text">Processed evidence will appear here.</p>
                 </div>
                 <div class="review-deck-header-actions">
-                    <span class="review-readiness" id="review-readiness"><i aria-hidden="true"></i>Review ready</span>
-                    <button class="btn btn-sm btn-secondary" id="btn-quality-report" type="button" onclick="openProcessingReport()" style="display:none"><img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Processing Report</button>
+                    <span class="review-readiness" id="review-readiness"><i aria-hidden="true"></i>Checking</span>
+                    <button class="btn btn-sm btn-secondary" id="btn-quality-report" type="button" onclick="openProcessingReport()" style="display:none"><img class="icon-img btn-icon-svg" src="/static/img/icons/workspace-report.svg" alt="" aria-hidden="true">Processing Report</button>
                 </div>
             </header>
 
             <div class="review-deck-grid">
                 <article class="review-module compliance-module" aria-labelledby="compliance-heading">
                     <header class="review-module-header">
-                        <div><span class="review-module-index">01 · DELIVERY</span><h3 id="compliance-heading">Compliance guidance</h3></div>
+                        <div><h3 id="compliance-heading">Compliance guidance</h3></div>
                         <label class="compliance-target-control" for="compliance-target">
                             <span>Target</span>
                             <select id="compliance-target" onchange="handleComplianceTargetChange(this.value)">
@@ -236,35 +415,10 @@
                     <p class="evidence-disclaimer" id="compliance-disclaimer">Local workflow guidance only. This is not regulatory or third-party certification.</p>
                 </article>
 
-                <article class="review-module blind-ab-module" aria-labelledby="blind-ab-heading">
-                    <header class="review-module-header">
-                        <div><span class="review-module-index">02 · LISTEN</span><h3 id="blind-ab-heading">Blind A/B</h3></div>
-                        <span class="round-indicator" id="ab-round-indicator">Not started</span>
-                    </header>
-                    <p class="review-module-intro">Compare randomized versions through the waveform above. Labels reveal only after your decision is saved.</p>
-                    <div class="blind-listen-grid" aria-label="Blind listening controls">
-                        <button class="blind-listen-button" id="btn-listen-a" type="button" onclick="listenBlindSlot('A')" disabled><span>A</span><strong>Listen A</strong><small>Randomized version</small></button>
-                        <button class="blind-listen-button" id="btn-listen-b" type="button" onclick="listenBlindSlot('B')" disabled><span>B</span><strong>Listen B</strong><small>Randomized version</small></button>
-                    </div>
-                    <div class="blind-decision" id="ab-decision-controls" aria-label="Choose the version you prefer">
-                        <button class="btn btn-sm btn-secondary" type="button" data-ab-choice="A" onclick="submitBlindDecision('A')" disabled>Choose A</button>
-                        <button class="btn btn-sm btn-secondary" type="button" data-ab-choice="B" onclick="submitBlindDecision('B')" disabled>Choose B</button>
-                        <button class="btn btn-sm btn-ghost" type="button" data-ab-choice="tie" onclick="submitBlindDecision('tie')" disabled>No difference</button>
-                    </div>
-                    <div class="blind-reveal" id="ab-reveal" hidden>
-                        <strong id="ab-reveal-choice">Decision saved</strong>
-                        <span id="ab-reveal-mapping"></span>
-                    </div>
-                    <div class="blind-round-footer">
-                        <button class="btn btn-sm btn-primary" id="btn-start-ab" type="button" onclick="startBlindABRound()"><img class="icon-img btn-icon-svg" src="/static/img/icons/repeat.svg" alt="" aria-hidden="true">Start blind round</button>
-                        <span id="ab-feedback" role="status">A/B preference is subjective, not a quality score.</span>
-                    </div>
-                </article>
-
                 <article class="review-module capsule-module" aria-labelledby="capsule-heading">
                     <header class="review-module-header">
-                        <div><span class="review-module-index">03 · PACKAGE</span><h3 id="capsule-heading">Project Capsule</h3></div>
-                        <img class="review-module-icon" src="/static/img/icons/package.svg" alt="" aria-hidden="true">
+                        <div><h3 id="capsule-heading">Project Capsule</h3></div>
+                        <img class="review-module-icon" src="/static/img/icons/workspace-capsule.svg" alt="" aria-hidden="true">
                     </header>
                     <p class="review-module-intro">Export the processed master with its local report, compliance evidence, decisions, and verification manifest.</p>
                     <div class="capsule-manifest" aria-label="Default capsule contents">
@@ -277,23 +431,45 @@
                     </label>
                     <button class="btn btn-primary capsule-export-button" id="btn-export-capsule" type="button" onclick="exportProjectCapsule()"><img class="icon-img btn-icon-svg" src="/static/img/icons/package.svg" alt="" aria-hidden="true">Export ZIP capsule</button>
                     <p class="capsule-status" id="capsule-status" role="status">Original audio excluded.</p>
-                    <label for="compliance-format">Delivery checks and capsule format</label>
-                    <select id="compliance-format" onchange="handleComplianceFormatChange(this.value)">
-                        <option value="wav">WAV</option><option value="mp3">MP3</option><option value="flac">FLAC</option>
-                    </select>
-                    <div class="direct-downloads">
-                        <span>Quick audio export</span>
-                        <div>
-                            <button class="btn btn-sm btn-secondary" type="button" onclick="downloadFile('wav')">WAV</button>
-                            <button class="btn btn-sm btn-secondary" type="button" onclick="downloadFile('mp3')">MP3</button>
-                            <button class="btn btn-sm btn-secondary" type="button" onclick="downloadFile('flac')">FLAC</button>
-                        </div>
-                    </div>
                 </article>
             </div>
         </section>
 
-        <!-- Smart Mode Banner -->
+
+                    </div>
+                </div>
+                <aside class="studio-inspector" aria-label="Session tools">
+                    <section data-workspace-view="clean" class="studio-inspector-section" aria-labelledby="clean-inspector-title">
+                        <h2 id="clean-inspector-title">Choose how to prepare the audio</h2>
+                        <p id="workspace-run-status" class="studio-helper workspace-run-status" role="status"></p>
+                        <div class="workspace-preset">
+                            <label for="workspace-preset-select">Processing preset</label>
+                            <select id="workspace-preset-select" aria-describedby="workspace-preset-description">
+                                <option value="">Choose a preset</option>
+                                <option value="custom">Set processing controls manually</option>
+                            </select>
+                            <p id="workspace-preset-description" class="studio-helper">A preset sets up the controls. Choose Process audio to render a new revision.</p>
+                            <dl class="workspace-recipe-status">
+                                <div><dt>Selected for next run</dt><dd id="workspace-selected-recipe">No processing preset</dd></div>
+                                <div><dt>Current revision</dt><dd id="workspace-rendered-recipe">None</dd></div>
+                            </dl>
+                        </div>
+                        <div class="studio-clean-actions">
+                            <button class="btn btn-lg btn-primary w-full" id="btn-process" type="button" onclick="startProcessing()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/workspace-clean.svg" alt="">Process audio</button>
+                            <button class="btn btn-sm btn-secondary" id="download-original-audio" type="button">Download original</button>
+                            <button class="btn btn-sm btn-secondary" id="go-to-rendered-export" type="button" data-go-to-stage="export" hidden>Export current revision</button>
+                            <button class="btn btn-sm btn-secondary" id="preview-cleanup" type="button">Preview spectral cleanup</button>
+                            <p class="studio-preview-info" id="cleanup-preview-status" role="status" hidden></p>
+                            <div id="cleanup-preview-choices" class="cleanup-preview-choices" role="group" aria-label="Cleanup preview version" hidden>
+                                <button class="btn btn-sm btn-secondary" type="button" data-preview-variant="original" aria-pressed="false">Original</button>
+                                <button class="btn btn-sm btn-secondary" type="button" data-preview-variant="spectral" aria-pressed="false">Cleaned</button>
+                            </div>
+                            <audio id="cleanup-preview-player" controls preload="none" hidden></audio>
+                        </div>
+                        <div class="workspace-original-analysis">
+                            <h3>Original file analysis</h3>
+                            <div class="studio-plan" id="studio-source-analysis" role="status"></div>
+                        </div>
         <div class="smart-mode-banner" id="smart-mode-banner">
             <div class="smart-mode-icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></div>
             <div class="smart-mode-info">
@@ -305,7 +481,8 @@
         </div>
 
         <!-- Feature Controls -->
-        <div class="card">
+        <details class="card studio-advanced">
+            <summary>Processing controls</summary>
             <div class="card-header">
                 <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/controls.svg" alt="" aria-hidden="true"></span> Processing Features</h2>
                 <button class="btn btn-sm btn-secondary" onclick="runSmartMode()"><img class="icon-img btn-icon-svg" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">Smart Mode</button>
@@ -517,6 +694,11 @@
             <div class="tab-content" id="tab-advanced">
                 <div class="tts-controls">
                     <div class="tts-control-group">
+                        <label for="opt-watermark-identifier">Apply an audio watermark to this revision (WAV/FLAC)</label>
+                        <input type="text" id="opt-watermark-identifier" maxlength="32" pattern="[A-Za-z0-9_-]{1,32}" autocomplete="off" aria-describedby="opt-watermark-hint" oninput="updateProcessButton()">
+                        <span class="setting-supporting-text" id="opt-watermark-hint">Optional. Use letters, numbers, hyphens or underscores.</span>
+                    </div>
+                    <div class="tts-control-group">
                         <label for="output-profile-select">Delivery Profile</label>
                         <select id="output-profile-select" onchange="applyOutputProfile(this.value)">
                             <option value="">Custom settings</option>
@@ -542,86 +724,461 @@
                 </div>
             </div>
 
-            <!-- Process Button -->
-            <div class="process-actions">
-                <button class="btn btn-lg btn-primary w-full" id="btn-process" onclick="startProcessing()" disabled>
-                    <img class="icon-img btn-icon-svg" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true">Process Audio
-                </button>
-            </div>
-        </div>
+        </details>
 
-        <!-- Progress -->
-        <div class="progress-container" id="progress-container">
-            <div class="card">
-                <div class="progress-header">
-                    <div class="progress-title">
-                        <div class="progress-title-spinner" id="progress-spinner"></div>
-                        <span id="progress-current-step">Initializing...</span>
+                        <button class="btn btn-sm btn-ghost" type="button" data-go-to-stage="review">Open speech editor</button>
+                    </section>
+                    <section data-workspace-view="review" class="studio-inspector-section" aria-labelledby="edit-inspector-title" hidden>
+                        <h2 id="edit-inspector-title">Listen and review</h2>
+                        <p class="studio-helper" id="studio-review-hint">Select a word to seek. Choose two words to preview a range or propose an edit.</p>
+                <article id="studio-blind-ab" class="card studio-blind-ab blind-ab-module" aria-labelledby="blind-ab-heading">
+                    <header class="review-module-header">
+                        <div><h3 id="blind-ab-heading">Blind A/B</h3></div>
+                        <span class="round-indicator" id="ab-round-indicator">Not started</span>
+                    </header>
+                    <p class="review-module-intro">Listen to randomized versions and save your preference to reveal the mapping.</p>
+                    <div class="blind-listen-grid" aria-label="Blind listening controls">
+                        <button class="blind-listen-button" id="btn-listen-a" type="button" onclick="listenBlindSlot('A')" disabled><span>A</span><strong>Listen A</strong><small>Randomized version</small></button>
+                        <button class="blind-listen-button" id="btn-listen-b" type="button" onclick="listenBlindSlot('B')" disabled><span>B</span><strong>Listen B</strong><small>Randomized version</small></button>
                     </div>
-                    <div class="progress-time-info">
-                        <span class="progress-elapsed" id="progress-elapsed">0:00</span>
-                        <div class="progress-eta" id="progress-eta" style="display:none">
-                            <span class="progress-eta-icon"><img class="icon-img" src="/static/img/icons/timer.svg" alt="" aria-hidden="true"></span>
-                            <span id="progress-eta-value">-</span> remaining
-                        </div>
-                        <div class="progress-eta-reason" id="progress-eta-reason" style="display:none"></div>
+                    <div class="blind-decision" id="ab-decision-controls" aria-label="Choose the version you prefer">
+                        <button class="btn btn-sm btn-secondary" type="button" data-ab-choice="A" onclick="submitBlindDecision('A')" disabled>Choose A</button>
+                        <button class="btn btn-sm btn-secondary" type="button" data-ab-choice="B" onclick="submitBlindDecision('B')" disabled>Choose B</button>
+                        <button class="btn btn-sm btn-ghost" type="button" data-ab-choice="tie" onclick="submitBlindDecision('tie')" disabled>No difference</button>
                     </div>
-                </div>
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar" id="progress-bar"></div>
-                </div>
-                <div class="progress-percentage" id="progress-percent">0%</div>
-                <div class="progress-steps" id="progress-steps"></div>
+                    <div class="blind-reveal" id="ab-reveal" hidden>
+                        <strong id="ab-reveal-choice">Decision saved</strong>
+                        <span id="ab-reveal-mapping"></span>
+                    </div>
+                    <div class="blind-round-footer">
+                        <button class="btn btn-sm btn-primary" id="btn-start-ab" type="button" onclick="startBlindABRound()"><img class="icon-img btn-icon-svg" src="/static/img/icons/repeat.svg" alt="" aria-hidden="true">Start blind round</button>
+                        <span id="ab-feedback" role="status">A/B preference is subjective, not a quality score.</span>
+                    </div>
+                </article>
+
+
+                        <button class="btn btn-primary" type="button" id="review-go-export" data-go-to-stage="export" disabled>Continue to export</button>
+                        <button class="btn btn-sm btn-ghost" type="button" data-go-to-stage="clean">Adjust cleanup</button>
+                    </section>
+                    <section data-workspace-view="export" class="studio-inspector-section" aria-labelledby="export-inspector-title" hidden>
+                        <h2 id="export-inspector-title">Export audio</h2>
+                        <label for="compliance-format">File format</label>
+                        <select id="compliance-format" onchange="handleComplianceFormatChange(this.value)">
+                            <option value="wav">WAV</option><option value="mp3">MP3</option><option value="flac">FLAC</option>
+                        </select>
+                        <button class="btn btn-primary" type="button" id="download-current-format"><img class="icon-img btn-icon-svg" src="/static/img/icons/workspace-export.svg" alt="">Download audio</button>
+                        <section class="studio-provenance" aria-labelledby="studio-provenance-title">
+                            <h3 id="studio-provenance-title">Provenance</h3>
+                    <details class="credentials-export" id="credentials-export" open hidden>
+                        <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt="" aria-hidden="true"> C2PA Content Credentials</summary>
+                        <p class="text-sm text-muted">Embed the source, observed processing steps and the report’s SHA-256 in a signed copy of this revision. Inherited source credentials may contain their own metadata.</p>
+                        <button class="btn btn-sm btn-secondary" type="button" id="credentials-export-button" disabled>Export signed copy</button>
+                        <p class="text-sm" id="credentials-export-status" role="status"></p>
+                    </details>
+
+                            <button class="btn btn-sm btn-secondary" type="button" id="studio-verify-credentials" aria-controls="credentials-inspector" aria-expanded="false" hidden><img class="icon-img btn-icon-svg" src="/static/img/icons/content-credentials.svg" alt="">Verify a signed file</button>
+                            <button class="btn btn-sm btn-ghost" type="button" onclick="switchPanel('watermark-panel', document.querySelector('[data-panel=watermark-panel]'))"><img class="icon-img btn-icon-svg" src="/static/img/icons/audio-watermark.svg" alt="">Open audio watermark</button>
+                        </section>
+                    </section>
+                </aside>
             </div>
         </div>
+        <details class="card studio-verifier" id="credentials-inspector" hidden>
+            <summary><img class="icon-img inline-icon" src="/static/img/icons/content-credentials.svg" alt=""> Close C2PA verification</summary>
+            <h2>Verify C2PA</h2>
+            <p class="text-sm text-muted">Check C2PA and audio measurements for the file received. Supports WAV, MP3, FLAC, M4A, MP4 and MOV. Verification runs on this Mac.</p>
+            <div class="studio-verifier-source">
+                <label for="credentials-file">Media to verify</label>
+                <input type="file" id="credentials-file" accept=".wav,.mp3,.flac,.m4a,.mp4,.mov">
+            </div>
+            <label class="studio-verifier-option text-sm">
+                <input type="checkbox" id="media-verification-audioseal" aria-describedby="media-verification-audioseal-requirement">
+                Include the experimental AudioSeal signal measurement
+            </label>
+            <p class="text-sm text-muted" id="media-verification-audioseal-requirement">Requires the optional local detector package.</p>
+            <p id="credentials-inspection" class="text-sm" role="status"></p>
+            <div id="media-verification-evidence" hidden>
+                <p class="text-sm">File received SHA-256<br><code id="media-verification-fingerprint" style="overflow-wrap:anywhere"></code></p>
+                <p id="media-verification-processing-report" class="text-sm" style="overflow-wrap:anywhere" hidden></p>
+                <div class="media-verification-comparison">
+                    <label for="media-expected-fingerprint">Expected file SHA-256</label>
+                    <input id="media-expected-fingerprint" type="text" autocomplete="off" spellcheck="false" maxlength="80" aria-describedby="media-fingerprint-purpose" placeholder="Paste 64 hexadecimal characters">
+                    <p id="media-fingerprint-purpose" class="text-sm text-muted">Use a fingerprint from a source you trust. This compares file bytes. Certificate trust has its own status.</p>
+                    <p id="media-fingerprint-comparison" class="text-sm" role="status"></p>
+                </div>
+                <div id="media-linked-report-check" class="media-verification-comparison" hidden>
+                    <label for="media-linked-report-file">Compare a processing report with the manifest</label>
+                    <input id="media-linked-report-file" type="file" accept=".json,application/json">
+                    <p id="media-linked-report-status" class="text-sm" role="status"></p>
+                </div>
+                <p id="media-verification-declared-processing" class="text-sm" hidden></p>
+                <p id="media-verification-audio" class="text-sm"></p>
+                <p id="media-verification-watermark" class="text-sm" hidden></p>
+                <svg id="media-verification-waveform" viewBox="0 0 256 48" class="text-muted" width="256" height="48" role="img" aria-label="Peak envelope of the analyzed audio"></svg>
+                <p class="text-sm text-muted">Use these signals to guide a review. The downloaded summary contains the received file’s fingerprint and is unsigned.</p>
+                <button id="media-verification-download" class="btn btn-secondary" type="button">Download verification report</button>
+            </div>
+        </details>
+
+
     </div>
 
-    <!-- --- PRESETS PANEL --- -->
-    <div class="panel" id="presets-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/presets.svg" alt="" aria-hidden="true"></span> Processing Presets</h2>
-                <button class="btn btn-sm btn-primary" onclick="saveCurrentAsPreset()"><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">Save Current Settings</button>
+    <section class="panel" id="project-studio-panel" aria-labelledby="project-studio-title">
+        <div id="project-studio" data-phase="edit" data-aspect="wide" data-media="empty">
+            <header class="project-studio-header">
+                <div class="studio-heading">
+                    <h1 id="project-studio-title" tabindex="-1">Studio</h1>
+                    <span id="studio-active-name" class="studio-active-name"></span>
+                </div>
+
+                <div class="studio-mode-bar">
+                    <div class="studio-phases" role="group" aria-label="Workspace layout">
+                        <button type="button" class="studio-button" data-studio-phase="record" aria-pressed="false" data-tip="Record from your microphone and manage project media."><img src="/static/img/icons/workspace-import.svg" alt="">Record</button>
+                        <button type="button" class="studio-button" data-studio-phase="edit" aria-pressed="true" data-tip="Arrange, trim, split, and fade clips on the timeline."><img src="/static/img/icons/workspace-cut.svg" alt="">Edit</button>
+                        <button type="button" class="studio-button" data-studio-phase="mix" aria-pressed="false" data-tip="Adjust the selected clip’s sound, gain, and automation."><img src="/static/img/icons/workspace-clean.svg" alt="">Mix</button>
+                        <button type="button" class="studio-button" data-studio-phase="export" aria-pressed="false" data-tip="Render the mix or gather the original media into a portable project."><img src="/static/img/icons/workspace-export.svg" alt="">Export</button>
+                    </div>
+                    <div class="studio-view-tools">
+                        <button type="button" class="studio-button" id="studio-calm" aria-pressed="false">Calm</button>
+                        <details class="studio-view-menu" id="studio-view-menu">
+                            <summary class="studio-button">Panels</summary>
+                            <div class="studio-view-sheet">
+                                <fieldset class="studio-panel-options">
+                                    <legend>Visible panels</legend>
+                                    <label><input type="checkbox" data-studio-panel-toggle="assets"> Assets</label>
+                                    <label><input type="checkbox" data-studio-panel-toggle="inspector" checked> Inspector</label>
+                                    <label><input type="checkbox" data-studio-panel-toggle="history"> History</label>
+                                    <label><input type="checkbox" data-studio-panel-toggle="export"> Export</label>
+                                </fieldset>
+                                <label class="studio-range">Dock width <input type="range" id="studio-dock-width" min="260" max="480" step="10" value="310"></label>
+                                <button type="button" class="studio-button" id="studio-restore-layout">Restore preset</button>
+                                <button type="button" class="studio-button" id="studio-shortcuts-action">Keyboard shortcuts</button>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <div class="studio-project-picker">
+                    <label for="studio-project-select" class="sr-only">Open a project</label>
+                    <select id="studio-project-select"><option value="">Open a project</option></select>
+                    <button id="studio-project-new" type="button" class="studio-button">New project</button>
+                    <button id="studio-project-bundle" type="button" class="studio-button">Open project ZIP</button>
+                    <input id="studio-bundle-input" type="file" accept=".zip,application/zip" hidden>
+                </div>
+            </header>
+
+            <div class="studio-context-bar">
+                <div class="studio-project-actions">
+                    <button type="button" class="studio-button" id="studio-import">Import media</button>
+                    <button type="button" class="studio-button" id="studio-use-current">Use open file</button>
+                </div>
+                <div class="studio-footer">
+                    <span id="studio-status" role="status">Ready.</span>
+                    <button type="button" class="studio-button" id="studio-reload" hidden>Reload project</button>
+                    <progress id="studio-progress" max="100" aria-label="Background job progress" hidden></progress>
+                </div>
+                <div id="studio-live-meter" class="studio-live-meter" role="group" aria-label="Stereo playback level" data-signal="off">
+                    <span class="studio-meter-label" aria-hidden="true">Stereo out</span>
+                    <div class="studio-meter-channels" aria-hidden="true">
+                        <span class="studio-meter-channel"><b>L</b><span class="studio-meter-track"><span id="studio-level-left" class="studio-meter-fill"></span></span></span>
+                        <span class="studio-meter-channel"><b>R</b><span class="studio-meter-track"><span id="studio-level-right" class="studio-meter-fill"></span></span></span>
+                    </div>
+                </div>
             </div>
-            <div class="sidebar-section-title mb-12">BUILT-IN PRESETS</div>
+
+            <p id="studio-layout-note" class="sr-only" role="status"></p>
+            <section id="studio-project-empty" class="studio-project-welcome" aria-labelledby="studio-project-welcome-title">
+                <div class="studio-project-welcome-content">
+                    <h2 id="studio-project-welcome-title">Start an edit</h2>
+                    <p>Open audio or video and work directly on the timeline.</p>
+                    <div class="studio-project-welcome-actions">
+                        <button id="studio-welcome-import" type="button" class="studio-button studio-primary">
+                            <img src="/static/img/icons/workspace-import.svg" alt=""> Import media
+                        </button>
+                        <button id="studio-welcome-sample" type="button" class="studio-button">
+                            <span class="studio-play-glyph" aria-hidden="true"></span> Try sample
+                        </button>
+                    </div>
+                </div>
+            </section>
+            <input type="file" id="studio-file-input" accept=".wav,.mp3,.flac,.ogg,.m4a,.aac,.wma,.mp4,.mov,.webm,.aif,.aiff,.caf" hidden>
+            <fieldset id="studio-active-project" class="studio-active-project" disabled>
+                <legend class="sr-only">Active project</legend>
+                <input type="file" id="studio-relink-input" accept=".wav,.mp3,.flac,.ogg,.m4a,.aac,.wma,.mp4,.mov,.webm,.aif,.aiff,.caf" hidden>
+                <div class="studio-preview-bar" role="group" aria-label="Transport">
+                    <audio id="studio-audio" preload="metadata" hidden></audio>
+                    <div class="studio-transport-buttons">
+                        <button type="button" class="studio-button" id="studio-play" aria-keyshortcuts="Space" aria-pressed="false">
+                            <span class="studio-play-glyph" aria-hidden="true"></span><span data-studio-play-label>Play</span>
+                        </button>
+                        <button type="button" class="studio-button" id="studio-stop">
+                            <span class="studio-stop-glyph" aria-hidden="true"></span>Stop
+                        </button>
+                    </div>
+                    <output id="studio-time" aria-label="Playhead time" aria-live="off">00:00.000</output>
+                    <div class="studio-record-controls">
+                        <button id="studio-record-start" type="button" class="studio-button"><span class="studio-record-dot" aria-hidden="true"></span> Record mic</button>
+                        <button id="studio-record-stop" type="button" class="studio-button" hidden>Stop recording</button>
+                        <span id="studio-record-status" role="status"></span>
+                    </div>
+                </div>
+                <div class="studio-editing-deck">
+                    <section class="studio-surface studio-preview-panel" aria-labelledby="studio-preview-title">
+                        <header class="studio-surface-head">
+                            <h2 id="studio-preview-title">Preview</h2>
+                            <div class="studio-aspect" role="group" aria-label="Preview layout">
+                                <button type="button" class="studio-button" data-studio-aspect="wide" aria-pressed="true" aria-label="Landscape preview, 16:9">16:9</button>
+                                <button type="button" class="studio-button" data-studio-aspect="tall" aria-pressed="false" aria-label="Portrait preview, 9:16">9:16</button>
+                                <button type="button" class="studio-button" id="studio-enlarge-preview" aria-controls="studio-preview-frame" aria-pressed="false">Enlarge preview</button>
+                            </div>
+                        </header>
+                        <div class="studio-preview-content">
+                            <div class="studio-preview-frame" id="studio-preview-frame">
+                                <video id="studio-video" playsinline muted preload="metadata" aria-label="Video source preview" hidden></video>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="studio-surface studio-timeline-panel" aria-labelledby="studio-timeline-title">
+                        <header class="studio-surface-head studio-timeline-toolbar">
+                            <h2 id="studio-timeline-title">Timeline</h2>
+                            <div class="studio-inline">
+                                <button type="button" class="studio-button" id="studio-add-track">Add track</button>
+                                <button type="button" class="studio-button" id="studio-add-marker">Marker</button>
+                                <button type="button" class="studio-button" id="studio-split" aria-keyshortcuts="S B">Split</button>
+                            </div>
+                            <div class="studio-inline studio-timeline-options">
+                                <label class="studio-inline">BPM <input id="studio-bpm" type="number" min="30" max="300" step="1" placeholder="—"></label>
+                                <label class="studio-inline"><input id="studio-snap" type="checkbox" checked> Snap</label>
+                                <label class="studio-inline">Zoom <input id="studio-zoom" type="range" min="0.25" max="4" step="0.05" value="1"></label>
+                            </div>
+                        </header>
+                        <div id="studio-timeline" aria-label="Project timeline" tabindex="0"></div>
+                    </section>
+
+                    <div class="studio-dock" id="studio-panel-dock">
+                        <section class="studio-surface studio-tool-panel" data-studio-panel="assets" aria-labelledby="studio-assets-title" hidden>
+                            <header class="studio-surface-head">
+                                <h2 id="studio-assets-title">Assets</h2>
+                                <button type="button" class="studio-button studio-dock-action" data-studio-detach="assets" aria-label="Detach Assets">Detach</button>
+                            </header>
+                            <div class="studio-panel-body">
+                                <p class="studio-panel-description">Bring audio or video into this project.</p>
+                                <ul id="studio-assets" class="studio-asset-list" aria-label="Project assets"></ul>
+                            </div>
+                        </section>
+
+                        <section class="studio-surface studio-tool-panel" data-studio-panel="inspector" aria-labelledby="studio-inspector-title">
+                            <header class="studio-surface-head">
+                                <h2 id="studio-inspector-title">Clip inspector</h2>
+                                <button type="button" class="studio-button studio-dock-action" data-studio-detach="inspector" aria-label="Detach Clip inspector">Detach</button>
+                            </header>
+                            <div class="studio-panel-body">
+                                <p id="studio-inspector-empty" class="studio-panel-description">Select a clip to adjust its timing, sound, or effects.</p>
+                                <section id="studio-clip-fields" aria-label="Selected clip controls" hidden>
+                                    <details class="studio-inspector-details" id="studio-mix-controls">
+                                        <summary>Sound and gain</summary>
+                                        <div class="studio-fields studio-mix-fields">
+                                            <label class="studio-range">Clarity <input type="range" id="studio-clip-clarity" min="0" max="100" step="1" value="0"></label>
+                                            <label class="studio-range">Warmth <input type="range" id="studio-clip-warmth" min="0" max="100" step="1" value="0"></label>
+                                            <label class="studio-range">Echo reduction <input type="range" id="studio-clip-echo" min="0" max="100" step="1" value="0"></label>
+                                            <label>Gain (dB) <input type="number" id="studio-clip-gain" min="-60" max="12" step="0.5" value="0"></label>
+                                            <label>Presence frequency (Hz) <input type="number" id="studio-clip-eq" min="350" max="10000" step="1" value="2200"></label>
+                                            <label>Compressor ratio <input type="number" id="studio-clip-ratio" min="1" max="8" step="0.1" value="1"></label>
+                                            <label>Compressor threshold (dBFS) <input type="number" id="studio-clip-threshold" min="-60" max="0" step="0.5" value="-18"></label>
+                                            <label class="studio-inline"> <input type="checkbox" id="studio-clip-bypass"> Bypass clip effects</label>
+                                        </div>
+                                    </details>
+                                    <details class="studio-inspector-details studio-edit-fields" open>
+                                        <summary>Timing</summary>
+                                        <div class="studio-fields studio-timing-fields">
+                                            <label class="studio-full-field">Track <select id="studio-clip-track"></select></label>
+                                            <label>Start (s) <input type="number" id="studio-clip-start" min="0" step="0.001" value="0"></label>
+                                            <label>Source in (s) <input type="number" id="studio-clip-in" min="0" step="0.001" value="0"></label>
+                                            <label>Source out (s) <input type="number" id="studio-clip-out" min="0" step="0.001" value="0"></label>
+                                            <label>Fade in (s) <input type="number" id="studio-clip-fade-in" min="0" step="0.001" value="0"></label>
+                                            <label>Fade out (s) <input type="number" id="studio-clip-fade-out" min="0" step="0.001" value="0"></label>
+                                        </div>
+                                    </details>
+                                    <details class="studio-inspector-details">
+                                        <summary>Clip actions</summary>
+                                        <div class="studio-action-list">
+                                            <button type="button" class="studio-button" data-studio-action="isolate-voice" hidden>Isolate voice</button>
+                                            <button type="button" class="studio-button" data-studio-action="remove-silences">Remove silences</button>
+                                            <button type="button" class="studio-button" data-studio-action="align-beat">Align to beat</button>
+                                            <button type="button" class="studio-button" data-studio-action="transcribe">Transcribe</button>
+                                            <button type="button" class="studio-button" data-studio-action="subtitles">Generate subtitles</button>
+                                            <button type="button" class="studio-button" data-studio-action="remove-clip">Remove clip</button>
+                                        </div>
+                                        <a id="studio-subtitles-link" class="studio-button" download hidden>Download subtitles</a>
+                                        <ol id="studio-transcript" aria-label="Transcript" class="studio-transcript"></ol>
+                                    </details>
+                                    <details class="studio-inspector-details">
+                                        <summary>Gain automation</summary>
+                                        <label>Keyframe gain (dB) <input type="number" id="studio-keyframe-gain" min="-60" max="12" step="0.5" value="0"></label>
+                                        <button type="button" class="studio-button" data-studio-action="automation">Add point at playhead</button>
+                                        <ol id="studio-automation-points" aria-label="Gain automation points"></ol>
+                                    </details>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="studio-surface studio-tool-panel" data-studio-panel="history" aria-labelledby="studio-history-title" hidden>
+                            <header class="studio-surface-head">
+                                <h2 id="studio-history-title">History</h2>
+                                <button type="button" class="studio-button studio-dock-action" data-studio-detach="history" aria-label="Detach History">Detach</button>
+                            </header>
+                            <div class="studio-panel-body">
+                                <div class="studio-inline">
+                                    <button type="button" class="studio-button" id="studio-undo">Undo</button>
+                                    <button type="button" class="studio-button" id="studio-redo">Redo</button>
+                                </div>
+                                <ol id="studio-history" aria-label="Project history"></ol>
+                            </div>
+                        </section>
+
+                        <section class="studio-surface studio-tool-panel" data-studio-panel="export" aria-labelledby="studio-export-title" hidden>
+                            <header class="studio-surface-head">
+                                <h2 id="studio-export-title">Export</h2>
+                                <button type="button" class="studio-button studio-dock-action" data-studio-detach="export" aria-label="Detach Export">Detach</button>
+                            </header>
+                            <div class="studio-panel-body">
+                                <label class="studio-range">Audio format
+                                    <select id="studio-format">
+                                        <option value="wav">WAV</option>
+                                        <option value="flac">FLAC</option>
+                                    </select>
+                                </label>
+                                <div class="studio-action-list">
+                                    <button type="button" class="studio-button studio-primary" id="studio-export">Render audio</button>
+                                    <a id="studio-render-download" class="studio-button" download hidden>Download audio</a>
+                                    <a id="studio-render-report" class="studio-button" download hidden>Download processing report</a>
+                                    <button type="button" class="studio-button" id="studio-consolidate">Consolidate project</button>
+                                    <a id="studio-consolidation-download" class="studio-button" download hidden>Download consolidated project</a>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="studio-floating-layer" id="studio-floating-layer"></div>
+            </fieldset>
+
+
+            <dialog id="studio-new-dialog" class="studio-dialog" aria-labelledby="studio-new-title">
+                <form id="studio-project-form">
+                    <h2 id="studio-new-title">New project</h2>
+                    <label class="studio-range">Project name <input type="text" id="studio-project-name" required maxlength="80" autocomplete="off"></label>
+                    <div class="studio-inline">
+                        <button type="button" class="studio-button" id="studio-new-cancel">Cancel</button>
+                        <button type="submit" class="studio-button studio-primary">Create project</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <dialog id="studio-shortcuts" class="studio-dialog" aria-labelledby="studio-shortcuts-title">
+                <h2 id="studio-shortcuts-title">Keyboard shortcuts</h2>
+                <div id="studio-shortcuts-fields"></div>
+                <div class="studio-inline">
+                    <button type="button" class="studio-button" id="studio-shortcuts-reset">Restore defaults</button>
+                    <form method="dialog"><button type="submit" class="studio-button studio-primary">Done</button></form>
+                </div>
+            </dialog>
+        </div>
+    </section>
+
+    <!-- --- PRESETS PANEL --- -->
+    <section class="panel" id="workspaces-panel" aria-labelledby="workspaces-title">
+        <header class="panel-header">
+            <h1 id="workspaces-title" tabindex="-1">My Workspaces</h1>
+            <p class="panel-subtitle">Activate a workspace to keep its tools visible as you work.</p>
+        </header>
+        <div class="workspace-collections">
+            <section class="card workspace-collection" aria-labelledby="workspace-collection-title">
+                <div class="workspace-collection-header">
+                    <h2 id="workspace-collection-title">Saved workspaces</h2>
+                    <button class="btn btn-primary" type="button" id="create-workspace" disabled>New workspace</button>
+                </div>
+                <div id="saved-workspaces"></div>
+                <p id="workspace-settings-status" role="status">Loading workspaces…</p>
+            </section>
+            <form class="card workspace-collection" id="workspace-form" aria-labelledby="workspace-form-title" hidden>
+                <h2 id="workspace-form-title">New workspace</h2>
+                <fieldset id="workspace-form-controls">
+                    <label for="new-workspace-name">Workspace name</label>
+                    <input id="new-workspace-name" type="text" required maxlength="48" placeholder="e.g. Podcast editing">
+                    <ol id="workspace-tool-order" aria-label="Pinned tools in order"></ol>
+                    <label for="workspace-module-select">Tools to add</label>
+                    <div class="workspace-collection-actions">
+                        <select id="workspace-module-select"></select>
+                        <button class="btn btn-secondary" id="workspace-add-module" type="button">Add tool</button>
+                    </div>
+                    <div class="workspace-collection-actions">
+                        <button class="btn btn-primary" type="submit">Save workspace</button>
+                        <button class="btn btn-secondary" id="workspace-cancel" type="button">Cancel</button>
+                    </div>
+                </fieldset>
+                <p id="workspace-form-status" role="status"></p>
+            </form>
+        </div>
+    </section>
+
+    <div class="panel" id="presets-panel" aria-labelledby="preset-library-title">
+        <header class="tool-heading">
+            <div class="tool-heading-icon"><img src="/static/img/icons/presets.svg" alt=""></div>
+            <div><h1 id="preset-library-title">Presets</h1><p>Choose a starting point for cleanup or save your own settings.</p></div>
+            <button class="btn btn-secondary tool-heading-action" type="button" onclick="saveCurrentAsPreset()"><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="">Save current settings</button>
+        </header>
+        <div class="tool-surface">
+            <h2 class="tool-section-title">Built-in presets</h2>
             <div class="preset-grid" id="builtin-presets"></div>
-            <div class="sidebar-section-title mt-20 mb-12">CUSTOM PRESETS</div>
+            <h2 class="tool-section-title tool-section-following">Your presets</h2>
             <div class="preset-grid" id="custom-presets"></div>
         </div>
     </div>
 
     <!-- --- BATCH PROCESSING PANEL --- -->
-    <div class="panel" id="batch-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/package.svg" alt="" aria-hidden="true"></span> Batch Processing</h2>
-            </div>
-            <div class="upload-zone" id="batch-upload-zone" style="padding:30px">
+    <div class="panel" id="review-desk-panel" aria-label="Review Desk">
+        <iframe id="review-desk-frame" title="Review Desk" loading="lazy" src="/static/review-desk/index.html"
+                sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>
+    </div>
+    <div class="panel" id="batch-panel" aria-labelledby="batch-title">
+        <header class="tool-heading">
+            <div class="tool-heading-icon"><img src="/static/img/icons/package.svg" alt=""></div>
+            <div><h1 id="batch-title">Batch processing</h1><p>Apply the same processing settings to a group of recordings.</p></div>
+        </header>
+        <div class="tool-surface">
+            <div class="upload-zone tool-drop-zone" id="batch-upload-zone">
                 <div class="upload-zone-icon"><img class="icon-img" src="/static/img/icons/package.svg" alt="" aria-hidden="true"></div>
-                <div class="upload-zone-title">Drop multiple files here</div>
-                <div class="upload-zone-subtitle">All files will be processed with the same settings</div>
-                <input type="file" id="batch-file-input" accept=".mp3,.mp4,.wav,.flac,.ogg,.m4a" multiple hidden>
+                <button class="btn btn-secondary" type="button">Choose audio files</button>
+                <p class="upload-zone-subtitle">You can also drop files here.</p>
+                <input type="file" id="batch-file-input" accept=".aac,.flac,.m4a,.mp3,.mp4,.ogg,.wav,.wma" multiple hidden>
             </div>
             <div class="batch-file-list mt-16" id="batch-file-list"></div>
-            <div class="mt-16">
-                <button class="btn btn-lg btn-primary w-full" id="btn-batch-process" onclick="startBatchProcessing()" disabled>
-                    <img class="icon-img btn-icon-svg" src="/static/img/icons/aem-mark.svg" alt="" aria-hidden="true">Process All Files
+            <div class="tool-actions">
+                <button class="btn btn-primary" id="btn-batch-process" type="button" onclick="startBatchProcessing()" disabled>
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/workspace-clean.svg" alt="">Process all files
                 </button>
             </div>
         </div>
     </div>
 
     <!-- --- SPEECH-TO-TEXT PANEL --- -->
-    <div class="panel" id="stt-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true"></span> Speech to Text</h2>
-            </div>
-            <div class="requires-file-notice" id="stt-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
-            <p class="text-sm text-muted mb-16" id="transcription-engine-description">Transcribe locally with the bundled Faster-Whisper Medium model. Supports automatic language detection.</p>
-            <div class="tts-controls mb-16">
-                <div class="tts-control-group">
-                    <label>Language</label>
+    <div class="panel" id="stt-panel" aria-labelledby="stt-title">
+        <header class="tool-heading">
+            <div class="tool-heading-icon"><img src="/static/img/icons/workspace-transcribe.svg" alt=""></div>
+            <div><h1 id="stt-title">Speech to Text</h1><p id="transcription-engine-description">Transcribe audio on this Mac with automatic language detection.</p></div>
+        </header>
+        <div class="requires-file-notice tool-source-notice" id="stt-no-file">
+            <img src="/static/img/icons/workspace-import.svg" alt="">
+            <span>Open a recording to transcribe it.</span>
+            <button class="btn btn-secondary" type="button" id="stt-open-audio">Open audio</button>
+        </div>
+        <div class="tool-two-columns">
+            <aside class="tool-surface tool-settings-rail" aria-labelledby="transcription-settings-title">
+                <h2 class="tool-section-title" id="transcription-settings-title">Transcription settings</h2>
+                <div class="tool-field">
+                    <label for="stt-language">Language</label>
                     <select id="stt-language">
                         <option value="">Auto-detect</option>
                         <option value="en">English</option>
@@ -634,8 +1191,8 @@
                         <option value="zh">Chinese</option>
                     </select>
                 </div>
-                <div class="tts-control-group">
-                    <label>Export Format</label>
+                <div class="tool-field">
+                    <label for="stt-format">Export format</label>
                     <select id="stt-format">
                         <option value="txt">Plain Text</option>
                         <option value="srt">SRT Subtitles</option>
@@ -643,88 +1200,24 @@
                         <option value="json">JSON (detailed)</option>
                     </select>
                 </div>
-            </div>
-            <div class="tts-control-group" style="margin-bottom: 12px;">
-                <label>Output Filename</label>
-                <input type="text" id="stt-filename" class="setting-input" placeholder="transcript" style="width:100%; min-width:0;">
-            </div>
-            <button class="btn btn-primary w-full mb-16" id="btn-transcribe" onclick="startTranscription()" disabled>
-                <img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Transcribe Audio
-            </button>
-            <div class="transcript-output" id="transcript-output" style="min-height:60px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:var(--radius-md); padding:12px; font-size:0.82rem; color:var(--text-secondary); white-space:pre-wrap; max-height:300px; overflow-y:auto; margin-bottom:12px;">
-                <em style="opacity:0.4">Il testo trascritto apparirà qui in tempo reale...</em>
-            </div>
-            <div class="mt-12 flex gap-8" id="stt-actions" style="display:flex; gap:8px;">
-                <button class="btn btn-sm btn-secondary" onclick="copyTranscript()" id="btn-copy-transcript" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Copy</button>
-                <button class="btn btn-sm btn-primary" onclick="downloadTranscript()" id="btn-download-transcript" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">Download File</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- --- PRECISION SPEECH EDITOR PANEL --- -->
-    <div class="panel" id="speech-editor-panel">
-        <div class="card">
-            <div class="card-header">
-                <div>
-                    <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/filler.svg" alt="" aria-hidden="true"></span> Precision Speech Editor</h2>
-                    <p class="text-sm text-muted">Review every proposed edit before a new audio file is rendered. The original recording is preserved.</p>
+                <div class="tool-field">
+                    <label for="stt-filename">Output filename</label>
+                    <input type="text" id="stt-filename" class="setting-input" placeholder="transcript">
                 </div>
-            </div>
-            <div class="requires-file-notice" id="speech-editor-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
-            <div class="speech-editor-controls">
-                <div class="tts-control-group">
-                    <label for="speech-editor-language">Language</label>
-                    <select id="speech-editor-language">
-                        <option value="">Auto-detect</option>
-                        <option value="it">Italian</option>
-                        <option value="en">English</option>
-                    </select>
+                <button class="btn btn-primary" id="btn-transcribe" type="button" onclick="startTranscription()" disabled>
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/workspace-transcribe.svg" alt="">Transcribe audio
+                </button>
+            </aside>
+            <section class="tool-surface tool-transcript" aria-labelledby="transcript-reader-title">
+                <h2 class="tool-section-title" id="transcript-reader-title">Transcript</h2>
+                <div class="transcript-output" id="transcript-output">
+                    <p class="tool-placeholder">Your transcript appears here as it is generated.</p>
                 </div>
-                <div class="tts-control-group">
-                    <label for="speech-editor-fillers">Additional filler words</label>
-                    <input class="text-input" id="speech-editor-fillers" type="text" placeholder="comma-separated">
+                <div class="tool-actions" id="stt-actions">
+                    <button class="btn btn-secondary" type="button" onclick="copyTranscript()" id="btn-copy-transcript" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="">Copy</button>
+                    <button class="btn btn-secondary" type="button" onclick="downloadTranscript()" id="btn-download-transcript" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="">Download transcript</button>
                 </div>
-            </div>
-            <button class="btn btn-primary w-full mb-16" id="btn-speech-editor-analyze" onclick="runSpeechEditor()" disabled>
-                <img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Analyze speech edits
-            </button>
-            <div id="speech-editor-results" style="display:none">
-                <div class="speech-editor-summary" id="speech-editor-summary"></div>
-                <div class="speech-editor-toolbar">
-                    <button class="btn btn-sm btn-secondary" type="button" onclick="applySpeechEditBulk('high-confidence')">Apply high confidence</button>
-                    <button class="btn btn-sm btn-secondary" type="button" onclick="applySpeechEditBulk('keep-all')">Keep all</button>
-                    <button class="btn btn-sm btn-ghost" id="btn-speech-undo" type="button" onclick="navigateSpeechHistory('undo')" disabled>Undo</button>
-                    <button class="btn btn-sm btn-ghost" id="btn-speech-redo" type="button" onclick="navigateSpeechHistory('redo')" disabled>Redo</button>
-                    <button class="btn btn-sm btn-ghost" type="button" onclick="exportSpeechEdl('json')">Export JSON</button>
-                    <button class="btn btn-sm btn-ghost" type="button" onclick="exportSpeechEdl('csv')">Export CSV</button>
-                    <span id="speech-editor-revision">Revision -</span>
-                </div>
-                <section class="speech-transcript-workbench" aria-labelledby="speech-transcript-heading">
-                    <div class="speech-transcript-heading">
-                        <div>
-                            <strong id="speech-transcript-heading">Transcript-linked edit</strong>
-                            <span>Select a first and last word. The range becomes a reviewable proposal.</span>
-                        </div>
-                        <button class="btn btn-sm btn-ghost" type="button" onclick="clearTranscriptSelection()">Clear selection</button>
-                    </div>
-                    <div class="speech-transcript-words" id="speech-transcript-words" role="listbox" aria-label="Transcript words"></div>
-                    <div class="speech-transcript-selection">
-                        <span id="speech-transcript-selection-note">No transcript range selected.</span>
-                        <div>
-                            <button class="btn btn-sm btn-secondary" id="btn-manual-cut" type="button" onclick="createTranscriptEdit('cut')" disabled>Create cut proposal</button>
-                            <button class="btn btn-sm btn-secondary" id="btn-manual-mute" type="button" onclick="createTranscriptEdit('mute')" disabled>Create mute proposal</button>
-                        </div>
-                    </div>
-                </section>
-                <audio id="speech-editor-preview" controls preload="none" class="speech-editor-preview"></audio>
-                <div class="speech-edit-list" id="speech-edit-list"></div>
-                <div class="speech-editor-render-row">
-                    <span id="speech-editor-render-note">Approve one or more candidates to render a new file.</span>
-                    <button class="btn btn-primary" id="btn-speech-editor-render" onclick="renderSpeechEditor()" disabled>
-                        <img class="icon-img btn-icon-svg" src="/static/img/icons/save.svg" alt="" aria-hidden="true">Render approved edits
-                    </button>
-                </div>
-            </div>
+            </section>
         </div>
     </div>
 
@@ -842,127 +1335,144 @@ Start with a description. Refine styles, instruments and arrangement as needed."
 
     <!-- --- TEXT-TO-SPEECH PANEL --- -->
     <div class="panel" id="tts-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/tts.svg" alt="" aria-hidden="true"></span> Text to Speech</h2>
-            </div>
-            <p class="text-sm text-muted mb-16" id="tts-engine-description">Generate natural speech with the voices available in this distribution.</p>
-            <textarea id="tts-text" rows="5" placeholder="Enter text to be spoken..."></textarea>
+        <div class="speech-studio">
+            <header class="speech-header">
+                <h1><img src="/static/img/icons/tts.svg" alt="" aria-hidden="true">Text to Speech</h1>
+                <p>Write a script, choose a voice, and listen to the recording.</p>
+            </header>
 
-            <!-- Expressive Mode Toggle -->
-            <div class="mt-12 expressive-mode-control">
-                <label class="toggle" style="flex-shrink:0">
-                    <input type="checkbox" id="tts-expressive" aria-label="Expressive mode" onchange="toggleExpressiveMode(this.checked)">
-                    <span class="toggle-slider"></span>
-                </label>
-                <div style="flex:1">
-                    <div style="font-weight:600; font-size:0.85rem; color:var(--text-primary)"><img class="icon-img inline-icon" src="/static/img/icons/enhance.svg" alt="" aria-hidden="true">Expressive Mode <span class="badge" style="font-size:0.65rem; background:rgba(168,85,247,0.2); color:var(--accent-primary); margin-left:6px">Ollama/Gemma</span></div>
-                    <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px">Gemma rewrites your text with natural pauses, filler words, and conversational rhythm before synthesis</div>
-                </div>
-                <button class="btn btn-sm btn-secondary" id="btn-preview-rewrite" onclick="previewRewrite()" style="display:none; white-space:nowrap"><img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Preview</button>
-            </div>
+            <div class="speech-workbench">
+                <section class="speech-editor" aria-labelledby="tts-script-label">
+                    <h2><label for="tts-text" id="tts-script-label">Script</label></h2>
+                    <textarea id="tts-text" rows="9" placeholder="Write or paste your script"></textarea>
+                    <div id="tts-rewrite-preview" class="speech-rewrite" style="display:none">
+                        <h3 id="tts-rewrite-label">Expressive rewrite</h3>
+                        <p id="tts-rewrite-help">Review or edit this version before generating speech.</p>
+                        <div id="tts-rewrite-text" role="textbox" aria-labelledby="tts-rewrite-label"
+                             aria-describedby="tts-rewrite-help" aria-multiline="true" contenteditable="true"></div>
+                    </div>
+                </section>
 
-            <!-- Gemma Rewrite Preview (hidden by default) -->
-            <div id="tts-rewrite-preview" class="mt-8" style="display:none">
-                <div style="font-size:0.72rem; font-weight:600; color:var(--accent-primary); margin-bottom:4px"><img class="icon-img inline-icon" src="/static/img/icons/enhance.svg" alt="" aria-hidden="true">Gemma Rewrite Preview:</div>
-                <div id="tts-rewrite-text" style="padding:10px 12px; background:rgba(168,85,247,0.05); border:1px solid rgba(168,85,247,0.15); border-radius:var(--radius-sm); font-size:0.8rem; color:var(--text-secondary); line-height:1.5; white-space:pre-wrap; max-height:150px; overflow-y:auto; cursor:text" contenteditable="true"></div>
-                <div style="font-size:0.65rem; color:var(--text-muted); margin-top:4px">You can edit the rewritten text before generating speech</div>
-            </div>
+                <aside class="speech-delivery" aria-labelledby="tts-delivery-title">
+                    <div class="speech-delivery-art" aria-hidden="true"></div>
+                    <div class="speech-delivery-settings">
+                        <h2 id="tts-delivery-title">Voice &amp; Delivery</h2>
+                        <label class="speech-field" for="tts-voice">Voice</label>
+                        <select id="tts-voice" aria-describedby="tts-voice-status" onchange="handleTTSVoiceChange()" disabled>
+                            <option value="" disabled selected>Select a voice</option>
+                            <optgroup id="tts-personal-voices" label="My Voices (MakeMyVoice)">
+                                <option value="" disabled>Loading personal voices...</option>
+                            </optgroup>
+                            <optgroup id="tts-expressive-voices" label="Expressive voices · English and Italian" hidden></optgroup>
+                            <optgroup id="tts-system-voices" label="macOS voices (local)"></optgroup>
+                        </select>
+                        <p class="speech-voice-status speech-delivery-status" id="tts-voice-status" role="status">Checking voice availability…</p>
+                        <button type="button" class="speech-settings-link" id="tts-refresh-voices" onclick="loadTTSEngines()">Refresh voices</button>
+                        <div class="voice-pack-setup" data-voice-pack hidden></div>
+                        <label class="speech-field" for="tts-style">Style</label>
+                        <select id="tts-style">
+                            <option value="neutral">Neutral</option>
+                            <option value="expressive">Expressive</option>
+                            <option value="calm">Calm</option>
+                            <option value="energetic">Energetic</option>
+                        </select>
+                        <details class="speech-shaping">
+                            <summary>Speed, pitch &amp; warmth</summary>
+                            <div class="speech-shaping-controls">
+                                <div class="speech-range">
+                                    <label for="tts-speed">Speed</label>
+                                    <input type="range" min="50" max="200" value="100" id="tts-speed" oninput="this.nextElementSibling.textContent=this.value+'%'">
+                                    <output for="tts-speed" aria-live="off">100%</output>
+                                </div>
+                                <div class="speech-range">
+                                    <label for="tts-pitch">Pitch</label>
+                                    <input type="range" min="50" max="200" value="100" id="tts-pitch" oninput="this.nextElementSibling.textContent=this.value+'%'">
+                                    <output for="tts-pitch" aria-live="off">100%</output>
+                                </div>
+                                <div class="speech-range">
+                                    <label for="tts-warmth">Warmth</label>
+                                    <input type="range" min="0" max="100" value="50" id="tts-warmth" oninput="this.nextElementSibling.textContent=this.value+'%'">
+                                    <output for="tts-warmth" aria-live="off">50%</output>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </aside>
 
-            <div class="tts-controls mt-16">
-                <div class="tts-control-group">
-                    <label>Voice</label>
-                    <select id="tts-voice" onchange="handleTTSVoiceChange()">
-                        <optgroup id="tts-personal-voices" label="My Voices (MakeMyVoice)">
-                            <option value="" disabled>Loading personal voices...</option>
-                        </optgroup>
-                        <optgroup label="Italiano (Edge Neural)">
-                            <option value="it_giuseppe" selected>Giuseppe - Maschile, espressivo</option>
-                            <option value="it_isabella">Isabella - Femminile, chiara</option>
-                            <option value="it_diego">Diego - Maschile, profondo</option>
-                            <option value="it_elsa">Elsa - Femminile, naturale</option>
-                        </optgroup>
-                        <optgroup label="English (Edge Neural)">
-                            <option value="en_aria">Aria - Female, versatile</option>
-                            <option value="en_guy">Guy - Male, narrator</option>
-                            <option value="en_davis">Davis - Male, warm</option>
-                            <option value="en_jenny">Jenny - Female, clear</option>
-                            <option value="en_sonia">Sonia - Female, British</option>
-                        </optgroup>
-                        <optgroup label="Other (Edge Neural)">
-                            <option value="es_elena">Elena - Espanol</option>
-                            <option value="fr_denise">Denise - Francais</option>
-                            <option value="de_katja">Katja - Deutsch</option>
-                        </optgroup>
-                        <optgroup id="tts-kokoro-voices" label="Kokoro Local (AI, English)">
-                            <option value="kokoro_heart">Heart - Warm, emotional</option>
-                            <option value="kokoro_bella">Bella - Clear, articulate</option>
-                            <option value="kokoro_adam">Adam - Deep, authoritative</option>
-                            <option value="kokoro_emma">Emma - British, sophisticated</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div class="tts-control-group">
-                    <label>Style</label>
-                    <select id="tts-style">
-                        <option value="neutral">Neutral</option>
-                        <option value="expressive">Expressive</option>
-                        <option value="calm">Calm</option>
-                        <option value="energetic">Energetic</option>
-                    </select>
-                </div>
-                <div class="tts-control-group" id="voice-clone-control">
-                    <label>Personal Voice Studio</label>
-                    <input type="text" id="clone-profile-name" maxlength="80" placeholder="Voice name (for example: FabFab)">
-                    <button class="btn btn-sm btn-secondary w-full" onclick="document.getElementById('clone-file-input').click()">
-                        <img class="icon-img btn-icon-svg" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">Create / Improve from Sample
+                <div class="speech-actions">
+                    <button type="button" class="btn btn-primary" onclick="synthesizeSpeech()" id="btn-generate-speech" disabled>
+                        <img class="icon-img btn-icon-svg" src="/static/img/icons/tts.svg" alt="" aria-hidden="true">Generate Speech
                     </button>
-                    <input type="file" id="clone-file-input" accept=".mp3,.wav,.m4a" hidden onchange="handleCloneUpload(event)">
-                    <textarea id="clone-transcript" rows="2" placeholder="Exact sample transcript (optional; generated locally when omitted)"></textarea>
-                    <label class="voice-consent"><input type="checkbox" id="clone-consent"> I confirm I own or have permission to clone this voice</label>
-                    <button class="btn btn-sm btn-secondary w-full" id="btn-save-voice-settings" style="display:none" onclick="saveVoiceProfileSettings()">Save settings for this voice</button>
-                    <span class="text-xs text-muted" id="clone-status">Create a named reusable voice, or select one above to improve it.</span>
-                    <span class="text-xs text-muted" id="clone-engine-status"></span>
                 </div>
+
+                <section id="tts-result" class="speech-result" style="display:none" aria-labelledby="tts-result-title">
+                    <h2 id="tts-result-title">Generated speech</h2>
+                    <audio id="tts-audio" controls aria-label="Generated speech"></audio>
+                    <p id="tts-engine-badge" style="display:none" aria-live="polite"></p>
+                </section>
             </div>
-            <div class="mt-12">
-                <div class="slider-group">
-                    <span class="slider-label">Speed</span>
-                    <input type="range" aria-label="Speech speed" min="50" max="200" value="100" id="tts-speed" oninput="this.nextElementSibling.textContent=this.value+'%'">
-                    <span class="slider-value">100%</span>
-                </div>
-                <div class="slider-group">
-                    <span class="slider-label">Pitch</span>
-                    <input type="range" aria-label="Speech pitch" min="50" max="200" value="100" id="tts-pitch" oninput="this.nextElementSibling.textContent=this.value+'%'">
-                    <span class="slider-value">100%</span>
-                </div>
-                <div class="slider-group">
-                    <span class="slider-label">Warmth</span>
-                    <input type="range" aria-label="Speech warmth" min="0" max="100" value="50" id="tts-warmth" oninput="this.nextElementSibling.textContent=this.value+'%'">
-                    <span class="slider-value">50%</span>
-                </div>
-            </div>
-            <div class="mt-16">
-                <button class="btn btn-lg btn-primary w-full" onclick="synthesizeSpeech()" id="btn-generate-speech"><img class="icon-img btn-icon-svg" src="/static/img/icons/tts.svg" alt="" aria-hidden="true">Generate Speech</button>
-            </div>
-            <div id="tts-result" class="mt-16" style="display:none">
-                <audio id="tts-audio" controls class="w-full" style="border-radius:var(--radius-md)"></audio>
-                <div id="tts-engine-badge" class="mt-8" style="display:none; font-size:0.7rem; color:var(--text-muted)"></div>
+
+            <div class="speech-tools">
+                <details class="speech-tool">
+                    <summary><img src="/static/img/icons/enhance.svg" alt="" aria-hidden="true">Expressive rewrite</summary>
+                    <div class="speech-tool-content expressive-mode-control">
+                        <label class="speech-checkbox">
+                            <input type="checkbox" id="tts-expressive" onchange="toggleExpressiveMode(this.checked)">
+                            <span>Use Gemma through Ollama to rewrite the script for conversational delivery.</span>
+                        </label>
+                        <button type="button" class="btn btn-secondary" id="btn-preview-rewrite" onclick="previewRewrite()" style="display:none">
+                            <img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Preview
+                        </button>
+                    </div>
+                </details>
+
+                <details class="speech-tool" id="voice-clone-control">
+                    <summary><img src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">Personal Voice Studio</summary>
+                    <div class="speech-tool-content speech-personal">
+                        <p id="clone-engine-status" class="speech-voice-status"></p>
+                        <p id="clone-status" class="speech-voice-status" aria-live="polite">Create a named reusable voice, or select one above to improve it.</p>
+                        <div class="speech-personal-fields">
+                            <div>
+                                <label class="speech-field" for="clone-profile-name">Voice name</label>
+                                <input type="text" id="clone-profile-name" maxlength="80" placeholder="Name this voice">
+                            </div>
+                            <div>
+                                <label class="speech-field" for="clone-transcript">Sample transcript (optional)</label>
+                                <textarea id="clone-transcript" rows="2" placeholder="Leave blank to transcribe locally"></textarea>
+                            </div>
+                        </div>
+                        <label class="speech-checkbox">
+                            <input type="checkbox" id="clone-consent">
+                            <span>I confirm I own or have permission to clone this voice.</span>
+                        </label>
+                        <div class="speech-personal-actions">
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('clone-file-input').click()">
+                                <img class="icon-img btn-icon-svg" src="/static/img/icons/studio-mic.svg" alt="" aria-hidden="true">Create or improve from sample
+                            </button>
+                            <input type="file" id="clone-file-input" accept=".mp3,.wav,.m4a" hidden onchange="handleCloneUpload(event)">
+                            <button type="button" class="btn btn-secondary" id="btn-save-voice-settings" style="display:none" onclick="saveVoiceProfileSettings()">Save settings for this voice</button>
+                        </div>
+                    </div>
+                </details>
             </div>
         </div>
     </div>
 
     <!-- --- SPEAKER DIARIZATION PANEL --- -->
-    <div class="panel" id="diarize-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/speakers.svg" alt="" aria-hidden="true"></span> Speaker Diarization</h2>
-            </div>
-            <div class="requires-file-notice" id="diarize-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
-            <p class="text-sm text-muted mb-16">Identify who speaks when. Optimized for Apple M3 MAX via MPS.</p>
-            <div class="tts-controls mb-16">
-                <div class="tts-control-group">
-                    <label>Expected speakers</label>
+    <div class="panel" id="diarize-panel" aria-labelledby="diarize-title">
+        <header class="tool-heading">
+            <div class="tool-heading-icon"><img src="/static/img/icons/speakers.svg" alt=""></div>
+            <div><h1 id="diarize-title">Speaker diarization</h1><p>See when each speaker talks in the recording.</p></div>
+        </header>
+        <div class="requires-file-notice tool-source-notice" id="diarize-no-file">
+            <img src="/static/img/icons/workspace-import.svg" alt="">
+            <span>Open a recording in Workspace to analyze its speakers.</span>
+            <button class="btn btn-secondary" type="button" onclick="switchPanel('upload-panel', document.querySelector('[data-panel=upload-panel]'))">Open Workspace</button>
+        </div>
+        <div class="tool-surface">
+            <div class="tool-controls">
+                <div class="tool-field">
+                    <label for="diarize-speakers">Expected speakers</label>
                     <select id="diarize-speakers">
                         <option value="0">Auto-detect</option>
                         <option value="2">2 speakers</option>
@@ -971,12 +1481,12 @@ Start with a description. Refine styles, instruments and arrangement as needed."
                         <option value="5">5+ speakers</option>
                     </select>
                 </div>
+                <button class="btn btn-primary" id="btn-diarize" type="button" onclick="startDiarization()" disabled>
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/speakers.svg" alt="">Analyze speakers
+                </button>
             </div>
-            <button class="btn btn-primary w-full mb-16" id="btn-diarize" onclick="startDiarization()" disabled>
-                <img class="icon-img btn-icon-svg" src="/static/img/icons/speakers.svg" alt="" aria-hidden="true">Analyze Speakers
-            </button>
-            <div id="diarize-results" style="display:none">
-                <div class="card-title mb-12">Speaker Timeline</div>
+            <div id="diarize-results" class="tool-result" style="display:none">
+                <h2 class="tool-section-title">Speaker timeline</h2>
                 <div class="diarization-bar" id="diarization-bar"></div>
                 <div class="mt-16" id="speaker-stats"></div>
             </div>
@@ -984,25 +1494,31 @@ Start with a description. Refine styles, instruments and arrangement as needed."
     </div>
 
     <!-- --- SMART MODE PANEL --- -->
-    <div class="panel" id="smart-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true"></span> Smart Enhance 2.0</h2>
+    <div class="panel" id="smart-panel" aria-labelledby="smart-title">
+        <header class="tool-heading">
+            <div class="tool-heading-icon"><img src="/static/img/icons/smart-ai.svg" alt=""></div>
+            <div><h1 id="smart-title">Smart Enhance</h1><p>Check level, noise, clipping and bandwidth locally, then review suggested settings.</p></div>
+        </header>
+        <div class="requires-file-notice tool-source-notice" id="smart-no-file">
+            <img src="/static/img/icons/workspace-import.svg" alt="">
+            <span>Open a recording in Workspace to analyze it.</span>
+            <button class="btn btn-secondary" type="button" onclick="switchPanel('upload-panel', document.querySelector('[data-panel=upload-panel]'))">Open Workspace</button>
+        </div>
+        <div class="tool-surface">
+            <div class="tool-controls">
+                <div class="tool-field">
+                    <label for="smart-profile">Processing profile</label>
+                    <select id="smart-profile" onchange="runSmartMode(this.value)">
+                        <option value="conservative">Conservative · minimal intervention</option>
+                        <option value="balanced" selected>Balanced · recommended</option>
+                        <option value="maximum">Maximum · review with A/B</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="btn-smart-analyze" type="button" onclick="runSmartMode()" disabled>
+                    <img class="icon-img btn-icon-svg" src="/static/img/icons/smart-ai.svg" alt="">Analyze recording
+                </button>
             </div>
-            <div class="requires-file-notice" id="smart-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
-            <p class="text-sm text-muted mb-16">Private, deterministic analysis of level, noise, clipping, silence, hum and bandwidth. Audio and diagnostics remain on this Mac.</p>
-            <div class="smart-profile-control mb-16">
-                <label for="smart-profile">Processing profile</label>
-                <select id="smart-profile" onchange="runSmartMode(this.value)">
-                    <option value="conservative">Conservative - minimal intervention</option>
-                    <option value="balanced" selected>Balanced - recommended</option>
-                    <option value="maximum">Maximum - review with A/B</option>
-                </select>
-            </div>
-            <button class="btn btn-primary w-full mb-16" id="btn-smart-analyze" onclick="runSmartMode()" disabled>
-                <img class="icon-img btn-icon-svg" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">Analyze locally
-            </button>
-            <div id="smart-results" style="display:none">
+            <div id="smart-results" class="tool-result" style="display:none">
                 <section class="smart-analysis-region mt-16" aria-labelledby="smart-analysis-title">
                     <h3 class="card-title mb-12" id="smart-analysis-title">Signal diagnosis</h3>
                     <div id="smart-analysis-content"></div>
@@ -1013,101 +1529,97 @@ Start with a description. Refine styles, instruments and arrangement as needed."
     </div>
 
     <!-- --- WATERMARK PANEL --- -->
-    <div class="panel" id="watermark-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/lock.svg" alt="" aria-hidden="true"></span> Audio Watermarking</h2>
-            </div>
-            <div class="requires-file-notice" id="watermark-no-file"><img class="icon-img notice-icon-svg" src="/static/img/icons/warning.svg" alt="" aria-hidden="true">Upload an audio file first from the "Upload & Process" panel</div>
-            <p class="text-sm text-muted mb-16">Embed an invisible watermark or detect existing watermarks.</p>
-            <div class="tts-controls mb-16">
-                <div class="tts-control-group">
-                    <label>Identifier (optional)</label>
-                    <input type="text" class="text-input" id="watermark-id" placeholder="e.g. episode-42, my-podcast">
+    <div class="panel" id="watermark-panel" aria-labelledby="watermark-title">
+        <header class="tool-heading">
+            <div class="tool-heading-icon"><img src="/static/img/icons/audio-watermark.svg" alt=""></div>
+            <div><h1 id="watermark-title">Audio watermark</h1><p>Embed or detect an identifier in the audio signal.</p></div>
+        </header>
+        <div class="requires-file-notice tool-source-notice" id="watermark-no-file">
+            <img src="/static/img/icons/workspace-import.svg" alt="">
+            <span>Open a recording in Workspace to work with its watermark.</span>
+            <button class="btn btn-secondary" type="button" onclick="switchPanel('upload-panel', document.querySelector('[data-panel=upload-panel]'))">Open Workspace</button>
+        </div>
+        <div class="tool-two-columns">
+            <section class="tool-surface" aria-labelledby="watermark-signal-title">
+                <h2 class="tool-section-title" id="watermark-signal-title">Audio signal</h2>
+                <div class="tool-field">
+                    <label for="watermark-id">Identifier <span class="tool-optional">(optional)</span></label>
+                    <input type="text" class="text-input" id="watermark-id" placeholder="e.g. episode-42">
                 </div>
-            </div>
-            <div class="flex gap-12">
-                <button class="btn btn-primary" id="btn-watermark" onclick="embedWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/lock.svg" alt="" aria-hidden="true">Embed Watermark</button>
-                <button class="btn btn-secondary" id="btn-detect-watermark" onclick="detectWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="" aria-hidden="true">Detect Watermark</button>
-            </div>
-            <div id="watermark-result" class="mt-16" style="display:none"></div>
+                <div class="tool-actions watermark-actions">
+                    <button class="btn btn-primary" id="btn-watermark" type="button" onclick="embedWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/audio-watermark.svg" alt="">Embed watermark</button>
+                    <button class="btn btn-secondary" id="btn-detect-watermark" type="button" onclick="detectWatermark()" disabled><img class="icon-img btn-icon-svg" src="/static/img/icons/search.svg" alt="">Detect watermark</button>
+                </div>
+                <div id="watermark-result" class="tool-result" style="display:none"></div>
+            </section>
+            <aside class="tool-surface tool-settings-rail" aria-labelledby="watermark-credentials-title">
+                <h2 class="tool-section-title" id="watermark-credentials-title"><img src="/static/img/icons/content-credentials.svg" alt="">C2PA Content Credentials</h2>
+                <p>Check the signed record of a file’s provenance and integrity.</p>
+                <button class="btn btn-secondary" id="watermark-credentials-shortcut" type="button" hidden>Open C2PA verifier</button>
+            </aside>
         </div>
     </div>
 
-    <!-- --- EDGE CLUSTER PANEL --- -->
-    <div class="panel" id="cluster-panel">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><span class="icon"><img class="icon-img" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true"></span> Edge Computing Cluster</h2>
-                <button class="btn btn-sm btn-secondary" id="cluster-enable-button" onclick="refreshCluster()"><img class="icon-img btn-icon-svg" src="/static/img/icons/power.svg" alt="" aria-hidden="true">Enable &amp; discover</button>
-            </div>
-            <p class="text-sm text-muted mb-16">Connected devices that contribute compute power for distributed audio processing. Workers auto-announce via UDP on port 9999.</p>
-
-            <!-- Master Node -->
-            <div class="cluster-section-title"><img class="icon-img section-title-icon" src="/static/img/icons/desktop-node.svg" alt="" aria-hidden="true">MASTER NODE</div>
-            <div class="cluster-node master-node" id="master-node-card">
-                <div class="cluster-node-header">
-                    <div class="cluster-node-status online"></div>
-                    <div class="cluster-node-name" id="master-node-name">Mac (M3 MAX)</div>
-                    <span class="cluster-node-role">MASTER</span>
+    <!-- --- CONNECTIONS PANEL --- -->
+    <div class="panel" id="cluster-panel" aria-labelledby="connections-title">
+        <header class="connections-heading">
+            <h1 id="connections-title">Connections</h1>
+            <p>Connect a companion to transfer audio or contribute Voice EQ processing over your local network.</p>
+        </header>
+        <div class="connections-layout">
+            <section class="connection-card connection-pairing" id="companion-controls" aria-labelledby="connection-pair-title"></section>
+            <section class="connection-card connection-mac" aria-labelledby="connection-mac-title">
+                <div class="connection-card-heading">
+                    <img class="icon-img" src="/static/img/icons/desktop-node.svg" alt="">
+                    <h2 id="connection-mac-title">This Mac</h2>
                 </div>
-                <div class="cluster-node-stats">
-                    <div class="cluster-stat"><span class="cluster-stat-label">Chip</span><span class="cluster-stat-value" id="master-chip">-</span></div>
-                    <div class="cluster-stat"><span class="cluster-stat-label">Role</span><span class="cluster-stat-value">Orchestrator + ML Models</span></div>
-                    <div class="cluster-stat"><span class="cluster-stat-label">Filters</span><span class="cluster-stat-value">16 (all)</span></div>
-                </div>
-                <div class="cluster-benchmark">
-                    <div class="cluster-benchmark-label">Benchmark Power</div>
-                    <div class="cluster-benchmark-bar"><div class="cluster-benchmark-fill master" style="width:100%"></div></div>
-                    <span class="cluster-benchmark-value">Master - Full Pipeline</span>
-                </div>
-            </div>
-
-            <!-- Edge Workers -->
-            <div class="cluster-section-title mt-20"><img class="icon-img section-title-icon" src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">EDGE WORKERS <span class="text-muted" id="cluster-worker-count">(0 connected)</span></div>
-            <div id="cluster-workers-list">
-                <div class="cluster-empty" id="cluster-empty">
-                    <div class="cluster-empty-icon"><img class="icon-img" src="/static/img/icons/cluster.svg" alt="" aria-hidden="true"></div>
-                    <div class="cluster-empty-text">No edge workers connected</div>
-                    <div class="cluster-empty-hint">Install the AudioEnhancerMAX Worker app on your Android phone and connect to the same Wi-Fi network.</div>
-                </div>
-            </div>
-
-            <!-- Add Worker Manually -->
-            <div class="cluster-add-worker mt-16">
-                <div class="sidebar-section-title">ADD WORKER MANUALLY</div>
-                <div class="flex gap-8 mt-8">
-                    <input type="text" class="text-input" id="add-worker-ip" placeholder="IP Address (e.g. 192.168.1.100)" style="flex:1">
-                    <input type="number" class="text-input" id="add-worker-port" placeholder="Port" value="8877" style="width:80px">
-                    <button class="btn btn-sm btn-primary" onclick="addWorkerManually()">+ Add</button>
-                </div>
-            </div>
+                <p class="connection-copy">Runs the audio pipeline and supported local models.</p>
+                <dl class="connection-mac-facts">
+                    <div>
+                        <dt>Chip</dt>
+                        <dd id="connection-mac-chip">Not detected yet</dd>
+                    </div>
+                    <div>
+                        <dt>PyTorch Metal (MPS)</dt>
+                        <dd id="connection-mac-runtime">Checking availability…</dd>
+                    </div>
+                </dl>
+            </section>
         </div>
+        <details class="connection-card connection-legacy">
+            <summary>
+                <span>Advanced · legacy workers</span>
+                <span class="connection-worker-count" id="cluster-worker-count">0 connected</span>
+            </summary>
+            <div class="connection-legacy-body">
+                <p class="connection-copy">Manage compatible legacy DSP workers on the local network. Pair companion apps above.</p>
+                <div class="connection-discovery">
+                    <button class="btn btn-sm btn-secondary" id="cluster-enable-button" type="button" onclick="refreshCluster()">Enable discovery</button>
+                    <p id="cluster-discovery-status" role="status">Checking discovery…</p>
+                </div>
+                <div id="cluster-workers-list">
+                    <p class="cluster-empty" id="cluster-empty">No legacy workers registered.</p>
+                </div>
+                <form class="connection-worker-form" onsubmit="event.preventDefault(); addWorkerManually()">
+                    <label for="add-worker-ip">Worker address
+                        <input type="text" class="text-input" id="add-worker-ip" placeholder="192.168.1.100" required>
+                    </label>
+                    <label for="add-worker-port">Port
+                        <input type="number" class="text-input" id="add-worker-port" value="8877" min="1" max="65535" required>
+                    </label>
+                    <button class="btn btn-sm btn-secondary" type="submit">Add worker</button>
+                </form>
+            </div>
+        </details>
     </div>
 
 
-
-<!-- --- Global Activity Bar --- -->
-<div class="activity-bar" id="activity-bar">
-    <div class="activity-bar-spinner"></div>
-    <span class="activity-bar-text" id="activity-bar-text">Processing...</span>
-    <div class="activity-bar-progress">
-        <div class="activity-bar-progress-fill" id="activity-bar-fill" style="width:0%"></div>
-    </div>
-    <span class="activity-bar-time" id="activity-bar-time">
-        <span id="activity-elapsed">0:00</span>
-        <span class="activity-bar-eta" id="activity-bar-eta" style="display:none"></span>
-    </span>
-</div>
-
-<!-- --- Toast Container --- -->
-<div class="toast-container" id="toast-container"></div>
 
 <!-- =============== SETTINGS PANEL =============== -->
 <div class="panel" id="settings-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/settings.svg" alt="" aria-hidden="true">Settings</h2>
-        <p class="panel-subtitle">Configure AudioEnhancerMAX v3.9.0</p>
+        <p class="panel-subtitle">Configure AudioEnhancerMAX</p>
     </div>
     <div class="panel-body settings-grid">
         <div class="settings-group">
@@ -1177,7 +1689,16 @@ Start with a description. Refine styles, instruments and arrangement as needed."
         </div>
 
         <div class="settings-group">
-            <h3><img class="icon-img heading-icon" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">AI Engine</h3>
+            <h3><img class="icon-img heading-icon" src="/static/img/icons/smart-ai.svg" alt="" aria-hidden="true">AI and models</h3>
+            <div class="setting-item">
+                <div>
+                    <strong>Optional local writing assistant</strong>
+                    <p class="setting-supporting-text" id="local-model-status" role="status">Checking for Ollama and Gemma…</p>
+                    <p class="setting-supporting-text">Audio cleanup works independently. For local writing suggestions, install and open Ollama, then run <code>ollama pull gemma4:e2b</code>.</p>
+                    <p class="setting-supporting-text"><a href="https://ollama.com/download/mac">Download Ollama for Mac</a> · <a href="https://ollama.com/library/gemma4:e2b">Gemma 4 model details</a></p>
+                </div>
+                <button class="btn btn-secondary" type="button" id="local-model-refresh">Check again</button>
+            </div>
             <div class="setting-item">
                 <label>Whisper Model Size</label>
                 <select id="setting-whisper-model" class="setting-select">
@@ -1197,7 +1718,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
             <h3><img class="icon-img heading-icon" src="/static/img/icons/lock.svg" alt="" aria-hidden="true">Privacy &amp; Offline</h3>
             <p class="setting-supporting-text">These boundaries are persisted locally and enforced by the server.</p>
             <div class="setting-item">
-                <div><label>Optional external services</label><span class="setting-supporting-text">Allows Edge Neural TTS. Audio processing remains local unless LAN workers are separately enabled.</span></div>
+                <div><label>Optional external services</label><span class="setting-supporting-text">Controls optional external integrations. Text to Speech uses voices on this Mac.</span></div>
                 <label class="setting-toggle"><input type="checkbox" id="setting-external-services" aria-label="Allow optional external services"><span class="toggle-slider"></span></label>
             </div>
             <div class="setting-item">
@@ -1229,14 +1750,14 @@ Start with a description. Refine styles, instruments and arrangement as needed."
 <div class="panel" id="about-panel">
     <div class="panel-header">
         <h2><img class="icon-img heading-icon" src="/static/img/icons/info.svg" alt="" aria-hidden="true">About AudioEnhancerMAX</h2>
-        <p class="panel-subtitle">v3.9.0 - Local-first, reviewable audio production</p>
+        <p class="panel-subtitle">Local-first, reviewable audio production</p>
     </div>
     <div class="panel-body about-content">
         <div class="about-hero">
             <div class="about-logo"><img src="/static/img/audioenhancermax-logo.png" alt="AudioEnhancerMAX logo"></div>
             <div class="about-identity">
                 <span class="about-kicker">Open source audio workspace</span>
-                <h3>AudioEnhancerMAX <span class="about-version">v3.9.0</span></h3>
+                <h3>AudioEnhancerMAX <span class="about-version" id="about-release-identity" hidden></span></h3>
                 <p>Audio processing, transcription, monitoring and trusted-LAN edge workers in one local-first suite.</p>
                 <p class="about-by">Created and maintained by <strong>Fabrizio Degni</strong></p>
             </div>
@@ -1254,11 +1775,11 @@ Start with a description. Refine styles, instruments and arrangement as needed."
         </div>
 
         <div class="about-resource-grid" aria-label="Official project resources">
-            <a class="about-resource" href="#about-privacy">
+            <a class="about-resource" href="https://www.fabriziodegni.com/AudioEnhancerMAX/privacy.html" target="_blank" rel="noopener noreferrer">
                 <img src="/static/img/icons/lock.svg" alt="" aria-hidden="true">
                 <span><strong>Privacy and data flow</strong><small>What stays local and when the network is used</small></span>
             </a>
-            <a class="about-resource" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank" rel="noopener noreferrer">
+            <a class="about-resource" href="https://www.fabriziodegni.com/AudioEnhancerMAX/support.html" target="_blank" rel="noopener noreferrer">
                 <img src="/static/img/icons/info.svg" alt="" aria-hidden="true">
                 <span><strong>Support and bug reports</strong><small>Open a public, traceable GitHub issue</small></span>
             </a>
@@ -1275,31 +1796,26 @@ Start with a description. Refine styles, instruments and arrangement as needed."
         <div class="about-section">
             <div class="about-section-heading">
                 <div>
-                    <span class="about-kicker">Current release</span>
-                    <h3>What's new in v3.7</h3>
+                    <h3>Release highlights</h3>
                 </div>
-                <a class="about-text-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Full changelog</a>
+                <a class="about-text-link" href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank" rel="noopener noreferrer">Release notes</a>
             </div>
             <div class="about-release-grid">
-                <article class="about-release-item">
-                    <span class="changelog-tag new">SMART ENHANCE 2</span>
-                    <h4>Measured, deterministic choices</h4>
-                    <p>Local diagnosis explains common recording risks and selects Conservative, Balanced or Maximum settings without handing DSP control to a language model.</p>
+                <article class="about-release-item" id="about-content-credentials" hidden>
+                    <h4>C2PA Content Credentials</h4>
+                    <p>Inspect embedded credentials locally or export signed WAV, MP3 and FLAC copies with a configured signing identity.</p>
                 </article>
                 <article class="about-release-item">
-                    <span class="changelog-tag new">PRECISION EDITOR</span>
                     <h4>Reviewable speech edits</h4>
                     <p>Transcript-linked cut and mute decisions remain reversible with preview, persisted undo/redo and EDL export while the source stays untouched.</p>
                 </article>
                 <article class="about-release-item">
-                    <span class="changelog-tag improved">DELIVERY</span>
-                    <h4>Five explicit output profiles</h4>
-                    <p>Podcast, video, audiobook, lossless archive and source-quality master profiles make format and loudness choices visible and auditable.</p>
+                    <h4>Music brief</h4>
+                    <p>Create structured music directions and export them as text or JSON.</p>
                 </article>
                 <article class="about-release-item">
-                    <span class="changelog-tag improved">PROOF LEDGER</span>
-                    <h4>Reports and privacy boundaries</h4>
-                    <p>Per-job reports disclose engines, options, warnings and privacy state; external, Ollama and trusted-LAN permissions remain independent.</p>
+                    <h4>Processing reports tied to revisions</h4>
+                    <p>Download the report for the exported revision and compare its SHA-256 with the fingerprint in the signed C2PA manifest.</p>
                 </article>
             </div>
         </div>
@@ -1308,29 +1824,28 @@ Start with a description. Refine styles, instruments and arrangement as needed."
             <div class="about-section-heading">
                 <div>
                     <span class="about-kicker">Companion apps</span>
-                    <h3>Extend processing across trusted devices</h3>
+                    <h3>Android and iOS companions</h3>
                 </div>
             </div>
             <div class="about-companion-grid">
                 <article class="about-companion available">
                     <div class="about-companion-head">
                         <img src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">
-                        <div><h4>Android Worker</h4><span>v1.2.0 available</span></div>
+                        <div><h4>Android Companion</h4><span>BETA APK</span></div>
                     </div>
-                    <p>Pairs an Android 8.0 or later device on the same trusted Wi-Fi network and exposes supported DSP work to the desktop cluster.</p>
-                    <p class="about-disclosure">Current distribution: debug APK for manual installation. Review Android security prompts before installing.</p>
+                    <p>Import audio by format, review an edit on the phone and send it to a paired Mac over Wi-Fi.</p>
+                    <p class="about-disclosure">See the <a class="about-text-link" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer">companion guide</a> for requirements and installation.</p>
                     <div class="about-actions">
-                        <a class="btn btn-sm btn-primary" href="https://raw.githubusercontent.com/sev7enITA/AudioEnhancerMAX/main/releases/AudioEnhancerMAX-Worker-v1.2.0-debug.apk" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="" aria-hidden="true">Download APK</a>
-                        <a class="btn btn-sm btn-secondary" href="https://github.com/sev7enITA/AudioEnhancerMAX/blob/main/android-worker/README.md" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">Setup guide</a>
+                        <a class="btn btn-sm btn-primary" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer"><img class="icon-img btn-icon-svg" src="/static/img/icons/download.svg" alt="" aria-hidden="true">Get Android Companion</a>
                     </div>
                 </article>
                 <article class="about-companion planned">
                     <div class="about-companion-head">
                         <img src="/static/img/icons/edge-device.svg" alt="" aria-hidden="true">
-                        <div><h4>iOS Companion</h4><span>Coming soon</span></div>
+                        <div><h4>iOS Companion</h4><span>Source available</span></div>
                     </div>
-                    <p>An iPhone and iPad companion is under consideration. No public iOS build or release date is currently available.</p>
-                    <a class="about-text-link" href="/roadmap.html" target="_blank" rel="noopener noreferrer">Follow the community roadmap</a>
+                    <p>Import, trim and review audio on iPhone or iPad, then send it to a paired Mac. The iOS companion is available as source code.</p>
+                    <a class="about-text-link" href="https://www.fabriziodegni.com/AudioEnhancerMAX/companion.html#availability" target="_blank" rel="noopener noreferrer">Companion availability</a>
                 </article>
             </div>
         </div>
@@ -1351,7 +1866,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
                 <article>
                     <img src="/static/img/icons/external-flow.svg" alt="" aria-hidden="true">
                     <h4>Network use is contextual</h4>
-                    <p>Text leaves the device only when an online TTS option is selected. Audio chunks are sent across the LAN only when you connect and use a trusted edge worker.</p>
+                    <p>Online speech services and C2PA timestamping use the network when selected. Companion transfers and optional edge processing use the local network after you enable them.</p>
                 </article>
                 <article>
                     <img src="/static/img/icons/file-report.svg" alt="" aria-hidden="true">
@@ -1403,6 +1918,23 @@ Start with a description. Refine styles, instruments and arrangement as needed."
 
 </main>
 
+<!-- --- Global Activity Bar --- -->
+<div class="activity-bar" id="activity-bar">
+    <div class="activity-bar-spinner"></div>
+    <span class="activity-bar-text" id="activity-bar-text">Processing...</span>
+    <div class="activity-bar-progress">
+        <div class="activity-bar-progress-fill" id="activity-bar-fill" style="width:0%"></div>
+    </div>
+    <span class="activity-bar-time" id="activity-bar-time">
+        <span id="activity-elapsed">0:00</span>
+        <span class="activity-bar-eta" id="activity-bar-eta" style="display:none"></span>
+    </span>
+</div>
+
+<!-- --- Toast Container --- -->
+<div class="toast-container" id="toast-container"></div>
+
+
 <!-- --- First-launch System Readiness --- -->
 <div class="preflight-overlay" id="preflight-overlay" role="dialog" aria-modal="true" aria-labelledby="preflight-title">
     <div class="preflight-dialog">
@@ -1417,10 +1949,11 @@ Start with a description. Refine styles, instruments and arrangement as needed."
             <span class="preflight-status" id="preflight-status">Checking</span>
         </div>
         <div class="preflight-summary" id="preflight-summary">Running local checks...</div>
+        <div class="voice-pack-setup" data-voice-pack hidden></div>
         <div class="preflight-checks" id="preflight-checks"></div>
         <div class="preflight-policy">
             <img src="/static/img/icons/lock.svg" alt="" aria-hidden="true">
-            <span>The check runs locally. It does not transmit diagnostics, install third-party software, or request administrator access.</span>
+            <span>System checks run on this Mac. Optional voice setup starts only when you choose to install it.</span>
         </div>
         <div class="preflight-actions">
             <button class="btn btn-secondary" type="button" onclick="initPreflight(true)"><img class="icon-img btn-icon-svg" src="/static/img/icons/refresh.svg" alt="" aria-hidden="true">Check again</button>
@@ -1428,6 +1961,25 @@ Start with a description. Refine styles, instruments and arrangement as needed."
         </div>
     </div>
 </div>
+
+<template id="voice-pack-template">
+    <h3>Set up offline expressive voices</h3>
+    <p>English and Italian voice profiles. Scripts, prompts and recordings stay on this Mac.</p>
+    <p data-voice-pack-status role="status" aria-live="polite"></p>
+    <progress data-voice-pack-progress aria-label="Voice pack installation" hidden></progress>
+    <div data-voice-pack-actions>
+        <button class="btn btn-secondary" type="button" data-voice-pack-download>Download components</button>
+        <details>
+            <summary>Install from an offline folder</summary>
+            <form>
+                <label>Offline voice pack folder
+                    <input type="text" placeholder="/Volumes/USB/VoicePack" required spellcheck="false">
+                </label>
+                <button class="btn btn-secondary" type="submit">Install from folder</button>
+            </form>
+        </details>
+    </div>
+</template>
 
 <!-- --- Processing Dashboard Overlay --- -->
 <div class="loading-overlay" id="loading-overlay">
@@ -1450,7 +2002,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
                     <span class="proc-node-dot online"></span>
                     <span class="proc-node-label"><img class="icon-img inline-icon" src="/static/img/icons/desktop-node.svg" alt="" aria-hidden="true">Mac - Master</span>
                 </div>
-                <div class="proc-node-chip" id="proc-master-chip">Apple M3 Max</div>
+                <div class="proc-node-chip" id="proc-master-chip">Chip being detected</div>
                 <div class="proc-node-meters">
                     <div class="proc-meter">
                         <span class="proc-meter-label">System CPU</span>
@@ -1460,7 +2012,7 @@ Start with a description. Refine styles, instruments and arrangement as needed."
                     <div class="proc-meter">
                         <span class="proc-meter-label">System GPU</span>
                         <div class="proc-meter-bar"><div class="proc-meter-fill gpu" id="proc-master-gpu" style="width:0%"></div></div>
-                        <span class="proc-meter-val" id="proc-master-gpu-val">-</span>
+                        <span class="proc-meter-val" id="proc-master-gpu-val" title="Awaiting a GPU sensor reading">—</span>
                     </div>
                     <div class="proc-meter">
                         <span class="proc-meter-label">System RAM</span>
@@ -1497,67 +2049,18 @@ Start with a description. Refine styles, instruments and arrangement as needed."
 </div>
 
 <!-- --- Application Scripts --- -->
-<script src="/static/js/app.js?v=3.7.4-personal-voice1"></script>
+<script src="/static/js/context-tips.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/workspace.js"></script>
+<script src="/static/js/saved-workspaces.js"></script>
+<script src="/static/js/studio-layout.js"></script>
+<script src="/static/js/studio-timeline.js"></script>
+<script src="/static/js/studio-engine.js"></script>
+<script src="/static/js/studio-home.js"></script>
+<script src="/static/js/companion.js"></script>
 <script src="/static/js/music-assistant.js?v=1"></script>
-<script>
-(() => {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('mobile-nav-toggle');
-    const backdrop = document.getElementById('sidebar-backdrop');
-    const mobileQuery = window.matchMedia('(max-width: 1024px)');
+<script src="/static/js/workspace-dock.js"></script>
 
-    function setNavigationOpen(open, restoreFocus = false) {
-        sidebar.classList.toggle('open', open);
-        backdrop.classList.toggle('visible', open);
-        document.body.classList.toggle('navigation-open', open);
-        toggle.setAttribute('aria-expanded', String(open));
-        toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
-
-        if (open) {
-            const activeItem = sidebar.querySelector('.sidebar-nav-item.active');
-            window.requestAnimationFrame(() => (activeItem || sidebar.querySelector('.sidebar-nav-item'))?.focus());
-        } else if (restoreFocus) {
-            toggle.focus();
-        }
-    }
-
-    toggle.addEventListener('click', () => {
-        setNavigationOpen(!sidebar.classList.contains('open'));
-    });
-
-    backdrop.addEventListener('click', () => setNavigationOpen(false, true));
-
-    sidebar.addEventListener('click', event => {
-        const navigationItem = event.target.closest('.sidebar-nav-item');
-        if (!navigationItem) return;
-
-        sidebar.querySelectorAll('.sidebar-nav-item').forEach(item => item.removeAttribute('aria-current'));
-        navigationItem.setAttribute('aria-current', 'page');
-
-        if (mobileQuery.matches) {
-            setNavigationOpen(false, true);
-        }
-    });
-
-    document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && sidebar.classList.contains('open')) {
-            setNavigationOpen(false, true);
-        }
-    });
-
-    mobileQuery.addEventListener('change', event => {
-        if (!event.matches) setNavigationOpen(false);
-    });
-
-    const uploadZone = document.getElementById('upload-zone');
-    uploadZone.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            document.getElementById('file-input').click();
-        }
-    });
-})();
-</script>
-
+<script src="/static/js/content-credentials.js"></script>
 </body>
 </html>

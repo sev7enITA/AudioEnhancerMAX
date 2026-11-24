@@ -1,10 +1,10 @@
-"""Identity of the stable direct-download release."""
+"""Identity of the direct-download release."""
 
 APP_NAME = "AudioEnhancerMAX"
-APP_VERSION = "3.9.0"
-APP_BUILD = "3.9.2"
-RELEASE_CHANNEL = "stable"
-RELEASE_LABEL = "Stable"
-RELEASE_TAG = "v3.9.0"
+APP_VERSION = "4.1.16"
+APP_BUILD = "4.1.20"
+RELEASE_CHANNEL = "beta"
+RELEASE_LABEL = "BETA"
+RELEASE_TAG = f"v{APP_VERSION}-beta.1"
 BUNDLE_IDENTIFIER = "com.fabriziodegni.audioenhancermax"
 DEFAULT_PORT = 8000

@@ -1,12 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AudioEnhancerMAX mark">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="AudioEnhancerMAX">
   <defs>
-    <linearGradient id="g" x1="10" y1="54" x2="54" y2="10" gradientUnits="userSpaceOnUse">
+    <linearGradient id="frame" x1="180" y1="844" x2="844" y2="180" gradientUnits="userSpaceOnUse">
       <stop stop-color="#7c3aed"/>
-      <stop offset="0.55" stop-color="#06b6d4"/>
+      <stop offset="0.52" stop-color="#06b6d4"/>
       <stop offset="1" stop-color="#10b981"/>
     </linearGradient>
+    <linearGradient id="wave" x1="224" y1="610" x2="800" y2="414" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a78bfa"/>
+      <stop offset="0.5" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
   </defs>
-  <rect x="5" y="5" width="54" height="54" rx="14" fill="#10131a" stroke="url(#g)" stroke-width="2"/>
-  <path d="M15 35c5 0 5-15 10-15s5 24 10 24 5-24 10-24 5 15 10 15" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
-  <path d="M18 46h28" fill="none" stroke="#f0f0f5" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+  <rect x="72" y="72" width="880" height="880" rx="216" fill="#0c1018"/>
+  <rect x="96" y="96" width="832" height="832" rx="194" fill="none" stroke="url(#frame)" stroke-width="24"/>
+  <path d="M216 548c74 0 74-226 148-226s74 364 148 364 74-364 148-364 74 226 148 226" fill="none" stroke="url(#wave)" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M264 758h496" fill="none" stroke="#f2f5f8" stroke-width="52" stroke-linecap="round" opacity=".94"/>
 </svg>

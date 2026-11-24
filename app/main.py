@@ -1,26 +1,32 @@
 """
 AudioEnhancerMAX by Fd - Main FastAPI Application
 Full-featured audio processing dashboard backend.
-Optimized for Apple Silicon M3 MAX.
+Supports local audio processing on Apple Silicon.
 """
 import os
 import asyncio
+import hashlib
+import tempfile
+import threading
 import logging
 import mimetypes
 import re
+import sqlite3
 import uuid
 from pathlib import Path
-from typing import Optional, List
+from typing import Literal, Optional, List
 
 import numpy as np
-from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, Query, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, Query, Form, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
 
 from app.config import (
-    APP_STORE_MODE, UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
+    APP_STORE_MODE, DATA_DIR, UPLOAD_DIR, OUTPUT_DIR, FRONTEND_DIR,
     ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB, ROADMAP_VOTES_FILE,
     bundled_whisper_model_available,
 )
@@ -31,7 +37,7 @@ from app.models.schemas import (
     VoiceProfileEnrollRequest, VoiceProfileUpdateRequest,
     SpeechEditorAnalyzeRequest, SpeechEditorUpdateRequest, SpeechEditorRenderRequest,
     SpeechEditorManualEditRequest, RevisionRequest, RuntimePrivacySettingsRequest,
-    ProjectCapsuleRequest, BlindABReviewRequest,
+    ProjectCapsuleRequest, BlindABReviewRequest, SavedWorkspaces,
 )
 from app.models.music import MusicBriefRequest, MusicRefineRequest
 from app.utils.audio_io import (
@@ -40,6 +46,7 @@ from app.utils.audio_io import (
     generate_waveform_data
 )
 from app.utils.progress import progress_tracker
+from app.services.workspace_history import read_history, record_event, signal_fingerprint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -146,9 +153,20 @@ async def prevent_stale_frontend(request, call_next):
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 app.mount("/img", StaticFiles(directory=str(FRONTEND_DIR / "img")), name="public-images")
 app.mount("/outputs", StaticFiles(directory=str(OUTPUT_DIR)), name="outputs")
+from app.services.project_studio_routes import router as studio_router
+app.include_router(studio_router)
+if not APP_STORE_MODE:
+    from desktop.companion.control import router as companion_router
+    app.include_router(companion_router)
 
 
 # ── Schemas for new endpoints ──
+
+class CredentialsExportRequest(BaseModel):
+    format: str
+    version: str
+    revision: str
+
 
 class PresetSaveRequest(BaseModel):
     name: str
@@ -208,6 +226,9 @@ async def shutdown_services():
     from app.services.cluster_manager import cluster_manager
     system_monitor.stop()
     cluster_manager.stop()
+    if not APP_STORE_MODE:
+        from desktop.companion.control import stop as stop_companion
+        await asyncio.to_thread(stop_companion)
 
 
 # ══════════════════════════════════════════════════════════
@@ -265,6 +286,62 @@ async def update_runtime_privacy_settings(request: RuntimePrivacySettingsRequest
     if not settings["trusted_lan_processing_allowed"]:
         from app.services.cluster_manager import cluster_manager
         cluster_manager.stop()
+        if not APP_STORE_MODE:
+            from desktop.companion.control import suspend_workers
+            suspend_workers()
+    return settings
+
+
+_workspaces_write_lock = threading.Lock()
+
+
+def _read_workspace_settings(path: Path) -> SavedWorkspaces:
+    try:
+        return SavedWorkspaces.model_validate_json(path.read_bytes())
+    except FileNotFoundError:
+        return SavedWorkspaces(workspaces=[])
+
+
+@app.get("/api/settings/workspaces", response_model=SavedWorkspaces, response_model_exclude_none=True)
+def load_workspaces(request: Request):
+    _require_local_credentials_request(request, "Workspaces")
+    try:
+        return _read_workspace_settings(DATA_DIR / "workspaces.json")
+    except (OSError, ValueError) as exc:
+        logger.warning("Could not read saved workspaces", exc_info=True)
+        raise HTTPException(503, "Could not load your workspaces.") from exc
+
+
+@app.put("/api/settings/workspaces", response_model=SavedWorkspaces, response_model_exclude_none=True)
+def save_workspaces(request: Request, settings: SavedWorkspaces):
+    _require_local_credentials_request(request, "Workspaces")
+    from app.services.artifact_store import atomic_json
+
+    names = {}
+    for workspace in settings.workspaces:
+        workspace.name = workspace.name.strip()
+        key = workspace.name.casefold()
+        if not key or key in names or len(set(workspace.tools)) != len(workspace.tools):
+            raise HTTPException(422, "Use a distinct name and add each tool once.")
+        names[key] = workspace.name
+    if settings.active_workspace is not None:
+        active = names.get(settings.active_workspace.strip().casefold())
+        if active is None:
+            raise HTTPException(422, "Select a saved workspace to activate.")
+        settings.active_workspace = active
+
+    path = DATA_DIR / "workspaces.json"
+    try:
+        with _workspaces_write_lock:
+            if "active_workspace" not in settings.model_fields_set:
+                # Older clients only send the list. Keep the activation if its workspace still exists.
+                previous = _read_workspace_settings(path).active_workspace
+                if previous is not None:
+                    settings.active_workspace = names.get(previous.casefold())
+            atomic_json(path, settings.model_dump(exclude_none=True))
+    except (OSError, ValueError) as exc:
+        logger.warning("Could not save workspaces", exc_info=True)
+        raise HTTPException(503, "Could not save your workspaces.") from exc
     return settings
 
 
@@ -367,7 +444,7 @@ async def serve_roadmap_html():
 
 
 # ══════════════════════════════════════════════════════════
-# Per-Filter Benchmarks (seconds per 60s of audio on M3 MAX)
+# Reference per-filter timings (seconds per 60s of audio)
 # ══════════════════════════════════════════════════════════
 
 FILTER_BENCHMARKS = {
@@ -470,6 +547,7 @@ def upload_file(file: UploadFile = File(...)):
     upload_path = get_upload_path(file_id, ext)
     wav_path = get_upload_path(file_id, ".wav")
     size_bytes = 0
+    digest = hashlib.sha256()
     completed = False
     try:
         with upload_path.open("wb") as destination:
@@ -477,18 +555,45 @@ def upload_file(file: UploadFile = File(...)):
                 size_bytes += len(chunk)
                 if size_bytes > MAX_FILE_SIZE_MB * 1024 * 1024:
                     raise HTTPException(400, f"File too large. Max: {MAX_FILE_SIZE_MB}MB")
+                digest.update(chunk)
                 destination.write(chunk)
-        info = get_audio_info(upload_path)
-        audio, sr = load_audio(upload_path)
+        try:
+            info = get_audio_info(upload_path)
+            audio, sr = load_audio(upload_path)
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise HTTPException(422, "This file could not be decoded as supported audio.") from exc
+        if not audio.size:
+            raise HTTPException(422, "The selected file contains no audio samples.")
+        for offset in range(0, audio.size, 1024 * 1024):
+            if not np.isfinite(audio[offset:offset + 1024 * 1024]).all():
+                raise HTTPException(422, "This file contains invalid audio samples. Try another copy or convert it to PCM WAV.")
         if ext != ".wav":
             save_audio(audio, sr, wav_path)
 
         waveform = generate_waveform_data(audio, num_points=500)
+        source_sha256 = digest.hexdigest()
+        # Preserve the original container as a possible C2PA parent even when DSP
+        # works from the normalized WAV derivative.
+        from app.services.content_credentials import MEDIA_TYPES
+        if ext != ".wav" and ext in MEDIA_TYPES:
+            from app.services.artifact_store import atomic_json, sha256_file
+            atomic_json(get_upload_path(file_id, ".source.json"), {
+                "original_suffix": ext,
+                "original_sha256": source_sha256,
+                "decoded_sha256": sha256_file(wav_path),
+            })
+        history_recorded = record_event(
+            file_id, "source_imported", source_sha256=source_sha256,
+            format=ext.lstrip("."), size_bytes=size_bytes,
+            duration_seconds=info["duration"], sample_rate=info["sample_rate"], channels=info["channels"],
+        )
         completed = True
         return {
             "file_id": file_id,
             "filename": file.filename,
             "size_bytes": size_bytes,
+            "source_sha256": source_sha256,
+            "history_recorded": history_recorded,
             "duration_seconds": info["duration"],
             "sample_rate": info["sample_rate"],
             "channels": info["channels"],
@@ -500,7 +605,8 @@ def upload_file(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, f"Failed to process upload: {str(e)}")
+        logger.exception("Workspace import failed for %s (%s)", file_id, ext)
+        raise HTTPException(500, "Could not import the file. Try another copy or check the local app log.") from e
     finally:
         if not completed:
             upload_path.unlink(missing_ok=True)
@@ -535,6 +641,13 @@ async def process_audio(request: ProcessingRequest):
     options = request.options.model_copy(deep=True)
     requested_options = options.model_dump(mode="json")
     processing_started = _time.monotonic()
+    preserve_channels = request.preserve_channels
+    if preserve_channels and (
+        options.output_profile
+        or options.watermark_identifier
+        or any(value is True for key, value in requested_options.items() if key not in {"auto_eq", "normalize"})
+    ):
+        raise HTTPException(400, "Channel-preserving processing supports Voice EQ and Level only")
 
     if options.output_profile:
         from app.services.output_profiles import resolve_output_profile
@@ -550,6 +663,9 @@ async def process_audio(request: ProcessingRequest):
             else:
                 setattr(options, field, value)
 
+    if options.watermark_identifier and options.output_format.value not in {"wav", "flac"}:
+        raise HTTPException(400, "Choose WAV or FLAC to preserve a revision watermark")
+
     if APP_STORE_MODE and options.keep_music:
         raise HTTPException(400, "Music separation is not included in the Mac App Store build")
 
@@ -560,7 +676,10 @@ async def process_audio(request: ProcessingRequest):
     if file_id in _PROCESSING_FILES:
         raise HTTPException(409, "This file is already being processed")
     _PROCESSING_FILES.add(file_id)
+    executed_steps: list[str] = []
+    changed_steps: list[str] = []
     try:
+        await asyncio.to_thread(record_event, file_id, "processing_started", mode="processed")
         audio_duration_sec = 60.0
         try:
             info = get_audio_info(source_path)
@@ -569,11 +688,15 @@ async def process_audio(request: ProcessingRequest):
             pass
 
         # Diagnose and tune the original, even when a later checkpoint is reusable.
-        audio, sr = load_audio(source_path)
+        audio, sr = load_audio(source_path, mono=not preserve_channels)
+        if preserve_channels:
+            audio = audio.T if audio.shape[0] == 2 else audio[0]
         checkpoint_dir = OUTPUT_DIR / f"{file_id}_checkpoints"
         completed_steps_set = set()
         from app.services.processing_report import quality_summary
-        report_input_summary = await asyncio.to_thread(quality_summary, audio, sr)
+        report_input_summary = await asyncio.to_thread(
+            quality_summary, audio.mean(axis=1) if audio.ndim == 2 else audio, sr,
+        )
 
         await progress_tracker.send_progress(file_id, "loading", 0.05, "Audio loaded")
 
@@ -592,6 +715,8 @@ async def process_audio(request: ProcessingRequest):
             "auto_eq", "studio_sound", "frequency_restoration", "normalize",
         ]
         active_steps = [s for s in STEP_ORDER if opts_dict.get(s)]
+        if options.watermark_identifier:
+            active_steps.append("audio_watermark")
 
         # ── Timing Engine: start job + get adaptive estimate ──
         job_id = file_id
@@ -605,7 +730,7 @@ async def process_audio(request: ProcessingRequest):
         # ── Dynamic Parameter Tuning ──
         try:
             from app.services.smart_mode import get_dynamic_parameters
-            dynamic_params = await asyncio.to_thread(get_dynamic_parameters, audio, sr, opts_dict)
+            dynamic_params = {} if preserve_channels else await asyncio.to_thread(get_dynamic_parameters, audio, sr, opts_dict)
             if dynamic_params:
                 logger.info(f"v2.0 Dynamic tuning active: {len(dynamic_params)} filters adjusted")
                 if "remove_noise" in dynamic_params and hasattr(options, 'noise_reduction_strength'):
@@ -628,7 +753,8 @@ async def process_audio(request: ProcessingRequest):
         from app.services.runtime_settings import external_service_allowed
         engines = [engine_for_step(step) for step in active_steps]
         checkpoint_enabled = (
-            not external_service_allowed("trusted-lan")
+            not preserve_channels
+            and not external_service_allowed("trusted-lan")
             and not any(step in {"remove_filler_words", "eliminate_hesitations", "remove_stuttering", "keep_music"} for step in active_steps)
             and all(engine["mode"] in {"deterministic-local", "dsp-fallback", "heuristic-local"} for engine in engines)
         )
@@ -649,7 +775,7 @@ async def process_audio(request: ProcessingRequest):
         try:
             from app.services.cluster_manager import cluster_manager
             from app.services.runtime_settings import external_service_allowed
-            if external_service_allowed("trusted-lan") and cluster_manager.can_distribute(opts_dict):
+            if not preserve_channels and external_service_allowed("trusted-lan") and cluster_manager.can_distribute(opts_dict):
                 n_workers = len(cluster_manager.online_workers)
                 await progress_tracker.send_progress(
                     file_id, "cluster", 0.08,
@@ -658,11 +784,17 @@ async def process_audio(request: ProcessingRequest):
                 supported_filters = cluster_manager.distributable_filters(opts_dict)
                 offload_opts = {key: True for key in supported_filters}
                 if offload_opts:
+                    before = await asyncio.to_thread(signal_fingerprint, audio, sr) if len(offload_opts) == 1 else None
                     audio = await cluster_manager.process_distributed(
                         audio, sr, offload_opts,
                         progress_callback=lambda name, pct, msg: progress_tracker.send_progress(file_id, name, pct, msg)
                     )
                     distributed_filters = set(offload_opts.keys())
+                    if before is not None:
+                        step = next(iter(offload_opts))
+                        executed_steps.append(step)
+                        if before != await asyncio.to_thread(signal_fingerprint, audio, sr):
+                            changed_steps.append(step)
                     logger.info(f" Distributed processing done for: {distributed_filters}")
                     await progress_tracker.send_progress(
                         file_id, "cluster_done", 0.35,
@@ -698,11 +830,16 @@ async def process_audio(request: ProcessingRequest):
             )
 
             # Execute the actual processing - in thread to keep server responsive
-            result = await asyncio.to_thread(process_fn, audio, sr)
-            if isinstance(result, tuple):
-                audio, sr = result
-            else:
-                audio = result
+            def execute():
+                before = signal_fingerprint(audio, sr)
+                result = process_fn(audio, sr)
+                output, rate = result if isinstance(result, tuple) else (result, sr)
+                return output, rate, before != signal_fingerprint(output, rate)
+
+            audio, sr, changed = await asyncio.to_thread(execute)
+            executed_steps.append(step_name)
+            if changed:
+                changed_steps.append(step_name)
 
             elapsed = timing_engine.end_step(job_id, step_name)
             current_step_idx[0] += 1
@@ -801,7 +938,7 @@ async def process_audio(request: ProcessingRequest):
         if options.auto_eq:
             from app.services.enhancement import apply_auto_eq
             await run_step("auto_eq", "AutoEQ applied",
-                           lambda a, s: apply_auto_eq(a, s))
+                           lambda a, s: apply_auto_eq(a.T, s).T)
 
         if options.studio_sound:
             from app.services.enhancement import apply_studio_sound
@@ -815,8 +952,26 @@ async def process_audio(request: ProcessingRequest):
 
         if options.normalize:
             from app.services.enhancement import normalize_volume
+            if preserve_channels and len(audio) < sr * 0.4:
+                # EBU R128 needs a full 400 ms block; very short edits use the
+                # existing peak fallback instead of failing the handoff.
+                from app.services.enhancement import _peak_normalize
+                normalizer = lambda a, s: _peak_normalize(a, target_db=-1.0)
+            else:
+                normalizer = lambda a, s: normalize_volume(a, s, options.target_loudness_lufs)
             await run_step("normalize", "Volume normalized",
-                           lambda a, s: normalize_volume(a, s, options.target_loudness_lufs))
+                           normalizer)
+
+        if options.watermark_identifier:
+            from app.services.watermarking import embed_revision_watermark
+
+            try:
+                await run_step(
+                    "audio_watermark", "Audio watermark applied",
+                    lambda a, _sr: embed_revision_watermark(a, options.watermark_identifier),
+                )
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
 
         # ── Finalize: save output ──
         timing_engine.end_job(job_id)
@@ -830,6 +985,7 @@ async def process_audio(request: ProcessingRequest):
         result_url = f"/outputs/{output_path.name}"
         report_url = None
         report_summary = None
+        report_sha256 = None
         compliance_result = None
         compliance_target = {
             "youtube": "video",
@@ -852,9 +1008,9 @@ async def process_audio(request: ProcessingRequest):
                 file_id=file_id,
                 app_version=APP_VERSION,
                 input_summary=report_input_summary,
-                output_audio=audio,
+                output_audio=audio.mean(axis=1) if audio.ndim == 2 else audio,
                 output_sample_rate=sr,
-                options=options.model_dump(mode="json"),
+                options={**options.model_dump(mode="json"), **({"preserve_channels": True} if preserve_channels else {})},
                 active_steps=active_steps,
                 distributed_steps=sorted(distributed_filters),
                 elapsed_seconds=_time.monotonic() - processing_started,
@@ -864,8 +1020,21 @@ async def process_audio(request: ProcessingRequest):
                 compliance=compliance_result,
             )
             processing_report["artifact_revision"] = artifact["revision"]
+            processing_report["executed_steps"] = executed_steps
+            processing_report["changed_steps"] = changed_steps
+            for entry in processing_report["pipeline"]:
+                step = entry["step"]
+                if step in executed_steps:
+                    entry["execution"] = "completed"
+                    entry["signal_changed"] = step in changed_steps
+                elif step in resumed_steps:
+                    entry["execution"] = "checkpoint_reused"
+                elif step in distributed_filters:
+                    entry["execution"] = "distributed_group_completed"
             processing_report["checkpoint"] = {"identity": identity, "enabled": checkpoint_enabled, "resumed_steps": resumed_steps}
-            atomic_json(output_path.with_suffix(".report.json"), processing_report)
+            report_path = output_path.with_suffix(".report.json")
+            atomic_json(report_path, processing_report)
+            report_sha256 = hashlib.sha256(report_path.read_bytes()).hexdigest()
             report_url = f"/api/reports/{file_id}?revision={artifact['revision']}"
             report_summary = {
                 "input_quality_score": processing_report["input"]["quality_score"],
@@ -876,6 +1045,13 @@ async def process_audio(request: ProcessingRequest):
             }
         except Exception as report_error:
             logger.warning("Processing report could not be generated: %s", report_error)
+
+        history_recorded = await asyncio.to_thread(
+            record_event, file_id, "revision_rendered", revision=artifact["revision"],
+            mode="processed", format=fmt, executed_steps=executed_steps, changed_steps=changed_steps,
+            resumed_steps=resumed_steps, distributed_steps=sorted(distributed_filters),
+            output_sha256=artifact["exports"][fmt]["sha256"], processing_report_sha256=report_sha256,
+        )
 
         # Clean up checkpoints on success
         import shutil
@@ -897,14 +1073,26 @@ async def process_audio(request: ProcessingRequest):
             "waveform_data": waveform,
             "format": fmt,
             "report_url": report_url,
+            "history_recorded": history_recorded,
             "report_summary": report_summary,
             "compliance_url": f"/api/compliance/{file_id}" if compliance_result else None,
             "compliance_summary": compliance_result,
         }
 
     except HTTPException:
+        await asyncio.to_thread(
+            record_event, file_id, "processing_failed", mode="processed", executed_steps=executed_steps,
+        )
+        raise
+    except asyncio.CancelledError:
+        await asyncio.to_thread(
+            record_event, file_id, "processing_interrupted", mode="processed", executed_steps=executed_steps,
+        )
         raise
     except Exception as e:
+        await asyncio.to_thread(
+            record_event, file_id, "processing_failed", mode="processed", executed_steps=executed_steps,
+        )
         logger.error(f"Processing failed: {e}", exc_info=True)
         try:
             timing_engine.end_job(file_id)
@@ -917,8 +1105,46 @@ async def process_audio(request: ProcessingRequest):
 
 
 # ══════════════════════════════════════════════════════════
-# Routes - Smart Mode (local Ollama/Gemma)
+# Routes - Local workspace preview and analysis
 # ══════════════════════════════════════════════════════════
+
+@app.get("/api/workspace/{file_id}/cleanup-preview")
+def cleanup_preview(
+    file_id: str,
+    start_seconds: float = Query(default=0, ge=0, le=86400),
+    variant: Literal["original", "spectral"] = "original",
+    strength: float = Query(default=0.7, ge=0, le=1),
+):
+    """Read the next eight seconds from the unchanged source and preview local spectral cleanup."""
+    import io
+
+    import soundfile as sf
+
+    source = _find_source(_require_file_id(file_id))
+    if source is None or source.suffix != ".wav":
+        raise HTTPException(404, "A decoded local source is required for the cleanup preview")
+    try:
+        with sf.SoundFile(source) as stream:
+            if stream.channels not in {1, 2} or not 8_000 <= stream.samplerate <= 192_000:
+                raise HTTPException(422, "Preview requires mono or stereo audio from 8 to 192 kHz")
+            start = int(start_seconds * stream.samplerate)
+            if start >= stream.frames:
+                raise HTTPException(422, "Choose a position before the end of the recording")
+            stream.seek(start)
+            sample_rate = stream.samplerate
+            excerpt = stream.read(sample_rate * 8, dtype="float32", always_2d=True)
+        if variant == "spectral":
+            from app.services.noise_removal import remove_noise_spectral
+
+            excerpt = remove_noise_spectral(excerpt.T, sample_rate, strength).T
+        buffer = io.BytesIO()
+        sf.write(buffer, excerpt, sample_rate, format="WAV", subtype="PCM_16")
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise HTTPException(409, "Unable to read a cleanup preview from this source") from exc
+    if variant == "spectral":
+        record_event(file_id, "preview_generated", mode="spectral_cleanup", start_seconds=start_seconds, strength=strength)
+    return Response(buffer.getvalue(), media_type="audio/wav", headers={"Cache-Control": "no-store"})
+
 
 @app.post("/api/smart-mode/{file_id}")
 async def smart_mode_analyze(
@@ -933,25 +1159,58 @@ async def smart_mode_analyze(
     try:
         audio, sr = load_audio(source_path)
         from app.services.smart_mode import analyze_and_suggest
-        return await asyncio.to_thread(analyze_and_suggest, audio, sr, profile.value)
+        analysis = await asyncio.to_thread(analyze_and_suggest, audio, sr, profile.value)
+        analysis["history_recorded"] = await asyncio.to_thread(
+            record_event, file_id, "analysis_completed", profile=profile.value,
+            detected_type=analysis.get("detected_type"),
+            quality_score=analysis.get("quality", {}).get("quality_score"),
+        )
+        return analysis
     except Exception as e:
         raise HTTPException(500, f"Smart mode failed: {str(e)}")
+
+
+@app.get("/api/workspace/{file_id}/history")
+def get_workspace_history(
+    file_id: str, request: Request,
+    before: int | None = Query(default=None, gt=0),
+):
+    _require_local_credentials_request(request)
+    file_id = _require_file_id(file_id)
+    if _find_source(file_id) is None:
+        raise HTTPException(404, "Source file not found")
+    try:
+        history = read_history(file_id, before=before)
+    except (OSError, sqlite3.Error, ValueError) as exc:
+        logger.warning("Could not read workspace history", exc_info=True)
+        raise HTTPException(503, "Local action history is unavailable") from exc
+    return JSONResponse(history, headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/reports/{file_id}")
 async def get_processing_report(file_id: str, version: str = "processed", revision: str | None = None):
     """Return evidence for the requested current result, not another operation."""
-    import json
+    from app.services.processing_report import load_processing_report, read_revision_report
+
     file_id = _require_file_id(file_id)
     version = _require_choice(version, {"processed", "speech_edit"}, "version")
     output, artifact = await _resolve_export(file_id, version=version, revision=revision)
-    path = output.with_suffix(".report.json")
-    if path.is_file():
-        return json.loads(path.read_text())
-    from app.services.processing_report import load_processing_report
-    report = load_processing_report(file_id)
-    if report and report.get("provenance", {}).get("processed_output", {}).get("sha256") == artifact["exports"][artifact["master_format"]]["sha256"]:
-        return report
+    try:
+        raw, _ = await asyncio.to_thread(read_revision_report, output, artifact)
+        return Response(raw, media_type="application/json", headers={"Cache-Control": "no-store"})
+    except FileNotFoundError:
+        if revision is None and artifact.get("legacy_adoption"):
+            report = await asyncio.to_thread(load_processing_report, file_id)
+            master = artifact["exports"][artifact["master_format"]]
+            try:
+                evidence = report["provenance"]["processed_output"]
+                if (evidence["sha256"] == master["sha256"]
+                        and evidence["name"] == f"{file_id}_{version}{output.suffix}"):
+                    return report
+            except (KeyError, TypeError):
+                pass
+    except (OSError, ValueError):
+        pass
     raise HTTPException(404, "Report for this output revision is unavailable")
 
 
@@ -1276,7 +1535,12 @@ async def analyze_speech_edits(request: SpeechEditorAnalyzeRequest):
         )
 
     try:
-        return await asyncio.to_thread(analyze_sync)
+        edl = await asyncio.to_thread(analyze_sync)
+        await asyncio.to_thread(
+            record_event, file_id, "speech_analysis_completed",
+            candidate_count=len(edl.get("candidates", [])), edl_revision=edl.get("revision"),
+        )
+        return edl
     except Exception as exc:
         logger.error("Speech editor analysis failed: %s", exc, exc_info=True)
         raise HTTPException(500, f"Speech editor analysis failed: {exc}") from exc
@@ -1302,12 +1566,18 @@ async def update_speech_edits(file_id: str, request: SpeechEditorUpdateRequest):
     if edl is None:
         raise HTTPException(404, "Speech edit list not found")
     try:
-        return await asyncio.to_thread(
+        updated = await asyncio.to_thread(
             update_speech_edl,
             edl,
             [item.model_dump() for item in request.decisions],
             request.revision,
         )
+        if updated["revision"] != request.revision:
+            await asyncio.to_thread(
+                record_event, file_id, "speech_decisions_saved",
+                edl_revision=updated["revision"], decision_count=len(request.decisions),
+            )
+        return updated
     except KeyError as exc:
         raise HTTPException(400, str(exc)) from exc
     except ValueError as exc:
@@ -1324,9 +1594,14 @@ async def add_manual_speech_edit_endpoint(file_id: str, request: SpeechEditorMan
     if edl is None:
         raise HTTPException(404, "Speech edit list not found")
     try:
-        return await asyncio.to_thread(
+        updated = await asyncio.to_thread(
             add_manual_speech_edit, edl, request.model_dump(), request.revision
         )
+        await asyncio.to_thread(
+            record_event, file_id, "speech_decisions_saved",
+            edl_revision=updated["revision"], decision_count=1,
+        )
+        return updated
     except ValueError as exc:
         status_code = 409 if "changed" in str(exc) else 400
         raise HTTPException(status_code, str(exc)) from exc
@@ -1350,9 +1625,15 @@ async def _navigate_speech_edit_history(file_id: str, revision: int, direction: 
     if edl is None:
         raise HTTPException(404, "Speech edit list not found")
     try:
-        return await asyncio.to_thread(
+        updated = await asyncio.to_thread(
             navigate_speech_edl_history, edl, revision, direction
         )
+        if updated["revision"] != revision:
+            await asyncio.to_thread(
+                record_event, file_id, "speech_decisions_saved",
+                edl_revision=updated["revision"], mode=direction,
+            )
+        return updated
     except ValueError as exc:
         status_code = 409 if "changed" in str(exc) else 400
         raise HTTPException(status_code, str(exc)) from exc
@@ -1454,7 +1735,7 @@ async def render_speech_edits(file_id: str, request: SpeechEditorRenderRequest):
     if not source_path:
         raise HTTPException(404, "File not found")
 
-    from app.services.speech_editor import load_speech_edl, render_speech_edl
+    from app.services.speech_editor import load_speech_edl, render_speech_edl, speech_edit_timeline
 
     edl = load_speech_edl(file_id)
     if edl is None:
@@ -1470,7 +1751,9 @@ async def render_speech_edits(file_id: str, request: SpeechEditorRenderRequest):
         from app.services.processing_report import create_processing_report, quality_summary
 
         input_summary = quality_summary(audio, sr)
-        rendered = render_speech_edl(audio, sr, edl)
+        timeline = speech_edit_timeline(len(audio), sr, edl)
+        before = signal_fingerprint(audio, sr)
+        rendered = render_speech_edl(audio, sr, edl, timeline=timeline)
         output_format = request.output_format.value
         from app.services.artifact_store import publish_audio, atomic_json
         artifact = publish_audio(file_id, rendered, sr, output_format, "speech_edit")
@@ -1496,12 +1779,25 @@ async def render_speech_edits(file_id: str, request: SpeechEditorRenderRequest):
             app_build=APP_BUILD, source_path=source_path, output_path=output_path,
         )
         report["artifact_revision"] = artifact["revision"]
-        atomic_json(output_path.with_suffix(".report.json"), report)
-        return rendered, sr, output_format, report, artifact, output_path
+        report["executed_steps"] = ["speech_edl_render"]
+        report["changed_steps"] = ["speech_edl_render"] if before != signal_fingerprint(rendered, sr) else []
+        report["pipeline"][0]["execution"] = "completed"
+        report["pipeline"][0]["signal_changed"] = bool(report["changed_steps"])
+        report_path = output_path.with_suffix(".report.json")
+        atomic_json(report_path, report)
+        record_event(
+            file_id, "revision_rendered", revision=artifact["revision"], mode="speech_edit", format=output_format,
+            executed_steps=report["executed_steps"], changed_steps=report["changed_steps"],
+            output_sha256=artifact["exports"][output_format]["sha256"],
+            processing_report_sha256=hashlib.sha256(report_path.read_bytes()).hexdigest(),
+        )
+        return rendered, sr, output_format, report, artifact, output_path, timeline
 
     try:
-        rendered, sr, output_format, report, artifact, output_path = await asyncio.to_thread(render_sync)
+        await asyncio.to_thread(record_event, file_id, "processing_started", mode="speech_edit")
+        rendered, sr, output_format, report, artifact, output_path, timeline = await asyncio.to_thread(render_sync)
     except Exception as exc:
+        await asyncio.to_thread(record_event, file_id, "processing_failed", mode="speech_edit")
         logger.error("Speech edit rendering failed: %s", exc, exc_info=True)
         raise HTTPException(500, f"Speech edit rendering failed: {exc}") from exc
 
@@ -1516,6 +1812,7 @@ async def render_speech_edits(file_id: str, request: SpeechEditorRenderRequest):
         "applied_edits": edl["summary"]["selected_candidates"],
         "source_preserved": True,
         "edl_revision": edl["revision"],
+        "timeline": timeline,
         "report_url": f"/api/reports/{file_id}?version=speech_edit&revision={artifact['revision']}",
         "report_summary": {
             "input_quality_score": report["input"]["quality_score"],
@@ -1579,17 +1876,48 @@ async def update_voice_profile_endpoint(profile_id: str, request: VoiceProfileUp
 @app.get("/api/tts/voices")
 async def get_voices():
     from app.services.tts import get_available_voices
-    from app.services.runtime_settings import external_service_allowed
-    voices = get_available_voices()
-    if not external_service_allowed("external"):
-        voices = [voice for voice in voices if voice.get("engine") != "edge"]
-    return {"voices": voices}
+
+    from app.services.expressive_voice import available_voices as expressive_voices
+
+    macos = await asyncio.to_thread(get_available_voices)
+    natural = expressive_voices()
+    return {"voices": natural + macos, "installed_engines": {"macos": bool(macos), "qwen3": bool(natural), "kokoro": False, "edge": False}}
+
+
+class VoicePackSetupRequest(BaseModel):
+    mode: Literal["download", "offline"]
+    folder: str | None = None
+
+
+@app.get("/api/tts/voice-pack")
+async def get_voice_pack_status():
+    from app.services.expressive_setup import status
+
+    return status()
+
+
+@app.post("/api/tts/voice-pack", status_code=202)
+async def install_voice_pack(request: Request, setup: VoicePackSetupRequest):
+    from app.services.expressive_setup import SetupError, start
+
+    if (request.client is None or request.client.host not in {"127.0.0.1", "::1"}
+            or request.url.hostname not in {"127.0.0.1", "localhost", "::1"}
+            or request.headers.get("origin") != str(request.base_url).rstrip("/")):
+        raise HTTPException(403, "Open voice setup in the local desktop app.")
+    folder = (setup.folder or "").strip()
+    if setup.mode == "offline" and not folder:
+        raise HTTPException(422, "Enter the path to the offline voice pack folder.")
+    try:
+        return start(folder if setup.mode == "offline" else None)
+    except SetupError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @app.post("/api/tts/synthesize")
 async def synthesize(request: TTSRequest):
+    from app.services.tts import LocalSpeechUnavailable, synthesize_speech
+
     try:
-        from app.services.tts import synthesize_speech
         from app.services.runtime_settings import external_service_allowed
 
         if request.expressive and not external_service_allowed("ollama"):
@@ -1601,12 +1929,6 @@ async def synthesize(request: TTSRequest):
                 400,
                 "One-shot voice samples are no longer accepted. Save the sample as a named personal voice first.",
             )
-        if not external_service_allowed("external") and not request.voice_profile_id:
-            if request.engine == "edge" or (request.voice_id or "").startswith(("it_", "en_", "es_", "fr_", "de_")):
-                raise HTTPException(403, "Optional external TTS services are disabled in Settings")
-            if request.engine == "auto":
-                request.engine = "kokoro"
-
         # Run TTS in thread - model loading + inference + Gemma rewrite can take 30+ seconds
         audio, sr, metadata = await asyncio.to_thread(
             synthesize_speech,
@@ -1629,9 +1951,11 @@ async def synthesize(request: TTSRequest):
             "file_id": file_id,
             "audio_url": f"/outputs/{file_id}_tts.wav",
             "duration": round(len(audio) / sr, 2),
-            "engine": metadata.get("engine", "edge"),
+            "engine": metadata.get("engine", "macos"),
             "engine_version": metadata.get("engine_version"),
-            "execution": metadata.get("execution", "external" if metadata.get("engine") == "edge" else "local"),
+            "execution": metadata.get("execution", "local"),
+            "voice_name": metadata.get("voice_name"),
+            "language": metadata.get("language", request.language),
             "model": metadata.get("model"),
             "personal_model": bool(metadata.get("personal_model", False)),
             "voice_profile_id": metadata.get("voice_profile_id"),
@@ -1641,8 +1965,16 @@ async def synthesize(request: TTSRequest):
         }
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(500, f"TTS failed: {str(e)}")
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except LocalSpeechUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except RuntimeError as exc:
+        logger.warning("Local speech synthesis failed: %s", type(exc).__name__)
+        raise HTTPException(503, "Local speech synthesis could not complete. Try another installed voice.") from exc
+    except Exception as exc:
+        logger.error("Unexpected speech synthesis failure: %s", type(exc).__name__)
+        raise HTTPException(500, "Local speech synthesis failed.") from exc
 
 
 @app.post("/api/tts/rewrite")
@@ -1905,6 +2237,170 @@ async def _resolve_export(file_id: str, format: str | None = None,
         raise HTTPException(409, str(exc)) from exc
 
 
+def _require_local_credentials_request(request: Request, feature: str = "Content Credentials") -> None:
+    """Limit access to integrations and their private data to the local UI."""
+    if request.url.hostname not in {"localhost", "127.0.0.1", "::1"}:
+        raise HTTPException(403, f"Open AudioEnhancerMAX on this device to use {feature}")
+    if request.client is None or request.client.host not in {"127.0.0.1", "::1"}:
+        raise HTTPException(403, f"{feature} are available on this device only")
+    origin = request.headers.get("origin")
+    if origin and origin != f"{request.url.scheme}://{request.url.netloc}":
+        raise HTTPException(403, f"{feature} require a same-origin request")
+
+
+@app.get("/api/content-credentials")
+def content_credentials_status(request: Request):
+    _require_local_credentials_request(request)
+    from app.services.content_credentials import capabilities
+    return JSONResponse(capabilities(), headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/content-credentials/inspect")
+def inspect_content_credentials(request: Request, file: UploadFile = File(...)):
+    _require_local_credentials_request(request)
+    from app.services.content_credentials import (
+        CredentialsError, CredentialsUnavailable, inspect_stream,
+    )
+    if file.size is None or not 0 < file.size <= MAX_FILE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(413, f"Select a file up to {MAX_FILE_SIZE_MB} MB")
+    try:
+        result = inspect_stream(file.file, Path(file.filename or "").suffix.lower())
+    except CredentialsUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except CredentialsError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
+
+_media_verification_slot = threading.BoundedSemaphore(1)
+
+
+@app.post("/api/media-verification")
+async def verify_received_media(
+    request: Request, extension: str = Query(..., max_length=5), audioseal: bool = False,
+):
+    _require_local_credentials_request(request)
+    from app.services.content_credentials import MEDIA_TYPES
+    from app.services.media_verification import verify_media
+
+    suffix = "." + extension.lower()
+    if suffix not in MEDIA_TYPES:
+        raise HTTPException(415, "Choose WAV, MP3, FLAC, M4A, MP4 or MOV")
+    if request.headers.get("content-type") != "application/octet-stream":
+        raise HTTPException(415, "Send the original file as binary data")
+    if not _media_verification_slot.acquire(blocking=False):
+        raise HTTPException(429, "Wait for the current verification to finish")
+    limit = MAX_FILE_SIZE_MB * 1024 * 1024
+    try:
+        with tempfile.TemporaryFile() as snapshot:
+            size = 0
+            digest = hashlib.sha256()
+            try:
+                async with asyncio.timeout(180):
+                    async for chunk in request.stream():
+                        size += len(chunk)
+                        if size > limit:
+                            raise HTTPException(413, f"Select a file up to {MAX_FILE_SIZE_MB} MB")
+                        digest.update(chunk)
+                        await run_in_threadpool(snapshot.write, chunk)
+            except TimeoutError as exc:
+                raise HTTPException(408, "The file transfer timed out") from exc
+            if size == 0:
+                raise HTTPException(422, "Choose a nonempty file")
+            await run_in_threadpool(snapshot.seek, 0)
+            result = await run_in_threadpool(verify_media, snapshot, suffix, digest.hexdigest(), size, audioseal)
+    except OSError as exc:
+        raise HTTPException(507, "Could not open or write the temporary verification copy") from exc
+    finally:
+        _media_verification_slot.release()
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/content-credentials/export/{file_id}")
+def export_content_credentials(file_id: str, options: CredentialsExportRequest, request: Request):
+    import hashlib
+    import tempfile
+
+    from app.services.artifact_store import StaleRevision, resolve_export
+    from app.services.content_credentials import (
+        CredentialsError, CredentialsUnavailable, select_parent, sign_export,
+    )
+    from app.services.processing_report import read_revision_report
+
+    _require_local_credentials_request(request)
+    file_id = _require_file_id(file_id)
+    fmt = _require_choice(options.format, DOWNLOAD_AUDIO_FORMATS, "format")
+    version = _require_choice(options.version, {"processed", "speech_edit"}, "version")
+    if not re.fullmatch(r"[0-9a-f]{32}", options.revision):
+        raise HTTPException(400, "A current audio revision is required")
+
+    temporary = None
+    try:
+        master, artifact = resolve_export(file_id, None, version, options.revision)
+        try:
+            report_bytes, report = read_revision_report(master, artifact)
+        except FileNotFoundError as exc:
+            raise CredentialsError("No processing report for this result. Process it again.") from exc
+        except ValueError as exc:
+            raise CredentialsError("The processing report does not match this result. Process it again.") from exc
+        if fmt not in {"wav", "flac"} and report.get("options", {}).get("watermark_identifier"):
+            raise CredentialsError("Choose WAV or FLAC to preserve the audio watermark in the signed copy.")
+        if fmt == artifact["master_format"]:
+            export = master
+        else:
+            export, artifact = resolve_export(file_id, fmt, version, options.revision)
+        source = _find_source(file_id)
+        if source is None:
+            raise CredentialsError("The source for this result is unavailable.")
+        parent = select_parent(source, report, get_upload_path(file_id, ".source.json"))
+
+        temporary = tempfile.TemporaryDirectory(prefix="aemax-c2pa-")
+        filename = f"AudioEnhancerMAX-{options.revision[:8]}-credentials.{fmt}"
+        signed = Path(temporary.name) / filename
+        verification = sign_export(
+            export, parent, signed,
+            revision=options.revision,
+            operation=version,
+            app_version=APP_VERSION,
+            report_sha256=hashlib.sha256(report_bytes).hexdigest(),
+            expected_export_sha256=artifact["exports"][fmt]["sha256"],
+            executed_steps=report.get("executed_steps"),
+            changed_steps=report.get("changed_steps"),
+        )
+        record_event(
+            file_id, "signed_export_prepared", revision=options.revision, mode=version, format=fmt,
+            verification_status=verification["status"], timestamp_trusted=verification["timestamp_trusted"],
+        )
+        headers = {
+            "Cache-Control": "no-store",
+            "X-Audio-Revision": options.revision,
+            "X-Content-Credentials": verification["status"],
+        }
+        if verification["timestamp_trusted"]:
+            headers["X-C2PA-Timestamp"] = "trusted"
+        response = FileResponse(
+            signed, media_type=AUDIO_MEDIA_TYPES[export.suffix], filename=filename,
+            headers=headers,
+            background=BackgroundTask(temporary.cleanup),
+        )
+        temporary = None  # The response owns cleanup once delivery starts.
+        return response
+    except StaleRevision as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(404, "No completed output for this operation") from exc
+    except CredentialsUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except CredentialsError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except (ValueError, OSError) as exc:
+        logger.warning("Unable to resolve source evidence for signed export (%s)", type(exc).__name__)
+        raise HTTPException(409, "The source or export evidence could not be read. Process it again.") from exc
+    finally:
+        if temporary is not None:
+            temporary.cleanup()
+
+
 @app.get("/api/download/{file_id}")
 async def download_file(file_id: str, format: str = "wav", version: str = "processed",
                         revision: str | None = None):
@@ -1912,14 +2408,19 @@ async def download_file(file_id: str, format: str = "wav", version: str = "proce
     format = _require_choice(format, DOWNLOAD_AUDIO_FORMATS, "format")
     version = _require_choice(version, DOWNLOAD_AUDIO_VERSIONS, "version")
     if version == "original":
-        path = _find_source(file_id)
+        paths = (get_upload_path(file_id, suffix) for suffix in sorted(ALLOWED_EXTENSIONS) if suffix != ".wav")
+        path = next((candidate for candidate in paths if candidate.is_file()), None) or _find_source(file_id)
         if path is None:
             raise HTTPException(404, "Original audio not found")
-        # Original downloads preserve the original artifact; the suffix is explicit.
+        await asyncio.to_thread(record_event, file_id, "export_prepared", mode="original", format=path.suffix[1:])
         return FileResponse(path, media_type=AUDIO_MEDIA_TYPES.get(path.suffix),
                             filename=f"AudioEnhancerMAX_{file_id}_original{path.suffix}",
                             headers={"Cache-Control": "no-store"})
     path, artifact = await _resolve_export(file_id, format, version, revision)
+    await asyncio.to_thread(
+        record_event, file_id, "export_prepared", revision=artifact["revision"], mode=version, format=format,
+        output_sha256=artifact["exports"][format]["sha256"],
+    )
     return FileResponse(path, media_type=AUDIO_MEDIA_TYPES[path.suffix],
                         filename=f"AudioEnhancerMAX_{file_id}.{format}",
                         headers={"Cache-Control": "no-store", "X-Audio-Revision": artifact["revision"],
@@ -1950,24 +2451,16 @@ async def websocket_progress(websocket: WebSocket, file_id: str):
 
 @app.get("/api/health")
 async def health():
-    try:
-        import torch
-        mps_available = bool(torch.backends.mps.is_available())
-    except (ImportError, OSError):
-        mps_available = False
+    from app.services.apple_acceleration import is_mps_available
+    mps_available = is_mps_available()
     gpu_info = "Apple Silicon MPS" if mps_available else "CPU"
 
     # Check local Ollama / Gemma-family model
     gemma_status = "unknown"
     gemma_model = None
     try:
-        from app.services.smart_mode import _check_ollama_available
-        import app.services.smart_mode as smart_mod
-        if _check_ollama_available():
-            gemma_status = "available"
-            gemma_model = smart_mod.OLLAMA_MODEL
-        else:
-            gemma_status = "not_running"
+        from app.services.smart_mode import local_model_status
+        gemma_status, gemma_model = await asyncio.to_thread(local_model_status)
     except Exception:
         gemma_status = "error"
 
@@ -1978,32 +2471,34 @@ async def health():
         metrics = system_monitor.get_stats()
         if metrics:
             system_data = {
-                "chip": metrics.get("chip", "Apple M3 Max"),
+                "chip": metrics.get("chip") or None,
                 "cpu_percent": metrics.get("cpu_percent", 0),
-                "soc_cpu_percent": metrics.get("soc_cpu_percent", 0),
+                "soc_cpu_percent": metrics.get("soc_cpu_percent"),
                 "app_cpu_percent": metrics.get("app_cpu_percent", 0),
                 "app_cpu_core_percent": metrics.get("app_cpu_core_percent", 0),
                 "app_ram_mb": metrics.get("app_ram_mb", 0),
                 "metric_scope": metrics.get("metric_scope", "system"),
                 "cpu_per_core": metrics.get("cpu_per_core", []),
-                "cpu_freq_ghz": metrics.get("cpu_freq_ghz", 0),
-                "gpu_percent": metrics.get("gpu_percent", 0),
-                "gpu_freq_ghz": metrics.get("gpu_freq_ghz", 0),
+                "cpu_freq_ghz": metrics.get("cpu_freq_ghz"),
+                "gpu_percent": metrics.get("gpu_percent"),
+                "gpu_freq_ghz": metrics.get("gpu_freq_ghz"),
                 "ram_percent": metrics.get("ram_percent", 0),
                 "ram_used_gb": metrics.get("ram_used_gb", 0),
                 "ram_total_gb": metrics.get("ram_total_gb", 0),
                 "swap_used_gb": metrics.get("swap_used_gb", 0),
-                "ane_percent": metrics.get("ane_percent", 0),
-                "power_watts": metrics.get("power_watts", 0),
-                "thermal_pressure": metrics.get("thermal_pressure", "nominal"),
-                "cpu_temp_c": metrics.get("cpu_temp_c", 0),
-                "gpu_temp_c": metrics.get("gpu_temp_c", 0),
+                "ane_percent": metrics.get("ane_percent"),
+                "ane_power_watts": metrics.get("ane_power_watts"),
+                "macmon_available": metrics.get("macmon_available", False),
+                "power_watts": metrics.get("power_watts"),
+                "thermal_pressure": metrics.get("thermal_pressure"),
+                "cpu_temp_c": metrics.get("cpu_temp_c"),
+                "gpu_temp_c": metrics.get("gpu_temp_c"),
                 "timestamp": metrics.get("timestamp", 0),
             }
             # Include benchmark score if available
             try:
                 from app.services.benchmark import get_benchmark_result
-                bench = get_benchmark_result()
+                bench = get_benchmark_result(run_if_missing=False)
                 if bench:
                     system_data["benchmark_score"] = bench.get("score", 0)
             except Exception:
@@ -2115,6 +2610,7 @@ def _count_steps(options: ProcessingOptions) -> int:
         options.keep_music, options.wind_noise_remover,
         options.buzzing_noise_remover, options.static_noise_remover,
         options.reverb_echo_remover, options.frequency_restoration,
+        bool(options.watermark_identifier),
     ])
 
 

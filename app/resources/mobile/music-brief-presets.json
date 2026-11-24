@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Podcast intro",
+    "summary": "A short signature with space for the host.",
+    "style": "Warm acoustic, voice-friendly",
+    "instruments": "Felt piano, plucked bass, soft brushed percussion",
+    "exclusions": "Lead vocals, heavy bass, dense midrange",
+    "vocals": "Instrumental",
+    "duration": "15",
+    "bpm": "92",
+    "arrangement": "0–3 s: memorable motif. 3–11 s: reduce density under the host. 11–15 s: resolve with a clean handoff."
+  },
+  {
+    "name": "Documentary bed",
+    "summary": "A slow build that leaves dialogue intelligible.",
+    "style": "Restrained cinematic ambient",
+    "instruments": "Sparse piano, low strings, gentle texture",
+    "exclusions": "Trailer hits, sudden transitions, sharp mids",
+    "vocals": "Instrumental",
+    "duration": "45",
+    "bpm": "70",
+    "arrangement": "Open with texture, introduce a restrained motif, leave room for narration, then resolve without a dramatic hit."
+  },
+  {
+    "name": "Social cut",
+    "summary": "An immediate hook and a clean ending for short video.",
+    "style": "Modern rhythmic pop",
+    "instruments": "Tight drums, muted bass, bright plucks",
+    "exclusions": "Long intro, abrupt clipping, dominant vocal",
+    "vocals": "Instrumental",
+    "duration": "20",
+    "bpm": "112",
+    "arrangement": "Opening hook in the first second. Build with one clear change midway. End on a short edit-friendly accent."
+  },
+  {
+    "name": "Ambient loop",
+    "summary": "A quiet texture designed for a seamless repeat.",
+    "style": "Spacious ambient",
+    "instruments": "Soft pads, distant piano harmonics, subtle field texture",
+    "exclusions": "Heavy percussion, hard ending, large dynamic jumps",
+    "vocals": "Instrumental",
+    "duration": "30",
+    "bpm": "64",
+    "arrangement": "Evolve the texture gradually. Match the opening harmony and tail at the loop boundary."
+  },
+  {
+    "name": "Vocal theme",
+    "summary": "A simple topline direction with lyrics kept separate.",
+    "style": "Intimate acoustic pop",
+    "instruments": "Fingerpicked guitar, upright bass, soft percussion",
+    "exclusions": "Dense layering or processing that obscures the lyrics",
+    "vocals": "One close, expressive lead vocal. Keep phrasing natural and leave room between lines.",
+    "duration": "60",
+    "bpm": "86",
+    "arrangement": "Brief instrumental opening, intimate verse, fuller chorus, and a gentle ending."
+  }
+]

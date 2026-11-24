@@ -7,8 +7,12 @@ import os
 import sys
 import threading
 import time
+from html import escape
 from pathlib import Path
 from urllib.parse import urlparse
+
+from app.config import ALLOWED_EXTENSIONS, STUDIO_MEDIA_EXTENSIONS
+from app.release import RELEASE_LABEL
 
 import objc
 from AppKit import (
@@ -33,11 +37,14 @@ from AppKit import (
 )
 from Foundation import NSURL, NSURLRequest
 from WebKit import (
+    WKContentWorld,
     WKNavigationActionPolicyAllow,
     WKNavigationActionPolicyCancel,
     WKNavigationActionPolicyDownload,
     WKNavigationResponsePolicyAllow,
     WKNavigationResponsePolicyDownload,
+    WKUserScript,
+    WKUserScriptInjectionTimeAtDocumentStart,
     WKWebView,
     WKWebViewConfiguration,
 )
@@ -52,6 +59,44 @@ WINDOW_STYLE = (
     | NSWindowStyleMaskResizable
 )
 
+WORKSPACE_PICKER_WORLD = "AudioEnhancerMAXWorkspaceFilePicker"
+WORKSPACE_PICKER_SCRIPT = """
+(() => {
+    let workspaceInput = false;
+    document.addEventListener("click", ({ target }) => {
+        if (target instanceof HTMLInputElement && target.type === "file") {
+            workspaceInput = ({
+                "file-input": "workspace", "studio-file-input": "studio",
+                "studio-relink-input": "studio", "studio-bundle-input": "bundle",
+            })[target.id] || false;
+        }
+    }, true);
+    window.takeWorkspaceFilePickerIntent = () => {
+        const intent = workspaceInput;
+        workspaceInput = false;
+        return intent;
+    };
+})();
+"""
+
+
+def _workspace_file_url(url, extensions=ALLOWED_EXTENSIONS) -> bool:
+    return bool(
+        url is not None and url.isFileURL() and not url.hasDirectoryPath()
+        and Path(str(url.lastPathComponent())).suffix.lower() in extensions
+    )
+
+
+class WorkspaceFilePanelDelegate(
+    objc.lookUpClass("NSObject"), protocols=[objc.protocolNamed("NSOpenSavePanelDelegate")]
+):
+    def panel_shouldEnableURL_(self, _panel, url):
+        # Folders must stay available for navigation. The panel separately
+        # disables choosing a directory as the recording.
+        return bool(url.isFileURL() and url.hasDirectoryPath()) or _workspace_file_url(
+            url, getattr(self, "extensions", ALLOWED_EXTENSIONS)
+        )
+
 
 def _is_local_url(value: str) -> bool:
     parsed = urlparse(value)
@@ -64,7 +109,9 @@ def _frontend_resource_dir() -> Path:
 
 
 def _about_html(*, version: str, build_number: str, distribution: str) -> str:
-    channel = "Mac App Store" if distribution == "app-store" else "Direct / development"
+    edition = "Mac App Store" if distribution == "app-store" else "Direct download"
+    version = escape(version)
+    build_number = escape(build_number)
     return f"""
     <!doctype html>
     <html lang="en">
@@ -115,16 +162,16 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
             <img class="logo" src="img/audioenhancermax-logo.png" alt="AudioEnhancerMAX logo">
             <div><span class="kicker">Local-first audio workspace</span>
               <h1>AudioEnhancerMAX</h1>
-              <p>Audio processing, transcription, monitoring and trusted-LAN edge workers in one suite.</p>
+              <p>Clean audio, compare revisions, and export with a report linked to the result.</p>
               <p class="byline">Created and maintained by <strong>Fabrizio Degni</strong></p>
             </div>
           </div>
 
           <div class="meta">
-            <div><span>Version</span><strong>{version} ({build_number})</strong></div>
-            <div><span>Distribution</span><strong>{channel}</strong></div>
+            <div><span>Version</span><strong>{version} · build {build_number}</strong></div>
+            <div><span>Channel</span><strong>{RELEASE_LABEL}</strong></div>
+            <div><span>Distribution</span><strong>{edition}</strong></div>
             <div><span>License</span><strong>MIT</strong></div>
-            <div><span>Support</span><strong>Open-source community</strong></div>
           </div>
 
           <section><h2>Purpose and core capabilities</h2>
@@ -132,20 +179,20 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
               <div class="card"><h3>Enhance audio locally</h3><p class="muted">Import, inspect, clean, compare and export recordings while preserving the original.</p></div>
               <div class="card"><h3>Speech tools</h3><p class="muted">Local Faster-Whisper transcription plus clearly identified optional speech services.</p></div>
               <div class="card"><h3>Native macOS experience</h3><p class="muted">Apple Silicon app with native Open and Save panels and no Terminal command required.</p></div>
-              <div class="card"><h3>Optional trusted devices</h3><p class="muted">User-enabled local-network workers can extend selected processing tasks.</p></div>
+              <div class="card"><h3>Companion pairing</h3><p class="muted">Find the Mac from the companion or invite a discoverable phone from the Mac. Confirm the same code on both devices before transferring audio.</p></div>
             </div>
           </section>
 
           <section><h2>Privacy and data flow</h2>
             <div class="grid">
               <div class="card"><h3>Local by default</h3><p class="muted">Core audio processing and packaged transcription run on this Mac. The private desktop service listens only on <code>127.0.0.1</code> and stops with the app.</p></div>
-              <div class="card"><h3>Network use is contextual</h3><p class="muted">Text leaves the Mac only when an online TTS option is explicitly selected. Audio crosses the LAN only when a trusted edge worker is enabled and used.</p></div>
+              <div class="card"><h3>Network features are optional</h3><p class="muted">Online speech services, companion transfers and C2PA timestamping use the network when you select those features. The timestamp authority receives a fingerprint.</p></div>
               <div class="card"><h3>No maintainer telemetry</h3><p class="muted">Recordings, outputs and diagnostics are not automatically uploaded to the maintainer.</p></div>
               <div class="card"><h3>User-controlled files</h3><p class="muted">You choose source files and export destinations with standard macOS panels.</p></div>
             </div>
             <div class="actions">
-              <a class="button primary" href="https://fabriziodegni.com/AudioEnhancerMAX/privacy.html" target="_blank">Privacy notice</a>
-              <a class="button" href="https://fabriziodegni.com/AudioEnhancerMAX/accessibility.html" target="_blank">Accessibility</a>
+              <a class="button primary" href="https://www.fabriziodegni.com/AudioEnhancerMAX/privacy.html" target="_blank">Privacy notice</a>
+              <a class="button" href="https://www.fabriziodegni.com/AudioEnhancerMAX/accessibility.html" target="_blank">Accessibility</a>
             </div>
           </section>
 
@@ -163,7 +210,7 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
             <p class="muted">Include the app version and distribution, macOS version, Mac model and chip, exact reproduction steps, selected modules, output format and the complete redacted error message.</p>
             <div class="notice"><strong>Do not publish sensitive material.</strong><br>Never attach confidential recordings, transcripts, credentials, personal identifiers or unreviewed logs to a public ticket. Use a synthetic or redacted sample.</div>
             <div class="actions">
-              <a class="button primary" href="https://fabriziodegni.com/AudioEnhancerMAX/support.html" target="_blank">Official support page</a>
+              <a class="button primary" href="https://www.fabriziodegni.com/AudioEnhancerMAX/support.html" target="_blank">Official support page</a>
               <a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues/new/choose" target="_blank">Open support ticket</a>
               <a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX/issues" target="_blank">Search tickets</a>
               <a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX/releases" target="_blank">Releases</a>
@@ -174,7 +221,7 @@ def _about_html(*, version: str, build_number: str, distribution: str) -> str:
             <div class="grid">
               <div class="card"><h3>Backend</h3><p class="muted">FastAPI + Python 3.11</p></div>
               <div class="card"><h3>Native shell</h3><p class="muted">AppKit + WKWebView</p></div>
-              <div class="card"><h3>Audio and AI</h3><p class="muted">PyAV, scipy, pedalboard, PyTorch MPS and Faster-Whisper</p></div>
+              <div class="card"><h3>Audio and AI</h3><p class="muted">PyAV, SciPy and Pedalboard. The app shows which optional model engines and hardware backends are available.</p></div>
               <div class="card"><h3>Project</h3><p class="muted">Source code, documentation and release history are available on GitHub.</p></div>
             </div>
             <div class="actions"><a class="button" href="https://github.com/sev7enITA/AudioEnhancerMAX" target="_blank">GitHub repository</a><a class="button" href="https://sourceforge.net/projects/audioenhancermax/" target="_blank">SourceForge project</a></div>
@@ -214,6 +261,7 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         self.about_web_view = None
         self._ready_thread = None
         self._terminating = False
+        self._open_panel = None
         return self
 
     def applicationDidFinishLaunching_(self, _notification):
@@ -235,6 +283,11 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         self.window.setDelegate_(self)
 
         configuration = WKWebViewConfiguration.alloc().init()
+        world = WKContentWorld.worldWithName_(WORKSPACE_PICKER_WORLD)
+        picker_script = WKUserScript.alloc().initWithSource_injectionTime_forMainFrameOnly_inContentWorld_(
+            WORKSPACE_PICKER_SCRIPT, WKUserScriptInjectionTimeAtDocumentStart, True, world
+        )
+        configuration.userContentController().addUserScript_(picker_script)
         self.web_view = WKWebView.alloc().initWithFrame_configuration_(frame, configuration)
         self.web_view.setNavigationDelegate_(self)
         self.web_view.setUIDelegate_(self)
@@ -487,20 +540,87 @@ class NativeAppDelegate(objc.lookUpClass("NSObject")):
         LOGGER.error("WebKit download failed: %s", error)
 
     def webView_runOpenPanelWithParameters_initiatedByFrame_completionHandler_(
-        self, _web_view, parameters, _frame, completion_handler
+        self, web_view, parameters, frame, completion_handler
     ):
-        panel = NSOpenPanel.alloc().init()
-        if panel is None:
-            LOGGER.error("Could not create the native open panel")
+        directories = parameters.allowsDirectories()
+        multiple = parameters.allowsMultipleSelection()
+        url = frame.request().URL() if frame.isMainFrame() else None
+        if web_view != self.web_view or not url or not self.frontend_url:
+            self._open_file_panel(directories, multiple, False, completion_handler)
+            return
+
+        current = urlparse(str(url.absoluteString()))
+        expected = urlparse(self.frontend_url)
+        if not _is_local_url(str(url.absoluteString())) or (
+            current.scheme, current.netloc, current.path
+        ) != (expected.scheme, expected.netloc, expected.path):
+            self._open_file_panel(directories, multiple, False, completion_handler)
+            return
+
+        # WKOpenPanelParameters exposes selection flags, but no public
+        # property for the DOM input's accept list or identifier.
+        def present(intent, error):
+            self._open_file_panel(
+                directories, multiple, str(intent) if error is None and intent else False, completion_handler
+            )
+
+        try:
+            web_view.evaluateJavaScript_inFrame_inContentWorld_completionHandler_(
+                "window.takeWorkspaceFilePickerIntent?.() ?? false",
+                frame, WKContentWorld.worldWithName_(WORKSPACE_PICKER_WORLD), present,
+            )
+        except Exception:
+            LOGGER.exception("Could not identify the WebKit file input")
+            completion_handler(None)
+
+    def _open_file_panel(self, directories, multiple, workspace, completion_handler):
+        if self._terminating or self._open_panel is not None:
             completion_handler(None)
             return
-        panel.setCanChooseFiles_(True)
-        panel.setCanChooseDirectories_(parameters.allowsDirectories())
-        panel.setAllowsMultipleSelection_(parameters.allowsMultipleSelection())
-        if panel.runModal() == NSModalResponseOK:
-            completion_handler(panel.URLs())
-        else:
-            completion_handler(None)
+        replied = False
+        extensions = {"studio": STUDIO_MEDIA_EXTENSIONS, "bundle": {".zip"}}.get(workspace, ALLOWED_EXTENSIONS)
+
+        def finish(result):
+            nonlocal replied
+            if replied:
+                return
+            replied = True
+            selected = None
+            try:
+                if result == NSModalResponseOK:
+                    urls = panel.URLs()
+                    if urls and (not workspace or all(_workspace_file_url(url, extensions) for url in urls)):
+                        selected = urls
+            except Exception:
+                LOGGER.exception("Could not read the native open-panel selection")
+            finally:
+                self._open_panel = None
+            completion_handler(selected)
+
+        try:
+            panel = NSOpenPanel.alloc().init()
+            if panel is None:
+                raise RuntimeError("AppKit did not create the open panel")
+            panel.setCanChooseFiles_(True)
+            panel.setCanChooseDirectories_(directories and not workspace)
+            panel.setAllowsMultipleSelection_(multiple)
+            file_filter = None
+            if workspace:
+                panel.setAllowedFileTypes_(sorted(extension[1:] for extension in extensions))
+                panel.setAllowsOtherFileTypes_(False)
+                file_filter = WorkspaceFilePanelDelegate.alloc().init()
+                file_filter.extensions = extensions
+                panel.setDelegate_(file_filter)
+            self._open_panel = (panel, file_filter)
+            if self.window is None:
+                finish(panel.runModal())
+            else:
+                # WebKit is already handling a UI callback. Keep its owner,
+                # delegate and completion alive without nesting a modal loop.
+                panel.beginSheetModalForWindow_completionHandler_(self.window, finish)
+        except Exception:
+            LOGGER.exception("Could not present the native open panel")
+            finish(None)
 
     def webView_runJavaScriptAlertPanelWithMessage_initiatedByFrame_completionHandler_(
         self, _web_view, message, _frame, completion_handler

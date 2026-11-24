@@ -56,6 +56,42 @@ def test_valid_upload_keeps_response_and_original_audio(uploads):
     assert result['waveform_data']
 
 
+def test_float_wav_with_invalid_samples_fails_cleanly(uploads):
+    buffer = io.BytesIO()
+    sf.write(buffer, np.array([0.25, np.nan, np.inf], dtype=np.float32), 16000, format="WAV", subtype="FLOAT")
+    response = TestClient(main.app).post(
+        "/api/upload", files={"file": ("invalid.wav", buffer.getvalue(), "audio/wav")},
+    )
+    assert response.status_code == 422
+    assert "invalid audio samples" in response.json()["detail"]
+    assert list(uploads.iterdir()) == []
+
+
+def test_cleanup_preview_reads_same_bounded_excerpt_and_leaves_source_intact(uploads, monkeypatch):
+    sample_rate = 16_000
+    length = 11
+    t = np.arange(sample_rate * length) / sample_rate
+    audio = np.stack([0.4 * np.sin(2 * np.pi * 123 * t), 0.2 * np.sin(2 * np.pi * 141 * t)], axis=-1)
+    source = uploads / 'preview.wav'
+    sf.write(source, audio, sample_rate, subtype='PCM_16')
+    before = source.read_bytes()
+    monkeypatch.setattr('app.services.noise_removal.remove_noise_spectral', lambda data, sr, strength: data * 0.5)
+
+    client = TestClient(main.app)
+    endpoint = '/api/workspace/preview/cleanup-preview'
+    original = client.get(endpoint, params={'start_seconds': 2, 'variant': 'original'})
+    cleaned = client.get(endpoint, params={'start_seconds': 2, 'variant': 'spectral'})
+
+    assert original.status_code == cleaned.status_code == 200
+    assert cleaned.headers['cache-control'] == 'no-store'
+    original_audio, rate = sf.read(io.BytesIO(original.content))
+    cleaned_audio, _ = sf.read(io.BytesIO(cleaned.content))
+    assert (rate, original_audio.shape) == (sample_rate, (8 * sample_rate, 2))
+    np.testing.assert_allclose(cleaned_audio, original_audio * 0.5, atol=1 / 32768)
+    assert source.read_bytes() == before
+    assert client.get(endpoint, params={'start_seconds': length}).status_code == 422
+
+
 def test_failure_after_conversion_removes_both_uploaded_and_converted_audio(uploads, monkeypatch):
     def fail(*args, **kwargs):
         assert len(list(uploads.iterdir())) == 2  # Input FLAC and generated WAV exist.

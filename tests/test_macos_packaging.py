@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -32,16 +33,34 @@ class MacOSPackagingTests(unittest.TestCase):
         self.assertNotIn("librosa", CORE_MODULES)
         self.assertNotIn("torch", CORE_MODULES)
 
-    def test_store_preflight_accepts_accelerate_without_optional_torch(self):
+    def test_preflight_explains_pytorch_is_optional_in_both_editions(self):
         from app.services.preflight import _mps_check
 
-        with (
-            patch("app.services.preflight.APP_STORE_MODE", True),
-            patch.dict(sys.modules, {"torch": None}),
-        ):
-            result = _mps_check()
+        for store_mode in (False, True):
+            with (
+                self.subTest(store=store_mode),
+                patch("app.services.preflight.APP_STORE_MODE", store_mode),
+                patch.dict(sys.modules, {"torch": None}),
+            ):
+                result = _mps_check()
+                self.assertEqual(result["status"], "pass")
+                self.assertFalse(result["required"])
+                self.assertIn("does not include PyTorch", result["detail"])
 
-        self.assertEqual(result["status"], "pass")
+    def test_preflight_distinguishes_mps_runtime_states(self):
+        from app.services.preflight import _mps_check
+
+        for built, available, status, detail in (
+            (False, False, "warning", "built without the MPS backend"),
+            (True, False, "warning", "cannot access it in this session"),
+            (True, True, "pass", "can access the GPU"),
+        ):
+            backend = SimpleNamespace(is_built=lambda: built, is_available=lambda: available)
+            torch = SimpleNamespace(backends=SimpleNamespace(mps=backend))
+            with self.subTest(built=built, available=available), patch.dict(sys.modules, {"torch": torch}):
+                result = _mps_check()
+                self.assertEqual(result["status"], status)
+                self.assertIn(detail, result["detail"])
 
     def test_app_store_entitlements_do_not_allow_unsigned_executable_memory(self):
         entitlements = (
@@ -61,8 +80,10 @@ class MacOSPackagingTests(unittest.TestCase):
 
     def test_direct_build_uses_current_build_number(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text()
-        from app.release import APP_BUILD
-        self.assertIn(f'AEMAX_BUILD_NUMBER:-{APP_BUILD}', script)
+        self.assertIn('runpy.run_path(sys.argv[1])["APP_BUILD"]', script)
+        self.assertIn('runpy.run_path(sys.argv[1])["APP_VERSION"]', script)
+        self.assertIn('runpy.run_path(sys.argv[1])["RELEASE_TAG"]', script)
+        self.assertIn('"AEMAXReleaseChannel": release["RELEASE_CHANNEL"]', script)
 
     def test_direct_build_uses_jit_free_runtime(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text()

@@ -71,6 +71,7 @@ VOICE_PROFILES_DIR.mkdir(parents=True, exist_ok=True)
 # Audio settings
 MAX_FILE_SIZE_MB = 500
 ALLOWED_EXTENSIONS = {".mp3", ".mp4", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
+STUDIO_MEDIA_EXTENSIONS = ALLOWED_EXTENSIONS | {".mov", ".webm", ".aif", ".aiff", ".caf"}
 DEFAULT_SAMPLE_RATE = 44100
 HIGH_QUALITY_SAMPLE_RATE = 48000
 

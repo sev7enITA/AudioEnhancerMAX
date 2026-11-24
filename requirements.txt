@@ -30,7 +30,6 @@ faster-whisper==1.1.0
 requests==2.34.2
 
 # Text-to-Speech
-edge-tts==7.2.8
 kokoro==0.9.4
 
 # ML Framework (Apple Silicon MPS)
@@ -42,3 +41,9 @@ aiofiles==24.1.0
 pydantic==2.10.4
 psutil==7.2.2
 httpx==0.28.1
+qrcode==8.2
+
+c2pa-python==0.39.0
+cryptography==50.0.2
+asn1crypto==1.5.1; sys_platform == "darwin"
+pyobjc-framework-Security==12.2.1; sys_platform == "darwin"

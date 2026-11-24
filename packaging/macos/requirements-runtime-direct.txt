@@ -2,3 +2,9 @@
 # JIT-free App Store core so Developer ID builds cannot reintroduce
 # librosa/Numba/llvmlite executable-memory crashes.
 -r requirements-runtime-app-store.txt
+c2pa-python==0.39.0
+cryptography==50.0.2
+asn1crypto==1.5.1
+pyobjc-framework-Security==12.2.1
+toml==0.10.2
+qrcode==8.2

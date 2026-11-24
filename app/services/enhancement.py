@@ -6,6 +6,8 @@ import numpy as np
 from typing import Optional
 import logging
 
+from app.services.apple_acceleration import is_mps_available
+
 logger = logging.getLogger(__name__)
 
 
@@ -228,10 +230,7 @@ def keep_music(
         model = get_model("htdemucs")
         model.eval()
 
-        # Enable Metal GPU acceleration on Apple Silicon
-        device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
-        model.to(device)
-        logger.info(f"Demucs on device: {device}")
+        device = torch.device("mps" if is_mps_available() else "cpu")
 
         # Demucs expects (batch, channels, samples) at model.samplerate
         if audio.ndim == 1:
@@ -246,12 +245,18 @@ def keep_music(
                 audio_tensor.squeeze(0), sr, model.samplerate
             ).unsqueeze(0)
 
-        # Move audio to GPU
-        audio_tensor = audio_tensor.to(device)
-
-        # Separate sources (GPU-accelerated)
         with torch.no_grad():
-            sources = apply_model(model, audio_tensor, device=device)
+            try:
+                model.to(device)
+                sources = apply_model(model, audio_tensor.to(device), device=device)
+            except (RuntimeError, NotImplementedError):
+                if device.type != "mps":
+                    raise
+                logger.info("Demucs Metal processing failed; retrying on CPU")
+                device = torch.device("cpu")
+                model.to(device)
+                sources = apply_model(model, audio_tensor, device=device)
+        logger.info("Demucs processed audio on %s", device)
 
         # Move results back to CPU for numpy conversion
         sources = sources.cpu()

@@ -56,8 +56,9 @@ def get_capability_registry() -> dict[str, Any]:
     pyannote = _module_available("pyannote.audio")
     demucs = _module_available("demucs") and not APP_STORE_MODE
     audiosr = _module_available("audiosr")
-    kokoro = _module_available("kokoro") and not APP_STORE_MODE
-    edge_tts = _module_available("edge_tts")
+    from app.services.tts import get_available_voices
+
+    system_speech = bool(get_available_voices())
     try:
         from app.services.voice_profiles import clone_adapter_capabilities
 
@@ -119,20 +120,11 @@ def get_capability_registry() -> dict[str, Any]:
             ),
         ),
         "local_tts": _engine(
-            "kokoro",
-            "Kokoro",
-            available=kokoro,
-            mode="neural-local" if kokoro else "unavailable",
-            version=_package_version("kokoro") if kokoro else None,
-            detail="Disabled in the Mac App Store distribution." if APP_STORE_MODE else "Optional local synthesis.",
-        ),
-        "cloud_tts": _engine(
-            "edge-tts",
-            "Microsoft Edge Neural TTS",
-            available=edge_tts,
-            mode="external-network",
-            version=_package_version("edge-tts") if edge_tts else None,
-            detail="Text leaves this Mac only after the user starts synthesis.",
+            "macos-speech",
+            "macOS system voices",
+            available=system_speech,
+            mode="system-local" if system_speech else "unavailable",
+            detail="Speech synthesis uses installed macOS voices.",
         ),
         "voice_clone": _engine(
             voice_clone.get("backend") or "makemyvoice-adapter",
@@ -162,7 +154,6 @@ def get_capability_registry() -> dict[str, Any]:
 
     from app.services.runtime_settings import load_runtime_settings
     runtime_privacy = load_runtime_settings()
-    engines["cloud_tts"]["allowed"] = runtime_privacy["external_services_allowed"]
     return {
         "schema_version": 1,
         "distribution": "app-store" if APP_STORE_MODE else "direct",
@@ -171,7 +162,7 @@ def get_capability_registry() -> dict[str, Any]:
         # Backward-compatible feature flags used by the existing interface.
         "transcription_model": engines["transcription"]["label"],
         "transcription_bundled": bundled_whisper_model_available(),
-        "kokoro_local_tts": engines["local_tts"]["available"],
+        "kokoro_local_tts": False,
         "personal_voice_profiles": engines["voice_clone"]["available"],
         "demucs_music_separation": engines["source_separation"]["available"],
         "neural_denoise": engines["noise_reduction"]["mode"] == "neural",
@@ -203,6 +194,13 @@ def engine_for_step(step: str) -> dict[str, Any]:
             mode="reviewed-local",
             version="1",
             detail="Only user-approved cut and mute decisions are rendered; the source is preserved.",
+        )
+
+    if step == "audio_watermark":
+        return _engine(
+            "pcm24-revision-watermark", "PCM revision watermark", available=True,
+            mode="deterministic-local", version="1",
+            detail="An audio identifier embedded in the lossless review and export.",
         )
 
     heuristic_steps = {
