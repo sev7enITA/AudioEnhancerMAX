@@ -4,16 +4,23 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val playStoreOnly = providers.gradleProperty("aemax.playStoreOnly").orElse("false").map { value ->
+    require(value in setOf("true", "false")) { "aemax.playStoreOnly must be true or false" }
+    value.toBoolean()
+}.get()
+
 android {
     namespace = "com.audioenhancermax.worker"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.audioenhancermax.worker"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        testInstrumentationRunner = "com.audioenhancermax.worker.MediaInstrumentation"
+        targetSdk = if (playStoreOnly) 36 else 35
+        versionCode = 23
+        versionName = "4.1.9"
+        buildConfigField("boolean", "PLAY_STORE_ONLY", playStoreOnly.toString())
     }
 
     buildTypes {
@@ -37,8 +44,20 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+
+    sourceSets.getByName("main").assets.srcDir("../../app/resources/c2pa")
+    sourceSets.getByName("main").assets.srcDir("../../app/resources/mobile")
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/reviewDeskAssets"))
+    sourceSets.getByName("androidTest").assets.srcDir("../../web/c2pa/v4.0.0-beta.1")
 }
+
+val stageReviewDesk by tasks.registering(Sync::class) {
+    from("../../frontend/review-desk")
+    into(layout.buildDirectory.dir("generated/reviewDeskAssets/review-desk"))
+}
+tasks.named("preBuild") { dependsOn(stageReviewDesk) }
 
 dependencies {
     // Compose BOM
@@ -61,10 +80,15 @@ dependencies {
 
     // Core KTX
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
 
-    // NanoHTTPD (embedded HTTP server)
-    implementation("org.nanohttpd:nanohttpd:2.3.1")
+    // Foreground lifecycle and regression tests
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.2")
+    testImplementation("junit:junit:4.13.2")
     
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
     // JSON
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.github.contentauth:c2pa-android:0.1.1")
 }

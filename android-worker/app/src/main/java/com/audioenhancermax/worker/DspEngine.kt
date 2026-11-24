@@ -15,9 +15,9 @@ object DspEngine {
     /** Available DSP filters on this worker */
     val AVAILABLE_FILTERS = listOf(
         "remove_noise", "wind_noise_remover", "buzzing_noise_remover",
-        "static_noise_remover", "reverb_echo_remover", "remove_mouth_sounds",
+        "static_noise_remover", "reverb_echo_remover",
         "remove_breaths", "remove_long_silences", "auto_eq", "studio_sound",
-        "normalize", "frequency_restoration"
+        "normalize"
     )
 
     /**
@@ -28,6 +28,8 @@ object DspEngine {
      * @return Processed audio samples
      */
     fun processChunk(audio: FloatArray, sampleRate: Int, filters: Map<String, Boolean>): FloatArray {
+        require(sampleRate in 8000..96000 && audio.isNotEmpty() && audio.size <= (Wave.MAX_BYTES-44)/4 && audio.all { it.isFinite() }) { "Invalid audio input" }
+        require(filters.filterValues { it }.keys.all { it in AVAILABLE_FILTERS }) { "Unsupported DSP filter" }
         var result = audio.copyOf()
 
         if (filters["remove_noise"] == true) {
@@ -333,40 +335,31 @@ object DspEngine {
     // ══════════════════════════════════════════════════════════
 
     private fun applySilenceRemoval(audio: FloatArray, sr: Int): FloatArray {
-        val thresholdDb = -40f
-        val minSilenceMs = 1000
-        val threshold = 10f.pow(thresholdDb / 20f)
-        val frameSamples = sr / 100 // 10ms frames
-        val minSilenceFrames = minSilenceMs / 10
-
-        val frames = mutableListOf<Boolean>() // true = voice, false = silence
-        var i = 0
-        while (i + frameSamples <= audio.size) {
-            val rms = sqrt(audio.sliceArray(i until i + frameSamples).map { it * it }.average().toFloat())
-            frames.add(rms > threshold)
-            i += frameSamples
-        }
-
-        // Find long silences and shorten them
-        val result = mutableListOf<Float>()
-        var silenceCount = 0
-        val maxSilenceSamples = sr / 2 // Keep at most 0.5s of silence
-
-        for (frameIdx in frames.indices) {
-            val start = frameIdx * frameSamples
-            val end = minOf(start + frameSamples, audio.size)
-
-            if (!frames[frameIdx]) {
-                silenceCount++
-                if (silenceCount * frameSamples <= maxSilenceSamples) {
-                    for (j in start until end) result.add(audio[j])
-                }
-            } else {
-                silenceCount = 0
-                for (j in start until end) result.add(audio[j])
+        val frameSamples = (sr / 100).coerceAtLeast(1)
+        val result = ArrayList<Float>(audio.size)
+        var silenceStart = -1
+        fun flush(end: Int) {
+            if (silenceStart >= 0) {
+                val count = end - silenceStart
+                val kept = if (count > sr) sr / 2 else count
+                for (j in silenceStart until silenceStart + kept) result.add(audio[j])
+                silenceStart = -1
             }
         }
-
+        var pos = 0
+        while (pos < audio.size) {
+            val end = minOf(pos + frameSamples, audio.size)
+            var energy = 0.0
+            for (j in pos until end) energy += audio[j] * audio[j]
+            if (sqrt(energy / (end - pos)) <= 0.01) {
+                if (silenceStart < 0) silenceStart = pos
+            } else {
+                flush(pos)
+                for (j in pos until end) result.add(audio[j])
+            }
+            pos = end
+        }
+        flush(audio.size)
         return result.toFloatArray()
     }
 
@@ -386,7 +379,7 @@ object DspEngine {
         q: Float,
         gainDb: Float = 0f
     ): FloatArray {
-        val w0 = 2.0 * PI * freq / sr
+        val w0 = 2.0 * PI * minOf(freq, sr * 0.45f) / sr
         val sinW0 = sin(w0)
         val cosW0 = cos(w0)
         val alpha = sinW0 / (2.0 * q)
