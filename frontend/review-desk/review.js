@@ -20,6 +20,8 @@
     let audioRead = 0;
     let clipRead = 0;
     const heard = new Set();
+    const pendingSources = new Set();
+    const busy = new Set();
     const player = byId("listener");
 
     async function fingerprint(file, max) {
@@ -56,26 +58,35 @@
     }
 
     async function run(button, message, operation) {
+        if (busy.has(button.id)) return;
+        busy.add(button.id);
         button.disabled = true;
         try { await operation(); }
         catch (error) { status(message, error.message || "The operation failed."); }
-        finally { button.disabled = false; }
+        finally {
+            busy.delete(button.id);
+            button.disabled = false;
+            updateExports();
+        }
     }
 
-    function updateClip() {
-        byId("export-clip").disabled = !captions?.cues.length;
-        byId("export-wav").disabled = !clipSource;
+    function updateExports() {
+        byId("export-clip").disabled = busy.has("export-clip") || !captions?.cues.length;
+        byId("export-wav").disabled = busy.has("export-wav") || !clipSource;
+        byId("export-chapters").disabled = busy.has("export-chapters") || !chapters.length;
+        byId("export-pack").disabled = busy.has("export-pack") || pendingSources.size > 0;
     }
 
     on("captions", "change", async event => {
         const file = event.target.files[0];
         if (!file) return;
         const revision = ++captionRead;
+        pendingSources.add("captions");
         captions = undefined;
         lastClip = undefined;
         byId("suggest").disabled = true;
         byId("issues").replaceChildren();
-        updateClip();
+        updateExports();
         status("caption-status", "Checking file…");
         try {
             const { bytes, identity } = await fingerprint(file, tool.CAPTION_BYTES);
@@ -91,9 +102,11 @@
                 byId("issues").append(item);
             }
             status("caption-status", `${result.format} · ${result.cues.length} cues · ${result.issues.length} flags${first.length < result.issues.length ? " (first 30 shown)" : ""}`);
-            updateClip();
         } catch (error) {
             if (revision === captionRead) status("caption-status", error.message);
+        } finally {
+            if (revision === captionRead) pendingSources.delete("captions");
+            updateExports();
         }
     });
 
@@ -124,7 +137,7 @@
             return row;
         });
         byId("chapter-list").replaceChildren(...rows);
-        byId("export-chapters").disabled = !chapters.length;
+        updateExports();
         byId("add-chapter").disabled = chapters.length >= 80;
     }
 
@@ -166,18 +179,21 @@
         const file = event.target.files[0];
         if (!file) return;
         const revision = ++clipRead;
+        pendingSources.add("clip");
         clipSource = undefined;
         lastClip = undefined;
-        updateClip();
+        updateExports();
         status("clip-status", "Reading WAV…");
         try {
             const source = await fingerprint(file, tool.AUDIO_BYTES);
             if (revision !== clipRead) return;
             clipSource = source;
             status("clip-status", "WAV ready. Use the same range for WAV and SRT.");
-            updateClip();
         } catch (error) {
             if (revision === clipRead) status("clip-status", error.message);
+        } finally {
+            if (revision === clipRead) pendingSources.delete("clip");
+            updateExports();
         }
     });
     on("clip-in", "input", () => { lastClip = undefined; });
@@ -197,9 +213,9 @@
                 throw new Error("The source or range changed. Export the current selection.");
             }
             const sameRange = lastClip?.start === range.start && lastClip.end === range.end;
+            save(`aemax-clip.${ext}`, data, mime);
             lastClip = { ...(sameRange ? lastClip : {}), ...range,
                 [ext]: { sha256: digest, source: ext === "wav" ? source.identity : source.input } };
-            save(`aemax-clip.${ext}`, data, mime);
             status("clip-status", `${ext.toUpperCase()} prepared for ${tool.timestamp(range.start)} to ${tool.timestamp(range.end)}.`);
         }));
     }
@@ -231,7 +247,14 @@
         event.target.value = "";
         const revision = ++audioRead;
         resetAudio();
-        if (files.length !== 2) { status("listen-status", "Choose exactly two audio files."); return; }
+        if (files.length !== 2) {
+            pendingSources.delete("listening");
+            updateExports();
+            status("listen-status", "Choose exactly two audio files.");
+            return;
+        }
+        pendingSources.add("listening");
+        updateExports();
         status("listen-status", "Preparing anonymous versions…");
         try {
             const validated = [];
@@ -243,6 +266,9 @@
             updateListen();
         } catch (error) {
             if (revision === audioRead) status("listen-status", error.message);
+        } finally {
+            if (revision === audioRead) pendingSources.delete("listening");
+            updateExports();
         }
     });
 
@@ -275,13 +301,24 @@
         updateListen();
     });
 
-    on("export-pack", "click", event => run(event.currentTarget, "export-status", async () => {
+    function packContent() {
+        if (pendingSources.size) throw new Error("Wait for the selected files to finish loading.");
         const title = byId("publish-name").value.trim();
         if (!title) { byId("publish-name").focus(); throw new Error("Enter a title for the publishing pack."); }
-        const pack = await tool.publishingPack({
+        return {
             title, notes: byId("publish-notes").value.trim(), captions: captions || null,
             chapters: reviewedChapters(), clip: lastClip || null, listening: decision || null,
-        });
+        };
+    }
+
+    on("export-pack", "click", event => run(event.currentTarget, "export-status", async () => {
+        const content = packContent();
+        const revisions = [captionRead, clipRead, audioRead].join(":");
+        const pack = await tool.publishingPack(content);
+        if (revisions !== [captionRead, clipRead, audioRead].join(":")
+            || JSON.stringify(content) !== JSON.stringify(packContent())) {
+            throw new Error("The review changed. Export the current publishing pack.");
+        }
         save("aemax-review-pack.json", JSON.stringify(pack, null, 2) + "\n", "application/json");
         status("export-status", `Pack prepared · SHA-256 ${pack.digest.content}`);
     }));
