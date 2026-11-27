@@ -213,6 +213,33 @@ def synthesize_speech(
     expressive: bool = False,
     engine: str = "auto",
 ) -> tuple:
+    """Render plain text or narration aligned to the timestamps in a scene table."""
+    from functools import partial
+
+    from app.services.timed_script import parse_scenes, render_scenes
+
+    render = partial(
+        _synthesize_passage, language=language, voice_id=voice_id, speed=speed, pitch=pitch,
+        warmth=warmth, style=style, clone_voice_path=clone_voice_path,
+        voice_profile_id=voice_profile_id, expressive=expressive, engine=engine,
+    )
+    scenes = parse_scenes(text)
+    return render_scenes(scenes, render) if scenes else render(text)
+
+
+def _synthesize_passage(
+    text: str,
+    language: str = "en",
+    voice_id: str = "default",
+    speed: float = 1.0,
+    pitch: float = 1.0,
+    warmth: float = 0.5,
+    style: str = "neutral",
+    clone_voice_path: Optional[str] = None,
+    voice_profile_id: Optional[str] = None,
+    expressive: bool = False,
+    engine: str = "auto",
+) -> tuple:
     """Generate speech with an installed on-device voice."""
     if engine not in ("auto", "macos", "voice-clone", expressive_voice.ENGINE):
         raise ValueError("This app generates speech locally. Select an installed voice.")

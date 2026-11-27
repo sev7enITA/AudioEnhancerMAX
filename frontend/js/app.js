@@ -2891,6 +2891,10 @@ async function synthesizeSpeech() {
             if (data.voice_profile_name) parts.push(data.personal_model ? 'fine-tuned model' : 'zero-shot reference');
             if (data.expressive) parts.push('Expressive');
             parts.push(`${data.duration.toFixed(1)}s`);
+            if (data.scene_count) {
+                const scenes = data.scene_count === 1 ? 'scene' : 'scenes';
+                parts.push(`${data.scene_count} timed ${scenes} · ${data.accelerated_scenes} sped up`);
+            }
             badge.textContent = parts.join(' - ');
             badge.style.display = 'block';
         }

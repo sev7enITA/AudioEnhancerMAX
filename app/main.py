@@ -1943,6 +1943,8 @@ async def synthesize(request: TTSRequest):
         return {
             "file_id": file_id,
             "audio_url": f"/outputs/{file_id}_tts.wav",
+            "scene_count": metadata.get("scene_count", 0),
+            "accelerated_scenes": metadata.get("accelerated_scenes", 0),
             "duration": round(len(audio) / sr, 2),
             "engine": metadata.get("engine", "macos"),
             "engine_version": metadata.get("engine_version"),
@@ -1977,10 +1979,12 @@ async def rewrite_text(request: TTSRewriteRequest):
         from app.services.runtime_settings import external_service_allowed
         if not external_service_allowed("ollama"):
             raise HTTPException(403, "Local Ollama editorial assistance is disabled in Settings")
+        from functools import partial
+        from app.services.timed_script import rewrite_script
         from app.services.tts import rewrite_expressive
-        rewritten = await asyncio.to_thread(
-            rewrite_expressive, request.text, request.language, request.style
-        )
+
+        rewrite = partial(rewrite_expressive, language=request.language, style=request.style)
+        rewritten = await asyncio.to_thread(rewrite_script, request.text, rewrite)
         return {
             "original": request.text,
             "rewritten": rewritten,
@@ -1988,6 +1992,8 @@ async def rewrite_text(request: TTSRewriteRequest):
         }
     except HTTPException:
         raise
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     except Exception as e:
         raise HTTPException(500, f"Rewrite failed: {str(e)}")
 

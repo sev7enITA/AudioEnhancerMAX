@@ -1344,7 +1344,8 @@ Start with a description. Refine styles, instruments and arrangement as needed."
             <div class="speech-workbench">
                 <section class="speech-editor" aria-labelledby="tts-script-label">
                     <h2><label for="tts-text" id="tts-script-label">Script</label></h2>
-                    <textarea id="tts-text" rows="9" placeholder="Write or paste your script"></textarea>
+                    <textarea id="tts-text" rows="9" placeholder="Write or paste your script" aria-describedby="tts-timing-help"></textarea>
+                    <p id="tts-timing-help">For timed narration, paste a table with Time, Scene and Text columns separated by tabs.</p>
                     <div id="tts-rewrite-preview" class="speech-rewrite" style="display:none">
                         <h3 id="tts-rewrite-label">Expressive rewrite</h3>
                         <p id="tts-rewrite-help">Review or edit this version before generating speech.</p>
