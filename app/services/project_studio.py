@@ -433,8 +433,11 @@ def render_audio(project: dict, destination: Path, fmt: str, progress) -> dict:
     """Mix into a private temporary path without holding the complete project in RAM."""
     from contextlib import ExitStack
 
-    clips = sorted((clip for clip in project["clips"] if clip["track_id"] not in
-                    {track["id"] for track in project["tracks"] if track["muted"]}), key=lambda clip: clip["start"])
+    muted_tracks = {track["id"] for track in project["tracks"] if track["muted"]}
+    clips = sorted(
+        (clip for clip in project["clips"] if clip["track_id"] not in muted_tracks),
+        key=lambda clip: clip["start"],
+    )
     if not clips:
         raise ValueError("Add an unmuted audio clip before rendering.")
     assets = {item["id"]: item for item in project["assets"]}

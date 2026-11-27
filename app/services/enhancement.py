@@ -181,6 +181,9 @@ def normalize_volume(
         import pyloudnorm as pyln
 
         meter = pyln.Meter(sr)
+        if len(audio) < meter.block_size * sr:
+            # Integrated loudness requires a full gating block.
+            return _peak_normalize(audio, target_db=-1.0)
         current_loudness = meter.integrated_loudness(audio)
 
         if np.isinf(current_loudness) or np.isnan(current_loudness):

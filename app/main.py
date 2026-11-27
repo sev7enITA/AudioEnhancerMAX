@@ -952,15 +952,8 @@ async def process_audio(request: ProcessingRequest):
 
         if options.normalize:
             from app.services.enhancement import normalize_volume
-            if preserve_channels and len(audio) < sr * 0.4:
-                # EBU R128 needs a full 400 ms block; very short edits use the
-                # existing peak fallback instead of failing the handoff.
-                from app.services.enhancement import _peak_normalize
-                normalizer = lambda a, s: _peak_normalize(a, target_db=-1.0)
-            else:
-                normalizer = lambda a, s: normalize_volume(a, s, options.target_loudness_lufs)
             await run_step("normalize", "Volume normalized",
-                           normalizer)
+                           lambda a, s: normalize_volume(a, s, options.target_loudness_lufs))
 
         if options.watermark_identifier:
             from app.services.watermarking import embed_revision_watermark

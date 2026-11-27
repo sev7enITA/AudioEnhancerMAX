@@ -2,13 +2,9 @@
 set -euo pipefail
 
 ROOT="${0:A:h:h}"
-VERSION="${AEMAX_MARKETING_VERSION:-3.9.0}"
-BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-3.9.2}"
-APP_NAME="AudioEnhancerMAX"
-RELEASE_TAG="v3.9.0"
 BUILD_DIR="${AEMAX_BUILD_DIR:-${ROOT}/build/macos}"
 DIST_DIR="${AEMAX_DIST_DIR:-${ROOT}/dist/macos}"
-ICON_SOURCE="${ROOT}/packaging/macos/AudioEnhancerMAX.svg"
+MASTER_ICON="${ROOT}/frontend/img/audioenhancermax-logo.png"
 ICONSET="${BUILD_DIR}/AudioEnhancerMAX.iconset"
 ICON="${ROOT}/packaging/macos/AudioEnhancerMAX.icns"
 PYTHON="${AEMAX_PYTHON:-${ROOT}/venv/bin/python}"
@@ -41,6 +37,11 @@ if [[ ! -x "${PYTHON}" ]]; then
     print -u2 "Python environment not found: ${PYTHON}"
     exit 1
 fi
+
+VERSION="${AEMAX_MARKETING_VERSION:-$("${PYTHON}" -c 'import runpy, sys; print(runpy.run_path(sys.argv[1])["APP_VERSION"])' "${ROOT}/app/release.py")}"
+BUILD_NUMBER="${AEMAX_BUILD_NUMBER:-$("${PYTHON}" -c 'import runpy, sys; print(runpy.run_path(sys.argv[1])["APP_BUILD"])' "${ROOT}/app/release.py")}"
+APP_NAME="AudioEnhancerMAX"
+RELEASE_TAG="$("${PYTHON}" -c 'import runpy, sys; print(runpy.run_path(sys.argv[1])["RELEASE_TAG"])' "${ROOT}/app/release.py")"
 
 if ! security find-identity -v -p codesigning | grep -Fq "\"${APP_IDENTITY}\""; then
     print -u2 "Developer ID signing identity not available with its private key: ${APP_IDENTITY}"
@@ -93,9 +94,6 @@ PY
     rm -rf "${BUILD_DIR}" "${DIST_DIR}" "${ICONSET}"
     mkdir -p "${BUILD_DIR}" "${DIST_DIR}" "${ICONSET}"
 
-    qlmanage -t -s 1024 -o "${BUILD_DIR}" "${ICON_SOURCE}" >/dev/null 2>&1
-    MASTER_ICON="${BUILD_DIR}/AudioEnhancerMAX.svg.png"
-
     for size in 16 32 128 256 512; do
         sips -z "${size}" "${size}" "${MASTER_ICON}" --out "${ICONSET}/icon_${size}x${size}.png" >/dev/null
         double=$((size * 2))
@@ -123,19 +121,23 @@ DMG_TEMP="${SIGNING_ROOT}/${DMG_NAME}"
 DMG_PATH="${DIST_DIR}/${DMG_NAME}"
 
 # A reused bundle must identify the requested release before it is signed.
-"${PYTHON}" - "${APP_PATH}/Contents/Info.plist" "${VERSION}" "${BUILD_NUMBER}" <<'PY'
+"${PYTHON}" - "${APP_PATH}/Contents/Info.plist" "${VERSION}" "${BUILD_NUMBER}" "${ROOT}/app/release.py" <<'PY'
 import plistlib
+import runpy
 import sys
 from pathlib import Path
 
 info = plistlib.loads(Path(sys.argv[1]).read_bytes())
+release = runpy.run_path(sys.argv[4])
 expected = {
     "CFBundleShortVersionString": sys.argv[2],
     "CFBundleVersion": sys.argv[3],
     "AEMAXDistribution": "direct",
-    "CFBundleDisplayName": "AudioEnhancerMAX",
-    "CFBundleIdentifier": "com.fabriziodegni.audioenhancermax",
-    "AEMAXReleaseChannel": "stable",
+    "CFBundleDisplayName": release["APP_NAME"],
+    "CFBundleIdentifier": release["BUNDLE_IDENTIFIER"],
+    "AEMAXReleaseChannel": release["RELEASE_CHANNEL"],
+    "AEMAXReleaseLabel": release["RELEASE_LABEL"],
+    "AEMAXReleaseTag": release["RELEASE_TAG"],
 }
 for key, value in expected.items():
     if info.get(key) != value:
@@ -153,7 +155,7 @@ mkdir -p "${DMG_ROOT}"
 ditto --norsrc --noqtn "${SIGNED_APP}" "${DMG_ROOT}/${APP_NAME}.app"
 ln -s /Applications "${DMG_ROOT}/Applications"
 hdiutil create \
-    -volname "AudioEnhancerMAX 3.9.0" \
+    -volname "${APP_NAME} ${VERSION}" \
     -srcfolder "${DMG_ROOT}" \
     -ov \
     -format UDZO \
