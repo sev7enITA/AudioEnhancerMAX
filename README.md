@@ -2,7 +2,9 @@
 
 # AudioEnhancerMAX
 
-**Current public BETA: 4.1.6.** [Mac build 4.1.10](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-beta.1) is a notarised Apple Silicon DMG. The [Companion BETA](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.6-mobile-beta.1) includes the signed Android APK, build 20, and an iOS Xcode developer archive, build 15.
+**Current public BETAs.** Apple Silicon Mac has a notarized [4.1.16 DMG, build 4.1.20](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.16-beta.1). Android has the signed [Companion 4.1.9 APK, build 23](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.9-mobile-beta.1). Review Desk covers caption checking, chapters, short clips, blind listening and publishing handoff. iOS 4.1.9 build 17 is prepared for TestFlight, with enrollment pending.
+
+[Project wiki](https://github.com/sev7enITA/AudioEnhancerMAX/wiki) · [Linux feasibility](https://www.fabriziodegni.com/AudioEnhancerMAX/roadmap.html#linux-desktop)
 
 [Release guide](https://www.fabriziodegni.com/AudioEnhancerMAX/release-4.html) · [Downloads and checksums](https://www.fabriziodegni.com/AudioEnhancerMAX/download.html) · [Release evidence](https://www.fabriziodegni.com/AudioEnhancerMAX/status.html) · [Watch the English trailer](https://www.fabriziodegni.com/AudioEnhancerMAX/release-4.html#trailer)
 
