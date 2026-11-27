@@ -2,7 +2,7 @@
 
 # AudioEnhancerMAX
 
-**Current public BETAs.** Apple Silicon Mac has a notarized [4.1.16 DMG, build 4.1.20](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.16-beta.1). Android has the signed [Companion 4.1.9 APK, build 23](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.9-mobile-beta.1). Review Desk covers caption checking, chapters, short clips, blind listening and publishing handoff. iOS 4.1.9 build 17 is prepared for TestFlight, with enrollment pending.
+**Current public BETAs.** Apple Silicon Mac has a notarized [4.1.17 DMG, build 4.1.21](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.17-beta.1) with narration aligned to scene timestamps. Android has the signed [Companion 4.1.10 APK, build 24](https://github.com/sev7enITA/AudioEnhancerMAX/releases/tag/v4.1.10-mobile-beta.1). Both include Review Desk export checks. iOS 4.1.9 build 17 is prepared for TestFlight, with enrollment pending.
 
 [Project wiki](https://github.com/sev7enITA/AudioEnhancerMAX/wiki) · [Linux feasibility](https://www.fabriziodegni.com/AudioEnhancerMAX/roadmap.html#linux-desktop)
 
